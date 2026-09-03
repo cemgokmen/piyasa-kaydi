@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Piyasa Kaydı — kim ne aldı, ne sattı</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="{{ url_for('index') }}">Piyasa<span>Kaydı</span></a>
+    <p class="tagline">
+      ABD'de şirket yöneticilerinin kamuya bildirdiği hisse alım satımları.
+      Resmî kayıtlardan derlendi, Türkçeleştirildi.
+    </p>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <a class="tab is-on" href="{{ url_for('index') }}">Yönetici işlemleri</a>
+    <a class="tab" href="{{ url_for('fonlar') }}">Fonlar ve bankalar</a>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <div class="wrap">
+    <form method="get" action="{{ url_for('index') }}" id="filtre-formu">
+      <input type="hidden" name="islem" value="{{ islem }}">
+      <input type="hidden" name="donem" value="{{ donem }}">
+      <input type="hidden" name="sira" value="{{ sira }}">
+      <input id="search" class="search" type="search" name="q" value="{{ arama }}"
+             placeholder="Hisse kodu, kişi veya şirket ara" autocomplete="off">
+      <noscript><button class="chip" type="submit">Ara</button></noscript>
+    </form>
+
+    <div class="chip-row">
+      {% for deger, etiket in [('hepsi', 'Hepsi'), ('buy', 'Alım'), ('sell', 'Satım')] %}
+      <a class="chip {% if islem == deger %}is-on{% endif %}"
+         href="{{ url_for('index', islem=deger, q=arama, donem=donem, sira=sira) }}">{{ etiket }}</a>
+      {% endfor %}
+
+      <span class="chip-sep"></span>
+
+      {% for deger, bilgi in donemler.items() %}
+      <a class="chip {% if donem == deger %}is-on{% endif %}"
+         href="{{ url_for('index', islem=islem, q=arama, donem=deger, sira=sira) }}">{{ bilgi[0] }}</a>
+      {% endfor %}
+
+      <span class="chip-sep"></span>
+
+      {% for deger, bilgi in siralamalar.items() %}
+      <a class="chip {% if sira == deger %}is-on{% endif %}"
+         href="{{ url_for('index', islem=islem, q=arama, donem=donem, sira=deger) }}">{{ bilgi[0] }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  {% if toplam %}
+  <section class="summary">
+    <div class="stat">
+      <span class="stat-label">Bildirim</span>
+      <span class="stat-value">{{ toplam_metin }}</span>
+    </div>
+    <div class="stat stat-buy">
+      <span class="stat-label">Alım</span>
+      <span class="stat-value">{{ alim_tutar }}</span>
+      <span class="stat-sub">{{ ozet.alim }} işlem</span>
+    </div>
+    <div class="stat stat-sell">
+      <span class="stat-label">Satım</span>
+      <span class="stat-value">{{ satim_tutar }}</span>
+      <span class="stat-sub">{{ ozet.satim }} işlem</span>
+    </div>
+    
+  </section>
+  {% endif %}
+
+  {% if rows %}
+  <ol class="trade-list">
+    {% for row in rows %}
+    <li class="trade {{ 'is-buy' if row.action == 'buy' else 'is-sell' }}">
+
+      <div class="trade-head">
+        <a class="ticker" href="{{ url_for('hisse', ticker=row.ticker) }}">{{ row.ticker }}</a>
+        <span class="action">{{ row.action_text }}</span>
+        <span class="trade-amount">{{ row.amount_text }}</span>
+      </div>
+
+      <p class="person">
+        <a class="person-name" href="{{ url_for('kisi', slug=row.person_slug) }}">{{ row.person }}</a>
+        <span class="person-role">{{ row.role_text }}</span>
+      </p>
+
+      <p class="meta">
+        <span>İşlem {{ row.islem_tarih_kisa }}</span>
+        <span class="dot">·</span>
+        <span>Bildirim {{ row.bildirim_tarih_kisa }}</span>
+        <span class="dot">·</span>
+        <span>{{ row.delay_days }} gün gecikme</span>
+        {% if row.source_url %}
+        <a class="source-link" href="{{ row.source_url }}" target="_blank" rel="noopener">kaynak</a>
+        {% endif %}
+      </p>
+
+    </li>
+    {% endfor %}
+  </ol>
+
+  {% if son_sayfa > 1 %}
+  <nav class="pager">
+    {% if sayfa > 1 %}
+    <a class="chip" href="{{ url_for('index', islem=islem, q=arama, donem=donem, sira=sira, sayfa=sayfa-1) }}">← Önceki</a>
+    {% else %}<span class="chip is-off">← Önceki</span>{% endif %}
+    <span class="pager-info">{{ sayfa }} / {{ son_sayfa }}</span>
+    {% if sayfa < son_sayfa %}
+    <a class="chip" href="{{ url_for('index', islem=islem, q=arama, donem=donem, sira=sira, sayfa=sayfa+1) }}">Sonraki →</a>
+    {% else %}<span class="chip is-off">Sonraki →</span>{% endif %}
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <p class="empty">Bu aramaya uyan kayıt yok. Dönemi genişletmeyi deneyin.</p>
+  {% endif %}
+
+  <footer class="foot">
+    <p><strong>Bu sitede yatırım tavsiyesi verilmez.</strong> Gösterilen bilgiler,
+    ilgili kişilerin yasal yükümlülük gereği kamuya açıkladığı bildirimlerin
+    derlenmiş halidir. Her kaydın yanındaki bağlantı resmî belgeye gider.</p>
+    <p class="foot-note">Kaynak: SEC EDGAR. Yalnızca açık piyasa alım ve satımları
+    gösterilir; maaş kapsamında verilen hisseler ve opsiyon kullanımları listeye
+    dahil edilmez.</p>
+  </footer>
+
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

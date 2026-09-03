@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ ticker }} — Piyasa Kaydı</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  <p class="crumb"><a href="{{ url_for('index') }}">← Tüm kayıtlar</a></p>
+
+  <h1>{{ ticker }}</h1>
+  <p class="page-sub">{{ sirket }}</p>
+
+  <div class="summary">
+    <div class="stat">
+      <span class="stat-label">Bildirim</span>
+      <span class="stat-value">{{ ozet.adet }}</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Kişi</span>
+      <span class="stat-value">{{ ozet.kisi }}</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Alım</span>
+      <span class="stat-value">{{ alim_tutar }}</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Satım</span>
+      <span class="stat-value">{{ satim_tutar }}</span>
+    </div>
+  </div>
+
+  {% if fon_ozet %}
+  <h2 class="panel-title">Bu hisseyi tutan fonlar</h2>
+
+  <p class="donem-notu">
+    {{ fon_ozet.donem_adi }} sonunda takip edilen <strong>{{ fon_ozet.sayi }} fon</strong>
+    bu hissede toplam <strong>{{ fon_ozet.toplam_kisa }}</strong> pozisyon bildirdi.
+  </p>
+
+  <ul class="minilist">
+    {% for f in fonlar_listesi %}
+    <li>
+      <a href="{{ url_for('fon', slug=f.fon_slug) }}">{{ f.fon_adi }}</a>
+      <span class="minilist-meta">{{ f.deger_kisa }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <h2 class="panel-title">Yönetici işlemleri</h2>
+  {% endif %}
+
+  <ul class="trade-list">
+    {% for row in rows %}
+    <li class="trade {{ 'is-buy' if row.action == 'buy' else 'is-sell' }}">
+
+      <div class="trade-head">
+        <span class="ticker">{{ row.ticker }}</span>
+        <span class="action">{{ row.action_text }}</span>
+      </div>
+
+      <p class="person">
+        <a class="person-name" href="{{ url_for('kisi', slug=row.person_slug) }}">{{ row.person }}</a>
+        <span class="person-role">{{ row.role_text }}</span>
+      </p>
+
+      <div class="figures">
+        <div class="figure">
+          <span class="figure-label">Tutar</span>
+          <span class="figure-value">{{ row.amount_text }}</span>
+        </div>
+        <div class="figure">
+          <span class="figure-label">İşlem tarihi</span>
+          <span class="figure-value">{{ row.transaction_date }}</span>
+        </div>
+        <div class="figure">
+          <span class="figure-label">Bildirim gecikmesi</span>
+          <span class="figure-value">{{ row.delay_days }} gün</span>
+        </div>
+      </div>
+
+      {% if row.source_url %}
+      <a class="source-link" href="{{ row.source_url }}" target="_blank" rel="noopener">Kaynak belge</a>
+      {% endif %}
+
+    </li>
+    {% endfor %}
+  </ul>
+
+</div>
+</body>

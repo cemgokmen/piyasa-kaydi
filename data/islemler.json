@@ -1,0 +1,56 @@
+[
+  {
+    "person": "J. Doe",
+    "chamber": "Senato",
+    "state": "Arizona",
+    "party": "Demokrat",
+    "committee": "Silahlı Kuvvetler Komitesi",
+    "ticker": "NVDA",
+    "asset_name": "NVIDIA Corporation",
+    "action": "buy",
+    "amount_min": 15001,
+    "amount_max": 50000,
+    "transaction_date": "2026-07-12",
+    "disclosed_date": "2026-08-05"
+  },
+  {
+    "person": "M. Smith",
+    "chamber": "Temsilciler Meclisi",
+    "state": "Ohio",
+    "party": "Cumhuriyetçi",
+    "committee": "Enerji ve Ticaret Komitesi",
+    "ticker": "AAPL",
+    "asset_name": "Apple Inc.",
+    "action": "sell",
+    "amount_min": 100001,
+    "amount_max": 250000,
+    "transaction_date": "2026-06-30",
+    "disclosed_date": "2026-08-14"
+  },
+  {
+    "person": "K. Alvarez",
+    "chamber": "Senato",
+    "state": "Florida",
+    "party": "Cumhuriyetçi",
+    "committee": "Silahlı Kuvvetler Komitesi",
+    "ticker": "LMT",
+    "asset_name": "Lockheed Martin Corp.",
+    "action": "buy",
+    "amount_min": 250001,
+    "amount_max": 500000,
+    "transaction_date": "2026-05-21",
+    "disclosed_date": "2026-08-01"
+  },
+  {
+    "person": "R. Chen",
+    "job_title": "Finans direktörü (CFO)",
+    "company": "Microsoft Corporation",
+    "ticker": "MSFT",
+    "asset_name": "Microsoft Corporation",
+    "action": "sell",
+    "amount_min": 1200000,
+    "amount_max": 1200000,
+    "transaction_date": "2026-08-18",
+    "disclosed_date": "2026-08-20"
+  }
+]

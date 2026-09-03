@@ -1,0 +1,577 @@
+:root {
+  --paper:     #F7F8FA;
+  --card:      #FFFFFF;
+  --ink:       #0D1117;
+  --ink-2:     #414B58;
+  --ink-3:     #7B8794;
+  --line:      #DFE3E8;
+  --line-2:    #EDF0F3;
+
+  --buy:       #00875A;
+  --buy-strong:#00A76F;
+  --buy-soft:  #DCFBEF;
+  --sell:      #C0392B;
+  --sell-strong:#E5484D;
+  --sell-soft: #FFE9E7;
+
+  --accent:    #1B4DFF;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+a { color: inherit; }
+
+/* ---------- Üst başlık ---------- */
+
+.masthead {
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  padding: 34px 0 24px;
+  margin-bottom: 0;
+}
+
+.brand {
+  display: inline-block;
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  text-decoration: none;
+}
+
+.brand span { font-weight: 400; color: var(--ink-3); }
+
+.tagline {
+  margin: 6px 0 0;
+  max-width: 42em;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+/* ---------- Filtre çubuğu ---------- */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(250, 249, 246, 0.93);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+  margin-bottom: 18px;
+}
+
+.search {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font: inherit;
+  font-size: 15px;
+}
+
+.search::placeholder { color: var(--ink-3); }
+
+.search:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(22, 25, 29, 0.07);
+}
+
+.chip-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chip-row::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex: none;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink-2);
+  font-size: 13.5px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+
+.chip.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.chip.is-off { color: var(--ink-3); opacity: 0.5; pointer-events: none; }
+
+.chip-sep {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 5px;
+}
+
+/* ---------- Özet kutuları ---------- */
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 18px 0;
+}
+
+.stat {
+  background: var(--card);
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-3);
+}
+
+.stat-value {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.stat-sub { font-size: 12px; color: var(--ink-3); }
+
+.stat-buy .stat-value { color: var(--buy); }
+.stat-sell .stat-value { color: var(--sell); }
+
+/* ---------- Kayıt listesi ---------- */
+
+.trade-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.trade {
+  padding: 14px 2px 13px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.trade-head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.ticker {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+a.ticker {
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+a.ticker:hover { border-bottom-color: var(--ink-3); }
+
+.action {
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.is-buy .action { background: var(--buy-soft); color: var(--buy); }
+.is-sell .action { background: var(--sell-soft); color: var(--sell); }
+
+.trade-amount {
+  margin-left: auto;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.is-buy .trade-amount { color: var(--buy); }
+.is-sell .trade-amount { color: var(--sell); }
+
+.person {
+  margin: 5px 0 0;
+  font-size: 14.5px;
+}
+
+.person-name { color: var(--ink); }
+.person-role { color: var(--ink-2); }
+.person-role::before { content: " · "; color: var(--ink-3); }
+
+.meta {
+  margin: 6px 0 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot { color: var(--line); }
+
+.source-link {
+  margin-left: auto;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.source-link:hover { color: var(--ink); border-color: var(--ink-3); }
+
+/* ---------- İç sayfalar ---------- */
+
+.crumb { margin: 18px 0 0; font-size: 13.5px; }
+.crumb a { color: var(--ink-2); text-decoration: none; }
+.crumb a:hover { color: var(--ink); }
+
+h1 {
+  margin: 12px 0 0;
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.page-sub {
+  margin: 2px 0 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+/* ---------- Sayfalama ve alt bilgi ---------- */
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 26px 0;
+}
+
+.pager-info {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.empty { padding: 56px 0; text-align: center; color: var(--ink-3); }
+
+.foot {
+  margin-top: 32px;
+  padding: 18px 0 56px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.foot p { margin: 0 0 8px; max-width: 52em; }
+.foot-note { color: var(--ink-3); }
+
+/* ---------- Telefon ---------- */
+
+@media (max-width: 560px) {
+  .wrap { padding: 0 16px; }
+  .summary { grid-template-columns: 1fr 1fr; }
+  .trade-amount { margin-left: 0; width: 100%; }
+  .source-link { margin-left: 0; }
+  h1 { font-size: 23px; }
+}
+
+/* ---------- Canlandırma ---------- */
+
+.stat {
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.summary .stat-buy {
+  background: linear-gradient(180deg, var(--buy-soft) 0%, #fff 85%);
+}
+
+.summary .stat-sell {
+  background: linear-gradient(180deg, var(--sell-soft) 0%, #fff 85%);
+}
+
+.stat-value {
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.stat-buy .stat-value { color: var(--buy); }
+.stat-sell .stat-value { color: var(--sell); }
+
+/* Kartlara renkli sol kenar */
+
+.trade {
+  padding-left: 14px;
+  border-left: 3px solid transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.trade.is-buy { border-left-color: var(--buy-strong); }
+.trade.is-sell { border-left-color: var(--sell-strong); }
+
+.trade:hover { background: var(--line-2); }
+
+/* Tutarı öne çıkar */
+
+.trade-amount {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.is-buy .trade-amount { color: var(--buy); }
+.is-sell .trade-amount { color: var(--sell); }
+
+/* Alım/satım etiketi daha belirgin */
+
+.action {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.is-buy .action { background: var(--buy); color: #fff; }
+.is-sell .action { background: var(--sell); color: #fff; }
+
+/* Etkin filtre düğmesi */
+
+.chip.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 1px 3px rgba(27, 77, 255, 0.28);
+}
+
+.search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(27, 77, 255, 0.13);
+}
+
+/* Kartların yumuşak girişi */
+
+.trade {
+  animation: belir 0.28s ease both;
+}
+
+@keyframes belir {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trade { animation: none; }
+}
+.gecikme-notu {
+  margin: 0 0 8px;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+.panel-title {
+  margin: 26px 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+.minilist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.minilist li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 14.5px;
+}
+
+.minilist li:last-child { border-bottom: 0; }
+
+.minilist a {
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.minilist a:hover { border-bottom-color: var(--ink-3); }
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-weight: 600;
+}
+
+.minilist-meta {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+a.person-name {
+  text-decoration: none;
+  color: var(--ink);
+  border-bottom: 1px solid transparent;
+}
+
+a.person-name:hover {
+  border-bottom-color: var(--ink-3);
+}
+
+.tabs {
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs .wrap {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs .wrap::-webkit-scrollbar { display: none; }
+
+.tab {
+  padding: 12px 2px;
+  margin-right: 22px;
+  font-size: 14.5px;
+  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.tab:hover { color: var(--ink); }
+
+.tab.is-on {
+  color: var(--ink);
+  font-weight: 500;
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Portföy pastası ---------- */
+
+.pasta-bolum {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin: 20px 0 8px;
+  padding: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.pasta {
+  flex: none;
+  width: 190px;
+  height: 190px;
+}
+
+.pasta-liste {
+  flex: 1 1 260px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pasta-liste li {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 5px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.pasta-liste li:last-child { border-bottom: 0; }
+
+.nokta {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.pasta-ad {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-weight: 600;
+}
+
+.pasta-oran {
+  margin-left: auto;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13.5px;
+}
+
+.pasta-deger {
+  min-width: 82px;
+  text-align: right;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.artis { color: var(--buy); }
+.azalis { color: var(--sell); }
+
+@media (max-width: 560px) {
+  .pasta-bolum { gap: 16px; padding: 14px; }
+  .pasta { width: 150px; height: 150px; margin: 0 auto; }
+  .pasta-deger { display: none; }
+}
