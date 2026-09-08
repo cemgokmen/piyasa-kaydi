@@ -41,6 +41,4 @@ FONLAR = [
     "Deutsche Bank AG",
     "Barclays PLC",
     "HSBC Holdings PLC",
-    "Morgan Stanley Institutional Investment",
-    "BlackRock Finance",
 ]
