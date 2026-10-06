@@ -12,7 +12,7 @@ import requests
 # Proje kökündeki ayarlar.py'yi bulabilmek için
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ayarlar import USER_AGENT  # noqa: E402
+from piyasa.ayarlar import USER_AGENT  # noqa: E402
 
 # 8.1'de gördüğümüz ilk kayıt
 YOL = "edgar/data/910638/0001628280-26-058429.txt"

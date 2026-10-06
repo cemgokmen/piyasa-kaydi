@@ -1,7 +1,7 @@
 """
 Takip listesindeki fonların 13F bildirimlerini çekip veritabanına yazar.
 
-Çalıştırmak için:  python fon_toplayici.py
+Çalıştırmak için:  python -m piyasa fon
 """
 
 import json
@@ -13,10 +13,9 @@ from pathlib import Path
 
 import requests
 
-from ayarlar import USER_AGENT
-from database import get_connection, init_db
-from slug import slugify
-BASE_DIR = Path(__file__).parent
+from piyasa.ayarlar import FON_LISTESI, USER_AGENT
+from piyasa.veritabani import get_connection, init_db
+from piyasa.slug import slugify
 
 # Her fon için kaç çeyrek geriye gidilsin
 CEYREK_SAYISI = 4
@@ -153,7 +152,7 @@ def kaydet(conn, kayit):
 def main():
     init_db()
 
-    with open(BASE_DIR / "data" / "fonlar.json", encoding="utf-8") as f:
+    with open(FON_LISTESI, encoding="utf-8") as f:
         fonlar = json.load(f)
 
     print(f"{len(fonlar)} fon işlenecek.\n")

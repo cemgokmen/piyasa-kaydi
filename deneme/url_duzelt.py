@@ -9,8 +9,8 @@ from pathlib import Path
 # Proje kökündeki modülleri (database, toplayici...) bulabilmek için
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from database import get_connection
-from toplayici import belge_url
+from piyasa.veritabani import get_connection
+from piyasa.toplama.form4 import belge_url
 
 ON_EK = "https://www.sec.gov/Archives/"
 

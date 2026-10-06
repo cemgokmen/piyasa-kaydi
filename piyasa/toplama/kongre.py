@@ -15,7 +15,7 @@ eyalet + seçim bölgesiyle eşleştirilir. Aynı veri setindeki resmî tam ad,
 House Clerk listesindeki hatalı yazımların yerine kullanılır
 (ör. listede ad alanı "Scott Scott" olarak geçiyor).
 
-Çalıştırmak için:  python kongre_toplayici.py [yıl ...]
+Çalıştırmak için:  python -m piyasa kongre [yıl ...]
 Tekrar çalıştırılabilir: işlenmiş bildirimleri atlar.
 """
 
@@ -31,10 +31,10 @@ from datetime import date, datetime, timezone
 import pdfplumber
 import requests
 
-from ayarlar import USER_AGENT
-from database import get_connection, init_db
-from slug import slugify
-from toplayici import kaydet
+from piyasa.ayarlar import USER_AGENT
+from piyasa.veritabani import get_connection, init_db
+from piyasa.slug import slugify
+from piyasa.toplama.form4 import kaydet
 
 KAYNAK = "house_ptr"
 LISTE_URL = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/{yil}FD.zip"

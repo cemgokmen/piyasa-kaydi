@@ -12,7 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import json
 from datetime import datetime, timezone
 
-from database import get_connection, init_db, BASE_DIR
+from piyasa.ayarlar import KOK as BASE_DIR
+from piyasa.veritabani import get_connection, init_db
 
 COLUMNS = [
     "source_id", "source", "person", "chamber", "state", "party", "committee",

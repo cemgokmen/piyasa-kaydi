@@ -13,9 +13,9 @@ import xml.etree.ElementTree as ET
 
 import requests
 
-from database import get_connection
+from piyasa.veritabani import get_connection
 
-from ayarlar import USER_AGENT
+from piyasa.ayarlar import USER_AGENT
 
 
 def ham_dosya_url(index_url):

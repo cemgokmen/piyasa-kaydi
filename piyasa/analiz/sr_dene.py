@@ -1,13 +1,13 @@
 """
 Destek/direnç modelini gerçek hisselerde çalıştırır.
-Kullanım:  python sr_dene.py THYAO.IS AAPL
+Kullanım:  python -m piyasa sr-dene THYAO.IS AAPL
 """
 
 import sys
 
 import yfinance as yf
 
-from destek_direnc import bolgeleri_hesapla
+from piyasa.analiz.destek_direnc import bolgeleri_hesapla
 
 ESIK = 0  # bu puanın altındaki bölgeler gösterilmez
 
@@ -34,7 +34,11 @@ def goster(kod):
     print()
 
 
-if __name__ == "__main__":
+def main():
     kodlar = sys.argv[1:] or ["THYAO.IS", "ASELS.IS", "AAPL", "NVDA"]
     for kod in kodlar:
         goster(kod)
+
+
+if __name__ == "__main__":
+    main()

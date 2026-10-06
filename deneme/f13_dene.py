@@ -12,7 +12,7 @@ import requests
 # Proje kökündeki ayarlar.py'yi bulabilmek için
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ayarlar import USER_AGENT  # noqa: E402
+from piyasa.ayarlar import USER_AGENT  # noqa: E402
 
 # Berkshire Hathaway'in SEC kimlik numarası
 CIK = "0001067983"

@@ -9,7 +9,7 @@ Bir kez veya veri her güncellendiğinde çalıştırılır.
 
 from statistics import median
 
-from database import get_connection
+from piyasa.veritabani import get_connection
 
 # Ortancanın kaç katı sapma şüpheli sayılsın
 KAT_SINIRI = 10

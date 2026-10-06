@@ -11,9 +11,8 @@ from pathlib import Path
 
 import requests
 
-from ayarlar import USER_AGENT
-from fon_listesi import FONLAR
-BASE_DIR = Path(__file__).parent
+from piyasa.ayarlar import FON_LISTESI, USER_AGENT
+from piyasa.toplama.fon_listesi import FONLAR
 
 
 def cik_ara(ad):
@@ -61,7 +60,7 @@ def cik_ara(ad):
 
 def main():
         # Önceki sonuçları koru, üzerine ekle
-    dosya = BASE_DIR / "data" / "fonlar.json"
+    dosya = FON_LISTESI
     if dosya.exists():
         with open(dosya, encoding="utf-8") as f:
             bulunan = json.load(f)
@@ -87,7 +86,7 @@ def main():
 
         time.sleep(0.3)
 
-    with open(BASE_DIR / "data" / "fonlar.json", "w", encoding="utf-8") as f:
+    with open(FON_LISTESI, "w", encoding="utf-8") as f:
         json.dump(bulunan, f, ensure_ascii=False, indent=2)
 
     print(f"\nBulunan: {len(bulunan)}   Bulunamayan: {len(bulunamayan)}")

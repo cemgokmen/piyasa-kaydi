@@ -4,9 +4,13 @@ Artık database.init_db() bunu kendisi yapıyor; bu dosya geriye dönük
 uyumluluk için duruyor.
 """
 
-from database import init_db
+from piyasa.veritabani import DB_PATH, init_db
+
+
+def main():
+    init_db()
+    print(f"Veritabanı hazır: {DB_PATH}")
 
 
 if __name__ == "__main__":
-    init_db()
-    print("Bitti.")
+    main()

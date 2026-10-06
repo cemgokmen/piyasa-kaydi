@@ -1,6 +1,6 @@
 """
 SEC EDGAR'dan Form 4 bildirimlerini çekip veritabanına yazar.
-Çalıştırmak için:  python toplayici.py
+Çalıştırmak için:  python -m piyasa form4-bugun
 """
 
 import time
@@ -9,9 +9,9 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 
-from ayarlar import USER_AGENT
-from database import get_connection, init_db
-from slug import slugify
+from piyasa.ayarlar import USER_AGENT
+from piyasa.veritabani import get_connection, init_db
+from piyasa.slug import slugify
 
 # Kaç bildirim işlensin. Test için düşük tut.
 LIMIT = 1196

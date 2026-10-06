@@ -10,8 +10,8 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 
-from database import get_connection, init_db
-from toplayici import (
+from piyasa.veritabani import get_connection, init_db
+from piyasa.toplama.form4 import (
     bildirimi_coz,
     gunluk_index_url,
     index_satirini_coz,
@@ -29,7 +29,7 @@ KESINLESME_GUN = 3
 
 # Bildirimler paralel indirilir. SEC saniyede en fazla 10 istek istiyor;
 # hız sınırlayıcı bunun altında kalır.
-ESZAMANLI = 6
+ESZAMANLI = 10
 SANIYEDE_ISTEK = 8
 
 

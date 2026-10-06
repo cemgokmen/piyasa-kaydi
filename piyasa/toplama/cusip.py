@@ -1,13 +1,13 @@
 """
 holdings tablosundaki CUSIP kodlarinin ticker karsiligini OpenFIGI'den bulur.
-Calistirmak icin:  python cusip_ticker_bul.py
+Calistirmak icin:  python -m piyasa cusip
 """
 import time
 from datetime import datetime, timezone
 
 import requests
 
-from database import get_connection
+from piyasa.veritabani import get_connection
 
 OPENFIGI_URL = "https://api.openfigi.com/v3/mapping"
 GRUP_BOYUTU = 5

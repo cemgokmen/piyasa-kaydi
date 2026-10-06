@@ -1,6 +1,6 @@
 """
 Bir isimle SEC'te 13F veren kurumları arar ve son bildirim tarihlerini gösterir.
-Kullanım:  python fon_ara.py vanguard
+Kullanım:  python -m piyasa fon-ara vanguard
 """
 
 import sys
@@ -8,7 +8,7 @@ import time
 
 import requests
 
-from ayarlar import USER_AGENT
+from piyasa.ayarlar import USER_AGENT
 
 
 def indir(url, params=None):
@@ -21,7 +21,7 @@ def indir(url, params=None):
 
 def main():
     if len(sys.argv) < 2:
-        print("Kullanım: python fon_ara.py <isim>")
+        print("Kullanım: python -m piyasa fon-ara <isim>")
         return
 
     aranan = " ".join(sys.argv[1:])

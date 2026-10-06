@@ -2,9 +2,9 @@
 Destek/direnç modelini geniş bir hisse grubunda tek seferde çalıştırır.
 
 Kullanım:
-    python sr_tarama.py              haftalık, tüm geçmiş
-    python sr_tarama.py 1d 5y        günlük, 5 yıl
-    python sr_tarama.py 1mo max      aylık (istatistik gücü yok, yalnızca bilgi)
+    python -m piyasa sr-tarama              haftalık, tüm geçmiş
+    python -m piyasa sr-tarama 1d 5y        günlük, 5 yıl
+    python -m piyasa sr-tarama 1mo max      aylık (istatistik gücü yok, yalnızca bilgi)
 
 Kriter önceden belirlendi: z >= 2.
 Çoklu karşılaştırma: hiçbir gerçek etki olmasa bile her seviyenin
@@ -18,7 +18,7 @@ import warnings
 import yfinance as yf
 from scipy.stats import norm, binom
 
-from destek_direnc import YARILANMA_GUN, bolgeleri_hesapla
+from piyasa.analiz.destek_direnc import YARILANMA_GUN, bolgeleri_hesapla
 
 warnings.filterwarnings("ignore")
 

@@ -37,11 +37,11 @@ python3 -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 
 pip install -r requirements.txt
-python database.py
+python -m piyasa veritabani
 ```
 
-`python database.py` tabloları oluşturur. Eski bir veritabanında
-çalıştırılırsa eksik sütunları da ekler.
+`veritabani` komutu tabloları oluşturur; eski bir veritabanında eksik
+sütunları da ekler.
 
 SEC, kendisine istek atan herkesin kimlik bildirmesini istiyor. Kendi adını
 ve e-posta adresini ortam değişkeniyle ver:
@@ -50,81 +50,87 @@ ve e-posta adresini ortam değişkeniyle ver:
 export SEC_USER_AGENT="PiyasaKaydi ad@ornek.com"
 ```
 
-Varsayılan değer `ayarlar.py` içinde.
+Varsayılan değer `piyasa/ayarlar.py` içinde.
 
-## Veri çekme
+## Kullanım
 
-**Yönetici işlemleri** — son 90 günde eksik olan günleri tamamlar:
-
-```bash
-python gecmis_veri.py
-python supheli_bul.py
-```
-
-Kişi adresleri (`person_slug`) kayıt sırasında doldurulur. Bu özellikten
-önce çekilmiş kayıtlar için bir kez `python slug_ekle.py` çalıştır.
-
-İlk çalıştırma birkaç saat sürer. Yarıda kesilirse tekrar çalıştır,
-tamamlanan günleri atlar.
-
-**Fon pozisyonları** — çeyrekte bir yeterli:
+Bütün işler tek bir komut üzerinden yapılır. Komut listesi:
+`python -m piyasa yardim`
 
 ```bash
-python fon_toplayici.py
-python cusip_ticker_bul.py
+python -m piyasa site          # siteyi başlatır → http://127.0.0.1:5001
+python -m piyasa guncelle      # Form 4 + Kongre verisini günceller, şüphelileri işaretler
 ```
 
-13F bildirimleri Şubat, Mayıs, Ağustos ve Kasım aylarının ortasında
-yayımlanır.
-
-## Çalıştırma
+**Yönetici işlemleri (Form 4)** — son 90 günde eksik olan günleri, en
+yeniden başlayarak tamamlar. Yarıda kesilirse tekrar çalıştır, tamamlanan
+günleri atlar:
 
 ```bash
-python app.py
+python -m piyasa form4
+python -m piyasa supheli
 ```
 
-`http://127.0.0.1:5001`
+**Kongre üyelerinin işlemleri** — varsayılan bu yıl; yıl verilebilir.
+İşlenmiş bildirimleri atlar:
+
+```bash
+python -m piyasa kongre 2025 2026
+```
+
+**Fon pozisyonları (13F)** — çeyrekte bir yeterli. Bildirimler Şubat, Mayıs,
+Ağustos ve Kasım aylarının ortasında yayımlanır:
+
+```bash
+python -m piyasa fon
+python -m piyasa cusip
+```
 
 ## Yapı
 
 ```
-app.py               Flask sitesi: ana sayfa, hisse, kişi ve fon sayfaları
-database.py          SQLite bağlantısı ve şema (data/kayitlar.db)
-ayarlar.py           Ortak ayarlar (SEC_USER_AGENT)
-slug.py              İsimleri adres dostu metne çevirir
+app.py                     Siteyi başlatır (python app.py)
+piyasa/
+  __main__.py              Komut satırı: python -m piyasa <komut>
+  ayarlar.py               Dosya yolları, SEC_USER_AGENT
+  veritabani.py            SQLite bağlantısı ve şema (data/kayitlar.db)
+  slug.py                  İsimleri adres dostu metne çevirir
 
-toplayici.py         Son iş gününün Form 4 bildirimlerini çeker
-gecmis_veri.py       Son 90 günün eksik günlerini tamamlar
-supheli_bul.py       Anormal fiyatlı kayıtları işaretler (sitede gizlenir)
-slug_ekle.py         Eski kayıtlara kişi adresi ekler
-sutun_ekle.py        Eski veritabanına eksik sütunları ekler
+  toplama/                 Resmî kaynaklardan veri indirenler
+    form4.py               Form 4 ayrıştırma; son iş gününü indirir
+    form4_gecmis.py        Eksik günleri paralel indirir
+    kongre.py              House Clerk işlem bildirimleri (PDF)
+    fon13f.py              Fonların 13F bildirimleri
+    cusip.py               CUSIP → hisse kodu eşlemesi
+    fon_listesi.py, fon_cik.py, fon_ara.py   Fon listesi ve CIK bulma
 
-fon_listesi.py       Takip edilen fonların adları
-fon_ara.py           SEC'te isimle 13F veren kurum arar
-fon_cik_bul.py       Fon adlarından CIK numaralarını bulur → data/fonlar.json
-fon_toplayici.py     Fonların son 4 çeyreklik 13F bildirimlerini çeker
-cusip_ticker_bul.py  CUSIP numaralarını hisse kodlarına eşler
+  bakim/                   Veritabanı bakımı
+    supheli.py             Anormal fiyatlı kayıtları işaretler
+    slug_ekle.py           Eski kayıtlara kişi adresi ekler
+    sutun_ekle.py          Tabloları oluşturur, eksik sütunları ekler
 
-destek_direnc.py     Destek/direnç modeli (deneysel, siteye bağlı değil)
-sr_dene.py           Modeli birkaç hissede çalıştırır
-sr_tarama.py         Modeli geniş bir hisse grubunda istatistiksel olarak sınar
+  analiz/                  Deneysel analizler (siteye bağlı değil)
+    destek_direnc.py       Destek/direnç modeli
+    sr_dene.py, sr_tarama.py
 
-templates/, static/  Sayfa şablonları, CSS ve JS
-deneme/              İlk denemeler ve tek seferlik düzeltme scriptleri
-data/                Veritabanı ve fon listesi
+  web/                     Flask sitesi
+    templates/, static/    Şablonlar, CSS, JS
+
+deneme/                    İlk denemeler ve tek seferlik scriptler
+data/                      Veritabanı ve fon listesi
 ```
 
 ## Destek / direnç modeli (deneysel)
 
-`destek_direnc.py` fiyat geçmişinden destek ve direnç bölgeleri çıkarır ve
+`piyasa/analiz/destek_direnc.py` fiyat geçmişinden destek ve direnç bölgeleri çıkarır ve
 her bölgenin geçmişte gerçekten tutunup tutunmadığını şansla karşılaştırır:
 aynı seride rastgele çizilen seviyelerin tutunma oranı "şans oranı" kabul
 edilir, bölgenin z-skoru buna göre hesaplanır.
 
 ```bash
-python sr_dene.py AAPL NVDA          # günlük, son 5 yıl
-python sr_tarama.py                  # haftalık, tüm geçmiş, 40 hisse
-python sr_tarama.py 1d 5y            # günlük
+python -m piyasa sr-dene AAPL NVDA      # günlük, son 5 yıl
+python -m piyasa sr-tarama              # haftalık, tüm geçmiş, 40 hisse
+python -m piyasa sr-tarama 1d 5y        # günlük
 ```
 
 Mesafeler ATR cinsindendir; günlük, haftalık ve aylık mumlar desteklenir.

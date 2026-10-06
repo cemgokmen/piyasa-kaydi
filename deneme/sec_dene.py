@@ -13,7 +13,7 @@ import requests
 # Proje kökündeki ayarlar.py'yi bulabilmek için
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ayarlar import USER_AGENT  # noqa: E402
+from piyasa.ayarlar import USER_AGENT  # noqa: E402
 
 
 def daily_index_url(gun):
