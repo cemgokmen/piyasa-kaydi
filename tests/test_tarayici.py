@@ -81,7 +81,7 @@ def test_ana_menu_baglantilari(tarayici, sunucu):
         "Emtialar": "Emtialar",
         "Günlük özet": "",
         "Sinyaller": "Sinyaller",
-        "Ana sayfa": "Siyasetçilerin, yöneticilerin ve fonların hisse işlemleri",
+        "Ana sayfa": "Piyasa Kaydı: kim aldı, kim sattı, hepsi kayıtta.",
     }
     tarayici.get(sunucu + "/")
     for etiket, baslik in beklenen.items():

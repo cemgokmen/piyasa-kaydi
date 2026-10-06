@@ -1,12 +1,11 @@
 {% extends "base.html" %}
 {% from "_bilesenler.html" import parti_rozeti, islem_rozeti, yuklu_kartlar %}
-{% block baslik %}Piyasa Kaydı — ABD'de siyasetçi, yönetici ve fon işlemleri{% endblock %}
+{% block baslik %}Piyasa Kaydı: kim aldı, kim sattı, hepsi kayıtta{% endblock %}
 
 {% block icerik %}
 <section class="giris">
-  <h1>Siyasetçilerin, yöneticilerin ve fonların hisse işlemleri</h1>
-  <p class="giris-metin">ABD Kongresi, Beyaz Saray ve SEC'e yapılan yasal bildirimlerden derlenen
-  alım satım kayıtları. Her gün güncellenir.</p>
+  <h1>Piyasa Kaydı: kim aldı, kim sattı, hepsi kayıtta.</h1>
+  <p class="giris-metin">Kongre, Beyaz Saray ve SEC bildirimlerinden derlenen alım satım kayıtları.</p>
   <form class="giris-arama" method="get" action="{{ url_for('site.islemler') }}" role="search">
     <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
     <input type="search" name="q" placeholder="Hisse kodu (AAPL), şirket ya da kişi adı" aria-label="Ara" autocomplete="off" data-oneri>
