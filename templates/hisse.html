@@ -1,94 +1,76 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ ticker }} — Piyasa Kaydı</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
-</head>
-<body>
-<div class="wrap">
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, islem_tablosu %}
+{% block baslik %}{{ ticker }} — {{ sirket }} · Piyasa Kaydı{% endblock %}
 
-  <p class="crumb"><a href="{{ url_for('index') }}">← Tüm kayıtlar</a></p>
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / <a href="{{ url_for('islemler', kaynak='hepsi', donem='365') }}">İşlemler</a> / {{ ticker }}</p>
+    <h1><span class="ticker ticker-buyuk">{{ ticker }}</span> <span class="h1-alt">{{ sirket }}</span></h1>
+  </div>
+</header>
 
-  <h1>{{ ticker }}</h1>
-  <p class="page-sub">{{ sirket }}</p>
+<section class="kpi-izgara">
+  {{ kpi('Bildirim', (ozet.adet or 0)|sayi, (ozet.kisi or 0) ~ ' kişi') }}
+  {{ kpi('Alım', alim_tutar, (ozet.alim or 0) ~ ' işlem', 'alim') }}
+  {{ kpi('Satım', satim_tutar, (ozet.satim or 0) ~ ' işlem', 'satim') }}
+  {% if fon_ozet %}
+  {{ kpi('Fon pozisyonu', fon_ozet.toplam_kisa, fon_ozet.sayi ~ ' fon · ' ~ fon_ozet.donem_adi) }}
+  {% else %}
+  {{ kpi('Siyasetçi işlemi', ozet.siyasetci or 0, 'Kongre üyeleri') }}
+  {% endif %}
+</section>
 
-  <div class="summary">
-    <div class="stat">
-      <span class="stat-label">Bildirim</span>
-      <span class="stat-value">{{ ozet.adet }}</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Kişi</span>
-      <span class="stat-value">{{ ozet.kisi }}</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Alım</span>
-      <span class="stat-value">{{ alim_tutar }}</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Satım</span>
-      <span class="stat-value">{{ satim_tutar }}</span>
-    </div>
+<div class="izgara-yan">
+  <div>
+    {% if cubuklar %}
+    <section class="panel">
+      <header class="panel-ust">
+        <div><h2>Aylık işlem sayısı</h2><p class="panel-not">Son 12 ay, işlem tarihine göre</p></div>
+        <p class="lejant"><span class="lejant-alim"></span>Alım <span class="lejant-satim"></span>Satım</p>
+      </header>
+      <div class="grafik" role="img" aria-label="Son 12 ayın aylık alım ve satım sayıları">
+        {% for c in cubuklar %}
+        <div class="grafik-sutun" title="{{ c.ay }}: {{ c.alim }} alım, {{ c.satim }} satım">
+          <div class="grafik-ust"><span class="cubuk cubuk-alim" style="height: {{ (c.alim_oran * 100)|round(1) }}%"></span></div>
+          <div class="grafik-alt"><span class="cubuk cubuk-satim" style="height: {{ (c.satim_oran * 100)|round(1) }}%"></span></div>
+          <span class="grafik-ay">{{ c.ay }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section>
+      <h2 class="bolum-baslik">İşlemler</h2>
+      {% if rows %}{{ islem_tablosu(rows, hisse=False) }}
+      {% else %}<p class="bos">Bu hissede yönetici ya da siyasetçi işlemi yok.</p>{% endif %}
+    </section>
   </div>
 
-  {% if fon_ozet %}
-  <h2 class="panel-title">Bu hisseyi tutan fonlar</h2>
-
-  <p class="donem-notu">
-    {{ fon_ozet.donem_adi }} sonunda takip edilen <strong>{{ fon_ozet.sayi }} fon</strong>
-    bu hissede toplam <strong>{{ fon_ozet.toplam_kisa }}</strong> pozisyon bildirdi.
-  </p>
-
-  <ul class="minilist">
-    {% for f in fonlar_listesi %}
-    <li>
-      <a href="{{ url_for('fon', slug=f.fon_slug) }}">{{ f.fon_adi }}</a>
-      <span class="minilist-meta">{{ f.deger_kisa }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-
-  <h2 class="panel-title">Yönetici işlemleri</h2>
-  {% endif %}
-
-  <ul class="trade-list">
-    {% for row in rows %}
-    <li class="trade {{ 'is-buy' if row.action == 'buy' else 'is-sell' }}">
-
-      <div class="trade-head">
-        <span class="ticker">{{ row.ticker }}</span>
-        <span class="action">{{ row.action_text }}</span>
-      </div>
-
-      <p class="person">
-        <a class="person-name" href="{{ url_for('kisi', slug=row.person_slug) }}">{{ row.person }}</a>
-        <span class="person-role">{{ row.role_text }}</span>
-      </p>
-
-      <div class="figures">
-        <div class="figure">
-          <span class="figure-label">Tutar</span>
-          <span class="figure-value">{{ row.amount_text }}</span>
-        </div>
-        <div class="figure">
-          <span class="figure-label">İşlem tarihi</span>
-          <span class="figure-value">{{ row.transaction_date }}</span>
-        </div>
-        <div class="figure">
-          <span class="figure-label">Bildirim gecikmesi</span>
-          <span class="figure-value">{{ row.delay_days }} gün</span>
-        </div>
-      </div>
-
-      {% if row.source_url %}
-      <a class="source-link" href="{{ row.source_url }}" target="_blank" rel="noopener">Kaynak belge</a>
-      {% endif %}
-
-    </li>
-    {% endfor %}
-  </ul>
-
+  <aside>
+    {% if fon_ozet %}
+    <section class="panel">
+      <header class="panel-ust">
+        <div><h2>Bu hisseyi tutan fonlar</h2><p class="panel-not">{{ fon_ozet.donem_adi }} sonu</p></div>
+      </header>
+      <ul class="akis akis-sik">
+        {% for f in fonlar_listesi %}
+        <li>
+          <a class="akis-orta" href="{{ url_for('fon', slug=f.fon_slug) }}">{{ f.fon_adi }}</a>
+          <span class="sayi">{{ f.deger_kisa }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    <section class="panel panel-bilgi">
+      <h2>Dış bağlantılar</h2>
+      <ul class="baglantilar">
+        <li><a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;company=&amp;CIK={{ ticker }}&amp;type=4&amp;owner=only" target="_blank" rel="noopener">SEC'teki Form 4 bildirimleri ↗</a></li>
+        <li><a href="https://finance.yahoo.com/quote/{{ ticker }}" target="_blank" rel="noopener">Fiyat grafiği (Yahoo Finance) ↗</a></li>
+      </ul>
+    </section>
+  </aside>
 </div>
-</body>
+{% endblock %}

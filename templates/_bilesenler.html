@@ -1,0 +1,72 @@
+{# Sayfalar arasında paylaşılan küçük parçalar #}
+
+{% macro parti_rozeti(p) -%}
+  {%- if p %}<span class="parti parti-{{ p.sinif }}" title="{{ p.ad }}">{{ p.kod }}</span>{% endif -%}
+{%- endmacro %}
+
+{% macro islem_rozeti(row) -%}
+  <span class="rozet rozet-{{ row.action }}">{{ row.action_text }}</span>
+{%- endmacro %}
+
+{% macro kpi(etiket, deger, alt='', tur='') -%}
+  <div class="kpi {% if tur %}kpi-{{ tur }}{% endif %}">
+    <span class="kpi-etiket">{{ etiket }}</span>
+    <span class="kpi-deger">{{ deger }}</span>
+    {% if alt %}<span class="kpi-alt">{{ alt }}</span>{% endif %}
+  </div>
+{%- endmacro %}
+
+{# İşlem tablosu. Telefonda her satır karta dönüşür. #}
+{% macro islem_tablosu(rows, kisi=True, hisse=True) %}
+<div class="tablo-kap">
+  <table class="tablo islem-tablosu">
+    <thead>
+      <tr>
+        <th scope="col">Bildirim</th>
+        {% if hisse %}<th scope="col">Hisse</th>{% endif %}
+        {% if kisi %}<th scope="col">Kişi</th>{% endif %}
+        <th scope="col">İşlem</th>
+        <th scope="col" class="sag">Tutar</th>
+        <th scope="col">İşlem tarihi</th>
+        <th scope="col" class="sag">Gecikme</th>
+        <th scope="col"><span class="gorunmez">Kaynak</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="satir-{{ row.action }}">
+        <td data-etiket="Bildirim" class="tarih">{{ row.bildirim_tarih_kisa }}</td>
+        {% if hisse %}
+        <td data-etiket="Hisse" class="hucre-hisse">
+          <a class="ticker" href="{{ url_for('hisse', ticker=row.ticker) }}">{{ row.ticker }}</a>
+          <span class="soluk kirp" title="{{ row.asset_name }}">{{ row.asset_name or '' }}</span>
+        </td>
+        {% endif %}
+        {% if kisi %}
+        <td data-etiket="Kişi" class="hucre-kisi">
+          <a class="kisi-ad" href="{{ url_for('kisi', slug=row.person_slug) }}">{{ row.person }}</a>
+          {% if row.siyasetci %}
+          <span class="soluk">{{ parti_rozeti(row.parti) }} {{ row.chamber }} · {{ row.state }}</span>
+          {% else %}
+          <span class="soluk kirp" title="{{ row.role_text }}">{{ row.role_text }}</span>
+          {% endif %}
+        </td>
+        {% endif %}
+        <td data-etiket="İşlem">{{ islem_rozeti(row) }}</td>
+        <td data-etiket="Tutar" class="sag sayi tutar-{{ row.action }}" title="{{ row.amount_text }}">{{ row.amount_kisa }}</td>
+        <td data-etiket="İşlem tarihi" class="tarih">{{ row.islem_tarih_kisa }} <span class="soluk">{{ row.transaction_date[:4] }}</span></td>
+        <td data-etiket="Gecikme" class="sag sayi">
+          {% if row.gec %}<span class="gec" title="Yasal süreden sonra bildirildi">{{ row.delay_days }} gün</span>
+          {% else %}{{ row.delay_days }} gün{% endif %}
+        </td>
+        <td class="sag">
+          {% if row.source_url %}
+          <a class="kaynak" href="{{ row.source_url }}" target="_blank" rel="noopener" title="Resmî bildirim belgesi">Belge ↗</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, parti_rozeti %}
+{% block baslik %}Siyasetçilerin hisse işlemleri · Piyasa Kaydı{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / Siyasetçiler</p>
+    <h1>Siyasetçiler</h1>
+    <p class="sayfa-not">ABD Temsilciler Meclisi üyeleri, 2012 tarihli STOCK Act gereği kendilerinin,
+    eşlerinin ve bakmakla yükümlü oldukları çocuklarının 1.000 doları aşan hisse işlemlerini en geç
+    {{ yasal_gun }} gün içinde bildirmek zorunda. Tutarlar tam rakam değil, bildirimdeki aralıktır.</p>
+  </div>
+  <a class="dugme" href="{{ url_for('islemler', kaynak='siyasetci') }}">Tüm işlemleri gör →</a>
+</header>
+
+<section class="kpi-izgara">
+  {{ kpi('Kongre üyesi', (ozet.kisi or 0)|sayi, 'işlem bildiren') }}
+  {{ kpi('İşlem', (ozet.adet or 0)|sayi, (ozet.ilk|uzun_tarih) ~ ' sonrası' if ozet.ilk else '') }}
+  {{ kpi('Alım', (ozet.alim or 0)|sayi, 'üst sınır ' ~ (ozet.alim_tutar|tutar), 'alim') }}
+  {{ kpi('Satım', (ozet.satim or 0)|sayi, 'üst sınır ' ~ (ozet.satim_tutar|tutar), 'satim') }}
+</section>
+
+<div class="filtre-satir">
+  <div class="segment" role="group" aria-label="Parti">
+    <a class="{% if not parti %}secili{% endif %}" href="{{ url_for('siyasetciler') }}">Tüm partiler</a>
+    {% for kod, bilgi in partiler.items() if parti_sayilari.get(kod) %}
+    <a class="{% if parti == kod %}secili{% endif %}" href="{{ url_for('siyasetciler', parti=kod) }}">{{ bilgi[0] }} <span class="soluk">{{ parti_sayilari[kod] }}</span></a>
+    {% endfor %}
+  </div>
+  <label class="secim filtre-kutu">
+    <span>Süz</span>
+    <input type="search" id="tablo-suz" data-tablo="siyasetci-tablosu" placeholder="İsim veya eyalet" autocomplete="off">
+  </label>
+</div>
+
+{% if kisiler %}
+<div class="tablo-kap">
+  <table class="tablo" id="siyasetci-tablosu" data-siralanabilir>
+    <thead>
+      <tr>
+        <th scope="col">Üye</th>
+        <th scope="col">Bölge</th>
+        <th scope="col" class="sag" data-sirala="sayi">İşlem</th>
+        <th scope="col" class="sag" data-sirala="sayi">Alım</th>
+        <th scope="col" class="sag" data-sirala="sayi">Satım</th>
+        <th scope="col" class="sag" data-sirala="sayi">Hisse</th>
+        <th scope="col" class="sag" data-sirala="sayi">Ort. gecikme</th>
+        <th scope="col" class="sag" data-sirala="sayi">Geç bildirim</th>
+        <th scope="col" data-sirala="metin">Son işlem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for k in kisiler %}
+      <tr>
+        <td data-etiket="Üye"><a class="kisi-ad" href="{{ url_for('kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</td>
+        <td data-etiket="Bölge" class="sayi">{{ k.state }}</td>
+        <td data-etiket="İşlem" class="sag sayi" data-deger="{{ k.adet }}"><b>{{ k.adet }}</b></td>
+        <td data-etiket="Alım" class="sag sayi tutar-buy" data-deger="{{ k.alim }}">{{ k.alim }}</td>
+        <td data-etiket="Satım" class="sag sayi tutar-sell" data-deger="{{ k.satim }}">{{ k.satim }}</td>
+        <td data-etiket="Hisse" class="sag sayi" data-deger="{{ k.hisse }}">{{ k.hisse }}</td>
+        <td data-etiket="Ort. gecikme" class="sag sayi" data-deger="{{ k.ort_gecikme }}">{{ k.ort_gecikme }} gün</td>
+        <td data-etiket="Geç bildirim" class="sag sayi" data-deger="{{ k.gec }}">{% if k.gec %}<span class="gec">{{ k.gec }}</span>{% else %}<span class="soluk">0</span>{% endif %}</td>
+        <td data-etiket="Son işlem" class="tarih" data-deger="{{ k.son_islem }}">{{ k.son_islem|uzun_tarih }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="dipnot">Sütun başlıklarına tıklayarak sıralayabilirsiniz. Taranmış (elle doldurulmuş) bildirimler
+okunamadığı için listeye dahil değildir. Senato bildirimleri henüz eklenmedi.</p>
+{% else %}
+<div class="bos-durum">
+  <p><strong>Henüz siyasetçi kaydı yok.</strong></p>
+  <p><code>python kongre_toplayici.py</code> komutuyla Temsilciler Meclisi bildirimleri çekilir.</p>
+</div>
+{% endif %}
+{% endblock %}

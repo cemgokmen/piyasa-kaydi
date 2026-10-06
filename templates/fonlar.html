@@ -1,60 +1,43 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fonlar ve bankalar — Piyasa Kaydı</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi %}
+{% block baslik %}Fonlar ve bankalar · Piyasa Kaydı{% endblock %}
 
-<header class="masthead">
-  <div class="wrap">
-    <a class="brand" href="{{ url_for('index') }}">Piyasa<span>Kaydı</span></a>
-    <p class="tagline">
-      Büyük fonların ve bankaların ABD borsalarındaki pozisyonları.
-      Çeyreklik olarak kamuya bildirilir.
-    </p>
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / Fonlar</p>
+    <h1>Fonlar ve bankalar</h1>
+    <p class="sayfa-not">100 milyon doların üzerinde varlık yöneten kurumlar portföylerini her çeyrek
+    13F formuyla bildirir. Bildirim, çeyrek bitiminden en geç 45 gün sonra yayımlanır; yani bu veriler
+    işlemlerin bir süre sonrasını yansıtır.</p>
   </div>
 </header>
 
-<nav class="tabs">
-  <div class="wrap">
-    <a class="tab" href="{{ url_for('index') }}">Yönetici işlemleri</a>
-    <a class="tab is-on" href="{{ url_for('fonlar') }}">Fonlar ve bankalar</a>
-  </div>
-</nav>
+<section class="kpi-izgara kpi-3">
+  {{ kpi('Dönem', donem_adi) }}
+  {{ kpi('Fon', rows|length) }}
+  {{ kpi('Toplam bildirilen portföy', genel_toplam) }}
+</section>
 
-<main class="wrap">
-
-  <p class="donem-notu">
-    <strong>{{ donem_adi }}</strong> dönemine ait bildirimler.
-    13F bildirimleri çeyrek bitiminden en geç 45 gün sonra yayımlanır,
-    yani bu veriler işlemlerin bir süre sonrasını yansıtır.
-  </p>
-
-  <h2 class="panel-title">Fonlar</h2>
-  <ul class="minilist">
-    {% for row in rows %}
-    <li>
-      <a href="{{ url_for('fon', slug=row.fon_slug) }}">{{ row.fon_adi }}</a>
-      <span class="minilist-meta">{{ row.pozisyon }} pozisyon · {{ row.toplam_kisa }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-
-  <footer class="foot">
-    <p><strong>Bu sitede yatırım tavsiyesi verilmez.</strong> Gösterilen bilgiler,
-    kurumların yasal yükümlülük gereği kamuya açıkladığı bildirimlerin
-    derlenmiş halidir.</p>
-    <p class="foot-note">Kaynak: SEC EDGAR 13F bildirimleri. Yalnızca ABD
-    borsalarında işlem gören menkul kıymetler bildirilir; nakit, tahvil ve
-    yurt dışı varlıklar bu tabloda yer almaz.</p>
-  </footer>
-
-</main>
-</body>
-</html>
+<div class="tablo-kap">
+  <table class="tablo">
+    <thead>
+      <tr><th scope="col">#</th><th scope="col">Kurum</th><th scope="col" class="sag">Pozisyon</th>
+          <th scope="col" class="sag">Portföy değeri</th><th scope="col" class="genis">Büyüklük</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="soluk sayi">{{ loop.index }}</td>
+        <td data-etiket="Kurum"><a class="kisi-ad" href="{{ url_for('fon', slug=row.fon_slug) }}">{{ row.fon_adi }}</a></td>
+        <td data-etiket="Pozisyon" class="sag sayi">{{ row.pozisyon|sayi }}</td>
+        <td data-etiket="Değer" class="sag sayi"><b>{{ row.toplam_kisa }}</b></td>
+        <td class="genis"><span class="yatay-cubuk"><span style="width: {{ (row.oran * 100)|round(1) }}%"></span></span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="dipnot">Yalnızca ABD borsalarında işlem gören menkul kıymetler bildirilir; nakit, tahvil ve
+yurt dışı varlıklar bu tabloda yer almaz.</p>
+{% endblock %}

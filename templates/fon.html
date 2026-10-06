@@ -1,161 +1,94 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ fon_adi }} — Piyasa Kaydı</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi %}
+{% block baslik %}{{ fon_adi }} portföyü · Piyasa Kaydı{% endblock %}
 
-<header class="masthead">
-  <div class="wrap">
-    <a class="brand" href="{{ url_for('index') }}">Piyasa<span>Kaydı</span></a>
+{% macro pozisyon_listesi(liste, bos_metin, tur='') %}
+  {% if liste %}
+  <ul class="akis akis-sik">
+    {% for p in liste %}
+    <li>
+      {% if p.ticker %}<a class="ticker" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
+      {% else %}<span class="ticker soluk">—</span>{% endif %}
+      <span class="akis-orta soluk kirp" title="{{ p.sirket_adi }}">{{ p.sirket_adi }}</span>
+      <span class="sayi">
+        {% if tur == 'artis' and p.yuzde %}<span class="tutar-buy">+%{{ p.yuzde }}</span> · {% endif %}
+        {% if tur == 'azalis' and p.yuzde %}<span class="tutar-sell">%{{ p.yuzde }}</span> · {% endif %}
+        {{ p.deger_kisa }}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bos">{{ bos_metin }}</p>{% endif %}
+{% endmacro %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / <a href="{{ url_for('fonlar') }}">Fonlar</a></p>
+    <h1>{{ fon_adi }}</h1>
+    <p class="sayfa-not">{{ donem_adi }} sonu itibarıyla bildirilen portföy{% if onceki_adi %}; değişimler {{ onceki_adi }} ile karşılaştırıldı{% endif %}.</p>
   </div>
 </header>
 
-<nav class="tabs">
-  <div class="wrap">
-    <a class="tab" href="{{ url_for('index') }}">Yönetici işlemleri</a>
-    <a class="tab is-on" href="{{ url_for('fonlar') }}">Fonlar ve bankalar</a>
-  </div>
-</nav>
+<section class="kpi-izgara">
+  {{ kpi('Portföy değeri', toplam_kisa, donem_adi) }}
+  {{ kpi('Pozisyon', pozisyon_sayisi|sayi) }}
+  {{ kpi('Yeni giriş', sayilar.giris, sayilar.artan ~ ' pozisyon artırıldı', 'alim') }}
+  {{ kpi('Tam çıkış', sayilar.cikis, sayilar.azalan ~ ' pozisyon azaltıldı', 'satim') }}
+</section>
 
-<main class="wrap">
+{% if dilimler %}
+<section class="panel pasta-bolum">
+  <svg class="pasta" viewBox="0 0 200 200" role="img" aria-label="Portföy dağılımı">
+    {% for d in dilimler %}
+    <circle cx="100" cy="100" r="80" fill="none" stroke="{{ d.renk }}" stroke-width="34"
+            stroke-dasharray="{{ d.uzunluk }} {{ d.bosluk }}" stroke-dashoffset="{{ d.kayma }}"
+            transform="rotate(-90 100 100)"><title>{{ d.ad }} %{{ d.yuzde }}</title></circle>
+    {% endfor %}
+  </svg>
+  <ul class="pasta-liste">
+    {% for d in dilimler %}
+    <li>
+      <span class="nokta" style="background: {{ d.renk }}"></span>
+      <span class="pasta-ad">{{ d.ad }}</span>
+      <span class="pasta-oran sayi">%{{ d.yuzde }}</span>
+      <span class="pasta-deger sayi">{{ d.deger_kisa }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 
-  <p class="crumb"><a href="{{ url_for('fonlar') }}">← Tüm fonlar</a></p>
+{% if onceki_adi %}
+<div class="izgara-2">
+  <section class="panel"><header class="panel-ust"><div><h2>Yeni girilen hisseler</h2></div></header>
+    {{ pozisyon_listesi(girisler, 'Yeni pozisyon yok.') }}</section>
+  <section class="panel"><header class="panel-ust"><div><h2>Tamamen çıkılan hisseler</h2><p class="panel-not">Değerler önceki çeyreğe ait</p></div></header>
+    {{ pozisyon_listesi(cikislar, 'Çıkılan pozisyon yok.') }}</section>
+  <section class="panel"><header class="panel-ust"><div><h2>Pozisyon artırılanlar</h2></div></header>
+    {{ pozisyon_listesi(artanlar, 'Artırılan pozisyon yok.', 'artis') }}</section>
+  <section class="panel"><header class="panel-ust"><div><h2>Pozisyon azaltılanlar</h2></div></header>
+    {{ pozisyon_listesi(azalanlar, 'Azaltılan pozisyon yok.', 'azalis') }}</section>
+</div>
+{% endif %}
 
-  <h1>{{ fon_adi }}</h1>
-  <p class="page-sub">{{ donem_adi }} · {{ pozisyon_sayisi }} pozisyon · {{ toplam_kisa }}</p>
-
-  {% if dilimler %}
-  <section class="pasta-bolum">
-    <svg class="pasta" viewBox="0 0 200 200" role="img" aria-label="Portföy dağılımı">
-      {% for d in dilimler %}
-      <circle cx="100" cy="100" r="80"
-              fill="none"
-              stroke="{{ d.renk }}"
-              stroke-width="34"
-              stroke-dasharray="{{ d.uzunluk }} {{ d.bosluk }}"
-              stroke-dashoffset="{{ d.kayma }}"
-              transform="rotate(-90 100 100)"></circle>
+<h2 class="bolum-baslik">En büyük 50 pozisyon</h2>
+<div class="tablo-kap">
+  <table class="tablo">
+    <thead><tr><th scope="col">#</th><th scope="col">Hisse</th><th scope="col">Şirket</th>
+      <th scope="col" class="sag">Adet</th><th scope="col" class="sag">Değer</th><th scope="col" class="sag">Portföy payı</th></tr></thead>
+    <tbody>
+      {% for p in portfoy %}
+      <tr>
+        <td class="soluk sayi">{{ loop.index }}</td>
+        <td data-etiket="Hisse">{% if p.ticker %}<a class="ticker" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>{% else %}<span class="soluk">—</span>{% endif %}</td>
+        <td data-etiket="Şirket" class="kirp-hucre">{{ p.sirket_adi }}</td>
+        <td data-etiket="Adet" class="sag sayi">{{ (p.adet or 0)|int|sayi }}</td>
+        <td data-etiket="Değer" class="sag sayi"><b>{{ p.deger_kisa }}</b></td>
+        <td data-etiket="Pay" class="sag sayi">%{{ p.pay }}</td>
+      </tr>
       {% endfor %}
-    </svg>
-
-    <ul class="pasta-liste">
-      {% for d in dilimler %}
-      <li>
-        <span class="nokta" style="background: {{ d.renk }}"></span>
-        <span class="pasta-ad">{{ d.ad }}</span>
-        <span class="pasta-oran">%{{ d.yuzde }}</span>
-        <span class="pasta-deger">{{ d.deger_kisa }}</span>
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
-  {% endif %}
-
-  {% if onceki_adi %}
-  <p class="donem-notu">
-    Aşağıdaki değişimler <strong>{{ onceki_adi }}</strong> ile
-    <strong>{{ donem_adi }}</strong> arasındaki adet farkına göre hesaplandı.
-  </p>
-  {% endif %}
-
-  {% if girisler %}
-  <h2 class="panel-title">Yeni girilen hisseler</h2>
-  <ul class="minilist">
-    {% for p in girisler %}
-    <li>
-      {% if p.ticker %}
-      <a class="mono" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
-      {% else %}
-      <span class="mono">{{ p.sirket_adi[:24] }}</span>
-      {% endif %}
-      <span class="minilist-meta">{{ p.deger_kisa }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-
-  {% if cikislar %}
-  <h2 class="panel-title">Tamamen çıkılan hisseler</h2>
-  <ul class="minilist">
-    {% for p in cikislar %}
-    <li>
-      {% if p.ticker %}
-      <a class="mono" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
-      {% else %}
-      <span class="mono">{{ p.sirket_adi[:24] }}</span>
-      {% endif %}
-      <span class="minilist-meta">önceki dönem {{ p.deger_kisa }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-
-  {% if artanlar %}
-  <h2 class="panel-title">Pozisyon artırılanlar</h2>
-  <ul class="minilist">
-    {% for p in artanlar %}
-    <li>
-      {% if p.ticker %}
-      <a class="mono" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
-      {% else %}
-      <span class="mono">{{ p.sirket_adi[:24] }}</span>
-      {% endif %}
-      <span class="minilist-meta artis">
-        {% if p.yuzde %}+%{{ p.yuzde }}{% endif %} · {{ p.deger_kisa }}
-      </span>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-
-  {% if azalanlar %}
-  <h2 class="panel-title">Pozisyon azaltılanlar</h2>
-  <ul class="minilist">
-    {% for p in azalanlar %}
-    <li>
-      {% if p.ticker %}
-      <a class="mono" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
-      {% else %}
-      <span class="mono">{{ p.sirket_adi[:24] }}</span>
-      {% endif %}
-      <span class="minilist-meta azalis">
-        {% if p.yuzde %}%{{ p.yuzde }}{% endif %} · {{ p.deger_kisa }}
-      </span>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-
-  <h2 class="panel-title">En büyük pozisyonlar</h2>
-  <ul class="minilist">
-    {% for p in portfoy %}
-    <li>
-      {% if p.ticker %}
-      <a class="mono" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
-      {% else %}
-      <span class="mono">{{ p.sirket_adi[:24] }}</span>
-      {% endif %}
-      <span class="minilist-meta">{{ p.deger_kisa }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-
-  <footer class="foot">
-    <p><strong>Bu sitede yatırım tavsiyesi verilmez.</strong> Gösterilen bilgiler,
-    kurumların yasal yükümlülük gereği kamuya açıkladığı 13F bildirimlerinin
-    derlenmiş halidir.</p>
-    <p class="foot-note">13F bildirimleri çeyrek bitiminden en geç 45 gün sonra
-    yayımlanır. Yalnızca ABD borsalarında işlem gören menkul kıymetler bildirilir;
-    nakit, tahvil ve yurt dışı varlıklar bu tabloda yer almaz.</p>
-  </footer>
-
-</main>
-</body>
-</html>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

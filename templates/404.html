@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block baslik %}Sayfa bulunamadı · Piyasa Kaydı{% endblock %}
+{% block icerik %}
+<div class="bos-durum bos-durum-buyuk">
+  <p class="hata-kodu">404</p>
+  <p><strong>Aradığınız sayfa ya da kayıt bulunamadı.</strong></p>
+  <p>Hisse kodu veya kişi adresi değişmiş olabilir.</p>
+  <a class="dugme dugme-ana" href="{{ url_for('anasayfa') }}">Genel bakışa dön</a>
+</div>
+{% endblock %}

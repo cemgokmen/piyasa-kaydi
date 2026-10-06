@@ -1,4 +1,4 @@
-// --- Arama: yazmayı bırakınca formu gönder ---
+// --- İşlemler sayfası: arama kutusu yazmayı bırakınca formu gönderir ---
 
 const form = document.querySelector("#filtre-formu");
 const searchInput = document.querySelector("#search");
@@ -10,7 +10,7 @@ if (form && searchInput) {
     clearTimeout(zamanlayici);
     zamanlayici = setTimeout(function () {
       form.submit();
-    }, 400);
+    }, 450);
   });
 
   if (searchInput.value) {
@@ -19,55 +19,78 @@ if (form && searchInput) {
   }
 }
 
+// --- Sıralama seçimi değişince gizli alanı güncelleyip gönderir ---
+
+document.querySelectorAll("select[data-hedef]").forEach(function (secim) {
+  secim.addEventListener("change", function () {
+    const hedef = secim.form.querySelector(`input[name="${secim.dataset.hedef}"]`);
+    if (hedef) hedef.value = secim.value;
+    secim.removeAttribute("name");
+    secim.form.submit();
+  });
+});
+
 // --- Klavye kısayolu: / tuşu arama kutusuna götürür ---
 
+const genelArama = document.querySelector("#genel-arama");
+
 document.addEventListener("keydown", function (olay) {
-  if (olay.key === "/" && document.activeElement !== searchInput) {
+  const hedef = searchInput || genelArama;
+  const yaziyor = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName);
+  if (olay.key === "/" && !yaziyor && hedef) {
     olay.preventDefault();
-    searchInput.focus();
+    hedef.focus();
   }
 });
 
-// --- Özet rakamlarını sayarak göster ---
+// --- Tabloyu süz: isim veya eyalete göre satırları gizler ---
 
-function sayiyiCanlandir(element) {
-  const hedefMetin = element.textContent;
+document.querySelectorAll("#tablo-suz").forEach(function (kutu) {
+  const tablo = document.getElementById(kutu.dataset.tablo);
+  if (!tablo) return;
+  const kucult = (metin) => metin.toLocaleLowerCase("tr-TR");
 
-  // Metnin içindeki ilk sayıyı bul. "52,2 mn $" -> 52,2
-  const eslesme = hedefMetin.match(/[\d.]+,?\d*/);
-  if (!eslesme) return;
+  kutu.addEventListener("input", function () {
+    const aranan = kucult(kutu.value.trim());
+    tablo.querySelectorAll("tbody tr").forEach(function (satir) {
+      satir.hidden = aranan && !kucult(satir.textContent).includes(aranan);
+    });
+  });
+});
 
-  const hamSayi = parseFloat(eslesme[0].replace(/\./g, "").replace(",", "."));
-  if (isNaN(hamSayi) || hamSayi === 0) return;
+// --- Sıralanabilir tablolar: başlığa tıklayınca sıralar ---
 
-  const ondalikli = eslesme[0].includes(",");
-  const sure = 550;
-  const baslangic = performance.now();
+document.querySelectorAll("table[data-siralanabilir]").forEach(function (tablo) {
+  const basliklar = Array.from(tablo.querySelectorAll("th"));
 
-  function adim(simdi) {
-    const ilerleme = Math.min((simdi - baslangic) / sure, 1);
-    // Sona doğru yavaşlasın
-    const yumusak = 1 - Math.pow(1 - ilerleme, 3);
-    const anlik = hamSayi * yumusak;
+  basliklar.forEach(function (baslik, sutun) {
+    const tur = baslik.dataset.sirala;
+    if (!tur) return;
 
-    let metin;
-    if (ondalikli) {
-      metin = anlik.toFixed(1).replace(".", ",");
-    } else {
-      metin = Math.round(anlik).toLocaleString("tr-TR");
+    baslik.tabIndex = 0;
+
+    function sirala() {
+      const azalan = baslik.getAttribute("aria-sort") !== "descending";
+      basliklar.forEach((b) => b.removeAttribute("aria-sort"));
+      baslik.setAttribute("aria-sort", azalan ? "descending" : "ascending");
+
+      const govde = tablo.tBodies[0];
+      const satirlar = Array.from(govde.rows);
+      satirlar.sort(function (a, b) {
+        const x = a.cells[sutun].dataset.deger ?? a.cells[sutun].textContent;
+        const y = b.cells[sutun].dataset.deger ?? b.cells[sutun].textContent;
+        const fark = tur === "sayi" ? parseFloat(x) - parseFloat(y) : x.localeCompare(y, "tr");
+        return azalan ? -fark : fark;
+      });
+      satirlar.forEach((s) => govde.appendChild(s));
     }
 
-    element.textContent = hedefMetin.replace(eslesme[0], metin);
-
-    if (ilerleme < 1) requestAnimationFrame(adim);
-  }
-
-  requestAnimationFrame(adim);
-}
-
-const hareketAzalt = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-if (!hareketAzalt) {
-  document.querySelectorAll(".stat-value").forEach(sayiyiCanlandir);
-}
-
+    baslik.addEventListener("click", sirala);
+    baslik.addEventListener("keydown", function (olay) {
+      if (olay.key === "Enter" || olay.key === " ") {
+        olay.preventDefault();
+        sirala();
+      }
+    });
+  });
+});

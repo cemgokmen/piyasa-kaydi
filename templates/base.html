@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block baslik %}Piyasa Kaydı{% endblock %}</title>
+  <meta name="description" content="{% block aciklama %}ABD'de şirket yöneticilerinin, Kongre üyelerinin ve büyük fonların kamuya bildirdiği hisse işlemleri. Resmî kayıtlardan derlendi, Türkçeleştirildi.{% endblock %}">
+  <meta name="theme-color" content="#0B1220">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231B4DFF'/%3E%3Cpath d='M7 22l6-7 5 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
+</head>
+<body>
+
+<a class="atla" href="#icerik">İçeriğe geç</a>
+
+<header class="ust">
+  <div class="wrap ust-ic">
+    <a class="marka" href="{{ url_for('anasayfa') }}" aria-label="Piyasa Kaydı ana sayfa">
+      <svg class="marka-isaret" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="7"/>
+        <path d="M7 22l6-7 5 4 7-9"/>
+      </svg>
+      <span>Piyasa<b>Kaydı</b></span>
+    </a>
+
+    <nav class="ana-menu" aria-label="Ana menü">
+      <a href="{{ url_for('anasayfa') }}" {% if aktif == 'anasayfa' %}aria-current="page"{% endif %}>Genel bakış</a>
+      <a href="{{ url_for('islemler', kaynak='yonetici') }}" {% if aktif == 'islemler' %}aria-current="page"{% endif %}>Yönetici işlemleri</a>
+      <a href="{{ url_for('siyasetciler') }}" {% if aktif == 'siyasetci' %}aria-current="page"{% endif %}>Siyasetçiler</a>
+      <a href="{{ url_for('fonlar') }}" {% if aktif == 'fonlar' %}aria-current="page"{% endif %}>Fonlar</a>
+      <a href="{{ url_for('hakkinda') }}" {% if aktif == 'hakkinda' %}aria-current="page"{% endif %}>Yöntem</a>
+    </nav>
+
+    <form class="ust-arama" method="get" action="{{ url_for('islemler') }}" role="search">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
+      <input id="genel-arama" type="search" name="q" placeholder="Hisse, kişi veya şirket" autocomplete="off" aria-label="Ara">
+      <input type="hidden" name="donem" value="365">
+      <kbd>/</kbd>
+    </form>
+  </div>
+</header>
+
+<main id="icerik" class="wrap">
+  {% block icerik %}{% endblock %}
+</main>
+
+<footer class="alt">
+  <div class="wrap alt-ic">
+    <div>
+      <p class="alt-marka">Piyasa<b>Kaydı</b></p>
+      <p><strong>Yatırım tavsiyesi değildir.</strong> Bu sitedeki bilgiler, ilgili kişi ve
+      kurumların yasal yükümlülük gereği kamuya açıkladığı bildirimlerin derlenmiş
+      halidir. Her kaydın yanındaki bağlantı resmî belgeye gider.</p>
+    </div>
+    <div>
+      <p class="alt-baslik">Kaynaklar</p>
+      <ul>
+        <li><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC EDGAR</a> — Form 4 ve 13F</li>
+        <li><a href="https://disclosures-clerk.house.gov/FinancialDisclosure" target="_blank" rel="noopener">House Clerk</a> — Kongre işlem bildirimleri</li>
+      </ul>
+    </div>
+    <div>
+      <p class="alt-baslik">Site</p>
+      <ul>
+        <li><a href="{{ url_for('hakkinda') }}">Veriler nasıl derleniyor</a></li>
+        <li><a href="{{ url_for('islemler', kaynak='hepsi', donem='30') }}">Tüm işlemler</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

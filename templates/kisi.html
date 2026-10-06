@@ -1,83 +1,59 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ kimlik.person }} — Piyasa Kaydı</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
-</head>
-<body>
-<div class="wrap">
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, islem_tablosu, parti_rozeti %}
+{% block baslik %}{{ kimlik.person }} · Piyasa Kaydı{% endblock %}
 
-  <p class="crumb"><a href="{{ url_for('index') }}">← Tüm kayıtlar</a></p>
-
-  <h1>{{ kimlik.person }}</h1>
-  <p class="page-sub">{{ rol }}</p>
-
-  <div class="summary">
-    <div class="stat">
-      <span class="stat-label">Bildirim</span>
-      <span class="stat-value">{{ ozet.adet }}</span>
-      <span class="stat-sub">{{ ozet.hisse_adet }} farklı hisse</span>
-    </div>
-    <div class="stat stat-buy">
-      <span class="stat-label">Alım</span>
-      <span class="stat-value">{{ alim_tutar }}</span>
-      <span class="stat-sub">{{ ozet.alim }} işlem</span>
-    </div>
-    <div class="stat stat-sell">
-      <span class="stat-label">Satım</span>
-      <span class="stat-value">{{ satim_tutar }}</span>
-      <span class="stat-sub">{{ ozet.satim }} işlem</span>
-    </div>
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> /
+      {% if siyasetci %}<a href="{{ url_for('siyasetciler') }}">Siyasetçiler</a>
+      {% else %}<a href="{{ url_for('islemler', kaynak='yonetici') }}">Yönetici işlemleri</a>{% endif %}</p>
+    <h1>{{ kimlik.person }}</h1>
+    <p class="kimlik">
+      {% if siyasetci %}
+        {% if parti %}<span class="parti-uzun parti-{{ parti.sinif }}">{{ parti.ad }}</span>{% endif %}
+        <span>{{ kimlik.chamber }}</span><span class="soluk">·</span><span>{{ kimlik.state }}</span>
+      {% else %}
+        <span>{{ kimlik.job_title or 'Bildirim yükümlüsü' }}</span>
+        {% if kimlik.company %}<span class="soluk">·</span><span>{{ kimlik.company }}</span>{% endif %}
+      {% endif %}
+    </p>
   </div>
+</header>
 
-  <p class="gecikme-notu">
-    İşlemlerini ortalama <strong>{{ ort_gecikme }} gün</strong> sonra bildirmiş.
-    En geç bildirim: {{ max_gecikme }} gün.
-  </p>
+<section class="kpi-izgara">
+  {{ kpi('Bildirim', ozet.adet|sayi, ozet.hisse_adet ~ ' farklı hisse') }}
+  {{ kpi('Alım', alim_tutar if not siyasetci else ozet.alim, (ozet.alim ~ ' işlem') if not siyasetci else 'üst sınır ' ~ alim_tutar, 'alim') }}
+  {{ kpi('Satım', satim_tutar if not siyasetci else ozet.satim, (ozet.satim ~ ' işlem') if not siyasetci else 'üst sınır ' ~ satim_tutar, 'satim') }}
+  {{ kpi('Ortalama gecikme', ort_gecikme ~ ' gün', 'en geç ' ~ max_gecikme ~ ' gün', 'uyari' if gec_sayisi else '') }}
+</section>
 
-  {% if hisseler %}
-  <h2 class="panel-title">İşlem yaptığı hisseler</h2>
-  <ul class="minilist">
-    {% for h in hisseler %}
-    <li>
-      <a class="mono" href="{{ url_for('hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
-      <span class="minilist-meta">{{ h.adet }} işlem · {{ h.hacim_kisa }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
+{% if gec_sayisi %}
+<p class="uyari-kutu"><strong>{{ gec_sayisi }} işlem yasal süreden sonra bildirilmiş.</strong>
+{% if siyasetci %}STOCK Act, işlemlerin en geç {{ yasal_gun }} gün içinde bildirilmesini şart koşar.
+{% else %}Form 4 bildirimleri işlemden sonraki 2 iş günü içinde yapılmalıdır.{% endif %}</p>
+{% endif %}
 
-  <h2 class="panel-title">Kayıtlar</h2>
-  <ul class="trade-list">
-    {% for row in rows %}
-    <li class="trade {{ 'is-buy' if row.action == 'buy' else 'is-sell' }}">
-
-      <div class="trade-head">
-        <a class="ticker" href="{{ url_for('hisse', ticker=row.ticker) }}">{{ row.ticker }}</a>
-        <span class="action">{{ row.action_text }}</span>
-        <span class="trade-amount">{{ row.amount_text }}</span>
-      </div>
-
-      <p class="meta">
-        <span>İşlem {{ row.islem_tarih_kisa }}</span>
-        <span class="dot">·</span>
-        <span>Bildirim {{ row.bildirim_tarih_kisa }}</span>
-        <span class="dot">·</span>
-        <span>{{ row.delay_days }} gün gecikme</span>
-        {% if row.source_url %}
-        <a class="source-link" href="{{ row.source_url }}" target="_blank" rel="noopener">kaynak</a>
-        {% endif %}
-      </p>
-
-    </li>
-    {% endfor %}
-  </ul>
-
+<div class="izgara-yan">
+  <section>
+    <h2 class="bolum-baslik">İşlemler</h2>
+    {{ islem_tablosu(rows, kisi=False) }}
+  </section>
+  <aside>
+    {% if hisseler %}
+    <section class="panel">
+      <header class="panel-ust"><div><h2>En çok işlem yaptığı hisseler</h2></div></header>
+      <ul class="akis akis-sik">
+        {% for h in hisseler %}
+        <li>
+          <a class="ticker" href="{{ url_for('hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+          <span class="akis-orta soluk">{{ h.adet }} işlem</span>
+          <span class="sayi"><span class="tutar-buy">{{ h.alim }}A</span> / <span class="tutar-sell">{{ h.satim }}S</span></span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </aside>
 </div>
-</body>
-</html>
+{% endblock %}
