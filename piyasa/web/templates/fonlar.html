@@ -29,7 +29,8 @@
       {% for row in fonlar %}
       <tr>
         <td class="soluk sayi">{{ loop.index }}</td>
-        <td data-etiket="Kurum"><a class="kisi-ad" href="{{ url_for('site.fon', slug=row.fon_slug) }}">{{ row.fon_adi }}</a></td>
+        <td data-etiket="Kurum"><a class="kisi-ad" href="{{ url_for('site.fon', slug=row.fon_slug) }}">{{ row.fon_adi }}</a>
+          {% if row.geride %}<span class="alt-satir">son bildirim: {{ row.donem_adi }}</span>{% endif %}</td>
         <td data-etiket="Pozisyon" class="sag sayi">{{ row.pozisyon|sayi }}</td>
         <td data-etiket="Değer" class="sag sayi"><b>{{ row.toplam_kisa }}</b></td>
         <td class="genis"><span class="yatay-cubuk"><span style="width: {{ (row.oran * 100)|round(1) }}%"></span></span></td>

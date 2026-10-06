@@ -1,11 +1,12 @@
 # Piyasa Kaydı
 
-ABD borsalarındaki resmî bildirimleri Türkçeleştirip okunur hale getiren bir
-şeffaflık sitesi. Şirket yöneticilerinin hisse alım satımlarını ve büyük
-fonların portföy pozisyonlarını gösterir.
+ABD'deki resmî mali bildirimleri Türkçeleştirip okunur hale getiren bir
+şeffaflık sitesi: Kongre üyelerinin, Başkan ve Başkan Yardımcısının, şirket
+yöneticilerinin hisse işlemleri; büyük fon ve bankaların portföyleri;
+emtialar ve bunlar üzerine istatistiksel analizler.
 
-Veriler doğrudan SEC EDGAR'dan çekilir. Her kaydın yanında kaynak belgeye
-bağlantı vardır.
+Veriler resmî kaynaklardan çekilir (SEC EDGAR, House Clerk, OGE, CFTC, EIA,
+FRED). Her kaydın yanında kaynak belgeye bağlantı vardır.
 
 **Bu sitede yatırım tavsiyesi verilmez.** Yalnızca kamuya açık bildirimler
 derlenir ve gösterilir.
@@ -23,9 +24,17 @@ görünür.
 
 **Fon ve banka pozisyonları (13F)**
 100 milyon doların üzerinde varlık yöneten kurumlar, çeyreklik olarak
-portföylerini bildirir. Site 34 büyük fon ve bankayı takip eder; çeyrekler
+portföylerini bildirir. Site 49 büyük kurumu (Vanguard, BlackRock, State
+Street, JPMorgan, Berkshire, Norveç Varlık Fonu…) takip eder; çeyrekler
 arası farkı hesaplayarak hangi hisseye girildiğini, hangisinden çıkıldığını
 ve pozisyon değişimlerini gösterir.
+
+**Siyasetçiler**
+Temsilciler Meclisi üyelerinin STOCK Act işlem bildirimleri (House Clerk PDF'leri
+ayrıştırılarak), resmî fotoğraflar, liderlik görevleri ve komiteler. Her
+üyenin tahmini portföyü (alıp satmadığı hisseler) dairesel grafikle gösterilir.
+Başkan ve Başkan Yardımcısının OGE yıllık bildiriminden hisse/fon portföyü ve
+yıl içindeki işlemleri ayıklanır (tahvil ve şirket payları elenerek).
 
 **Emtialar**
 Altın, gümüş, platin, bakır ve Brent petrol:
@@ -44,7 +53,8 @@ Altın sayfasında gram altının TL fiyatı da hesaplanır.
 - *Sinyaller işe yarıyor mu?* — siyasetçi, yüklü, çıkar çatışmalı, yönetici ve
   küme alımlarının 30/90/180 gün sonraki endekse göre getirisi; güven aralığı,
   t testi ve çoklu karşılaştırma (Holm) düzeltmesiyle.
-- *Günlük özet* — günün bildirimlerinden kural tabanlı, paylaşılabilir Türkçe özet.
+- *Günlük özet* — günün bildirimlerinden kural tabanlı Türkçe özet; veri her
+  sabah otomatik güncellenir.
 
 ## Kurulum
 
@@ -79,7 +89,9 @@ Bütün işler tek bir komut üzerinden yapılır. Komut listesi:
 ```bash
 python -m piyasa site          # siteyi başlatır → http://127.0.0.1:5001
 python -m piyasa site --ag     # aynı Wi-Fi'daki telefondan açmak için (adresi yazdırır)
-python -m piyasa guncelle      # Form 4 + Kongre verisini günceller, şüphelileri işaretler
+python -m piyasa guncelle      # bütün veriyi günceller (her adım ayrı; biri hata verse de devam eder)
+python -m piyasa zamanla       # 'guncelle'yi her sabah 07:30'da otomatik çalıştırır (macOS)
+python -m piyasa zamanla --kaldir
 ```
 
 **Yönetici işlemleri (Form 4)** — son 90 günde eksik olan günleri, en
@@ -120,9 +132,12 @@ python -m piyasa analiz
 Ağustos ve Kasım aylarının ortasında yayımlanır:
 
 ```bash
-python -m piyasa fon
-python -m piyasa cusip
+python -m piyasa fon              # yeni çeyrekleri indirir (indirilmişleri atlar)
+python -m piyasa fon --yeniden    # bütün fonları baştan indirir
+python -m piyasa cusip            # CUSIP → hisse kodu (OpenFIGI)
 ```
+
+Takip edilen fonlar `data/fonlar.json` dosyasındadır (ad ve SEC CIK numarası).
 
 ## Testler ve kod denetimi
 
@@ -149,6 +164,31 @@ veritabanı kurulur, fiyat servisi sahte veriyle değiştirilir.
   kutuları, sıralama, süzme, tıklanabilir satırlar, fiyat grafiği ve
   telefon görünümü. Chrome yoksa atlanır.
 
+## Mimari
+
+```mermaid
+flowchart LR
+    K["Resmî kaynaklar<br/>SEC · House Clerk · OGE<br/>CFTC · EIA · FRED · Yahoo"] --> T["piyasa/toplama<br/>indirme ve ayrıştırma"]
+    T --> V[("SQLite<br/>data/kayitlar.db")]
+    V --> A["piyasa/analiz<br/>getiri · performans · çıkar çatışması<br/>sinyaller · portföy · özet"]
+    V --> S["piyasa/web/sorgular<br/>sayfa sorguları"]
+    A --> W["piyasa/web<br/>Flask Blueprint'leri + şablonlar"]
+    S --> W
+    C["piyasa/kurallar · bicim · kayitlar<br/>onbellek · fiyat · eslestirme"] -.-> T & A & W
+```
+
+Katman kuralları:
+
+- `toplama` yalnızca veri indirir ve veritabanına yazar; `analiz` ve `web`
+  yalnızca okur.
+- `web` dışındaki hiçbir katman `web`'i içe aktarmaz (`tests/test_mimari.py`
+  denetler).
+- Alan kuralları (yasal süreler, eşikler, SQL koşulları) `kurallar.py`'de,
+  Türkçe biçimlendirme `bicim.py`'de tek yerde durur.
+- Canlı veriler (fiyat, haber, öneri dizini) `@sureli` önbelleğiyle tutulur.
+- Bilgisayar ve telefon görünümleri ayrı stil dosyalarındadır: `mobil.css`
+  yalnızca dar ekranlarda yüklenir.
+
 ## Yapı
 
 ```
@@ -163,6 +203,8 @@ piyasa/
   fiyat.py                 Yahoo Finance fiyatları, değişimler, hacim
   onbellek.py              Süreli bellek önbelleği (@sureli)
   uyeler.py                Siyasetçi fotoğrafları, görevleri, önemli siyasetçiler
+  eslestirme.py            Şirket adı → borsa kodu (SEC listesiyle, tutucu)
+  zamanlama.py             Günlük otomatik güncelleme (launchd)
   slug.py                  İsimleri adres dostu metne çevirir
 
   toplama/                 Resmî kaynaklardan veri indirenler
@@ -171,7 +213,8 @@ piyasa/
     kongre.py              House Clerk işlem bildirimleri (PDF)
     fon13f.py              Fonların 13F bildirimleri
     cusip.py               CUSIP → hisse kodu eşlemesi
-    yurutme.py             Trump ve Vance'in OGE mali durum bildirimleri
+    yurutme.py             Trump ve Vance'in OGE mali durum bildirimleri (liste)
+    oge_yillik.py          OGE yıllık bildiriminden hisse portföyü ve işlemler
     emtia.py               CFTC fon konumları, EIA stokları, FRED faizleri
     fiyat_gecmisi.py       İşlem yapılan hisselerin ve SPY'nin günlük kapanışları
     sirketler.py           SEC sektörleri, Meclis üyeleri ve komite üyelikleri
@@ -192,6 +235,7 @@ piyasa/
     getiri.py              İşlem sonrası getiri (30/90/180 gün, bugüne) ve SPY
     performans.py          Siyasetçilerin yatırım performansı
     portfoy.py             Siyasetçinin tahmini portföyü (alıp satmadığı hisseler)
+    yurutme.py             Başkan ve Başkan Yardımcısının portföyü ve işlemleri
     cakisma.py             Komite ↔ sektör çıkar çatışmaları
     sektorler.py           SIC → sektör ve komite → sektör eşlemeleri
     sinyaller.py           Üçlü onay ve sinyallerin geçmiş başarısı
@@ -205,10 +249,11 @@ piyasa/
     rotalar.py             Sayfalar (Blueprint); SQL içermez
     emtia_rotalari.py      Emtia sayfaları (Blueprint)
     analiz_rotalari.py     Performans, çıkar çatışması, sinyaller, günlük özet
-    sorgular.py            Bütün veritabanı sorguları
     bicim.py               Şablon süzgeçleri
     arama.py               Arama önerileri: hisse, kişi, fon, emtia dizini
-    templates/, static/    Şablonlar, CSS, JS (grafik.js: ortak SVG grafik çizici)
+    sorgular/              Sayfa sorguları: islemler, genel, siyaset, hisse, kisi, fonlar
+    templates/, static/    Şablonlar; stil.css (ortak), mobil.css (telefon), app.js,
+                           grafik.js (SVG grafik çizici), fiyat.js
 
 tests/                     pytest testleri
 
