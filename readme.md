@@ -191,6 +191,7 @@ piyasa/
     sorgular.py            Bütün veritabanı sorguları
     bicim.py               Tutar, tarih biçimleri ve şablon süzgeçleri
     fiyat.py               Yahoo Finance fiyatları ve değişimler (15 dk önbellek)
+    arama.py               Arama önerileri: hisse, kişi, fon, emtia dizini
     templates/, static/    Şablonlar, CSS, JS (grafik.js: ortak SVG grafik çizici)
 
 tests/                     pytest testleri

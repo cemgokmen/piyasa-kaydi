@@ -1542,3 +1542,72 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .onay-serit:hover { border-color: var(--vurgu); }
 
 @media (max-width: 860px) { .one-cikan { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Arama önerileri ---------- */
+
+.oneri-listesi {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: min(440px, 70vh);
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(11, 18, 32, .16), 0 2px 6px rgba(11, 18, 32, .08);
+  text-align: left;
+}
+
+.ust-arama .oneri-listesi { min-width: 340px; left: auto; }
+
+.oneri-listesi li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.oneri-listesi li[aria-selected="true"] { background: var(--vurgu-yumusak); }
+
+.oneri-tur {
+  flex: none;
+  width: 66px;
+  padding: 2px 0;
+  border-radius: 6px;
+  background: var(--cizgi-2);
+  color: var(--yazi-2);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.oneri-hisse { background: var(--vurgu-yumusak); color: var(--vurgu); }
+.oneri-emtia { background: var(--uyari-yumusak); color: var(--uyari); }
+.oneri-siyasetci { background: var(--alim-yumusak); color: var(--alim); }
+
+.oneri-govde { display: flex; flex-direction: column; min-width: 0; }
+.oneri-etiket { font-weight: 600; font-size: 14px; color: var(--yazi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oneri-alt { font-size: 12.5px; color: var(--yazi-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oneri-listesi mark { background: none; color: var(--vurgu); font-weight: 700; }
+
+.oneri-hepsi {
+  margin-top: 4px;
+  border-top: 1px solid var(--cizgi-2);
+  border-radius: 0 0 8px 8px !important;
+  color: var(--vurgu);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.giris-arama .oneri-listesi { right: 0; }
+
+@media (max-width: 860px) {
+  .ust-arama .oneri-listesi { min-width: 0; left: 0; }
+}

@@ -183,3 +183,22 @@ def test_sinyaller_ve_ozet(istemci):
         assert metin in html
     ozet = istemci.get("/gunluk-ozet").get_data(as_text=True)
     assert "Metni kopyala" in ozet and "yönetici" in ozet
+
+
+def test_arama_onerileri(istemci):
+    def oner(q):
+        return istemci.get(f"/api/oneri?q={q}").get_json()["oneriler"]
+
+    assert oner("nvid")[0]["etiket"] == "NVDA"                 # şirket adının başı
+    assert oner("NVDA")[0]["adres"] == "/hisse/NVDA"           # kod
+    assert oner("nvidia corp")[0]["alt"] == "NVIDIA Corporation"
+    assert oner("jane")[0] == {"tur": "Siyasetçi", "etiket": "Jane Senator",
+                               "alt": "Demokrat · Temsilciler Meclisi · CA-11", "adres": "/kisi/jane-senator"}
+    assert oner("altın")[0]["adres"] == "/emtia/altin"         # Türkçe karakterli
+    assert oner("altin")[0]["adres"] == "/emtia/altin"         # Türkçe karaktersiz
+    assert oner("gold")[0]["adres"] == "/emtia/altin"          # eş anlamlı
+    assert oner("hatali") == []                                # şüpheli kayıt dizinde yok
+    assert oner("") == []
+    # Önerilerin hepsi açılabilir sayfalar
+    for o in oner("o") + oner("n"):
+        assert istemci.get(o["adres"]).status_code == 200, o

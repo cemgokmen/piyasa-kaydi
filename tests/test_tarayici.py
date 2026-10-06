@@ -118,7 +118,10 @@ def test_ust_arama_ve_kisayol(tarayici, sunucu):
     tarayici.execute_script("document.dispatchEvent(new KeyboardEvent('keydown', {key: '/'}))")
     odak = tarayici.switch_to.active_element
     assert odak.get_attribute("id") == "genel-arama"
-    odak.send_keys("Jane", Keys.ENTER)
+    odak.send_keys("Jane")
+    # Öneri listesi açılır; hiçbirini seçmeden Enter normal arama yapar
+    bekle(tarayici, EC.visibility_of_element_located((By.CSS_SELECTOR, ".ust-arama .oneri-listesi")))
+    odak.send_keys(Keys.ENTER)
     bekle(tarayici, EC.url_contains("q=Jane"))
     assert "Jane Senator" in tarayici.page_source
 
@@ -130,9 +133,9 @@ def test_islem_filtreleri(tarayici, sunucu):
         Select(secim).select_by_value(deger)
         bekle(tarayici, lambda t, ad=ad, deger=deger: sorgu(t).get(ad) == deger)
 
-    # Arama kutusu yazmayı bırakınca kendiliğinden gönderilir
+    # Arama kutusu Enter ile gönderilir
     kutu = tarayici.find_element(By.ID, "search")
-    kutu.send_keys("Jane")
+    kutu.send_keys("Jane", Keys.ENTER)
     bekle(tarayici, lambda t: sorgu(t).get("q") == "Jane")
 
     tarayici.find_element(By.LINK_TEXT, "Filtreleri temizle").click()
@@ -377,3 +380,48 @@ def test_gunluk_ozet(tarayici, sunucu):
         secim = Select(tarayici.find_element(By.ID, "gun-sec"))
         secim.select_by_index(0)
         bekle(tarayici, lambda t: t.find_element(By.TAG_NAME, "h1").text == baslik)
+
+
+
+def test_arama_onerileri_listesi(tarayici, sunucu):
+    tarayici.get(sunucu + "/fonlar")
+    kutu = tarayici.find_element(By.ID, "genel-arama")
+    liste = tarayici.find_element(By.CSS_SELECTOR, ".ust-arama .oneri-listesi")
+
+    # Yazarken liste açılır, ilk öneri NVDA; eşleşen kısım vurgulanır
+    kutu.send_keys("nvid")
+    bekle(tarayici, lambda t: liste.is_displayed() and "NVDA" in liste.text)
+    assert kutu.get_attribute("aria-expanded") == "true"
+    assert liste.find_element(By.CSS_SELECTOR, "mark").text.lower() == "nvid"
+
+    # Esc kapatır
+    kutu.send_keys(Keys.ESCAPE)
+    bekle(tarayici, lambda t: not liste.is_displayed())
+
+    # Klavye: ↓ ilk öneriyi seçer, Enter sayfasını açar
+    kutu.send_keys("a")
+    bekle(tarayici, lambda t: liste.is_displayed())
+    kutu.clear()
+    kutu.send_keys("nvid")
+    bekle(tarayici, lambda t: liste.is_displayed() and "NVDA" in liste.text)
+    kutu.send_keys(Keys.ARROW_DOWN)
+    assert kutu.get_attribute("aria-activedescendant")
+    kutu.send_keys(Keys.ENTER)
+    bekle(tarayici, EC.url_contains("/hisse/NVDA"))
+
+    # Fare: ana sayfadaki büyük arama kutusunda bir kişiye tıklama
+    tarayici.get(sunucu + "/")
+    kutu = tarayici.find_element(By.CSS_SELECTOR, ".giris-arama input")
+    kutu.send_keys("jane")
+    oge = bekle(tarayici, EC.visibility_of_element_located(
+        (By.XPATH, "//ul[contains(@class,'oneri-listesi')]//li[contains(., 'Jane Senator')]")))
+    oge.click()
+    bekle(tarayici, EC.url_contains("/kisi/jane-senator"))
+
+    # "Bütün işlemlerde ara" seçeneği formu gönderir
+    tarayici.get(sunucu + "/")
+    kutu = tarayici.find_element(By.CSS_SELECTOR, ".giris-arama input")
+    kutu.send_keys("nvidia")
+    hepsi = bekle(tarayici, EC.visibility_of_element_located((By.CSS_SELECTOR, ".giris-arama .oneri-hepsi")))
+    hepsi.click()
+    bekle(tarayici, lambda t: sorgu(t).get("q") == "nvidia")

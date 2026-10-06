@@ -18,7 +18,7 @@
 <form class="filtreler" method="get" action="{{ url_for('site.islemler') }}" id="filtre-formu">
   <div class="arama-kutu">
     <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
-    <input id="search" type="search" name="q" value="{{ filtre.q }}" placeholder="Hisse kodu, şirket ya da kişi ara" autocomplete="off" aria-label="Kayıtlarda ara">
+    <input id="search" type="search" name="q" value="{{ filtre.q }}" placeholder="Hisse kodu, şirket ya da kişi ara — Enter ile listede ara" autocomplete="off" aria-label="Kayıtlarda ara" data-oneri>
   </div>
 
   <div class="filtre-satir">

@@ -1,21 +1,15 @@
 "use strict";
 
 // ---------------------------------------------------------------------------
-// Filtre formu: arama kutusu yazmayı bırakınca, seçim kutuları değişince gönderilir
+// Filtre formu: seçim kutuları değişince gönderilir
 // ---------------------------------------------------------------------------
 
 const filtreFormu = document.querySelector("#filtre-formu");
 const aramaKutusu = document.querySelector("#search");
 
 if (filtreFormu) {
-  let zamanlayici = null;
-
+  // Arama kutusu Enter ile gönderilir; yazarken altta öneriler açılır (aşağıda)
   if (aramaKutusu) {
-    aramaKutusu.addEventListener("input", function () {
-      clearTimeout(zamanlayici);
-      zamanlayici = setTimeout(() => filtreFormu.requestSubmit(), 500);
-    });
-
     if (aramaKutusu.value) {
       aramaKutusu.focus();
       aramaKutusu.setSelectionRange(aramaKutusu.value.length, aramaKutusu.value.length);
@@ -173,3 +167,174 @@ if (kopyala) {
     }
   });
 }
+
+
+// ---------------------------------------------------------------------------
+// Arama önerileri: data-oneri taşıyan kutulara yazılırken altta liste açılır.
+// Fare ya da klavyeyle (↑ ↓ Enter, Esc) seçilir; seçilen sayfa açılır.
+// Hiçbiri seçilmeden Enter'a basılırsa form normal arama yapar.
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
+  const form = kutu.form;
+  const liste = document.createElement("ul");
+  liste.className = "oneri-listesi";
+  liste.id = `oneri-listesi-${sira}`;
+  liste.setAttribute("role", "listbox");
+  liste.hidden = true;
+  form.appendChild(liste);
+
+  kutu.setAttribute("role", "combobox");
+  kutu.setAttribute("aria-autocomplete", "list");
+  kutu.setAttribute("aria-expanded", "false");
+  kutu.setAttribute("aria-controls", liste.id);
+
+  let secenekler = [];
+  let aktif = -1;
+  let zamanlayici = null;
+  let istek = null;
+
+  function kapat() {
+    liste.hidden = true;
+    aktif = -1;
+    kutu.setAttribute("aria-expanded", "false");
+    kutu.removeAttribute("aria-activedescendant");
+  }
+
+  // Harf harf sadeleştirir (uzunluk korunur): I/İ/ı → i, aksanlar atılır.
+  // Böylece "nvid" NVIDIA'da, "altin" Altın'da bulunur.
+  function sadelestir(metin) {
+    return Array.from(metin, function (c) {
+      if (c === "I" || c === "İ" || c === "ı") return "i";
+      return c.toLowerCase().normalize("NFD")[0];
+    }).join("");
+  }
+
+  function vurgula(metin, aranan) {
+    // Eşleşen kısmı kalın gösterir; metin her zaman textContent olarak eklenir
+    const parca = document.createElement("span");
+    const i = sadelestir(metin).indexOf(sadelestir(aranan));
+    if (!aranan || i < 0) {
+      parca.textContent = metin;
+      return parca;
+    }
+    const kalin = document.createElement("mark");
+    kalin.textContent = metin.slice(i, i + aranan.length);
+    parca.append(metin.slice(0, i), kalin, metin.slice(i + aranan.length));
+    return parca;
+  }
+
+  function aktifYap(yeni) {
+    secenekler.forEach((s, i) => s.setAttribute("aria-selected", i === yeni ? "true" : "false"));
+    aktif = yeni;
+    if (yeni >= 0) {
+      kutu.setAttribute("aria-activedescendant", secenekler[yeni].id);
+      secenekler[yeni].scrollIntoView({ block: "nearest" });
+    } else {
+      kutu.removeAttribute("aria-activedescendant");
+    }
+  }
+
+  function goster(oneriler, aranan) {
+    liste.innerHTML = "";
+    secenekler = [];
+    oneriler.forEach(function (o, i) {
+      const li = document.createElement("li");
+      li.id = `${liste.id}-${i}`;
+      li.setAttribute("role", "option");
+      li.dataset.adres = o.adres;
+      const tur = document.createElement("span");
+      tur.className = `oneri-tur oneri-${o.tur.toLocaleLowerCase("tr-TR").replace(/[^a-zçğıöşü]/g, "")}`;
+      tur.textContent = o.tur;
+      const govde = document.createElement("span");
+      govde.className = "oneri-govde";
+      const etiket = vurgula(o.etiket, aranan);
+      etiket.className = "oneri-etiket";
+      const alt = vurgula(o.alt || "", aranan);
+      alt.className = "oneri-alt";
+      govde.append(etiket, alt);
+      li.append(tur, govde);
+      liste.appendChild(li);
+      secenekler.push(li);
+    });
+
+    const hepsi = document.createElement("li");
+    hepsi.id = `${liste.id}-hepsi`;
+    hepsi.setAttribute("role", "option");
+    hepsi.className = "oneri-hepsi";
+    hepsi.dataset.hepsi = "1";
+    hepsi.textContent = `“${aranan}” için bütün işlemlerde ara →`;
+    liste.appendChild(hepsi);
+    secenekler.push(hepsi);
+
+    liste.hidden = false;
+    kutu.setAttribute("aria-expanded", "true");
+    aktifYap(-1);
+  }
+
+  function sec(li) {
+    if (li.dataset.hepsi) {
+      kapat();
+      form.requestSubmit();
+    } else {
+      window.location.href = li.dataset.adres;
+    }
+  }
+
+  kutu.addEventListener("input", function () {
+    clearTimeout(zamanlayici);
+    const aranan = kutu.value.trim();
+    if (!aranan) {
+      kapat();
+      return;
+    }
+    zamanlayici = setTimeout(function () {
+      if (istek) istek.abort();
+      istek = new AbortController();
+      fetch(`/api/oneri?q=${encodeURIComponent(aranan)}`, { signal: istek.signal })
+        .then((cevap) => cevap.json())
+        .then(function (veri) {
+          // Yanıt gelene kadar kutu değiştiyse eski yanıtı gösterme
+          if (veri.sorgu !== kutu.value.trim().slice(0, 60)) return;
+          goster(veri.oneriler, aranan);
+        })
+        .catch(() => {});
+    }, 120);
+  });
+
+  kutu.addEventListener("keydown", function (olay) {
+    if (liste.hidden) return;
+    if (olay.key === "ArrowDown") {
+      olay.preventDefault();
+      aktifYap((aktif + 1) % secenekler.length);
+    } else if (olay.key === "ArrowUp") {
+      olay.preventDefault();
+      aktifYap(aktif <= 0 ? secenekler.length - 1 : aktif - 1);
+    } else if (olay.key === "Enter" && aktif >= 0) {
+      olay.preventDefault();
+      sec(secenekler[aktif]);
+    } else if (olay.key === "Escape") {
+      kapat();
+    }
+  });
+
+  // mousedown: kutu odağını kaybetmeden (liste kapanmadan) seçim yapılsın
+  liste.addEventListener("mousedown", function (olay) {
+    const li = olay.target.closest("li[role=option]");
+    if (!li) return;
+    olay.preventDefault();
+    sec(li);
+  });
+  liste.addEventListener("mousemove", function (olay) {
+    const li = olay.target.closest("li[role=option]");
+    if (li) aktifYap(secenekler.indexOf(li));
+  });
+
+  kutu.addEventListener("blur", () => setTimeout(kapat, 100));
+  kutu.addEventListener("focus", function () {
+    if (kutu.value.trim() && secenekler.length) {
+      liste.hidden = false;
+      kutu.setAttribute("aria-expanded", "true");
+    }
+  });
+});

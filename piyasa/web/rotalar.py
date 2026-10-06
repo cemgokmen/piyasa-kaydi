@@ -7,7 +7,7 @@ from flask import Blueprint, abort, jsonify, redirect, render_template, request,
 
 from piyasa.analiz import cakisma, performans, sinyaller
 from piyasa.emtia.tanimlar import EMTIALAR
-from piyasa.web import fiyat, sorgular
+from piyasa.web import arama, fiyat, sorgular
 from piyasa.web.bicim import PARTILER
 
 site = Blueprint("site", __name__)
@@ -84,6 +84,13 @@ def fiyat_api(ticker):
     if bilgi is None:
         return jsonify({"hata": "Bu hisse için güncel fiyat bulunamadı."}), 404
     return jsonify(bilgi)
+
+
+@site.route("/api/oneri")
+def oneri_api():
+    """Arama kutusunun altında açılan öneriler."""
+    sorgu = request.args.get("q", "").strip()[:60]
+    return jsonify({"sorgu": sorgu, "oneriler": arama.oneriler(sorgu)})
 
 
 @site.route("/kisi/<slug>")
