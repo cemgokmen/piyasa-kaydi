@@ -2,6 +2,8 @@
 {% from "_bilesenler.html" import kpi, islem_tablosu %}
 {% block baslik %}{{ ticker }} — {{ sirket }} · Piyasa Kaydı{% endblock %}
 
+{% block geri_adres %}{{ url_for('site.islemler', donem='365') }}{% endblock %}
+
 {% block icerik %}
 <header class="sayfa-ust hisse-ust">
   <div>

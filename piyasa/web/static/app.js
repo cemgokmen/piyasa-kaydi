@@ -120,3 +120,29 @@ document.querySelectorAll("table[data-siralanabilir]").forEach(function (tablo) 
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Geri düğmesi: siteden gelindiyse tarayıcı geçmişinde bir adım geri gider,
+// böylece önceki sayfa filtreleri ve kaydırma konumuyla geri gelir.
+// Sayfa doğrudan açıldıysa bağlantının kendi adresine (üst sayfaya) gider.
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll("[data-geri]").forEach(function (dugme) {
+  let siteIcinden = false;
+  try {
+    siteIcinden = document.referrer && new URL(document.referrer).origin === location.origin;
+  } catch (hata) {
+    siteIcinden = false;
+  }
+
+  if (siteIcinden && history.length > 1) {
+    dugme.title = "Önceki sayfaya dön";
+    dugme.addEventListener("click", function (olay) {
+      if (olay.metaKey || olay.ctrlKey || olay.shiftKey) return;  // yeni sekmede üst sayfa
+      olay.preventDefault();
+      history.back();
+    });
+  } else {
+    dugme.title = "Üst sayfaya git";
+  }
+});

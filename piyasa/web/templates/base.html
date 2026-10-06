@@ -44,6 +44,16 @@
 </header>
 
 <main id="icerik" class="wrap">
+  {% if aktif != 'anasayfa' %}
+  {#
+    Geri: ziyaretçi siteden geldiyse tarayıcı geçmişinde bir adım geri gider
+    (filtreler ve arama korunur). Sayfa doğrudan açıldıysa href'teki üst
+    sayfaya gider; her şablon bunu geri_adres bloğuyla belirler.
+  #}
+  <a class="geri" href="{% block geri_adres %}{{ url_for('site.anasayfa') }}{% endblock %}" data-geri>
+    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg>Geri
+  </a>
+  {% endif %}
   {% block icerik %}{% endblock %}
 </main>
 

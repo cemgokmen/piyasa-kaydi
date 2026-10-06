@@ -2,13 +2,11 @@
 {% from "_bilesenler.html" import kpi, islem_tablosu %}
 {% block baslik %}{{ kimlik.person }} · Piyasa Kaydı{% endblock %}
 
+{% block geri_adres %}{% if siyasetci %}{{ url_for('site.siyasetciler') }}{% else %}{{ url_for('site.islemler', kaynak='yonetici') }}{% endif %}{% endblock %}
+
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol">
-      {% if siyasetci %}<a href="{{ url_for('site.siyasetciler') }}">← Siyasetçiler</a>
-      {% else %}<a href="{{ url_for('site.islemler', kaynak='yonetici') }}">← Şirket yöneticileri</a>{% endif %}
-    </p>
     <h1>{{ kimlik.person }}</h1>
     <p class="kimlik">
       {% if siyasetci %}

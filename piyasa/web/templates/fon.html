@@ -21,10 +21,11 @@
   {% else %}<p class="bos">{{ bos_metin }}</p>{% endif %}
 {% endmacro %}
 
+{% block geri_adres %}{{ url_for('site.fonlar') }}{% endblock %}
+
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol"><a href="{{ url_for('site.fonlar') }}">← Tüm fonlar</a></p>
     <h1>{{ fon_adi }}</h1>
     <p class="sayfa-not">{{ donem_adi }} sonu itibarıyla bildirilen portföy{% if onceki_adi %}; değişimler {{ onceki_adi }} ile karşılaştırıldı{% endif %}.</p>
   </div>

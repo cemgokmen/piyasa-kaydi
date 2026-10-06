@@ -241,3 +241,39 @@ def test_telefon_gorunumu_tasmaz(tarayici, sunucu):
             assert genislik <= pencere, f"{adres}: sayfa {genislik}px, pencere {pencere}px"
     finally:
         tarayici.set_window_size(1366, 1000)
+
+
+def test_geri_dugmesi_onceki_sayfaya_doner(tarayici, sunucu):
+    # Filtreli listeden bir hisseye gidip geri dönünce aynı filtreler gelmeli
+    tarayici.get(sunucu + "/islemler?kaynak=yonetici&islem=buy&sira=tutar")
+    onceki = tarayici.current_url
+    tarayici.find_element(By.CSS_SELECTOR, ".islem-tablosu .ticker").click()
+    bekle(tarayici, EC.url_contains("/hisse/"))
+    tarayici.find_element(By.CSS_SELECTOR, "a.geri").click()
+    bekle(tarayici, EC.url_to_be(onceki))
+
+    # Birkaç adım: ana sayfa → siyasetçiler → kişi → hisse, sonra geri geri
+    tarayici.get(sunucu + "/")
+    tarayici.find_element(By.LINK_TEXT, "Siyasetçiler").click()
+    bekle(tarayici, EC.url_contains("/siyasetciler"))
+    tarayici.find_element(By.LINK_TEXT, "Jane Senator").click()
+    bekle(tarayici, EC.url_contains("/kisi/jane-senator"))
+    tarayici.find_element(By.CSS_SELECTOR, ".islem-tablosu .ticker").click()
+    bekle(tarayici, EC.url_contains("/hisse/"))
+    for beklenen in ("/kisi/jane-senator", "/siyasetciler", sunucu + "/"):
+        tarayici.find_element(By.CSS_SELECTOR, "a.geri").click()
+        bekle(tarayici, EC.url_contains(beklenen) if beklenen != sunucu + "/"
+              else EC.url_to_be(beklenen))
+
+    # Ana sayfada geri düğmesi yok
+    assert not tarayici.find_elements(By.CSS_SELECTOR, "a.geri")
+
+
+def test_geri_dugmesi_dogrudan_acilan_sayfada_ust_sayfaya_gider(tarayici, sunucu):
+    # Geçmiş yokken (bağlantı dışarıdan açıldı) üst sayfaya gitmeli
+    for adres, ust in (("/fon/ornek-fon", "/fonlar"), ("/kisi/jane-senator", "/siyasetciler"),
+                       ("/hisse/NVDA", "/islemler")):
+        tarayici.get("about:blank")
+        tarayici.get(sunucu + adres)
+        tarayici.find_element(By.CSS_SELECTOR, "a.geri").click()
+        bekle(tarayici, EC.url_contains(ust))
