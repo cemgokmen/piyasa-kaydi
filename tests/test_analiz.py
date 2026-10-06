@@ -80,3 +80,22 @@ def test_komite_sektorleri_tanimli():
                "Madencilik ve malzeme", "İnşaat", "Perakende", "Eğitim", "Sanayi"}
     for sektorler in KOMITE_SEKTORLERI.values():
         assert set(sektorler) <= gecerli
+
+
+def test_portfoy_satilan_hisse_cikar(istemci):
+    """Jane 12 kez NVDA aldı, hiç satmadı; AAPL'yi yalnızca sattı."""
+    from piyasa.analiz import portfoy
+
+    p = portfoy.hesapla("jane-senator")
+    hisseler = {x["ticker"]: x for x in p["pozisyonlar"]}
+    assert set(hisseler) == {"NVDA"}
+    nvda = hisseler["NVDA"]
+    assert nvda["alim"] >= 12
+    assert nvda["deger"] > nvda["maliyet"]        # NVDA test verisinde sürekli yükseliyor
+    assert nvda["pay"] == 1
+    assert portfoy.hesapla("yok-boyle") is None
+
+
+def test_portfoy_sayfada(istemci):
+    html = istemci.get("/kisi/jane-senator").get_data(as_text=True)
+    assert "Tahmini portföyü" in html and 'class="pasta"' in html and "%100,0" in html

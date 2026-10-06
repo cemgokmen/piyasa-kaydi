@@ -31,6 +31,9 @@ def test_yuzde_ve_fiyat():
     assert bicim.yuzde(-0.1) == "−%10,00"
     assert bicim.yuzde(None) == "—"
     assert bicim.fiyat(1234.5) == "1.234,50"
+    assert bicim.ondalik(32.456) == "32,5"
+    assert bicim.ondalik(1234.5, 2) == "1.234,50"
+    assert bicim.ondalik(7, 0) == "7"
 
 
 def test_tarihler():

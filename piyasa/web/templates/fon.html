@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi %}
+{% from "_bilesenler.html" import kpi, pasta_grafigi %}
 {% block baslik %}{{ fon_adi }} portföyü · Piyasa Kaydı{% endblock %}
 
 {% macro pozisyon_listesi(liste, bos_metin, tur='') %}
@@ -39,25 +39,7 @@
 </section>
 
 {% if dilimler %}
-<section class="panel pasta-bolum">
-  <svg class="pasta" viewBox="0 0 200 200" role="img" aria-label="Portföy dağılımı">
-    {% for d in dilimler %}
-    <circle cx="100" cy="100" r="80" fill="none" stroke="{{ d.renk }}" stroke-width="34"
-            stroke-dasharray="{{ d.uzunluk }} {{ d.bosluk }}" stroke-dashoffset="{{ d.kayma }}"
-            transform="rotate(-90 100 100)"><title>{{ d.ad }} %{{ d.yuzde }}</title></circle>
-    {% endfor %}
-  </svg>
-  <ul class="pasta-liste">
-    {% for d in dilimler %}
-    <li>
-      <span class="nokta" style="background: {{ d.renk }}"></span>
-      <span class="pasta-ad">{{ d.ad }}</span>
-      <span class="pasta-oran sayi">%{{ d.yuzde }}</span>
-      <span class="pasta-deger sayi">{{ d.deger_kisa }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-</section>
+{{ pasta_grafigi(dilimler) }}
 {% endif %}
 
 {% if onceki_adi %}
@@ -86,7 +68,7 @@
         <td data-etiket="Şirket" class="kirp-hucre">{{ p.sirket_adi }}</td>
         <td data-etiket="Adet" class="sag sayi">{{ (p.adet or 0)|int|sayi }}</td>
         <td data-etiket="Değer" class="sag sayi"><b>{{ p.deger_kisa }}</b></td>
-        <td data-etiket="Pay" class="sag sayi">%{{ p.pay }}</td>
+        <td data-etiket="Pay" class="sag sayi">%{{ p.pay|ondalik(2) }}</td>
       </tr>
       {% endfor %}
     </tbody>

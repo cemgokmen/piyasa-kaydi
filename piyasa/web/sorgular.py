@@ -431,7 +431,7 @@ DILIM_RENKLERI = [
 ]
 
 
-def _pasta_dilimleri(pozisyonlar, adet=10):
+def pasta_dilimleri(pozisyonlar, adet=10):
     """En büyük pozisyonlar + 'Diğerleri' için SVG çember dilimleri."""
     toplam = sum(p.get("deger") or 0 for p in pozisyonlar)
     if toplam <= 0:
@@ -541,6 +541,6 @@ def fon(slug):
         "cikislar": hazirla(cikislar)[:20],
         "artanlar": hazirla(artanlar, "fark_adet")[:20],
         "azalanlar": hazirla(azalanlar, "fark_adet")[:20],
-        "dilimler": _pasta_dilimleri(list(su_an.values())),
+        "dilimler": pasta_dilimleri(list(su_an.values())),
         "portfoy": hazirla(list(su_an.values()))[:50],
     }

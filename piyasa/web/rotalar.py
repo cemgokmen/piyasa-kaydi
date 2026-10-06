@@ -6,7 +6,7 @@ ve şablonu çizer; SQL burada yazılmaz.
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
 from piyasa import fiyat, uyeler
-from piyasa.analiz import cakisma, performans, sinyaller
+from piyasa.analiz import cakisma, performans, portfoy, sinyaller
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kurallar import PARTILER, parti_bilgisi
 from piyasa.web import arama, sorgular
@@ -101,6 +101,9 @@ def kisi(slug):
         abort(404)
     aktif = "siyasetci" if veri["siyasetci"] else "yonetici"
     if veri["siyasetci"]:
+        veri["portfoy"] = portfoy.hesapla(slug)
+        if veri["portfoy"] and veri["portfoy"]["pozisyonlar"]:
+            veri["portfoy_dilimleri"] = sorgular.pasta_dilimleri(veri["portfoy"]["pozisyonlar"], adet=8)
         veri["performans"] = performans.kisi(slug)
         veri["komiteler"] = cakisma.uye_komiteleri(slug)
         veri["cakisma_sayisi"] = sum(1 for i in veri["islemler"] if i["cakisma"])

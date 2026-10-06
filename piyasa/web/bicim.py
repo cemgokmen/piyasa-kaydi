@@ -2,7 +2,7 @@
 Jinja şablon süzgeçleri ve bütün şablonlarda kullanılabilen ortak değişkenler.
 """
 
-from piyasa.bicim import fiyat, kisa_aralik, kisa_tarih, kisa_tutar, sayi, uzun_tarih, yuzde
+from piyasa.bicim import fiyat, kisa_aralik, kisa_tarih, kisa_tutar, ondalik, sayi, uzun_tarih, yuzde
 from piyasa.kurallar import FORM4_IS_GUNU, PARTILER, STOCK_ACT_GUN
 
 
@@ -14,6 +14,7 @@ def sablonlara_kaydet(app):
     app.add_template_filter(kisa_tarih, "kisa_tarih")
     app.add_template_filter(yuzde, "yuzde")
     app.add_template_filter(fiyat, "fiyat")
+    app.add_template_filter(ondalik, "ondalik")
     app.add_template_global(kisa_aralik, "aralik")
 
     @app.context_processor

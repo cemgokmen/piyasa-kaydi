@@ -59,6 +59,15 @@ def yuzde(oran, isaretli=True):
     return f"{isaret}%{abs(oran) * 100:.2f}".replace(".", ",")
 
 
+def ondalik(n, basamak=1):
+    """32.456 -> '32,5'"""
+    if n is None:
+        return "—"
+    tam, _, kesir = f"{n:,.{basamak}f}".partition(".")
+    tam = tam.replace(",", ".")
+    return f"{tam},{kesir}" if kesir else tam
+
+
 def fiyat(n):
     """123.456 -> '123,46'"""
     if n is None:

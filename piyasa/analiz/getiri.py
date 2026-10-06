@@ -30,8 +30,16 @@ GIRIS_TOLERANSI = 7   # işlem günü fiyat yoksa en fazla kaç gün sonraki kap
 class FiyatDeposu:
     """Hisse başına (tarihler, kapanışlar) dizileri; hızlı tarih araması için."""
 
-    def __init__(self, conn):
-        tablo = pd.read_sql_query("SELECT ticker, tarih, kapanis FROM fiyat_gecmisi ORDER BY ticker, tarih", conn)
+    def __init__(self, conn, hisseler=None):
+        """hisseler verilirse yalnızca onların fiyatları yüklenir (hızlı)."""
+        if hisseler is not None:
+            hisseler = sorted(set(hisseler) | {ENDEKS})
+            yer = ",".join("?" * len(hisseler))
+            tablo = pd.read_sql_query(
+                f"SELECT ticker, tarih, kapanis FROM fiyat_gecmisi WHERE ticker IN ({yer}) ORDER BY ticker, tarih",
+                conn, params=hisseler)
+        else:
+            tablo = pd.read_sql_query("SELECT ticker, tarih, kapanis FROM fiyat_gecmisi ORDER BY ticker, tarih", conn)
         self.seriler = {
             # Gün hassasiyetinde tarih dizisi: aradaki fark doğrudan gün sayısı olsun
             t: (np.array(g["tarih"].tolist(), dtype="datetime64[D]"), g["kapanis"].to_numpy())

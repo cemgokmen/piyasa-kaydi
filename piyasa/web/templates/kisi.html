@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, islem_tablosu, fark, karar_rozeti, avatar %}
+{% from "_bilesenler.html" import kpi, islem_tablosu, fark, karar_rozeti, avatar, pasta_grafigi %}
 {% block baslik %}{{ kimlik.person }} · Piyasa Kaydı{% endblock %}
 
 {% block geri_adres %}{% if siyasetci %}{{ url_for('site.siyasetciler') }}{% else %}{{ url_for('site.islemler', kaynak='yonetici') }}{% endif %}{% endblock %}
@@ -33,6 +33,58 @@
 <p class="uyari-kutu"><strong>{{ gec_sayisi }} işlem yasal süreden sonra bildirilmiş.</strong>
 {% if siyasetci %}Kongre üyeleri işlemlerini en geç {{ yasal_gun }} gün içinde bildirmek zorunda.
 {% else %}Şirket yöneticileri işlemlerini {{ form4_gun }} iş günü içinde bildirmek zorunda.{% endif %}</p>
+{% endif %}
+
+{% if siyasetci and portfoy and portfoy.pozisyonlar %}
+<section class="bolum" id="portfoy">
+  <header class="bolum-ust">
+    <div>
+      <h2>Tahmini portföyü</h2>
+      <p class="bolum-not">Aldığı ve sonrasında satış bildirmediği hisseler. Maliyet, bildirilen tutar aralıklarının
+      ortasıdır; güncel değer, her alımdan bugüne hisse fiyatındaki değişimle hesaplanır.</p>
+    </div>
+  </header>
+  <div class="kpi-izgara">
+    {{ kpi('Elde tutulan hisse', portfoy.sayi, portfoy.kapanan ~ ' hissede satış bildirdi', birim='hisse') }}
+    {{ kpi('Tahmini maliyet', portfoy.maliyet|tutar, 'aralık ortaları toplamı') }}
+    {{ kpi('Tahmini güncel değer', portfoy.deger|tutar, 'bugünkü fiyatlarla',
+           'alim' if portfoy.getiri and portfoy.getiri > 0 else 'satim' if portfoy.getiri else '') }}
+    {{ kpi('Alımdan bu yana', portfoy.getiri|yuzde if portfoy.getiri is not none else '—', 'tahmini getiri') }}
+  </div>
+  {% if portfoy_dilimleri %}{{ pasta_grafigi(portfoy_dilimleri, 'Tahmini portföy dağılımı') }}{% endif %}
+  <div class="tablo-kap">
+    <table class="tablo" data-siralanabilir>
+      <thead>
+        <tr>
+          <th scope="col" data-sirala="metin">Hisse</th>
+          <th scope="col" class="sag" data-sirala="sayi">Alım</th>
+          <th scope="col" data-sirala="metin">Son alım</th>
+          <th scope="col" class="sag" data-sirala="sayi">Bildirilen tutar</th>
+          <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Tahmini değer</th>
+          <th scope="col" class="sag" data-sirala="sayi">Getiri</th>
+          <th scope="col" class="sag" data-sirala="sayi">Pay</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in portfoy.pozisyonlar %}
+        <tr class="tiklanir" data-href="{{ url_for('site.hisse', ticker=p.ticker) }}">
+          <td data-etiket="Hisse" data-deger="{{ p.ticker }}"><a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
+            <span class="alt-satir kirp">{{ p.sirket }}</span></td>
+          <td data-etiket="Alım" class="sag sayi" data-deger="{{ p.alim }}">{{ p.alim }}</td>
+          <td data-etiket="Son alım" class="tarih" data-deger="{{ p.son }}">{{ p.son|uzun_tarih }}</td>
+          <td data-etiket="Bildirilen tutar" class="sag sayi" data-deger="{{ p.ust }}">{{ aralik(p.alt, p.ust) }}</td>
+          <td data-etiket="Tahmini değer" class="sag sayi" data-deger="{{ p.deger }}"><b>{{ p.deger|tutar }}</b></td>
+          <td data-etiket="Getiri" class="sag" data-deger="{{ p.getiri if p.getiri is not none else 0 }}">{{ fark(p.getiri) }}</td>
+          <td data-etiket="Pay" class="sag sayi" data-deger="{{ p.pay }}">%{{ (p.pay * 100)|ondalik }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">Tahmindir: bildirimler tam tutar değil aralık verir; bir satışın kısmi olup olmadığı her zaman
+  ayırt edilemediği için satış bildirilen hisse elden çıkarılmış sayılır. Yalnızca 2025 başından beri bildirilen
+  işlemler görülür.</p>
+</section>
 {% endif %}
 
 {% if siyasetci and performans and performans.alim.n %}

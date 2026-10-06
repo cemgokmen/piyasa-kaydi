@@ -175,3 +175,26 @@
     {%- if foto %}<img src="{{ foto }}" alt="" loading="lazy" onerror="this.remove()">{% endif -%}
   </span>
 {%- endmacro %}
+
+{# Dairesel portföy grafiği ve açıklaması (fon ve siyasetçi portföyleri) #}
+{% macro pasta_grafigi(dilimler, etiket='Portföy dağılımı') %}
+<section class="panel pasta-bolum">
+  <svg class="pasta" viewBox="0 0 200 200" role="img" aria-label="{{ etiket }}">
+    {% for d in dilimler %}
+    <circle cx="100" cy="100" r="80" fill="none" stroke="{{ d.renk }}" stroke-width="34"
+            stroke-dasharray="{{ d.uzunluk }} {{ d.bosluk }}" stroke-dashoffset="{{ d.kayma }}"
+            transform="rotate(-90 100 100)"><title>{{ d.ad }} %{{ d.yuzde|ondalik }}</title></circle>
+    {% endfor %}
+  </svg>
+  <ul class="pasta-liste">
+    {% for d in dilimler %}
+    <li>
+      <span class="nokta" style="background: {{ d.renk }}"></span>
+      <span class="pasta-ad">{{ d.ad }}</span>
+      <span class="pasta-oran sayi">%{{ d.yuzde|ondalik }}</span>
+      <span class="pasta-deger sayi">{{ d.deger_kisa }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endmacro %}
