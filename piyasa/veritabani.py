@@ -110,6 +110,42 @@ def init_db():
         )
     """)
 
+    # --- Emtialar: CFTC fon konumları, EIA stokları, FRED faizleri ---
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS cot (
+            emtia          TEXT NOT NULL,
+            tarih          TEXT NOT NULL,
+            acik_pozisyon  INTEGER,
+            fon_uzun       INTEGER,
+            fon_kisa       INTEGER,
+            uretici_uzun   INTEGER,
+            uretici_kisa   INTEGER,
+            PRIMARY KEY (emtia, tarih)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS eia_stok (
+            seri   TEXT NOT NULL,
+            tarih  TEXT NOT NULL,
+            deger  REAL,
+            PRIMARY KEY (seri, tarih)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS makro (
+            seri   TEXT NOT NULL,
+            tarih  TEXT NOT NULL,
+            deger  REAL,
+            PRIMARY KEY (seri, tarih)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS emtia_guncelleme (
+            anahtar  TEXT PRIMARY KEY,
+            zaman    TEXT
+        )
+    """)
+
     # --- İndeksler ---
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ticker ON transactions(ticker)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_person ON transactions(person)")
