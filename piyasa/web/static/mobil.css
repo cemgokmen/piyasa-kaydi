@@ -1,0 +1,449 @@
+/* ==========================================================================
+   Piyasa Kaydı — telefon görünümü
+
+   Bu dosya yalnızca 860 pikselden dar ekranlarda yüklenir
+   (<link media="(max-width: 860px)">). Bilgisayar görünümü stil.css'tedir
+   ve bu dosyadan hiç etkilenmez.
+
+   İlkeler: tek sütun; her şey nefes alan, sade kartlar; uzun dikey yığınlar
+   yerine yana kaydırılan şeritler; etiket kalabalığı yok; altta sabit gezinme.
+   ========================================================================== */
+
+:root {
+  --kenar: 16px;
+  --alt-gezinme: 62px;
+}
+
+body { font-size: 15px; }
+.wrap { padding-inline: var(--kenar); }
+
+main {
+  padding-top: 14px;
+  padding-bottom: calc(var(--alt-gezinme) + 28px + env(safe-area-inset-bottom));
+}
+
+/* ---------- Üst çubuk: logo ve düğmeler tek satır, arama altında ---------- */
+
+.ust { position: sticky; top: 0; }
+.ust-ic { gap: 8px 10px; padding-block: 8px 10px; }
+.marka { font-size: 16px; }
+.marka-isaret { width: 24px; height: 24px; }
+.ikon-dugme { width: 36px; height: 36px; }
+.ust-arama { flex-basis: 100%; }
+.ust-arama input { height: 40px; font-size: 16px; }   /* 16px: iOS yakınlaştırmasın */
+.ust.menu-acik { box-shadow: 0 12px 28px rgba(11, 18, 32, .14); }
+
+/* ---------- Piyasa şeridi: kendiliğinden kayar ---------- */
+
+.serit { font-size: 12px; }
+.serit-ic { padding-block: 6px; }
+
+.serit.kayan .serit-ic {
+  overflow: hidden;
+  padding-right: 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+
+.serit.kayan .serit-akis {
+  display: flex;
+  flex: none;
+  animation: serit-kay var(--kayma-suresi, 40s) linear infinite;
+  will-change: transform;
+}
+
+/* Dikişsiz döngü için aralık boşluk yerine sağ dolguyla verilir */
+.serit.kayan .serit-oge { padding-right: 22px; }
+.serit.kayan:active .serit-akis,
+.serit.kayan:hover .serit-akis { animation-play-state: paused; }
+
+@keyframes serit-kay {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ---------- Alt gezinme çubuğu ---------- */
+
+.alt-gezinti {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: calc(var(--alt-gezinme) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: color-mix(in srgb, var(--kart) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-top: 1px solid var(--cizgi);
+}
+
+.alt-gezinti a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--yazi-3);
+  font-size: 10.5px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.alt-gezinti svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.alt-gezinti a[aria-current="page"] { color: var(--vurgu); }
+.alt-gezinti a[aria-current="page"] svg { stroke-width: 2.2; }
+
+/* ---------- Başlıklar ve bölümler ---------- */
+
+h1 { font-size: 23px; line-height: 1.25; }
+.giris { padding-top: 10px; margin-bottom: 22px; text-align: left; }
+.giris h1 { font-size: 26px; }
+.giris-metin, .giris .giris-metin { margin-left: 0; font-size: 15px; }
+.giris-arama { margin-top: 16px; }
+.giris-arama input { height: 46px; font-size: 16px; }
+
+.sayfa-ust { display: block; margin-bottom: 18px; }
+.sayfa-ust > .dugme, .sayfa-ust > .bolum-menu { margin-top: 12px; }
+.sayfa-not { margin-top: 6px; font-size: 14px; line-height: 1.55; color: var(--yazi-2); }
+
+.geri { margin: 0 0 12px; padding: 5px 10px 5px 6px; font-size: 13px; }
+
+.bolum { margin-bottom: 26px; }
+.bolum-ust { display: block; margin-bottom: 12px; }
+.bolum-ust h2 { font-size: 18px; }
+.bolum-not { font-size: 13.5px; line-height: 1.5; }
+.bolum-link { display: inline-block; margin-top: 6px; font-size: 13.5px; }
+.bolum-baslik { font-size: 17px; }
+
+.panel h2 { font-size: 15px; }
+.panel-ust { padding: 12px 14px 10px; }
+
+/* ---------- Özet kutuları: iki sütun, sıkı ---------- */
+
+.kpi-izgara,
+.kpi-izgara.kpi-3,
+.kpi-izgara.kpi-2,
+.kpi-izgara.kpi-6,
+.kpi-izgara:has(> :nth-child(5):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.kpi { padding: 11px 12px; gap: 1px; border-radius: 10px; }
+.kpi-etiket { font-size: 11.5px; line-height: 1.3; }
+.kpi-deger { font-size: 17px; }
+.kpi-birim { font-size: 11.5px; margin-left: 4px; }
+.kpi-alt { font-size: 11.5px; line-height: 1.35; }
+
+/* Tek kalan son kutu tam genişlik olsun, boşluk kalmasın */
+.kpi-izgara > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+/* ---------- Yana kaydırılan kart şeritleri (uzun dikey yığın yerine) ---------- */
+
+.kaynak-kartlari,
+.one-cikan,
+.kart-izgara,
+.kisi-izgara,
+.emtia-izgara {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: 78%;
+  gap: 10px;
+  margin-inline: calc(-1 * var(--kenar));
+  padding: 2px var(--kenar) 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--kenar);
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.kaynak-kartlari::-webkit-scrollbar,
+.one-cikan::-webkit-scrollbar,
+.kart-izgara::-webkit-scrollbar,
+.kisi-izgara::-webkit-scrollbar,
+.emtia-izgara::-webkit-scrollbar { display: none; }
+
+.kaynak-kartlari > *, .one-cikan > *, .kart-izgara > *, .kisi-izgara > *, .emtia-izgara > * {
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.kart-izgara { grid-auto-columns: 62%; }
+.one-cikan { margin-bottom: 26px; }
+.kaynak-kartlari { margin-bottom: 26px; }
+.kaynak-kart { padding: 14px 16px; }
+.kaynak-kart-sayi { font-size: 22px; }
+.kaynak-kart-metin { font-size: 13.5px; }
+
+/* ---------- İşlem kartları: etiketsiz, üç satır ----------
+   1. satır: hisse        | tutar
+   2. satır: kişi         | alım/satım
+   3. satır: tarih        | belge                                      */
+
+.tablo-kap { overflow: visible; background: none; border: 0; box-shadow: none; border-radius: 0; }
+
+.islem-tablosu, .islem-tablosu tbody { display: block; }
+.islem-tablosu thead { display: none; }
+
+.islem-tablosu tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "hisse tutar"
+    "kisi  islem"
+    "tarih belge";
+  gap: 6px 12px;
+  margin: 0 0 8px;
+  padding: 12px 14px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  box-shadow: var(--golge);
+}
+
+.islem-tablosu.kisisiz tr { grid-template-areas: "hisse tutar" "tarih islem" ". belge"; }
+.islem-tablosu.hissesiz tr { grid-template-areas: "kisi tutar" "tarih islem" ". belge"; }
+
+.islem-tablosu td {
+  display: block;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  text-align: left !important;
+}
+
+.islem-tablosu td::before { content: none !important; }
+.islem-tablosu tbody tr:hover { background: var(--kart); }
+
+.islem-tablosu .h-hisse { grid-area: hisse; }
+.islem-tablosu .h-kisi { grid-area: kisi; }
+.islem-tablosu .h-tarih { grid-area: tarih; align-self: end; font-size: 12.5px; color: var(--yazi-3); }
+.islem-tablosu .h-islem { grid-area: islem; justify-self: end; align-self: center; white-space: nowrap; }
+.islem-tablosu .h-tutar { grid-area: tutar; justify-self: end; font-size: 14px; font-weight: 600; }
+.islem-tablosu .h-belge { grid-area: belge; justify-self: end; align-self: end; }
+
+.islem-tablosu .h-hisse .ticker { font-size: 15px; }
+.islem-tablosu .alt-satir { font-size: 12.5px; }
+.islem-tablosu .kirp, .islem-tablosu .alt-satir.kirp { max-width: 100%; }
+.islem-tablosu .h-tarih .soluk { display: none; }               /* yıl tekrarı */
+.islem-tablosu .h-tarih .alt-satir { display: inline; margin: 0; }
+.islem-tablosu .h-tarih .alt-satir::before { content: " · "; }
+.islem-tablosu .rozet { font-size: 11.5px; padding: 2px 7px; }
+.islem-tablosu .rozet-yuklu, .islem-tablosu .rozet-cakisma { margin-left: 2px; }
+.islem-tablosu .kaynak { font-size: 12px; }
+
+/* ---------- Diğer tablolar: başlık + "etiket .... değer" satırları ---------- */
+
+.tablo:not(.tablo-sade):not(.islem-tablosu),
+.tablo:not(.tablo-sade):not(.islem-tablosu) tbody { display: block; }
+.tablo:not(.tablo-sade):not(.islem-tablosu) thead { display: none; }
+
+.tablo:not(.tablo-sade):not(.islem-tablosu) tr {
+  display: block;
+  margin: 0 0 8px;
+  padding: 12px 14px 8px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  box-shadow: var(--golge);
+}
+
+.tablo:not(.tablo-sade):not(.islem-tablosu) td {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border: 0;
+  border-top: 1px solid var(--cizgi-2);
+  text-align: right !important;
+  font-size: 13.5px;
+}
+
+.tablo:not(.tablo-sade):not(.islem-tablosu) td[data-etiket]::before {
+  content: attr(data-etiket);
+  flex: none;
+  display: inline;
+  color: var(--yazi-3);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: left;
+}
+
+/* İlk hücre kartın başlığıdır: etiketsiz, solda, büyük */
+.tablo:not(.tablo-sade):not(.islem-tablosu) td:first-child {
+  display: block;
+  padding: 0 0 8px;
+  border-top: 0;
+  text-align: left !important;
+  font-size: 15px;
+}
+.tablo:not(.tablo-sade):not(.islem-tablosu) td:first-child::before { content: none; }
+
+/* Sıra numarası sütunu (#) başlık olmasın: gizle, ikinci hücre başlık olsun */
+#performans-tablosu td:first-child,
+.fon-tablosu td:first-child { display: none; }
+#performans-tablosu td:nth-child(2),
+.fon-tablosu td:nth-child(2) {
+  display: block; padding: 0 0 8px; border-top: 0; text-align: left !important; font-size: 15px;
+}
+#performans-tablosu td:nth-child(2)::before,
+.fon-tablosu td:nth-child(2)::before { content: none; }
+.fon-tablosu td:nth-child(3) { border-top: 0; }
+
+.tablo:not(.tablo-sade):not(.islem-tablosu) td:empty,
+.tablo:not(.tablo-sade):not(.islem-tablosu) td:not([data-etiket]):not(:first-child) { display: none; }
+.tablo:not(.tablo-sade):not(.islem-tablosu) td .alt-satir { display: inline; margin-left: 6px; }
+.tablo:not(.tablo-sade):not(.islem-tablosu) td:first-child .alt-satir { display: block; margin-left: 0; }
+.tablo:not(.tablo-sade):not(.islem-tablosu) .kirp,
+.tablo:not(.tablo-sade):not(.islem-tablosu) .kirp-hucre { max-width: 100%; white-space: normal; }
+.tablo:not(.tablo-sade):not(.islem-tablosu) tbody tr:hover,
+.tablo tr.tiklanir:hover td { background: none; }
+
+.kisi-hucre { gap: 10px; }
+.basari-tablosu td { flex-wrap: wrap; }
+
+/* Küçük ana sayfa tabloları tablo olarak kalır, yalnızca sıkılaşır */
+.tablo-sade { font-size: 13.5px; }
+.tablo-sade th, .tablo-sade td { padding: 9px 12px; }
+.tablo-sade .kirp { max-width: 140px; }
+
+/* ---------- Filtreler ---------- */
+
+.filtreler { gap: 10px; margin-bottom: 16px; }
+.arama-kutu input { height: 44px; font-size: 16px; }
+
+.filtreler .filtre-satir {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.filtreler .secim {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  font-size: 11.5px;
+}
+
+.filtreler .secim select { width: 100%; height: 40px; font-size: 15px; }
+.filtreler .dugme[type="submit"] { display: none; }        /* seçim değişince zaten uygulanır */
+.filtreler .temizle { grid-column: 1 / -1; font-size: 13px; }
+
+.filtre-satir { gap: 8px; }
+.filtre-satir .segment { max-width: 100%; }
+.filtre-kutu { width: 100%; }
+.filtre-kutu input { flex: 1; font-size: 16px; }
+
+.sekmeler { margin: 0 calc(-1 * var(--kenar)) 18px; padding-inline: var(--kenar); }
+.sekmeler a { padding: 10px 10px; font-size: 14px; }
+
+.bolum-menu {
+  flex-wrap: nowrap;
+  margin-inline: calc(-1 * var(--kenar));
+  padding-inline: var(--kenar);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bolum-menu::-webkit-scrollbar { display: none; }
+.bolum-menu a { flex: none; padding: 6px 12px; font-size: 13.5px; }
+
+/* ---------- Kartların iç düzeni ---------- */
+
+.hisse-kart, .emtia-kart, .kisi-kart { padding: 13px 14px; }
+.emtia-fiyat { font-size: 20px; }
+.kisi-kart { align-items: flex-start; }
+.kisi-kart .avatar-orta { width: 44px; height: 44px; }
+
+.akis li { padding: 10px 14px; gap: 10px; }
+.akis .ticker { min-width: 46px; }
+
+.haberler li { padding: 11px 14px; }
+.haberler a { font-size: 14.5px; }
+
+/* ---------- Hisse ve emtia fiyat paneli ---------- */
+
+.fiyat-panel { padding: 14px 14px 10px; }
+.fiyat-deger { font-size: 27px; }
+.degisimler { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; }
+.degisim { padding: 6px 4px; border-radius: 8px; }
+.degisim-etiket { font-size: 11px; }
+.degisim-deger { font-size: 12.5px; }
+.fiyat-grafik, .fiyat-grafik svg { height: 200px; min-height: 200px; }
+.grafik-ust-satir { flex-wrap: wrap; }
+.segment-kucuk button { padding: 5px 9px; }
+
+.grafik { height: 150px; padding: 12px 10px 6px; gap: 3px; }
+.grafik-ay { font-size: 9.5px; }
+
+/* ---------- Profil ve portföy ---------- */
+
+.profil-ust, .sayfa-ust.profil-ust { display: flex; gap: 14px; align-items: center; }
+.avatar-buyuk { width: 64px; height: 64px; font-size: 21px; }
+.kimlik { font-size: 13.5px; gap: 6px; }
+
+.pasta-bolum { flex-direction: column; align-items: stretch; gap: 14px; padding: 16px; }
+.pasta { width: 160px; height: 160px; margin: 0 auto; }
+.pasta-liste { grid-template-columns: 1fr; }
+.pasta-deger { display: inline; }
+
+.izgara-2 { gap: 14px; }
+.izgara-yan { gap: 16px; }
+
+/* ---------- Kutular, dipnotlar, alt bilgi ---------- */
+
+.yorum-kutu, .uyari-kutu { padding: 12px 14px; font-size: 13.5px; line-height: 1.55; }
+.dipnot { font-size: 12px; line-height: 1.5; }
+.sozluk { font-size: 13px; }
+
+.ozet-gezinti { display: grid; grid-template-columns: auto 1fr auto; margin-top: 12px; }
+.ozet-gezinti .secim select { width: 100%; }
+.ozet-maddeler li { flex-wrap: wrap; padding: 12px 14px; font-size: 14px; }
+
+.metin-sayfa h2 { font-size: 18px; }
+.metin-sayfa p, .metin-sayfa li { font-size: 15px; }
+
+.alt { font-size: 13px; }
+.alt-ic { gap: 18px; padding-block: 24px 28px; }
+.alt-ic > div:last-child { display: none; }    /* sayfa listesi: alt gezinme ve menü zaten var */
+
+.sayfalama { gap: 8px; }
+.sayfalama .dugme { padding: 0 12px; }
+
+.bos-durum { padding: 36px 16px; }
+
+/* Dikey yerleşimde açıklama listesi boşluk bırakmasın */
+.pasta-liste { flex: none; }
+
+/* Seçim kutuları: her tarayıcıda aynı, dokunmaya uygun görünüm */
+.secim select {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 40px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--cizgi);
+  border-radius: 10px;
+  background: var(--kart) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236B7686' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center / 16px;
+  color: var(--yazi);
+  font: inherit;
+  font-size: 15px;
+}
+
+/* Kart satırlarında değer ve ek bilgisi sağda birlikte dursun */
+.tablo:not(.tablo-sade):not(.islem-tablosu) td:not(:first-child) { flex-wrap: wrap; }

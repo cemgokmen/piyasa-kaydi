@@ -400,7 +400,9 @@ if (serit) {
   fetch(serit.dataset.adres)
     .then((cevap) => (cevap.ok ? cevap.json() : Promise.reject(cevap.status)))
     .then(function (veri) {
-      const ic = serit.querySelector(".serit-ic");
+      const ic = document.createElement("div");
+      ic.className = "serit-akis";
+      serit.querySelector(".serit-ic").appendChild(ic);
       veri.gostergeler.forEach(function (g) {
         const oge = document.createElement(g.adres ? "a" : "span");
         oge.className = "serit-oge";
@@ -421,6 +423,47 @@ if (serit) {
         ic.appendChild(oge);
       });
       if (veri.gostergeler.length) serit.hidden = false;
+      seridiKaydir(serit, ic);
     })
     .catch(() => { /* şerit yalnızca süs; hata olursa gizli kalır */ });
 }
+
+
+// Telefonda şerit kendiliğinden kayar: öğeler bir kez kopyalanır, içerik yarı
+// genişliği kadar kaydırılıp başa sarılır (dikişsiz döngü). Dokununca durur.
+// Bilgisayarda ve "hareketi azalt" ayarında kopya yoktur, şerit sabittir.
+function seridiKaydir(serit, akis) {
+  const telefon = window.matchMedia("(max-width: 860px)");
+  const azHareket = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function ayarla() {
+    akis.querySelectorAll("[data-kopya]").forEach((o) => o.remove());
+    serit.classList.remove("kayan");
+    if (!telefon.matches || azHareket.matches) return;
+    Array.from(akis.children).forEach(function (oge) {
+      const kopya = oge.cloneNode(true);
+      kopya.dataset.kopya = "1";
+      kopya.setAttribute("aria-hidden", "true");
+      kopya.tabIndex = -1;
+      akis.appendChild(kopya);
+    });
+    // Hız sabit kalsın: genişliğe göre süre (saniyede ~40 piksel)
+    akis.style.setProperty("--kayma-suresi", `${Math.max(20, akis.scrollWidth / 2 / 40)}s`);
+    serit.classList.add("kayan");
+  }
+
+  ayarla();
+  telefon.addEventListener("change", ayarla);
+  azHareket.addEventListener("change", ayarla);
+}
+
+// Alt gezinmedeki "Ara": sayfanın başına çıkıp arama kutusuna odaklanır
+document.querySelectorAll("[data-arama-odak]").forEach(function (bag) {
+  bag.addEventListener("click", function (olay) {
+    const kutu = document.getElementById("genel-arama");
+    if (!kutu) return;
+    olay.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    kutu.focus({ preventScroll: true });
+  });
+});

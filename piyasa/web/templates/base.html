@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block baslik %}Piyasa Kaydı{% endblock %}</title>
   {% set sayfa_aciklamasi %}{% block aciklama %}ABD'de siyasetçilerin, şirket yöneticilerinin ve büyük fonların kamuya bildirdiği hisse işlemleri. Resmî kayıtlardan derlendi, Türkçeleştirildi.{% endblock %}{% endset %}
   <meta name="description" content="{{ sayfa_aciklamasi|trim }}">
@@ -21,6 +21,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
+  <!-- Telefon görünümü: yalnızca dar ekranlarda yüklenir, bilgisayar görünümüne dokunmaz -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobil.css') }}" media="(max-width: 860px)">
 </head>
 <body>
 
@@ -123,6 +125,22 @@
     </div>
   </div>
 </footer>
+
+<nav class="alt-gezinti" aria-label="Hızlı gezinme">
+  {% for ad, adres, etiket, ikon in [
+      ('anasayfa', url_for('site.anasayfa'), 'Ana sayfa', 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z'),
+      ('ozet', url_for('analiz.gunluk_ozet'), 'Özet', 'M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7'),
+      ('siyasetci', url_for('site.siyasetciler'), 'Siyasetçiler', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0'),
+      ('emtia', url_for('emtia.liste'), 'Emtialar', 'M4 18l5-6 4 3 7-9M15 6h5v5'),
+  ] %}
+  <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ ikon }}"/></svg>{{ etiket }}
+  </a>
+  {% endfor %}
+  <a href="#genel-arama" data-arama-odak>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>Ara
+  </a>
+</nav>
 
 <script src="{{ url_for('static', filename='app.js') }}"></script>
 {% block betik %}{% endblock %}

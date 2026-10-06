@@ -1769,3 +1769,7 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 @media (max-width: 860px) { .alt-ic { grid-template-columns: 1fr; } }
 /* Şerit sağa taşarsa kenarda solarak bittiği belli olsun */
 .serit-ic { mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent); padding-right: 48px; }
+
+/* Telefon öğeleri: bilgisayarda görünmez ya da düzene etki etmez (mobil.css açar) */
+.alt-gezinti { display: none; }
+.serit-akis { display: contents; }
