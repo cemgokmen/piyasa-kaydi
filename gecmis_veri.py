@@ -3,14 +3,15 @@ Geçmişe dönük SEC Form 4 verisi indirir.
 Yarıda kesilirse tekrar çalıştırabilirsin: tamamlanan günleri atlar.
 """
 
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 
 import requests
 
 from database import get_connection, init_db
 from toplayici import (
-    BEKLEME,
     bildirimi_coz,
     gunluk_index_url,
     index_satirini_coz,
@@ -25,6 +26,40 @@ GERIYE_GUN = 90
 # yakın bir gün "tatil" diye işaretlenirse bir daha hiç indirilmez; bu
 # yüzden dosyasız günler ancak bu kadar gün geçtikten sonra kapanır.
 KESINLESME_GUN = 3
+
+# Bildirimler paralel indirilir. SEC saniyede en fazla 10 istek istiyor;
+# hız sınırlayıcı bunun altında kalır.
+ESZAMANLI = 6
+SANIYEDE_ISTEK = 8
+
+
+class HizSiniri:
+    """İş parçacıkları arasında ortak, saniyede en fazla n istek."""
+
+    def __init__(self, saniyede):
+        self.aralik = 1 / saniyede
+        self.sonraki = time.monotonic()
+        self.kilit = threading.Lock()
+
+    def bekle(self):
+        with self.kilit:
+            simdi = time.monotonic()
+            bekleme = self.sonraki - simdi
+            self.sonraki = max(simdi, self.sonraki) + self.aralik
+        if bekleme > 0:
+            time.sleep(bekleme)
+
+
+SINIR = HizSiniri(SANIYEDE_ISTEK)
+
+
+def bildirimi_indir(kayit):
+    """Tek bir bildirimi indirip çözer; hata olursa None döner."""
+    SINIR.bekle()
+    try:
+        return bildirimi_coz(kayit)
+    except Exception:
+        return None
 
 
 def gun_tablosunu_hazirla(conn):
@@ -77,23 +112,21 @@ def gunu_isle(conn, gun):
     eklenen = 0
     hatali = 0
 
-    for i, kayit in enumerate(kayitlar, start=1):
-        try:
-            islemler = bildirimi_coz(kayit)
-        except Exception:
-            hatali += 1
-            time.sleep(BEKLEME)
-            continue
+    # İndirme paralel, veritabanına yazma tek iş parçacığından
+    with ThreadPoolExecutor(ESZAMANLI) as havuz:
+        for i, islemler in enumerate(havuz.map(bildirimi_indir, kayitlar), start=1):
+            if islemler is None:
+                hatali += 1
+                continue
 
-        for islem in islemler:
-            islem["fetched_at"] = simdi
-            eklenen += kaydet(conn, islem)
+            for islem in islemler:
+                islem["fetched_at"] = simdi
+                eklenen += kaydet(conn, islem)
 
-        if i % 100 == 0:
-            conn.commit()
-            print(f"      {i}/{len(kayitlar)} bildirim...", flush=True)
-
-        time.sleep(BEKLEME)
+            if i % 50 == 0:
+                conn.commit()
+            if i % 200 == 0:
+                print(f"      {i}/{len(kayitlar)} bildirim...", flush=True)
 
     conn.commit()
     return {"bildirim": len(kayitlar), "eklenen": eklenen, "hatali": hatali}
@@ -106,10 +139,10 @@ def main():
     erken_kapanan_gunleri_ac(conn)
 
     bugun = date.today()
+    # En yeni günler önce: yarıda kesilse bile güncel veri hazır olur
     gunler = [bugun - timedelta(days=i) for i in range(GERIYE_GUN)]
-    gunler.reverse()
 
-    print(f"Taranacak aralık: {gunler[0]} — {gunler[-1]}")
+    print(f"Taranacak aralık: {gunler[-1]} — {gunler[0]} (yeniden eskiye)")
     print(f"Toplam gün: {len(gunler)}\n")
 
     baslangic = time.time()

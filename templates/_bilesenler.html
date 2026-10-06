@@ -8,10 +8,10 @@
   <span class="rozet rozet-{{ row.action }}">{{ row.action_text }}</span>
 {%- endmacro %}
 
-{% macro kpi(etiket, deger, alt='', tur='') -%}
+{% macro kpi(etiket, deger, alt='', tur='', birim='') -%}
   <div class="kpi {% if tur %}kpi-{{ tur }}{% endif %}">
     <span class="kpi-etiket">{{ etiket }}</span>
-    <span class="kpi-deger">{{ deger }}</span>
+    <span class="kpi-deger">{{ deger }}{% if birim %}<span class="kpi-birim">{{ birim }}</span>{% endif %}</span>
     {% if alt %}<span class="kpi-alt">{{ alt }}</span>{% endif %}
   </div>
 {%- endmacro %}

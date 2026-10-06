@@ -15,10 +15,10 @@
 </header>
 
 <section class="kpi-izgara">
-  {{ kpi('Kongre üyesi', (ozet.kisi or 0)|sayi, 'işlem bildiren') }}
-  {{ kpi('İşlem', (ozet.adet or 0)|sayi, (ozet.ilk|uzun_tarih) ~ ' sonrası' if ozet.ilk else '') }}
-  {{ kpi('Alım', (ozet.alim or 0)|sayi, 'üst sınır ' ~ (ozet.alim_tutar|tutar), 'alim') }}
-  {{ kpi('Satım', (ozet.satim or 0)|sayi, 'üst sınır ' ~ (ozet.satim_tutar|tutar), 'satim') }}
+  {{ kpi('İşlem bildiren üye', (ozet.kisi or 0)|sayi, 'ABD Temsilciler Meclisi', birim='kişi') }}
+  {{ kpi('Toplam işlem', (ozet.adet or 0)|sayi, (ozet.ilk|uzun_tarih) ~ ' sonrası' if ozet.ilk else '', birim='işlem') }}
+  {{ kpi('Alım · tahmini tutar', aralik(ozet.alim_alt, ozet.alim_tutar), (ozet.alim or 0)|sayi ~ ' işlem', 'alim') }}
+  {{ kpi('Satım · tahmini tutar', aralik(ozet.satim_alt, ozet.satim_tutar), (ozet.satim or 0)|sayi ~ ' işlem', 'satim') }}
 </section>
 
 <div class="filtre-satir">
@@ -41,10 +41,11 @@
       <tr>
         <th scope="col">Üye</th>
         <th scope="col">Bölge</th>
-        <th scope="col" class="sag" data-sirala="sayi">İşlem</th>
+        <th scope="col" class="sag" data-sirala="sayi">İşlem sayısı</th>
         <th scope="col" class="sag" data-sirala="sayi">Alım</th>
         <th scope="col" class="sag" data-sirala="sayi">Satım</th>
-        <th scope="col" class="sag" data-sirala="sayi">Hisse</th>
+        <th scope="col" class="sag" data-sirala="sayi">Tahmini hacim</th>
+        <th scope="col" class="sag" data-sirala="sayi">Farklı hisse</th>
         <th scope="col" class="sag" data-sirala="sayi">Ort. gecikme</th>
         <th scope="col" class="sag" data-sirala="sayi">Geç bildirim</th>
         <th scope="col" data-sirala="metin">Son işlem</th>
@@ -55,10 +56,11 @@
       <tr>
         <td data-etiket="Üye"><a class="kisi-ad" href="{{ url_for('kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</td>
         <td data-etiket="Bölge" class="sayi">{{ k.state }}</td>
-        <td data-etiket="İşlem" class="sag sayi" data-deger="{{ k.adet }}"><b>{{ k.adet }}</b></td>
-        <td data-etiket="Alım" class="sag sayi tutar-buy" data-deger="{{ k.alim }}">{{ k.alim }}</td>
-        <td data-etiket="Satım" class="sag sayi tutar-sell" data-deger="{{ k.satim }}">{{ k.satim }}</td>
-        <td data-etiket="Hisse" class="sag sayi" data-deger="{{ k.hisse }}">{{ k.hisse }}</td>
+        <td data-etiket="İşlem sayısı" class="sag sayi" data-deger="{{ k.adet }}"><b>{{ k.adet|sayi }}</b></td>
+        <td data-etiket="Alım" class="sag sayi tutar-buy" data-deger="{{ k.alim }}">{{ k.alim|sayi }} <span class="soluk kucuk">alım</span></td>
+        <td data-etiket="Satım" class="sag sayi tutar-sell" data-deger="{{ k.satim }}">{{ k.satim|sayi }} <span class="soluk kucuk">satım</span></td>
+        <td data-etiket="Tahmini hacim" class="sag sayi" data-deger="{{ k.ust_tutar or 0 }}">{{ k.hacim_aralik }}</td>
+        <td data-etiket="Farklı hisse" class="sag sayi" data-deger="{{ k.hisse }}">{{ k.hisse }}</td>
         <td data-etiket="Ort. gecikme" class="sag sayi" data-deger="{{ k.ort_gecikme }}">{{ k.ort_gecikme }} gün</td>
         <td data-etiket="Geç bildirim" class="sag sayi" data-deger="{{ k.gec }}">{% if k.gec %}<span class="gec">{{ k.gec }}</span>{% else %}<span class="soluk">0</span>{% endif %}</td>
         <td data-etiket="Son işlem" class="tarih" data-deger="{{ k.son_islem }}">{{ k.son_islem|uzun_tarih }}</td>
@@ -68,7 +70,8 @@
   </table>
 </div>
 <p class="dipnot">Sütun başlıklarına tıklayarak sıralayabilirsiniz. Taranmış (elle doldurulmuş) bildirimler
-okunamadığı için listeye dahil değildir. Senato bildirimleri henüz eklenmedi.</p>
+okunamadığı için listeye dahil değildir. Senato bildirimleri henüz eklenmedi.
+Tahmini hacim, bildirim formundaki tutar aralıklarının alt ve üst sınırlarının toplamıdır.</p>
 {% else %}
 <div class="bos-durum">
   <p><strong>Henüz siyasetçi kaydı yok.</strong></p>

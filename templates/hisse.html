@@ -11,13 +11,13 @@
 </header>
 
 <section class="kpi-izgara">
-  {{ kpi('Bildirim', (ozet.adet or 0)|sayi, (ozet.kisi or 0) ~ ' kişi') }}
+  {{ kpi('Bildirim', (ozet.adet or 0)|sayi, (ozet.kisi or 0) ~ ' kişi', birim='işlem') }}
   {{ kpi('Alım', alim_tutar, (ozet.alim or 0) ~ ' işlem', 'alim') }}
   {{ kpi('Satım', satim_tutar, (ozet.satim or 0) ~ ' işlem', 'satim') }}
   {% if fon_ozet %}
   {{ kpi('Fon pozisyonu', fon_ozet.toplam_kisa, fon_ozet.sayi ~ ' fon · ' ~ fon_ozet.donem_adi) }}
   {% else %}
-  {{ kpi('Siyasetçi işlemi', ozet.siyasetci or 0, 'Kongre üyeleri') }}
+  {{ kpi('Siyasetçi işlemi', ozet.siyasetci or 0, 'Kongre üyeleri', birim='işlem') }}
   {% endif %}
 </section>
 

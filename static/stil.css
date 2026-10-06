@@ -353,6 +353,17 @@ h1 {
 
 .kpi-alt { color: var(--yazi-3); font-size: 12.5px; }
 
+.kpi-birim {
+  margin-left: 6px;
+  color: var(--yazi-3);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.kucuk { font-size: 12.5px; font-family: var(--sans); }
+
 .kpi-alim { box-shadow: inset 3px 0 0 var(--alim-cubuk), var(--golge); }
 .kpi-satim { box-shadow: inset 3px 0 0 var(--satim-cubuk), var(--golge); }
 .kpi-uyari { box-shadow: inset 3px 0 0 var(--uyari), var(--golge); }

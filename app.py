@@ -88,7 +88,9 @@ OZET_SUTUNLARI = """
     SUM(CASE WHEN action='buy' THEN 1 ELSE 0 END) AS alim,
     SUM(CASE WHEN action='sell' THEN 1 ELSE 0 END) AS satim,
     SUM(CASE WHEN action='buy' THEN amount_max ELSE 0 END) AS alim_tutar,
-    SUM(CASE WHEN action='sell' THEN amount_max ELSE 0 END) AS satim_tutar
+    SUM(CASE WHEN action='sell' THEN amount_max ELSE 0 END) AS satim_tutar,
+    SUM(CASE WHEN action='buy' THEN amount_min ELSE 0 END) AS alim_alt,
+    SUM(CASE WHEN action='sell' THEN amount_min ELSE 0 END) AS satim_alt
 """
 
 
@@ -158,17 +160,22 @@ def kisa_tutar(n):
     if n >= 1_000_000:
         return f"{n / 1_000_000:.1f}".replace(".", ",") + " mn $"
     if n >= 1_000:
-        return f"{n / 1_000:.0f} b $"
+        return f"{n / 1_000:.0f} bin $"
     return f"{sayi_bicimle(n)} $"
 
 
 def kisa_aralik(low, high):
-    """Kongre bildirimleri aralık verir: '1 b – 15 b $'"""
+    """Kongre bildirimleri aralık verir: '1 bin – 15 bin $'"""
     if low is None:
         return "—"
     if low == high:
         return kisa_tutar(low)
     return f"{kisa_tutar(low)[:-2]} – {kisa_tutar(high)}"
+
+
+@app.template_global("aralik")
+def aralik_global(alt, ust):
+    return kisa_aralik(alt or 0, ust or 0)
 
 
 def tarih_bicimle(iso):
@@ -418,6 +425,7 @@ def siyasetciler():
                   SUM(CASE WHEN action='buy' THEN 1 ELSE 0 END) AS alim,
                   SUM(CASE WHEN action='sell' THEN 1 ELSE 0 END) AS satim,
                   SUM(amount_max) AS ust_tutar,
+                  SUM(amount_min) AS alt_tutar,
                   COUNT(DISTINCT ticker) AS hisse,
                   MAX(transaction_date) AS son_islem,
                   AVG(julianday(disclosed_date) - julianday(transaction_date)) AS ort_gecikme,
@@ -429,7 +437,7 @@ def siyasetciler():
     ):
         k = dict(r)
         k["parti"] = parti_bilgisi(k["party"])
-        k["ust_tutar_kisa"] = kisa_tutar(k["ust_tutar"])
+        k["hacim_aralik"] = kisa_aralik(k["alt_tutar"], k["ust_tutar"])
         k["ort_gecikme"] = round(k["ort_gecikme"] or 0)
         kisiler.append(k)
 
@@ -643,8 +651,10 @@ def kisi(slug):
         ort_gecikme=round(ozet["ort_gecikme"] or 0),
         max_gecikme=round(ozet["max_gecikme"] or 0),
         gec_sayisi=sum(1 for r in rows if r["gec"]),
-        alim_tutar=kisa_tutar(ozet["alim_tutar"]),
-        satim_tutar=kisa_tutar(ozet["satim_tutar"]),
+        alim_tutar=(kisa_aralik(ozet["alim_alt"] or 0, ozet["alim_tutar"] or 0) if siyasetci
+                    else kisa_tutar(ozet["alim_tutar"])),
+        satim_tutar=(kisa_aralik(ozet["satim_alt"] or 0, ozet["satim_tutar"] or 0) if siyasetci
+                     else kisa_tutar(ozet["satim_tutar"])),
         hisseler=[dict(h, hacim_kisa=kisa_tutar(h["hacim"])) for h in hisseler],
         rows=rows,
     )

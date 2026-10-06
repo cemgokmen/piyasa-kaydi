@@ -15,8 +15,8 @@
 <section class="kpi-izgara" aria-label="Özet">
   {{ kpi('Yönetici alımı · 30 gün', yonetici.alim_tutar|tutar, (yonetici.alim or 0)|sayi ~ ' işlem', 'alim') }}
   {{ kpi('Yönetici satımı · 30 gün', yonetici.satim_tutar|tutar, (yonetici.satim or 0)|sayi ~ ' işlem', 'satim') }}
-  {{ kpi('Siyasetçi işlemi · 1 yıl', (siyaset.adet or 0)|sayi, (siyaset.kisi or 0) ~ ' Kongre üyesi') }}
-  {{ kpi('Takip edilen fon', fon_sayisi, donem_adi) }}
+  {{ kpi('Siyasetçi işlemi · 1 yıl', (siyaset.adet or 0)|sayi, (siyaset.kisi or 0) ~ ' Kongre üyesi', birim='işlem') }}
+  {{ kpi('Takip edilen fon', fon_sayisi, donem_adi, birim='fon') }}
 </section>
 
 <div class="izgara-2">
@@ -31,7 +31,7 @@
     </header>
     {% if kume %}
     <table class="tablo tablo-sade">
-      <thead><tr><th>Hisse</th><th class="sag">Yönetici</th><th class="sag">İşlem</th><th class="sag">Toplam</th></tr></thead>
+      <thead><tr><th>Hisse</th><th class="sag">Yönetici sayısı</th><th class="sag">İşlem sayısı</th><th class="sag">Toplam tutar</th></tr></thead>
       <tbody>
         {% for k in kume %}
         <tr>
@@ -102,7 +102,7 @@
     </header>
     {% if siyaset_hisse %}
     <table class="tablo tablo-sade">
-      <thead><tr><th>Hisse</th><th class="sag">Üye</th><th>Alım / satım</th></tr></thead>
+      <thead><tr><th>Hisse</th><th class="sag">Üye sayısı</th><th>Alım / satım dağılımı</th></tr></thead>
       <tbody>
         {% for h in siyaset_hisse %}
         {% set toplam = h.alim + h.satim %}
@@ -114,7 +114,7 @@
             <span class="oran-cubuk" title="{{ h.alim }} alım, {{ h.satim }} satım">
               <span class="oran-alim" style="width: {{ (h.alim / toplam * 100) if toplam else 0 }}%"></span>
             </span>
-            <span class="sayi soluk">{{ h.alim }}/{{ h.satim }}</span>
+            <span class="soluk kucuk">{{ h.alim }} alım · {{ h.satim }} satım</span>
           </td>
         </tr>
         {% endfor %}
