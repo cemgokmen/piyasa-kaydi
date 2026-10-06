@@ -1,10 +1,12 @@
 """Biçimlendirme, fiyat hesapları ve Kongre ayrıştırma yardımcıları."""
 
+from datetime import UTC
+
 import pandas as pd
 import pytest
 
+from piyasa import bicim, fiyat
 from piyasa.toplama import kongre
-from piyasa.web import bicim, fiyat
 
 
 @pytest.mark.parametrize("girdi, beklenen", [
@@ -69,11 +71,12 @@ def test_kongre_tutar_ve_isim():
 
 
 def test_haber_secimi():
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     from piyasa.emtia import haberler
 
     def h(baslik, kaynak="Ajans", gun=1):
-        return {"baslik": baslik, "kaynak": kaynak, "zaman": datetime(2026, 10, gun, tzinfo=timezone.utc),
+        return {"baslik": baslik, "kaynak": kaynak, "zaman": datetime(2026, 10, gun, tzinfo=UTC),
                 "etiketler": haberler.etiketle(baslik)}
 
     secilen = haberler._sec([

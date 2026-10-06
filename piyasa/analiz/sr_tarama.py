@@ -16,7 +16,7 @@ import sys
 import warnings
 
 import yfinance as yf
-from scipy.stats import norm, binom
+from scipy.stats import binom, norm
 
 from piyasa.analiz.destek_direnc import YARILANMA_GUN, bolgeleri_hesapla
 

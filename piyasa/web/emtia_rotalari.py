@@ -6,9 +6,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 from flask import Blueprint, abort, jsonify, render_template
 
+from piyasa import fiyat
 from piyasa.emtia import haberler, sorgular
 from piyasa.emtia.tanimlar import EMTIA, EMTIALAR, GOSTERGELER, GRUPLAR, ONS_GRAM
-from piyasa.web import fiyat
 
 emtia = Blueprint("emtia", __name__)
 
@@ -16,7 +16,7 @@ emtia = Blueprint("emtia", __name__)
 def _fiyatlar(kodlar):
     """Birden çok Yahoo kodunun fiyat bilgisini paralel alır (önbellekten ya da Yahoo'dan)."""
     with ThreadPoolExecutor(max_workers=len(kodlar)) as havuz:
-        return dict(zip(kodlar, havuz.map(lambda k: fiyat.fiyat_bilgisi(k, ham=True), kodlar)))
+        return dict(zip(kodlar, havuz.map(lambda k: fiyat.fiyat_bilgisi(k, ham=True), kodlar), strict=True))
 
 
 def _degisim(bilgi, anahtar):

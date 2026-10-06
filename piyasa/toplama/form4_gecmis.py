@@ -6,11 +6,10 @@ Yarıda kesilirse tekrar çalıştırabilirsin: tamamlanan günleri atlar.
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import requests
 
-from piyasa.veritabani import get_connection, init_db
 from piyasa.toplama.form4 import (
     bildirimi_coz,
     gunluk_index_url,
@@ -18,6 +17,7 @@ from piyasa.toplama.form4 import (
     indir,
     kaydet,
 )
+from piyasa.veritabani import get_connection, init_db
 
 # Kaç gün geriye gidilsin (takvim günü, hafta sonları dahil sayılır)
 GERIYE_GUN = 90
@@ -108,7 +108,7 @@ def gunu_isle(conn, gun):
     kayitlar = [index_satirini_coz(s) for s in satirlar]
     kayitlar = [k for k in kayitlar if k and k["form_type"] == "4"]
 
-    simdi = datetime.now(timezone.utc).isoformat()
+    simdi = datetime.now(UTC).isoformat()
     eklenen = 0
     hatali = 0
 
@@ -163,7 +163,7 @@ def main():
             print("      dosya yok (hafta sonu / tatil)")
             conn.execute(
                 "INSERT OR REPLACE INTO fetched_days VALUES (?, ?, ?)",
-                (gun.isoformat(), 0, datetime.now(timezone.utc).isoformat()),
+                (gun.isoformat(), 0, datetime.now(UTC).isoformat()),
             )
             conn.commit()
             continue
@@ -177,7 +177,7 @@ def main():
 
         conn.execute(
             "INSERT OR REPLACE INTO fetched_days VALUES (?, ?, ?)",
-            (gun.isoformat(), sonuc["eklenen"], datetime.now(timezone.utc).isoformat()),
+            (gun.isoformat(), sonuc["eklenen"], datetime.now(UTC).isoformat()),
         )
         conn.commit()
 

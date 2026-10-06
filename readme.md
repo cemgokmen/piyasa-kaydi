@@ -121,12 +121,17 @@ python -m piyasa fon
 python -m piyasa cusip
 ```
 
-## Testler
+## Testler ve kod denetimi
 
 ```bash
 pip install -r requirements-dev.txt
 python -m pytest
+ruff check .
 ```
+
+Katman kuralı: `web` yalnızca diğer katmanları kullanır; veri toplama,
+analiz ve emtia katmanları `web`'i içe aktarmaz (`tests/test_mimari.py`
+denetler).
 
 Testler gerçek veritabanına ve internete dokunmaz; geçici bir örnek
 veritabanı kurulur, fiyat servisi sahte veriyle değiştirilir.
@@ -149,6 +154,11 @@ piyasa/
   __main__.py              Komut satırı: python -m piyasa <komut>
   ayarlar.py               Dosya yolları, SEC_USER_AGENT
   veritabani.py            SQLite bağlantısı ve şema (data/kayitlar.db)
+  kurallar.py              Yasal süreler, eşikler, partiler, ortak SQL koşulları
+  bicim.py                 Tutar, yüzde ve tarihlerin Türkçe gösterimi
+  kayitlar.py              İşlem kayıtlarını gösterime hazırlama
+  fiyat.py                 Yahoo Finance fiyatları, değişimler, hacim
+  onbellek.py              Süreli bellek önbelleği (@sureli)
   slug.py                  İsimleri adres dostu metne çevirir
 
   toplama/                 Resmî kaynaklardan veri indirenler
@@ -189,8 +199,7 @@ piyasa/
     emtia_rotalari.py      Emtia sayfaları (Blueprint)
     analiz_rotalari.py     Performans, çıkar çatışması, sinyaller, günlük özet
     sorgular.py            Bütün veritabanı sorguları
-    bicim.py               Tutar, tarih biçimleri ve şablon süzgeçleri
-    fiyat.py               Yahoo Finance fiyatları ve değişimler (15 dk önbellek)
+    bicim.py               Şablon süzgeçleri
     arama.py               Arama önerileri: hisse, kişi, fon, emtia dizini
     templates/, static/    Şablonlar, CSS, JS (grafik.js: ortak SVG grafik çizici)
 

@@ -5,10 +5,11 @@ ve şablonu çizer; SQL burada yazılmaz.
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
+from piyasa import fiyat
 from piyasa.analiz import cakisma, performans, sinyaller
 from piyasa.emtia.tanimlar import EMTIALAR
-from piyasa.web import arama, fiyat, sorgular
-from piyasa.web.bicim import PARTILER
+from piyasa.kurallar import PARTILER
+from piyasa.web import arama, sorgular
 
 site = Blueprint("site", __name__)
 

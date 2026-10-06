@@ -9,11 +9,11 @@ from contextlib import closing
 from datetime import date, timedelta
 
 from piyasa.analiz import cakisma
+from piyasa.bicim import AYLAR, donem_metni, kisa_aralik, kisa_tutar
+from piyasa.kayitlar import islem_hazirla
+from piyasa.kurallar import GECERLI_KOD as GECERLI_TICKER
+from piyasa.kurallar import STOCK_ACT_GUN, TEMIZ, YUKLU_ALIM_ALT_SINIR, parti_bilgisi
 from piyasa.veritabani import get_connection
-from piyasa.web.bicim import (
-    AYLAR, STOCK_ACT_GUN, YUKLU_ALIM_ALT_SINIR,
-    donem_metni, islem_hazirla, kisa_aralik, kisa_tutar, parti_bilgisi,
-)
 
 SAYFA_BOYUTU = 50
 
@@ -37,12 +37,6 @@ KAYNAKLAR = {
     "yonetici": ("Şirket yöneticileri", "chamber IS NULL"),
     "siyasetci": ("Siyasetçiler", "chamber IS NOT NULL"),
 }
-
-# Anormal fiyatlı (yazım hatası şüpheli) kayıtlar hiçbir yerde gösterilmez
-TEMIZ = "(suspect IS NULL OR suspect = 0)"
-
-# Borsa kodu olmayan ihraççılar Form 4'te 'NONE' gibi yer tutucularla gelir
-GECERLI_TICKER = "ticker NOT IN ('NONE', 'N/A', 'NA', '')"
 
 OZET_SUTUNLARI = """
     COUNT(*) AS adet,

@@ -18,6 +18,7 @@ import requests
 
 from piyasa.analiz.sektorler import KOMITE_ADLARI, sic_sektoru
 from piyasa.ayarlar import USER_AGENT
+from piyasa.kurallar import GECERLI_KOD
 from piyasa.slug import slugify
 from piyasa.veritabani import get_connection, init_db
 
@@ -37,9 +38,8 @@ def json_al(adres):
 
 def sektorleri_doldur(conn):
     hisseler = [s[0] for s in conn.execute(
-        """SELECT DISTINCT ticker FROM transactions
-           WHERE ticker NOT IN ('NONE', 'N/A', 'NA', '')
-             AND ticker NOT IN (SELECT ticker FROM sirket)"""
+        f"""SELECT DISTINCT ticker FROM transactions
+           WHERE {GECERLI_KOD} AND ticker NOT IN (SELECT ticker FROM sirket)"""
     )]
     if not hisseler:
         print("  Yeni hisse yok.")

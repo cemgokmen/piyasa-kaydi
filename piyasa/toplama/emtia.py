@@ -13,7 +13,7 @@ Fiyatlar ve haberler burada indirilmez; site onları canlı alır.
 
 import io
 import zipfile
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pandas as pd
 import requests
@@ -122,7 +122,7 @@ def main():
 
     conn.execute(
         "INSERT OR REPLACE INTO emtia_guncelleme (anahtar, zaman) VALUES ('son', ?)",
-        (datetime.now(timezone.utc).isoformat(),),
+        (datetime.now(UTC).isoformat(),),
     )
     conn.commit()
     conn.close()

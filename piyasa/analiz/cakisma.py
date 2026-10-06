@@ -11,16 +11,14 @@ Not: Komite üyelikleri günceldir; geçmişteki bir işlemin yapıldığı gün
 farklı bir komitede olabilir.
 """
 
-import threading
-import time
 from contextlib import closing
 
 from piyasa.analiz.sektorler import KOMITE_ADLARI, KOMITE_SEKTORLERI
+from piyasa.bicim import kisa_aralik
+from piyasa.kayitlar import islem_hazirla
+from piyasa.kurallar import parti_bilgisi
+from piyasa.onbellek import sureli
 from piyasa.veritabani import get_connection
-
-_onbellek = {"zaman": 0, "veri": None}
-_kilit = threading.Lock()
-ONBELLEK_SURESI = 5 * 60
 
 
 def _hesapla():
@@ -46,20 +44,14 @@ def _hesapla():
     return islemler
 
 
+@sureli(5 * 60)
 def cakisan_islemler():
     """{işlem id: {'sektor': ..., 'komiteler': [...]}} — 5 dakika önbellekli."""
-    with _kilit:
-        if _onbellek["veri"] is not None and time.time() - _onbellek["zaman"] < ONBELLEK_SURESI:
-            return _onbellek["veri"]
-    veri = _hesapla()
-    with _kilit:
-        _onbellek.update(zaman=time.time(), veri=veri)
-    return veri
+    return _hesapla()
 
 
 def onbellegi_temizle():
-    with _kilit:
-        _onbellek.update(zaman=0, veri=None)
+    cakisan_islemler.temizle()
 
 
 def isaretle(islemler):
@@ -88,8 +80,6 @@ def uye_komiteleri(slug):
 
 def rapor(limit=100):
     """Çıkar çatışması sayfası: üye bazında özet ve son işlemler."""
-    from piyasa.web.bicim import islem_hazirla, kisa_aralik
-
     cakisanlar = cakisan_islemler()
     if not cakisanlar:
         return {"uyeler": [], "islemler": [], "toplam": 0}
@@ -118,7 +108,6 @@ def rapor(limit=100):
         u["komiteler"].update(c["komiteler"])
         u["sektorler"].add(c["sektor"])
 
-    from piyasa.web.bicim import parti_bilgisi
     liste = []
     for u in uyeler.values():
         toplam = toplamlar.get(u["slug"], u["adet"])

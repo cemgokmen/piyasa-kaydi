@@ -3,7 +3,7 @@ holdings tablosundaki CUSIP kodlarinin ticker karsiligini OpenFIGI'den bulur.
 Calistirmak icin:  python -m piyasa cusip
 """
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import requests
 
@@ -60,7 +60,7 @@ def kaydet(conn, cusip, ticker):
     conn.execute(
         "INSERT OR REPLACE INTO cusip_ticker (cusip, ticker, kaynak, guncelleme) "
         "VALUES (?, ?, ?, ?)",
-        (cusip, ticker, "openfigi", datetime.now(timezone.utc).isoformat()),
+        (cusip, ticker, "openfigi", datetime.now(UTC).isoformat()),
     )
 
 
@@ -86,7 +86,7 @@ def main():
             time.sleep(60)
             continue
 
-        for cusip, kayit in zip(grup, sonuc):
+        for cusip, kayit in zip(grup, sonuc, strict=True):
             veri = kayit.get("data")
             if veri:
                 kaydet(conn, cusip, us_ticker_sec(veri))

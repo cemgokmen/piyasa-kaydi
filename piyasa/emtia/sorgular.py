@@ -162,7 +162,7 @@ def faiz_kararlari(yil=4):
         return None
 
     kararlar = []
-    for (t0, v0), (t1, v1) in zip(fed, fed[1:]):
+    for (_, v0), (t1, v1) in zip(fed, fed[1:], strict=False):
         if v1 != v0:
             kararlar.append({"tarih": t1, "faiz": v1, "degisim": v1 - v0})
     kararlar.reverse()

@@ -24,17 +24,17 @@ import re
 import sys
 import time
 import unicodedata
-import zipfile
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timezone
+import zipfile
+from datetime import UTC, date, datetime
 
 import pdfplumber
 import requests
 
 from piyasa.ayarlar import USER_AGENT
-from piyasa.veritabani import get_connection, init_db
 from piyasa.slug import slugify
 from piyasa.toplama.form4 import kaydet
+from piyasa.veritabani import get_connection, init_db
 
 KAYNAK = "house_ptr"
 LISTE_URL = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/{yil}FD.zip"
@@ -245,7 +245,7 @@ def pdf_ayristir(icerik):
                 break
             blok.append(s)
 
-        def topla(bas, bit):
+        def topla(bas, bit, blok=blok):
             return " ".join(
                 k["text"] for s in blok for k in s["kelimeler"] if sutunda(k, bas, bit)
             ).strip()
@@ -341,7 +341,7 @@ def main():
         print(f"{yil}: {len(liste)} işlem bildirimi, {len(yeni)} tanesi yeni.\n")
 
         for n, b in enumerate(yeni, start=1):
-            simdi = datetime.now(timezone.utc).isoformat()
+            simdi = datetime.now(UTC).isoformat()
 
             if b["doc"][:1] in ("8", "9"):
                 durum, eklenen = "taranmis", 0

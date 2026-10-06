@@ -5,8 +5,8 @@ kayıtlar için.
 Bir kez çalıştırılır.
 """
 
-from piyasa.veritabani import get_connection, init_db
 from piyasa.slug import slugify
+from piyasa.veritabani import get_connection, init_db
 
 
 def main():

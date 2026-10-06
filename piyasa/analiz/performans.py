@@ -10,8 +10,8 @@ bilinir).
 from contextlib import closing
 
 from piyasa.analiz import istatistik
+from piyasa.kurallar import parti_bilgisi
 from piyasa.veritabani import get_connection
-from piyasa.web.bicim import parti_bilgisi
 
 STANDART_UFUK = "90"
 ASGARI_ALIM = 10      # sıralamaya girmek için en az bu kadar ölçülebilir alım

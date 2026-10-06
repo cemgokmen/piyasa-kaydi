@@ -4,14 +4,14 @@ SQLite dosyası örnek kayıtlarla doldurulur, fiyat servisi sahte veriyle
 değiştirilir.
 """
 
-from datetime import date, timedelta
+from datetime import UTC, date, timedelta
 
 import pandas as pd
 import pytest
 
-from piyasa import veritabani
+from piyasa import fiyat, veritabani
 from piyasa.emtia import haberler
-from piyasa.web import create_app, fiyat
+from piyasa.web import create_app
 
 BUGUN = date.today()
 
@@ -149,12 +149,12 @@ def ornek_analiz_verisi(conn):
 
 
 def sahte_haberler(sorgu):
-    from datetime import datetime, timezone
+    from datetime import datetime
     return [{
         "baslik": f"Örnek haber {i}: OPEC üretim kararı" if i % 2 else f"Fed faiz kararı sonrası emtialar {i}",
         "kaynak": "Örnek Ajans",
         "adres": f"https://ornek.com/haber/{i}",
-        "zaman": datetime(2026, 10, 1 + i, tzinfo=timezone.utc),
+        "zaman": datetime(2026, 10, 1 + i, tzinfo=UTC),
         "tarih": f"2026-10-0{1 + i}",
         "etiketler": ["OPEC", "Arz"] if i % 2 else ["Merkez bankası"],
     } for i in range(5)]
@@ -201,7 +201,8 @@ def veritabani_yolu(tmp_path_factory):
     from piyasa.analiz import cakisma, getiri, sinyaller
     getiri.main()
     cakisma.onbellegi_temizle()
-    sinyaller._onbellek["veri"] = sinyaller._onay_onbellek["veri"] = None
+    sinyaller.basari.temizle()
+    sinyaller.uclu_onay.temizle()
 
     yield yol
     veritabani.DB_PATH = eski
@@ -212,8 +213,8 @@ def uygulama(veritabani_yolu):
     eski = fiyat._indir, haberler._indir
     fiyat._indir = sahte_fiyat
     haberler._indir = sahte_haberler
-    fiyat._onbellek.clear()
-    haberler._onbellek.clear()
+    fiyat._bilgi.temizle()
+    haberler._secilmis.temizle()
     app = create_app()
     app.config["TESTING"] = True
     yield app

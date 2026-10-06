@@ -6,11 +6,11 @@ Yahoo'ya yeniden gidilmez.
 """
 
 import re
-import threading
-import time
 
 import pandas as pd
 import yfinance as yf
+
+from piyasa.onbellek import sureli
 
 ONBELLEK_SURESI = 15 * 60
 
@@ -32,10 +32,6 @@ GRAFIK_ARALIKLARI = [
     ("5y", pd.DateOffset(years=5), "W-FRI"),
     ("10y", pd.DateOffset(years=10), "W-FRI"),
 ]
-
-_onbellek = {}
-_kilit = threading.Lock()
-
 
 def yahoo_kodu(ticker):
     """
@@ -75,7 +71,7 @@ def _seri(tablo, geri, ornekleme):
     hacimli = parca["Volume"].sum() > 0
     return [
         [t.strftime("%Y-%m-%d"), round(float(k), 4)] + ([int(h)] if hacimli else [])
-        for t, k, h in zip(parca.index, parca["Close"], parca["Volume"])
+        for t, k, h in zip(parca.index, parca["Close"], parca["Volume"], strict=True)
     ]
 
 
@@ -125,26 +121,18 @@ def _indir(kod):
     }
 
 
+@sureli(ONBELLEK_SURESI)
+def _bilgi(kod):
+    try:
+        return _indir(kod)
+    except Exception:
+        return None
+
+
 def fiyat_bilgisi(ticker, ham=False):
     """
-    Fiyat, değişimler, hacim ve grafik serileri; veri yoksa None.
+    Fiyat, değişimler, hacim ve grafik serileri; veri yoksa None. 15 dk önbellekli.
     ham=True: kod olduğu gibi kullanılır (emtia ve endeks kodları: 'GC=F', 'DX-Y.NYB').
     """
     kod = ticker if ham else yahoo_kodu(ticker)
-    if not kod:
-        return None
-
-    simdi = time.time()
-    with _kilit:
-        kayit = _onbellek.get(kod)
-        if kayit and simdi - kayit[0] < ONBELLEK_SURESI:
-            return kayit[1]
-
-    try:
-        bilgi = _indir(kod)
-    except Exception:
-        bilgi = None
-
-    with _kilit:
-        _onbellek[kod] = (simdi, bilgi)
-    return bilgi
+    return _bilgi(kod) if kod else None

@@ -8,14 +8,13 @@ import json
 import time
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 
 import requests
 
 from piyasa.ayarlar import FON_LISTESI, USER_AGENT
-from piyasa.veritabani import get_connection, init_db
 from piyasa.slug import slugify
+from piyasa.veritabani import get_connection, init_db
 
 # Her fon için kaç çeyrek geriye gidilsin
 CEYREK_SAYISI = 4
@@ -158,7 +157,7 @@ def main():
     print(f"{len(fonlar)} fon işlenecek.\n")
 
     conn = get_connection()
-    simdi = datetime.now(timezone.utc).isoformat()
+    simdi = datetime.now(UTC).isoformat()
 
     toplam_eklenen = 0
 

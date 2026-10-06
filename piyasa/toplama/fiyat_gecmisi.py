@@ -16,8 +16,9 @@ from datetime import date, timedelta
 import pandas as pd
 import yfinance as yf
 
+from piyasa.fiyat import yahoo_kodu
+from piyasa.kurallar import GECERLI_KOD, TEMIZ
 from piyasa.veritabani import get_connection, init_db
-from piyasa.web.fiyat import yahoo_kodu
 
 ENDEKS = "SPY"
 PARCA = 150            # tek istekte indirilen hisse sayısı
@@ -27,10 +28,8 @@ YENILEME_GUN = 10      # son kaç günün fiyatı her seferinde yeniden yazıls�
 def gereken_hisseler(conn):
     return sorted({
         s["ticker"] for s in conn.execute(
-            """SELECT DISTINCT ticker FROM transactions
-               WHERE (chamber IS NOT NULL OR action = 'buy')
-                 AND (suspect IS NULL OR suspect = 0)
-                 AND ticker NOT IN ('NONE', 'N/A', 'NA', '')"""
+            f"""SELECT DISTINCT ticker FROM transactions
+               WHERE (chamber IS NOT NULL OR action = 'buy') AND {TEMIZ} AND {GECERLI_KOD}"""
         )
     } | {ENDEKS})
 

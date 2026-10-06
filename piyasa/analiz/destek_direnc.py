@@ -181,7 +181,7 @@ def yogunluk_egrisi(noktalar, agirliklar, izgara):
     merkezleridir. Çanın genişliği o günkü ATR'ye göre ayarlanır.
     """
     yogunluk = np.zeros_like(izgara)
-    for fiyat, a, w in zip(noktalar["fiyat"], noktalar["atr"], agirliklar):
+    for fiyat, a, w in zip(noktalar["fiyat"], noktalar["atr"], agirliklar, strict=True):
         h = KDE_BANT * a
         yogunluk += w * np.exp(-0.5 * ((izgara - fiyat) / h) ** 2)
     return yogunluk
@@ -198,10 +198,10 @@ def hacim_profili(df, izgara, son_indeks, yarilanma=YARILANMA_GUN):
     """
     profil = np.zeros_like(izgara)
 
-    for i, (l, h, v) in enumerate(zip(df["Low"], df["High"], df["Volume"])):
-        if v <= 0 or h <= l:
+    for i, (dusuk, h, v) in enumerate(zip(df["Low"], df["High"], df["Volume"], strict=True)):
+        if v <= 0 or h <= dusuk:
             continue
-        a = np.searchsorted(izgara, l)
+        a = np.searchsorted(izgara, dusuk)
         b = np.searchsorted(izgara, h)
         if b <= a:
             b = a + 1

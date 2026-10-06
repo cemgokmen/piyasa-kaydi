@@ -1,0 +1,45 @@
+[project]
+name = "piyasa-kaydi"
+version = "0.5.0"
+description = "ABD'de siyasetçilerin, şirket yöneticilerinin ve fonların bildirdiği hisse işlemleri — Türkçe şeffaflık sitesi"
+readme = "readme.md"
+requires-python = ">=3.11"
+dependencies = [
+    "flask",
+    "requests",
+    "numpy",
+    "pandas",
+    "scipy",
+    "yfinance",
+    "pdfplumber",
+    "xlrd",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "selenium", "ruff"]
+
+[project.scripts]
+piyasa = "piyasa.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["piyasa*"]
+
+[tool.setuptools.package-data]
+"piyasa.web" = ["templates/*.html", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["venv", "deneme"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# SQL ve uzun Türkçe metinler satır sınırını aşabilir
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["piyasa"]

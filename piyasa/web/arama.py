@@ -9,15 +9,14 @@ harf ve Türkçe karakterlerden bağımsızdır: "sandisk", "SanDisk", "altin",
 
 import math
 import re
-import threading
-import time
 import unicodedata
 from collections import Counter, defaultdict
 from contextlib import closing
 
 from piyasa.emtia.tanimlar import EMTIALAR
+from piyasa.kurallar import GECERLI_KOD, TEMIZ, parti_bilgisi
+from piyasa.onbellek import sureli
 from piyasa.veritabani import get_connection
-from piyasa.web.bicim import parti_bilgisi
 
 ONBELLEK_SURESI = 10 * 60
 EN_FAZLA = 8
@@ -67,8 +66,8 @@ def _dizin_kur():
         hisse_adlari = defaultdict(list)
         hisse_sayisi = Counter()
         for s in conn.execute(
-            """SELECT ticker, asset_name, COUNT(*) AS n FROM transactions
-               WHERE (suspect IS NULL OR suspect = 0) AND ticker NOT IN ('NONE', 'N/A', 'NA', '')
+            f"""SELECT ticker, asset_name, COUNT(*) AS n FROM transactions
+               WHERE {TEMIZ} AND {GECERLI_KOD}
                GROUP BY ticker, asset_name"""
         ):
             hisse_adlari[s["ticker"]] += [s["asset_name"]] * min(s["n"], 50)
@@ -88,9 +87,9 @@ def _dizin_kur():
             })
 
         for s in conn.execute(
-            """SELECT person_slug, MAX(person) AS ad, MAX(chamber) AS meclis, MAX(party) AS parti,
+            f"""SELECT person_slug, MAX(person) AS ad, MAX(chamber) AS meclis, MAX(party) AS parti,
                       MAX(state) AS bolge, MAX(job_title) AS unvan, MAX(company) AS sirket, COUNT(*) AS n
-               FROM transactions WHERE (suspect IS NULL OR suspect = 0) AND person_slug IS NOT NULL
+               FROM transactions WHERE {TEMIZ} AND person_slug IS NOT NULL
                GROUP BY person_slug"""
         ):
             if s["meclis"]:
@@ -120,23 +119,13 @@ def _dizin_kur():
     return girdiler
 
 
-_onbellek = {"zaman": 0, "dizin": None}
-_kilit = threading.Lock()
-
-
+@sureli(ONBELLEK_SURESI)
 def dizin():
-    with _kilit:
-        if _onbellek["dizin"] is not None and time.time() - _onbellek["zaman"] < ONBELLEK_SURESI:
-            return _onbellek["dizin"]
-    yeni = _dizin_kur()
-    with _kilit:
-        _onbellek.update(zaman=time.time(), dizin=yeni)
-    return yeni
+    return _dizin_kur()
 
 
 def onbellegi_temizle():
-    with _kilit:
-        _onbellek.update(zaman=0, dizin=None)
+    dizin.temizle()
 
 
 def _puan(girdi, aranan):

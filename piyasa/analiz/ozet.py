@@ -7,17 +7,15 @@ her cümle doğrudan veritabanındaki kayıtlara dayanır.
 from contextlib import closing
 from datetime import date, timedelta
 
+from piyasa import fiyat
 from piyasa.analiz import cakisma
+from piyasa.bicim import kisa_aralik, kisa_tutar, sayi, uzun_tarih, yuzde
 from piyasa.emtia import sorgular as emtia_sorgulari
 from piyasa.emtia.tanimlar import EMTIALAR
+from piyasa.kurallar import GECERLI_KOD as GECERLI
+from piyasa.kurallar import TEMIZ, YUKLU_ALIM_ALT_SINIR, parti_bilgisi
 from piyasa.veritabani import get_connection
-from piyasa.web import fiyat
-from piyasa.web.bicim import (
-    YUKLU_ALIM_ALT_SINIR, kisa_aralik, kisa_tutar, parti_bilgisi, sayi, uzun_tarih, yuzde,
-)
 
-TEMIZ = "(suspect IS NULL OR suspect = 0)"
-GECERLI = "ticker NOT IN ('NONE', 'N/A', 'NA', '')"
 GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 
 
@@ -102,8 +100,9 @@ def _siyasetciler(conn, gun):
 
     for s in [s for s in alim if (s["amount_min"] or 0) >= YUKLU_ALIM_ALT_SINIR][:3]:
         p = parti_bilgisi(s["party"])
+        parti = f" ({p['ad']})" if p else ""
         maddeler.append(_madde(
-            f"Yüklü alım: {s['person']}{f' ({p['ad']})' if p else ''}, {s['asset_name'] or s['ticker']} "
+            f"Yüklü alım: {s['person']}{parti}, {s['asset_name'] or s['ticker']} "
             f"hissesinden {kisa_aralik(s['amount_min'], s['amount_max'])} aldı "
             f"(işlem {uzun_tarih(s['transaction_date'])}).",
             f"/kisi/{s['person_slug']}", s["ticker"],

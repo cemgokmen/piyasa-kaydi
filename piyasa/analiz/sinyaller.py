@@ -10,25 +10,23 @@ mi? Giriş, bildirimin kamuya açıklandığı gündür — sinyali izleyen biri
 gerçekte yakalayabileceği getiri.
 """
 
-import threading
-import time
 from collections import defaultdict
 from contextlib import closing
 from datetime import date, timedelta
 
 from piyasa.analiz import cakisma, istatistik
 from piyasa.analiz.getiri import UFUKLAR
+from piyasa.bicim import kisa_aralik, kisa_tutar
+from piyasa.kurallar import YUKLU_ALIM_ALT_SINIR, gecerli_kod, parti_bilgisi, temiz
+from piyasa.onbellek import sureli
 from piyasa.veritabani import get_connection
-from piyasa.web.bicim import YUKLU_ALIM_ALT_SINIR, kisa_aralik, kisa_tutar, parti_bilgisi
 
-TEMIZ = "(t.suspect IS NULL OR t.suspect = 0)"
-GECERLI = "t.ticker NOT IN ('NONE', 'N/A', 'NA', '')"
+TEMIZ = temiz("t")
+GECERLI = gecerli_kod("t")
 
 YONETICI_PENCERE = 90      # gün: yönetici alımları
 SIYASET_PENCERE = 180      # gün: siyasetçi alımları
 KUME_PENCERE = 30          # gün: küme alımında alımlar arası en fazla süre
-
-_kilit = threading.Lock()
 
 
 def gun_once(gun):
@@ -67,18 +65,10 @@ def _fon_degisimleri(conn):
     return fonlar, son
 
 
-_onay_onbellek = {"zaman": 0, "veri": None}
-
-
+@sureli(10 * 60)
 def uclu_onay():
     """Kaynak sayısına göre sıralı hisse listesi (en az iki kaynak). 10 dk önbellekli."""
-    with _kilit:
-        if _onay_onbellek["veri"] and time.time() - _onay_onbellek["zaman"] < 600:
-            return _onay_onbellek["veri"]
-    veri = _uclu_onay_hesapla()
-    with _kilit:
-        _onay_onbellek.update(zaman=time.time(), veri=veri)
-    return veri
+    return _uclu_onay_hesapla()
 
 
 def _uclu_onay_hesapla():
@@ -186,15 +176,9 @@ def _olaylar(conn):
     }
 
 
-_onbellek = {"zaman": 0, "veri": None}
-
-
+@sureli(60 * 60)
 def basari():
     """Her sinyal ve süre için istatistik özeti. 1 saat önbellekli."""
-    with _kilit:
-        if _onbellek["veri"] and time.time() - _onbellek["zaman"] < 3600:
-            return _onbellek["veri"]
-
     with closing(get_connection()) as conn:
         olaylar = _olaylar(conn)
         farklar = defaultdict(dict)
@@ -214,7 +198,4 @@ def basari():
 
     # Sinyal × süre sayısı kadar test yapıldı: şans eseri anlamlı görünenleri ele
     istatistik.holm([o for satir in tablo for o in satir["ufuklar"].values()])
-
-    with _kilit:
-        _onbellek.update(zaman=time.time(), veri=tablo)
     return tablo

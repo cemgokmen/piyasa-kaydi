@@ -7,8 +7,6 @@ Sonuçlar 30 dakika bellekte tutulur.
 """
 
 import re
-import threading
-import time
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote
@@ -16,6 +14,7 @@ from urllib.parse import quote
 import requests
 
 from piyasa.emtia.tanimlar import HABER_ETIKETLERI
+from piyasa.onbellek import sureli
 
 RSS_URL = "https://news.google.com/rss/search?q={sorgu}&hl=tr&gl=TR&ceid=TR:tr"
 ONBELLEK_SURESI = 30 * 60
@@ -36,10 +35,6 @@ FIYAT_LISTESI = re.compile(
 
 # Sosyal medya paylaşımları haber sayılmaz
 ELENEN_KAYNAKLAR = ("instagram", "facebook", "youtube", "tiktok", "x.com", "twitter")
-
-_onbellek = {}
-_kilit = threading.Lock()
-
 
 def etiketle(baslik):
     kucuk = baslik.lower()
@@ -93,23 +88,17 @@ def _sec(haberler, adet):
     return secilen
 
 
+@sureli(ONBELLEK_SURESI, hatada_eskisi=True)
+def _secilmis(sorgu):
+    return _sec(_indir(sorgu), 40)
+
+
 def haberler(sorgu, adet=12):
-    """Sorgunun son iki haftadaki haberleri; ulaşılamazsa boş liste."""
-    simdi = time.time()
-    with _kilit:
-        kayit = _onbellek.get(sorgu)
-        if kayit and simdi - kayit[0] < ONBELLEK_SURESI:
-            return kayit[1][:adet]
-
+    """Sorgunun son iki haftadaki haberleri; ağ hatasında son başarılı sonuç ya da boş liste."""
     try:
-        sonuc = _sec(_indir(sorgu), 40)
+        return _secilmis(sorgu)[:adet]
     except Exception:
-        # Ağ hatasında eski sonucu (varsa) göster, yoksa boş dön
-        return kayit[1][:adet] if kayit else []
-
-    with _kilit:
-        _onbellek[sorgu] = (simdi, sonuc)
-    return sonuc[:adet]
+        return []
 
 
 def karar_haberleri(adet=10):

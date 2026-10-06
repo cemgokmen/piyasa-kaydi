@@ -5,14 +5,14 @@ SEC EDGAR'dan Form 4 bildirimlerini çekip veritabanına yazar.
 
 import time
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import requests
 
 from piyasa.ayarlar import USER_AGENT
-from piyasa.veritabani import get_connection, init_db
-from piyasa.slug import slugify
 from piyasa.bakim.supheli import fiyat_imkansiz_mi
+from piyasa.slug import slugify
+from piyasa.veritabani import get_connection, init_db
 
 # Kaç bildirim işlensin. Test için düşük tut.
 LIMIT = 1196
@@ -297,7 +297,7 @@ def main():
     print(f"İşlenecek: {min(LIMIT, len(kayitlar))}\n")
 
     conn = get_connection()
-    simdi = datetime.now(timezone.utc).isoformat()
+    simdi = datetime.now(UTC).isoformat()
 
     eklenen = 0
     atlanan = 0
