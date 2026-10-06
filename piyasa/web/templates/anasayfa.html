@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "_bilesenler.html" import parti_rozeti, islem_rozeti, yuklu_kartlar %}
-{% block baslik %}Piyasa Kaydı: kim aldı, kim sattı, hepsi kayıtta{% endblock %}
+{% block baslik %}Piyasa Kaydı: kim aldı, kim sattı?{% endblock %}
 
 {% block icerik %}
 <section class="giris">
-  <h1>Piyasa Kaydı: kim aldı, kim sattı, hepsi kayıtta.</h1>
+  <h1>Piyasa Kaydı: kim aldı, kim sattı?</h1>
   <p class="giris-metin">Kongre, Beyaz Saray ve SEC bildirimlerinden derlenen alım satım kayıtları.</p>
   <form class="giris-arama" method="get" action="{{ url_for('site.islemler') }}" role="search">
     <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
