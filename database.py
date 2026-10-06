@@ -11,7 +11,8 @@ DB_PATH = BASE_DIR / "data" / "kayitlar.db"
 
 def get_connection():
     """Veritabanına bağlanır."""
-    conn = sqlite3.connect(DB_PATH)
+    # Toplayıcı yazarken site okuyabilsin diye kilit beklemesi uzun
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
 
