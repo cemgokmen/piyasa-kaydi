@@ -1773,3 +1773,34 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 /* Telefon öğeleri: bilgisayarda görünmez ya da düzene etki etmez (mobil.css açar) */
 .alt-gezinti { display: none; }
 .serit-akis { display: contents; }
+
+/* ---------- Piyasa şeridi: kendiliğinden kayar (bütün ekranlarda) ----------
+   Öğeler JS ile bir kez kopyalanır; içerik yarı genişliği kadar kayıp başa
+   sarar. Fare üzerindeyken ya da dokununca durur. */
+
+.serit.kayan .serit-ic {
+  overflow: hidden;
+  padding-right: 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+
+.serit.kayan .serit-akis {
+  display: flex;
+  flex: none;
+  animation: serit-kay var(--kayma-suresi, 40s) linear infinite;
+  will-change: transform;
+}
+
+/* Dikişsiz döngü için aralık boşluk yerine sağ dolguyla verilir */
+.serit.kayan .serit-oge { padding-right: 22px; }
+.serit.kayan:active .serit-akis,
+.serit.kayan:hover .serit-akis { animation-play-state: paused; }
+
+@keyframes serit-kay {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+
+.ozet-govde { max-width: 860px; }

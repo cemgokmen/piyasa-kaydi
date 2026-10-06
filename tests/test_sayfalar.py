@@ -185,7 +185,9 @@ def test_sinyaller_ve_ozet(istemci):
     for metin in ("Üçlü onay", "Sinyaller işe yarıyor mu?", "Siyasetçi alımları", "Küme alımları"):
         assert metin in html
     ozet = istemci.get("/gunluk-ozet").get_data(as_text=True)
-    assert "Metni kopyala" in ozet and "yönetici" in ozet
+    assert "yönetici" in ozet
+    # Paylaşım metni ziyaretçilere gösterilmez
+    assert "Metni kopyala" not in ozet and "ozet-metni" not in ozet
 
 
 def test_arama_onerileri(istemci):

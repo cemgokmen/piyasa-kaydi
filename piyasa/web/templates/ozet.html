@@ -23,7 +23,7 @@
   </div>
 </header>
 
-<div class="izgara-yan">
+<div class="ozet-govde">
   <div>
     {% for bolum, maddeler in bolumler %}
     <section class="panel ozet-bolum">
@@ -43,14 +43,5 @@
     {% endfor %}
   </div>
 
-  <aside>
-    <section class="panel panel-bilgi">
-      <h2>Paylaş</h2>
-      <p class="kucuk soluk">Özetin düz metni; kopyalayıp sosyal medyada ya da mesajla paylaşabilirsiniz.</p>
-      <textarea id="ozet-metni" class="ozet-metni" readonly rows="12">{{ duz_metin }}</textarea>
-      <button type="button" class="dugme dugme-ana" id="kopyala" data-hedef="ozet-metni">Metni kopyala</button>
-      <span class="kopyala-durum" id="kopyala-durum" role="status"></span>
-    </section>
-  </aside>
 </div>
 {% endblock %}

@@ -366,11 +366,7 @@ def test_sinyaller_sayfasi(tarayici, sunucu):
 def test_gunluk_ozet(tarayici, sunucu):
     tarayici.get(sunucu + "/gunluk-ozet")
     baslik = tarayici.find_element(By.TAG_NAME, "h1").text
-    assert tarayici.find_element(By.ID, "ozet-metni").get_attribute("value").startswith("Piyasa Kaydı")
-
-    # Kopyala: pano izni olsun olmasın kullanıcıya bir durum mesajı gösterilir
-    tarayici.find_element(By.ID, "kopyala").click()
-    bekle(tarayici, lambda t: t.find_element(By.ID, "kopyala-durum").text != "")
+    assert not tarayici.find_elements(By.ID, "ozet-metni")
 
     # Önceki gün, sonra gün seçimiyle geri
     onceki = tarayici.find_elements(By.CSS_SELECTOR, 'a[rel="prev"]')
@@ -467,7 +463,20 @@ def test_piyasa_seridi(tarayici, sunucu):
     tarayici.get(sunucu + "/")
     serit = tarayici.find_element(By.ID, "piyasa-seridi")
     bekle(tarayici, lambda t: serit.is_displayed())
-    adlar = [o.find_element(By.CLASS_NAME, "serit-ad").text for o in serit.find_elements(By.CLASS_NAME, "serit-oge")]
+    ogeler = serit.find_elements(By.CLASS_NAME, "serit-oge")
+    adlar = [o.find_element(By.CLASS_NAME, "serit-ad").get_attribute("textContent") for o in ogeler]
     assert {"BIST 100", "S&P 500", "Dolar/TL", "Gram altın", "Brent"} <= set(adlar)
-    tarayici.find_element(By.XPATH, "//a[contains(@class,'serit-oge')][.//span[text()='Brent']]").click()
+    # Şerit kendiliğinden kayıyor: öğeler dikişsiz döngü için iki kez var, animasyon çalışıyor
+    assert "kayan" in serit.get_attribute("class")
+    assert len(ogeler) == 2 * len(set(adlar))
+    kopyalar = serit.find_elements(By.CSS_SELECTOR, "[data-kopya]")
+    assert all(k.get_attribute("aria-hidden") == "true" for k in kopyalar)
+    # Fare üzerine gelince durur
+    ActionChains(tarayici).move_to_element(serit).perform()
+    durum = tarayici.execute_script(
+        "return getComputedStyle(document.querySelector('.serit-akis')).animationPlayState")
+    assert durum == "paused"
+    # Bağlantılı öğe çalışır (hareket ettiği için tıklama JS ile)
+    brent = serit.find_element(By.XPATH, ".//a[contains(@class,'serit-oge')][.//span[text()='Brent']]")
+    tarayici.execute_script("arguments[0].click()", brent)
     bekle(tarayici, EC.url_contains("/emtia/brent"))

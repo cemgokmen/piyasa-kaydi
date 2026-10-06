@@ -142,32 +142,13 @@ document.querySelectorAll("[data-geri]").forEach(function (dugme) {
 });
 
 // ---------------------------------------------------------------------------
-// Günlük özet: gün seçimi ve "metni kopyala"
+// Günlük özet: gün seçimi
 // ---------------------------------------------------------------------------
 
 const gunSec = document.getElementById("gun-sec");
 if (gunSec) {
   gunSec.addEventListener("change", () => { window.location.href = gunSec.value; });
 }
-
-const kopyala = document.getElementById("kopyala");
-if (kopyala) {
-  const durum = document.getElementById("kopyala-durum");
-  const metin = document.getElementById(kopyala.dataset.hedef);
-
-  kopyala.addEventListener("click", async function () {
-    try {
-      await navigator.clipboard.writeText(metin.value);
-      durum.textContent = "Kopyalandı.";
-    } catch (hata) {
-      // Pano izni yoksa metni seç; kullanıcı Ctrl/Cmd+C ile kopyalayabilir
-      metin.focus();
-      metin.select();
-      durum.textContent = "Metin seçildi, Ctrl+C (Mac'te Cmd+C) ile kopyalayın.";
-    }
-  });
-}
-
 
 // ---------------------------------------------------------------------------
 // Arama önerileri: data-oneri taşıyan kutulara yazılırken altta liste açılır.
@@ -429,17 +410,16 @@ if (serit) {
 }
 
 
-// Telefonda şerit kendiliğinden kayar: öğeler bir kez kopyalanır, içerik yarı
-// genişliği kadar kaydırılıp başa sarılır (dikişsiz döngü). Dokununca durur.
-// Bilgisayarda ve "hareketi azalt" ayarında kopya yoktur, şerit sabittir.
+// Şerit kendiliğinden kayar: öğeler bir kez kopyalanır, içerik yarı genişliği
+// kadar kaydırılıp başa sarılır (dikişsiz döngü). Fare üzerindeyken ya da
+// dokununca durur. "Hareketi azalt" ayarında kopya yoktur, şerit sabittir.
 function seridiKaydir(serit, akis) {
-  const telefon = window.matchMedia("(max-width: 860px)");
   const azHareket = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   function ayarla() {
     akis.querySelectorAll("[data-kopya]").forEach((o) => o.remove());
     serit.classList.remove("kayan");
-    if (!telefon.matches || azHareket.matches) return;
+    if (azHareket.matches) return;
     Array.from(akis.children).forEach(function (oge) {
       const kopya = oge.cloneNode(true);
       kopya.dataset.kopya = "1";
@@ -453,7 +433,6 @@ function seridiKaydir(serit, akis) {
   }
 
   ayarla();
-  telefon.addEventListener("change", ayarla);
   azHareket.addEventListener("change", ayarla);
 }
 

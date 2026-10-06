@@ -165,6 +165,7 @@ def gunluk_ozet(gun=None):
 
     d = date.fromisoformat(gun)
     baslik = f"{uzun_tarih(gun)} {GUNLER[d.weekday()]}"
+    # Paylaşım için düz metin: sitede gösterilmez, istendiğinde dışarıya verilir
     duz_metin = "\n".join(
         [f"Piyasa Kaydı · {baslik} özeti", ""]
         + [satir for b, m in bolumler for satir in [b.upper(), *[f"• {x['metin']}" for x in m], ""]]
