@@ -30,10 +30,17 @@ UYELIKLER = "https://unitedstates.github.io/congress-legislators/committee-membe
 SANIYEDE_ISTEK = 8   # SEC sınırı 10
 
 
-def json_al(adres):
-    cevap = requests.get(adres, headers={"User-Agent": USER_AGENT}, timeout=60)
-    cevap.raise_for_status()
-    return cevap.json()
+def json_al(adres, deneme=3):
+    """JSON indirir; geçici ağ hatalarında birkaç kez dener."""
+    for sira in range(deneme):
+        try:
+            cevap = requests.get(adres, headers={"User-Agent": USER_AGENT}, timeout=60)
+            cevap.raise_for_status()
+            return cevap.json()
+        except (requests.ConnectionError, requests.Timeout):
+            if sira == deneme - 1:
+                raise
+            time.sleep(5 * (sira + 1))
 
 
 def sektorleri_doldur(conn):
@@ -83,10 +90,11 @@ def komiteleri_doldur(conn):
     for u in uyeler:
         t = u["terms"][-1]
         ad = u["name"].get("official_full") or f'{u["name"]["first"]} {u["name"]["last"]}'
+        gorevler = [r["title"] for r in u.get("leadership_roles", []) if not r.get("end")]
         conn.execute(
-            "INSERT INTO uye (bioguide, ad, slug, parti, bolge) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO uye (bioguide, ad, slug, parti, bolge, gorev) VALUES (?, ?, ?, ?, ?, ?)",
             (u["id"]["bioguide"], ad, slugify(ad), (t.get("party") or "")[:1],
-             f"{t['state']}-{int(t.get('district') or 0):02d}"),
+             f"{t['state']}-{int(t.get('district') or 0):02d}", gorevler[0] if gorevler else None),
         )
 
     sayi = 0

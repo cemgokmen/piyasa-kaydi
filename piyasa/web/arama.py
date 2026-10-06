@@ -7,6 +7,7 @@ harf ve Türkçe karakterlerden bağımsızdır: "sandisk", "SanDisk", "altin",
 "altın" hepsi bulunur.
 """
 
+import html
 import math
 import re
 import unicodedata
@@ -16,6 +17,7 @@ from contextlib import closing
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kurallar import GECERLI_KOD, TEMIZ, parti_bilgisi
 from piyasa.onbellek import sureli
+from piyasa.uyeler import YURUTME
 from piyasa.veritabani import get_connection
 
 ONBELLEK_SURESI = 10 * 60
@@ -43,7 +45,8 @@ def sade(metin):
 
 def sirket_adi_temizle(ad):
     """'Sandisk Corporation - Common Stock' → 'Sandisk Corporation'"""
-    ad = re.sub(r"\s+", " ", ad or "").strip()
+    ad = html.unescape(re.sub(r"&amp(?!;)", "&", ad or ""))
+    ad = re.sub(r"\s+", " ", ad).strip()
     ad = re.sub(r"\s+-\s+.*$", "", ad)
     ad = re.sub(r"\s+(common stock|ordinary shares|class [a-c] .*)$", "", ad, flags=re.IGNORECASE)
     return ad.strip(" ,.-")
@@ -110,6 +113,12 @@ def _dizin_kur():
                 "kod": "", "metin": sade(s["ad"]), "agirlik": s["n"],
             })
 
+    for y in YURUTME:
+        girdiler.append({
+            "tur": "Siyasetçi", "etiket": y["ad"], "alt": f"{y['gorev']} · mali durum bildirimleri", "one_cikar": True,
+            "adres": f"/yurutme/{y['slug']}", "kod": "", "metin": sade(y["ad"]), "agirlik": 5_000,
+        })
+
     for e in EMTIALAR:
         girdiler.append({
             "tur": "Emtia", "etiket": e["ad"], "alt": f"{e['grup']} · {e['birim']}",
@@ -144,7 +153,7 @@ def _puan(girdi, aranan):
     else:
         return 0
     # Sitenin kendi emtia sayfaları "altın", "gold", "petrol" aramalarında öne çıksın
-    if girdi["tur"] == "Emtia":
+    if girdi["tur"] == "Emtia" or girdi.get("one_cikar"):
         taban += 200
     # Çok işlem görenler öne; kısa adlar (tam eşleşmeye yakın) biraz önde
     return taban + 25 * math.log10(1 + girdi["agirlik"]) - min(len(metin), 60) * 0.3

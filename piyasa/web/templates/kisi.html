@@ -1,17 +1,19 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, islem_tablosu, fark, karar_rozeti %}
+{% from "_bilesenler.html" import kpi, islem_tablosu, fark, karar_rozeti, avatar %}
 {% block baslik %}{{ kimlik.person }} · Piyasa Kaydı{% endblock %}
 
 {% block geri_adres %}{% if siyasetci %}{{ url_for('site.siyasetciler') }}{% else %}{{ url_for('site.islemler', kaynak='yonetici') }}{% endif %}{% endblock %}
 
 {% block icerik %}
-<header class="sayfa-ust">
+<header class="sayfa-ust profil-ust">
+  {% if siyasetci %}{{ avatar(foto, kimlik.person, 'buyuk') }}{% endif %}
   <div>
     <h1>{{ kimlik.person }}</h1>
     <p class="kimlik">
       {% if siyasetci %}
         {% if parti %}<span class="parti-uzun parti-{{ parti.sinif }}">{{ parti.ad }}</span>{% endif %}
         <span>{{ kimlik.chamber }} üyesi</span><span class="soluk">·</span><span>{{ kimlik.state }}</span>
+        {% if gorev %}<span class="soluk">·</span><span class="etiket">{{ gorev }}</span>{% endif %}
       {% else %}
         <span>{{ kimlik.job_title or 'Bildirim yükümlüsü' }}</span>
         {% if kimlik.company %}<span class="soluk">·</span><span>{{ kimlik.company }}</span>{% endif %}

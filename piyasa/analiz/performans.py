@@ -9,6 +9,7 @@ bilinir).
 
 from contextlib import closing
 
+from piyasa import uyeler
 from piyasa.analiz import istatistik
 from piyasa.kurallar import parti_bilgisi
 from piyasa.veritabani import get_connection
@@ -71,6 +72,7 @@ def siralama(ufuk=STANDART_UFUK):
     # Onlarca kişi aynı anda test ediliyor: tek tek "anlamlı" görünenlerin bir kısmı şanstır
     istatistik.holm([k["alim"] for k in liste])
     liste.sort(key=lambda k: k["alim"]["ortalama"], reverse=True)
+    uyeler.fotolu(liste)
     for i, k in enumerate(liste, start=1):
         k["sira"] = i
     return liste

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, parti_rozeti, siyaset_sekmeleri, fark, karar_rozeti %}
+{% from "_bilesenler.html" import kpi, parti_rozeti, siyaset_sekmeleri, fark, karar_rozeti, avatar %}
 {% block baslik %}Kim piyasayı yendi? Siyasetçilerin yatırım performansı · Piyasa Kaydı{% endblock %}
 {% block geri_adres %}{{ url_for('site.siyasetciler') }}{% endblock %}
 
@@ -56,8 +56,8 @@
         {% for k in siralama %}
         <tr class="tiklanir" data-href="{{ url_for('site.kisi', slug=k.slug) }}">
           <td data-etiket="Sıra" class="soluk sayi" data-deger="{{ k.sira }}">{{ k.sira }}</td>
-          <td data-etiket="Üye" data-deger="{{ k.ad }}"><a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.slug) }}">{{ k.ad }}</a> {{ parti_rozeti(k.parti) }}
-            <span class="alt-satir">{{ k.bolge }}</span></td>
+          <td data-etiket="Üye" data-deger="{{ k.ad }}"><span class="kisi-hucre">{{ avatar(k.foto, k.ad) }}<span><a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.slug) }}">{{ k.ad }}</a> {{ parti_rozeti(k.parti) }}
+            <span class="alt-satir">{{ k.bolge }}</span></span></span></td>
           <td data-etiket="Endekse göre" class="sag" data-deger="{{ k.alim.ortalama }}">{{ fark(k.alim.ortalama) }}
             {% if k.alim.alt is defined %}<span class="alt-satir">{{ k.alim.alt|yuzde }} … {{ k.alim.ust|yuzde }}</span>{% endif %}</td>
           <td data-etiket="Endeksi yenen" class="sag sayi" data-deger="{{ k.alim.yenme }}">%{{ (k.alim.yenme * 100)|round|int }}</td>

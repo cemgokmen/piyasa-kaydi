@@ -11,6 +11,7 @@ Kullanım:
     python -m piyasa emtia                emtia verilerini indirir (CFTC, EIA, FRED)
     python -m piyasa fiyatlar             işlem yapılan hisselerin günlük fiyatlarını indirir
     python -m piyasa sirketler            şirket sektörleri ve Meclis komite üyelikleri
+    python -m piyasa yurutme              Başkan ve Başkan Yardımcısının OGE bildirimleri
     python -m piyasa analiz               işlem sonrası getirileri hesaplar
     python -m piyasa cusip                13F CUSIP numaralarını hisse kodlarına eşler
     python -m piyasa supheli              anormal fiyatlı kayıtları işaretler
@@ -34,6 +35,7 @@ KOMUTLAR = {
     "emtia": "piyasa.toplama.emtia",
     "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
     "sirketler": "piyasa.toplama.sirketler",
+    "yurutme": "piyasa.toplama.yurutme",
     "analiz": "piyasa.analiz.getiri",
     "cusip": "piyasa.toplama.cusip",
     "supheli": "piyasa.bakim.supheli",
@@ -46,7 +48,7 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
-GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "fiyatlar", "analiz"]
+GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "yurutme", "fiyatlar", "analiz"]
 
 
 def calistir(komut, argumanlar):

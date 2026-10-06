@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, parti_rozeti, yuklu_kartlar, siyaset_sekmeleri %}
+{% from "_bilesenler.html" import kpi, parti_rozeti, yuklu_kartlar, siyaset_sekmeleri, avatar %}
 {% block baslik %}Siyasetçilerin hisse işlemleri · Piyasa Kaydı{% endblock %}
 
 {% block icerik %}
@@ -19,6 +19,37 @@
   {{ kpi('Toplam işlem', (ozet.adet or 0)|sayi, (ozet.ilk|uzun_tarih) ~ ' sonrası' if ozet.ilk else '', birim='işlem') }}
   {{ kpi('Alım · tahmini tutar', aralik(ozet.alim_alt, ozet.alim_tutar), (ozet.alim or 0)|sayi ~ ' alım işlemi', 'alim') }}
   {{ kpi('Satım · tahmini tutar', aralik(ozet.satim_alt, ozet.satim_tutar), (ozet.satim or 0)|sayi ~ ' satım işlemi', 'satim') }}
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Önemli siyasetçiler</h2>
+      <p class="bolum-not">Başkan ve Başkan Yardımcısı, Meclis liderleri, işlemleri en çok takip edilen üyeler ve komite başkanları.</p>
+    </div>
+  </header>
+  <div class="kisi-izgara">
+    {% for y in yurutme %}
+    <a class="kisi-kart kisi-kart-vurgu" href="{{ url_for('site.yurutme', slug=y.slug) }}">
+      {{ avatar(y.foto, y.ad, 'orta') }}
+      <span class="kisi-kart-govde">
+        <b>{{ y.ad }} {{ parti_rozeti(y.parti_bilgisi) }}</b>
+        <span class="kisi-kart-gorev">{{ y.gorev }}</span>
+        <span class="kisi-kart-alt">Mali durum bildirimleri (OGE) →</span>
+      </span>
+    </a>
+    {% endfor %}
+    {% for k in onemliler[:10] %}
+    <a class="kisi-kart" href="{{ url_for('site.kisi', slug=k.slug) }}">
+      {{ avatar(k.foto, k.ad, 'orta') }}
+      <span class="kisi-kart-govde">
+        <b>{{ k.ad }} {{ parti_rozeti(k.parti) }}</b>
+        <span class="kisi-kart-gorev">{{ k.aciklama }}</span>
+        <span class="kisi-kart-alt">{{ k.adet|sayi }} işlem · {{ k.hacim }}</span>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
 </section>
 
 {% if yuklu %}
@@ -71,7 +102,7 @@
       <tbody>
         {% for k in kisiler %}
         <tr class="tiklanir" data-href="{{ url_for('site.kisi', slug=k.person_slug) }}">
-          <td data-etiket="Üye" data-deger="{{ k.person }}"><a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</td>
+          <td data-etiket="Üye" data-deger="{{ k.person }}"><span class="kisi-hucre">{{ avatar(k.foto, k.person) }}<a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</span></td>
           <td data-etiket="Eyalet" class="sayi" data-deger="{{ k.state }}">{{ k.state }}</td>
           <td data-etiket="İşlem sayısı" class="sag" data-deger="{{ k.adet }}">
             <b>{{ k.adet|sayi }}</b>

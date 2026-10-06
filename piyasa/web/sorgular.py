@@ -8,6 +8,7 @@ buradaki fonksiyonlardan alır. Her fonksiyon kendi bağlantısını açıp kapa
 from contextlib import closing
 from datetime import date, timedelta
 
+from piyasa import uyeler
 from piyasa.analiz import cakisma
 from piyasa.bicim import AYLAR, donem_metni, kisa_aralik, kisa_tutar
 from piyasa.kayitlar import islem_hazirla
@@ -234,6 +235,7 @@ def siyasetciler(parti=""):
             k = dict(s)
             k["parti"] = parti_bilgisi(k["party"])
             k["hacim"] = kisa_aralik(k["alt"], k["ust"])
+            k["foto"] = uyeler.foto(k["person_slug"])
             kisiler.append(k)
 
         parti_sayilari = {
@@ -250,7 +252,9 @@ def siyasetciler(parti=""):
         yuklu = siyasetcilerin_yuklu_alimlari(conn, gun=365, limit=12)
 
     return {"kisiler": kisiler, "parti_sayilari": parti_sayilari,
-            "ozet": ozet, "yuklu": yuklu}
+            "ozet": ozet, "yuklu": yuklu,
+            "onemliler": uyeler.onemli_siyasetciler(),
+            "yurutme": [dict(y, parti_bilgisi=parti_bilgisi(y["parti"])) for y in uyeler.YURUTME]}
 
 
 # ---------------------------------------------------------------------------
@@ -398,6 +402,8 @@ def kisi(slug):
     siyasetci = bool(kimlik.get("chamber"))
     return {
         "kimlik": kimlik,
+        "foto": uyeler.foto(slug) if siyasetci else None,
+        "gorev": uyeler.gorev(slug) if siyasetci else None,
         "siyasetci": siyasetci,
         "parti": parti_bilgisi(kimlik.get("party")),
         "ozet": ozet,

@@ -126,13 +126,17 @@ def ornek_emtia_verisi(conn):
 
 def ornek_analiz_verisi(conn):
     """Komiteler, sektörler, fiyat geçmişi; ardından getiriler hesaplanır."""
-    conn.executemany("INSERT INTO uye VALUES (?, ?, ?, ?, ?)", [
-        ("J000001", "Jane Senator", "jane-senator", "D", "CA-11"),
-        ("B000001", "Bob Rep", "bob-rep", "R", "TX-02"),
+    conn.executemany("INSERT INTO uye VALUES (?, ?, ?, ?, ?, ?)", [
+        ("J000001", "Jane Senator", "jane-senator", "D", "CA-11", "House Minority Whip"),
+        ("B000001", "Bob Rep", "bob-rep", "R", "TX-02", None),
     ])
     # Jane, teknolojiyi denetleyen Bilim komitesinde: NVDA alımları çıkar çatışması sayılır
     conn.executemany("INSERT INTO komite_uyeligi VALUES (?, ?, ?)", [
         ("J000001", "HSSY", None), ("B000001", "HSAG", "Chairman"),
+    ])
+    conn.executemany("INSERT INTO yurutme_bildirimi VALUES (?, ?, ?, ?, ?)", [
+        ("https://oge.gov/t1.pdf", "donald-j-trump", "islem", "278 Transaction", gun(14)),
+        ("https://oge.gov/y1.pdf", "donald-j-trump", "yillik", "Annual (2026)", gun(90)),
     ])
     conn.executemany("INSERT INTO sirket VALUES (?, ?, ?, ?, ?)", [
         ("NVDA", 1045810, 3674, "Semiconductors", "Teknoloji"),
@@ -201,6 +205,8 @@ def veritabani_yolu(tmp_path_factory):
     from piyasa.analiz import cakisma, getiri, sinyaller
     getiri.main()
     cakisma.onbellegi_temizle()
+    from piyasa import uyeler
+    uyeler.onbellegi_temizle()
     sinyaller.basari.temizle()
     sinyaller.uclu_onay.temizle()
 

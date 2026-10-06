@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, avatar %}
+{% block baslik %}{{ kisi.ad }} — mali durum bildirimleri · Piyasa Kaydı{% endblock %}
+{% block geri_adres %}{{ url_for('site.siyasetciler') }}{% endblock %}
+
+{% set islemler = bildirimler|selectattr('tur', 'equalto', 'islem')|list %}
+{% set yilliklar = bildirimler|selectattr('tur', 'equalto', 'yillik')|list %}
+{% set turler = {'islem': 'İşlem bildirimi (OGE 278-T)', 'yillik': 'Yıllık mali durum bildirimi',
+                 'ayrilis': 'Görevden ayrılış bildirimi', 'giris': 'Göreve başlangıç bildirimi', 'diger': 'Diğer'} %}
+
+{% block icerik %}
+<header class="profil-ust">
+  {{ avatar(kisi.foto, kisi.ad, 'buyuk') }}
+  <div>
+    <h1>{{ kisi.ad }}</h1>
+    <p class="kimlik">
+      {% if parti %}<span class="parti-uzun parti-{{ parti.sinif }}">{{ parti.ad }}</span>{% endif %}
+      <span>{{ kisi.gorev }}</span>
+    </p>
+  </div>
+</header>
+
+<p class="yorum-kutu">
+  <b>Neden işlemleri tabloda değil?</b> Başkan ve Başkan Yardımcısı, Kongre'ye değil ABD Hükümet Etiği
+  Ofisi'ne (OGE) bildirim yapar. {% if islemler %}Başkan'ın işlem bildirimleri büyük ölçüde taranmış belgelerdir ve
+  içerikleri ağırlıklı olarak belediye ve şirket tahvilleridir; bu yüzden tek tek işlemleri güvenilir biçimde
+  tabloya aktaramıyoruz.{% endif %} Aşağıda her bildirimin resmî belgesine ulaşabilirsiniz.
+</p>
+
+<section class="kpi-izgara kpi-3">
+  {{ kpi('İşlem bildirimi', islemler|length, 'OGE 278-T, 2025 sonrası', birim='belge') }}
+  {{ kpi('Yıllık bildirim', yilliklar|length, 'varlıklar ve gelir kaynakları', birim='belge') }}
+  {{ kpi('Son bildirim', (bildirimler[0].tarih|uzun_tarih) if bildirimler else '—', 'OGE yayın tarihi') }}
+</section>
+
+{% if bildirimler %}
+<div class="tablo-kap">
+  <table class="tablo">
+    <thead><tr><th scope="col">Yayın tarihi</th><th scope="col">Bildirim</th><th scope="col"><span class="gorunmez">Belge</span></th></tr></thead>
+    <tbody>
+      {% for b in bildirimler %}
+      <tr>
+        <td data-etiket="Yayın tarihi" class="tarih">{{ b.tarih|uzun_tarih }}</td>
+        <td data-etiket="Bildirim"><b>{{ turler[b.tur] }}</b><span class="alt-satir">{{ b.baslik }}</span></td>
+        <td class="sag"><a class="kaynak" href="{{ b.adres }}" target="_blank" rel="noopener">Belge (PDF) ↗</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="bos-durum"><p><strong>Henüz bildirim indirilmedi.</strong></p><p><code>python -m piyasa yurutme</code></p></div>
+{% endif %}
+<p class="dipnot">Kaynak: ABD Hükümet Etiği Ofisi (OGE), extapps2.oge.gov. Senato üyelerinin bildirim sitesi otomatik
+erişimi engellediği için Senatörler henüz listede yok.</p>
+{% endblock %}

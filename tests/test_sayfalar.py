@@ -32,6 +32,8 @@ SAYFALAR = [
     "/siyasetciler/cikar-catismasi",
     "/sinyaller",
     "/gunluk-ozet",
+    "/yurutme/donald-j-trump",
+    "/yurutme/jd-vance",
 ]
 
 
@@ -44,7 +46,8 @@ def test_sayfa_acilir(istemci, adres):
 
 @pytest.mark.parametrize("adres", ["/yok", "/hisse/YOKBOYLE", "/kisi/yok", "/fon/yok", "/emtia/yok",
                                    "/emtia/petrol", "/emtia/dogalgaz", "/emtia/bugday", "/emtia/misir",
-                                   "/gunluk-ozet/2000-01-01", "/gunluk-ozet/yok"])
+                                   "/gunluk-ozet/2000-01-01", "/gunluk-ozet/yok",
+                                   "/yurutme/yok"])
 def test_olmayan_sayfa_404(istemci, adres):
     cevap = istemci.get(adres)
     assert cevap.status_code == 404
@@ -202,3 +205,21 @@ def test_arama_onerileri(istemci):
     # Önerilerin hepsi açılabilir sayfalar
     for o in oner("o") + oner("n"):
         assert istemci.get(o["adres"]).status_code == 200, o
+
+
+def test_onemli_siyasetciler_ve_trump(istemci):
+    html = istemci.get("/siyasetciler").get_data(as_text=True)
+    assert "Önemli siyasetçiler" in html
+    assert "Donald J. Trump" in html and "/yurutme/donald-j-trump" in html
+    assert "Azınlık grup başkanvekili" in html            # Jane'in liderlik görevi
+    assert "Tarım Komitesi başkanı" in html                # Bob komite başkanı
+    assert "congress/225x275/J000001.jpg" in html          # resmî fotoğraf
+
+    trump = istemci.get("/yurutme/donald-j-trump").get_data(as_text=True)
+    assert "İşlem bildirimi (OGE 278-T)" in trump and "https://oge.gov/t1.pdf" in trump
+
+    kisi = istemci.get("/kisi/jane-senator").get_data(as_text=True)
+    assert "avatar-buyuk" in kisi and "Azınlık grup başkanvekili" in kisi
+
+    oneri = istemci.get("/api/oneri?q=trump").get_json()["oneriler"]
+    assert oneri[0]["adres"] == "/yurutme/donald-j-trump"

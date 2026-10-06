@@ -5,10 +5,10 @@ ve şablonu çizer; SQL burada yazılmaz.
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
-from piyasa import fiyat
+from piyasa import fiyat, uyeler
 from piyasa.analiz import cakisma, performans, sinyaller
 from piyasa.emtia.tanimlar import EMTIALAR
-from piyasa.kurallar import PARTILER
+from piyasa.kurallar import PARTILER, parti_bilgisi
 from piyasa.web import arama, sorgular
 
 site = Blueprint("site", __name__)
@@ -105,6 +105,16 @@ def kisi(slug):
         veri["komiteler"] = cakisma.uye_komiteleri(slug)
         veri["cakisma_sayisi"] = sum(1 for i in veri["islemler"] if i["cakisma"])
     return render_template("kisi.html", aktif=aktif, **veri)
+
+
+@site.route("/yurutme/<slug>")
+def yurutme(slug):
+    kisi = uyeler.YURUTME_SLUG.get(slug)
+    if kisi is None:
+        abort(404)
+    bildirimler = uyeler.yurutme_bildirimleri(slug)
+    return render_template("yurutme.html", aktif="siyasetci", kisi=kisi, bildirimler=bildirimler,
+                           parti=parti_bilgisi(kisi["parti"]))
 
 
 @site.route("/fonlar")

@@ -1611,3 +1611,53 @@ a.kisi-ad:hover { color: var(--vurgu); }
 @media (max-width: 860px) {
   .ust-arama .oneri-listesi { min-width: 0; left: 0; }
 }
+
+/* ---------- Fotoğraflar ve kişi kartları ---------- */
+
+.avatar {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--vurgu-yumusak);
+  color: var(--vurgu);
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.avatar-kucuk { width: 28px; height: 28px; font-size: 11px; }
+.avatar-orta { width: 52px; height: 52px; font-size: 16px; }
+.avatar-buyuk { width: 88px; height: 88px; font-size: 28px; box-shadow: 0 0 0 4px var(--kart), 0 0 0 5px var(--cizgi); }
+
+.kisi-hucre { display: inline-flex; align-items: center; gap: 10px; }
+
+.profil-ust { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 22px; }
+.profil-ust > div { flex: 1; min-width: 0; }
+.sayfa-ust.profil-ust { align-items: center; justify-content: flex-start; }
+
+.kisi-izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+
+.kisi-kart {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yaricap);
+  box-shadow: var(--golge);
+  text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease;
+  min-width: 0;
+}
+
+.kisi-kart:hover { border-color: var(--vurgu); transform: translateY(-1px); }
+.kisi-kart-vurgu { background: linear-gradient(135deg, var(--vurgu-yumusak), var(--kart) 70%); }
+.kisi-kart-govde { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kisi-kart-govde b { font-size: 15px; }
+.kisi-kart-gorev { color: var(--yazi-2); font-size: 13px; line-height: 1.35; }
+.kisi-kart-alt { color: var(--yazi-3); font-size: 12.5px; }
+.kisi-kart-vurgu .kisi-kart-alt { color: var(--vurgu); font-weight: 500; }

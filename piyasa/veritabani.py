@@ -170,9 +170,11 @@ def init_db():
             ad        TEXT,
             slug      TEXT,
             parti     TEXT,
-            bolge     TEXT
+            bolge     TEXT,
+            gorev     TEXT
         )
     """)
+    sutunlari_tamamla(conn, "uye", [("gorev", "TEXT")])
     conn.execute("""
         CREATE TABLE IF NOT EXISTS komite_uyeligi (
             bioguide  TEXT NOT NULL,
@@ -190,6 +192,17 @@ def init_db():
             getiri    REAL,               -- hissenin getirisi
             endeks    REAL,               -- aynı dönemde S&P 500 (SPY)
             PRIMARY KEY (islem_id, baz, ufuk)
+        )
+    """)
+
+    # --- Yürütme (Başkan, Başkan Yardımcısı): OGE mali durum bildirimleri ---
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS yurutme_bildirimi (
+            adres     TEXT PRIMARY KEY,   -- belgenin PDF adresi
+            kisi      TEXT NOT NULL,      -- adres dostu ad: donald-j-trump
+            tur       TEXT NOT NULL,      -- islem | yillik | ayrilis
+            baslik    TEXT,
+            tarih     TEXT                -- OGE'nin belgeyi yayımladığı gün
         )
     """)
 

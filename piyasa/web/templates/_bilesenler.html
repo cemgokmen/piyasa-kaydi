@@ -166,3 +166,12 @@
 {% macro karar_rozeti(k) -%}
   {%- if k %}<span class="karar karar-{{ k.kod }}">{{ k.metin }}</span>{% endif -%}
 {%- endmacro %}
+
+{# Kişi fotoğrafı; fotoğraf yoksa ya da yüklenemezse baş harfler görünür #}
+{% macro avatar(foto, ad, boyut='kucuk') -%}
+  {%- set parcalar = (ad or '?').replace('.', '').split() -%}
+  <span class="avatar avatar-{{ boyut }}" aria-hidden="true">
+    <span class="avatar-harf">{{ (parcalar[0][:1] ~ (parcalar[-1][:1] if parcalar|length > 1 else ''))|upper }}</span>
+    {%- if foto %}<img src="{{ foto }}" alt="" loading="lazy" onerror="this.remove()">{% endif -%}
+  </span>
+{%- endmacro %}
