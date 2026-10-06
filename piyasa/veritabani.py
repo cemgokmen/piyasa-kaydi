@@ -146,11 +146,59 @@ def init_db():
         )
     """)
 
+    # --- Analiz: fiyat geçmişi, sektörler, Meclis komiteleri ---
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS fiyat_gecmisi (
+            ticker   TEXT NOT NULL,
+            tarih    TEXT NOT NULL,
+            kapanis  REAL,
+            PRIMARY KEY (ticker, tarih)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS sirket (
+            ticker        TEXT PRIMARY KEY,
+            cik           INTEGER,
+            sic           INTEGER,
+            sic_aciklama  TEXT,
+            sektor        TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS uye (
+            bioguide  TEXT PRIMARY KEY,
+            ad        TEXT,
+            slug      TEXT,
+            parti     TEXT,
+            bolge     TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS komite_uyeligi (
+            bioguide  TEXT NOT NULL,
+            komite    TEXT NOT NULL,
+            unvan     TEXT,
+            PRIMARY KEY (bioguide, komite)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS islem_getirisi (
+            islem_id  INTEGER NOT NULL,
+            baz       TEXT NOT NULL,      -- 'islem' ya da 'bildirim' tarihinden
+            ufuk      TEXT NOT NULL,      -- '30', '90', '180' gün ya da 'bugun'
+            getiri    REAL,               -- hissenin getirisi
+            endeks    REAL,               -- aynı dönemde S&P 500 (SPY)
+            PRIMARY KEY (islem_id, baz, ufuk)
+        )
+    """)
+
     # --- İndeksler ---
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ticker ON transactions(ticker)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_person ON transactions(person)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_disclosed ON transactions(disclosed_date)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_person_slug ON transactions(person_slug)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_uye_slug ON uye(slug)")
 
     conn.execute("CREATE INDEX IF NOT EXISTS idx_h_fon ON holdings(fon_slug)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_h_donem ON holdings(donem)")

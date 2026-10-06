@@ -9,6 +9,9 @@ Kullanım:
     python -m piyasa kongre [yıl ...]     Temsilciler Meclisi işlemlerini indirir
     python -m piyasa fon                  fonların 13F bildirimlerini indirir
     python -m piyasa emtia                emtia verilerini indirir (CFTC, EIA, FRED)
+    python -m piyasa fiyatlar             işlem yapılan hisselerin günlük fiyatlarını indirir
+    python -m piyasa sirketler            şirket sektörleri ve Meclis komite üyelikleri
+    python -m piyasa analiz               işlem sonrası getirileri hesaplar
     python -m piyasa cusip                13F CUSIP numaralarını hisse kodlarına eşler
     python -m piyasa supheli              anormal fiyatlı kayıtları işaretler
     python -m piyasa slug                 eski kayıtlara kişi adresi ekler
@@ -29,6 +32,9 @@ KOMUTLAR = {
     "kongre": "piyasa.toplama.kongre",
     "fon": "piyasa.toplama.fon13f",
     "emtia": "piyasa.toplama.emtia",
+    "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
+    "sirketler": "piyasa.toplama.sirketler",
+    "analiz": "piyasa.analiz.getiri",
     "cusip": "piyasa.toplama.cusip",
     "supheli": "piyasa.bakim.supheli",
     "slug": "piyasa.bakim.slug_ekle",
@@ -40,7 +46,7 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
-GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli"]
+GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "fiyatlar", "analiz"]
 
 
 def calistir(komut, argumanlar):
