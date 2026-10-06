@@ -102,7 +102,7 @@ sutun_ekle.py        Eski veritabanına eksik sütunları ekler
 fon_listesi.py       Takip edilen fonların adları
 fon_ara.py           SEC'te isimle 13F veren kurum arar
 fon_cik_bul.py       Fon adlarından CIK numaralarını bulur → data/fonlar.json
-fon_toplayici.py     Fonların son iki çeyreklik 13F bildirimlerini çeker
+fon_toplayici.py     Fonların son 4 çeyreklik 13F bildirimlerini çeker
 cusip_ticker_bul.py  CUSIP numaralarını hisse kodlarına eşler
 
 destek_direnc.py     Destek/direnç modeli (deneysel, siteye bağlı değil)
