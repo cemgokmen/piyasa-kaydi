@@ -14,7 +14,7 @@ farklı bir komitede olabilir.
 from contextlib import closing
 
 from piyasa.analiz.sektorler import KOMITE_ADLARI, KOMITE_SEKTORLERI
-from piyasa.bicim import kisa_aralik
+from piyasa.bicim import kisa_aralik, sirket_kisa_ad
 from piyasa.kayitlar import islem_hazirla
 from piyasa.kurallar import parti_bilgisi
 from piyasa.onbellek import sureli
@@ -78,6 +78,15 @@ def uye_komiteleri(slug):
     ]
 
 
+def _sektor_hisseleri(sektorler):
+    """Sektör başına işlem yapılan hisseler (çok işlem görenden aza): [{'sektor', 'hisseler'}]"""
+    return [
+        {"sektor": sektor,
+         "hisseler": sorted(hisseler.values(), key=lambda h: (h["alim"] + h["satim"], h["ust"]), reverse=True)}
+        for sektor, hisseler in sorted(sektorler.items())
+    ]
+
+
 def rapor(limit=100):
     """Çıkar çatışması sayfası: üye bazında özet ve son işlemler."""
     cakisanlar = cakisan_islemler()
@@ -99,6 +108,7 @@ def rapor(limit=100):
         u = uyeler.setdefault(s["person_slug"], {
             "slug": s["person_slug"], "ad": s["person"], "party": s["party"], "bolge": s["state"],
             "adet": 0, "alim": 0, "alt": 0, "ust": 0, "komiteler": set(), "sektorler": set(),
+            "hisseler": {},
         })
         c = cakisanlar[s["id"]]
         u["adet"] += 1
@@ -107,6 +117,12 @@ def rapor(limit=100):
         u["ust"] += s["amount_max"] or 0
         u["komiteler"].update(c["komiteler"])
         u["sektorler"].add(c["sektor"])
+        h = u["hisseler"].setdefault(c["sektor"], {}).setdefault(s["ticker"], {
+            "ticker": s["ticker"], "ad": sirket_kisa_ad(s["asset_name"] or s["company"]),
+            "alim": 0, "satim": 0, "ust": 0,
+        })
+        h["alim" if s["action"] == "buy" else "satim"] += 1
+        h["ust"] += s["amount_max"] or 0
 
     liste = []
     for u in uyeler.values():
@@ -114,7 +130,8 @@ def rapor(limit=100):
         liste.append({**u, "parti": parti_bilgisi(u["party"]), "toplam": toplam,
                       "oran": u["adet"] / toplam if toplam else 0,
                       "hacim": kisa_aralik(u["alt"], u["ust"]),
-                      "komiteler": sorted(u["komiteler"]), "sektorler": sorted(u["sektorler"])})
+                      "komiteler": sorted(u["komiteler"]), "sektorler": sorted(u["sektorler"]),
+                      "hisseler": _sektor_hisseleri(u["hisseler"])})
     liste.sort(key=lambda u: (u["ust"], u["adet"]), reverse=True)
 
     islemler = isaretle([islem_hazirla(s) for s in satirlar[:limit]])

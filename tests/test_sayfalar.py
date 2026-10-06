@@ -177,6 +177,9 @@ def test_cikar_catismasi(istemci):
     assert "Jane Senator" in html and "Bilim, Uzay ve Teknoloji Komitesi" in html
     # Jane'in AAPL satımı da teknoloji: çatışma; Bob'un tarım komitesi NVDA ile çatışmaz
     assert "Bob Rep" not in html
+    # Üyenin yanında sektörle birlikte hangi şirketin hissesini alıp sattığı yazar
+    assert 'href="/hisse/NVDA"' in html and "cakisma-sirket\">NVIDIA<" in html
+    assert re.search(r"tutar-buy\">\d+ alım<", html) and re.search(r"tutar-sell\">\d+ satış<", html)
     assert "Komite ↔ sektör" in istemci.get("/hisse/NVDA").get_data(as_text=True)
 
 

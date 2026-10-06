@@ -31,7 +31,7 @@ komitede olabilir. Sektörler SEC'in resmî sanayi kodlarından (SIC) belirlenir
         <tr>
           <th scope="col" data-sirala="metin">Üye</th>
           <th scope="col">Komite</th>
-          <th scope="col">Sektör</th>
+          <th scope="col">Sektör ve işlem yaptığı hisseler</th>
           <th scope="col" class="sag" data-sirala="sayi">İşlem</th>
           <th scope="col" class="sag" data-sirala="sayi">Bütün işlemlerine oranı</th>
           <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Tahmini hacim</th>
@@ -43,7 +43,21 @@ komitede olabilir. Sektörler SEC'in resmî sanayi kodlarından (SIC) belirlenir
           <td data-etiket="Üye" data-deger="{{ u.ad }}"><a class="kisi-ad" href="{{ url_for('site.kisi', slug=u.slug) }}">{{ u.ad }}</a> {{ parti_rozeti(u.parti) }}
             <span class="alt-satir">{{ u.bolge }}</span></td>
           <td data-etiket="Komite" class="kucuk">{{ u.komiteler|join(', ') }}</td>
-          <td data-etiket="Sektör">{% for s in u.sektorler %}<span class="etiket">{{ s }}</span> {% endfor %}</td>
+          <td data-etiket="Sektör ve hisseler" class="cakisma-hisseler">
+            {% for g in u.hisseler %}
+            <div class="cakisma-sektor">
+              <span class="etiket">{{ g.sektor }}</span>
+              <ul>
+                {% for h in g.hisseler[:4] %}
+                <li><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+                  {% if h.ad and h.ad|upper != h.ticker %}<span class="cakisma-sirket">{{ h.ad }}</span>{% endif %}
+                  <span class="cakisma-adet">{% if h.alim %}<span class="tutar-buy">{{ h.alim }} alım</span>{% endif %}{% if h.alim and h.satim %} · {% endif %}{% if h.satim %}<span class="tutar-sell">{{ h.satim }} satış</span>{% endif %}</span></li>
+                {% endfor %}
+                {% if g.hisseler|length > 4 %}<li class="soluk kucuk">+{{ g.hisseler|length - 4 }} hisse daha</li>{% endif %}
+              </ul>
+            </div>
+            {% endfor %}
+          </td>
           <td data-etiket="İşlem" class="sag" data-deger="{{ u.adet }}"><b>{{ u.adet }}</b> <span class="alt-satir">{{ u.alim }} alım</span></td>
           <td data-etiket="Oran" class="sag sayi" data-deger="{{ u.oran }}">%{{ (u.oran * 100)|round|int }} <span class="soluk kucuk">/ {{ u.toplam }}</span></td>
           <td data-etiket="Tahmini hacim" class="sag sayi" data-deger="{{ u.ust }}">{{ u.hacim }}</td>

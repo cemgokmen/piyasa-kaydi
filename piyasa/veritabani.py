@@ -266,6 +266,7 @@ def init_db():
 
     sutunlari_tamamla(conn, "yurutme_varlik", [("sirket", "TEXT")])
     sutunlari_tamamla(conn, "yurutme_islem", [("sirket", "TEXT")])
+    sutunlari_tamamla(conn, "sirket_profili", [("kurulus", "INTEGER")])
 
     # --- İndeksler ---
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ticker ON transactions(ticker)")

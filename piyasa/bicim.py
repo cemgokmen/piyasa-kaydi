@@ -3,6 +3,7 @@ Sayı, tutar ve tarihleri Türkçe gösterime çeviren saf yardımcılar.
 Web'e bağımlı değildir; analiz ve özet metinleri de bunları kullanır.
 """
 
+import re
 from datetime import date
 
 AYLAR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz",
@@ -103,3 +104,31 @@ def donem_metni(donem):
     """'2026-06-30' -> '2026 2. çeyrek'"""
     yil, ay, _ = donem.split("-")
     return f"{yil} {(int(ay) - 1) // 3 + 1}. çeyrek"
+
+
+# ---------------------------------------------------------------------------
+# ŞİRKET ADLARI
+# ---------------------------------------------------------------------------
+
+_HISSE_TURU = re.compile(
+    r"\s*[-–,]?\s*\b(common stock|ordinary shares?|class [a-c]( common stock)?|"
+    r"american depositary shares?|ads|sponsored adr|shares?|common)\b.*$",
+    re.IGNORECASE,
+)
+_SIRKET_EKI = re.compile(
+    r"[\s,]+(corporation|corp\.?|incorporated|inc\.?|company|co\.?|ltd\.?|limited|plc|n\.?v\.?|s\.?a\.?|l\.?p\.?|ag|se|new)$",
+    re.IGNORECASE,
+)
+
+
+def sirket_kisa_ad(ad):
+    """'General Dynamics Corporation Common Stock' -> 'General Dynamics'; 'RTX Corporation' -> 'RTX'"""
+    ad = re.split(r"\s+-\s+", (ad or "").strip())[0]       # 'Alphabet Inc. - Class A'
+    ad = _HISSE_TURU.sub("", ad)
+    onceki = None
+    while onceki != ad:
+        yeni = _SIRKET_EKI.sub("", ad).strip(" ,.")
+        if yeni.endswith(("&", " and")):     # 'KKR & Co.', 'Eli Lilly and Company' bir bütündür
+            break
+        onceki, ad = ad, yeni
+    return re.sub(r"^The\s+(?=\S)", "", ad)                # 'The Hershey Company' -> 'Hershey'

@@ -208,7 +208,7 @@ def sahte_profil(ticker):
         return None
     return {"ticker": "AAPL", "ozet": "Apple akıllı telefon ve bilgisayar üretir.", "ozet_en": "Apple makes phones.",
             "sektor": "Teknoloji", "endustri": "Tüketici elektroniği", "calisan": 150000,
-            "merkez": "Cupertino, CA", "site": "https://www.apple.com", "guncelleme": "2026-01-01T00:00:00+00:00"}
+            "merkez": "Cupertino, CA", "site": "https://www.apple.com", "kurulus": 1976, "guncelleme": "2026-01-01T00:00:00+00:00"}
 
 
 @pytest.fixture(scope="session")

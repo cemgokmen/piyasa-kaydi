@@ -435,15 +435,43 @@ if (serit) {
 }
 
 
-// Şerit kendiliğinden kayar: öğeler bir kez kopyalanır, içerik yarı genişliği
-// kadar kaydırılıp başa sarılır (dikişsiz döngü). Fare üzerindeyken ya da
-// dokununca durur. "Hareketi azalt" ayarında kopya yoktur, şerit sabittir.
+// Şerit kendiliğinden kayar: öğeler bir kez kopyalanır, içerik her karede
+// biraz kaydırılır ve yarı genişliğe gelince başa sarılır (dikişsiz döngü).
+// Kaydırma CSS animasyonu yerine kare kare yapılır: fare girdiği anda o
+// karede durur, imlecin altındaki öğe yerinden oynamaz. Dokununca ve klavye
+// odağında da durur. "Hareketi azalt" ayarında kopya yoktur, şerit sabittir.
 function seridiKaydir(serit, akis) {
   const azHareket = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const HIZ = 40;                       // piksel / saniye
+  let konum = 0;
+  let onceki = null;
+  let kare = null;
+  let duraklat = 0;                     // fare, dokunma ve odak ayrı ayrı sayılır
+  const durdur = () => { duraklat += 1; serit.dataset.durdu = "1"; };
+  const surdur = () => {
+    duraklat = Math.max(0, duraklat - 1);
+    if (!duraklat) delete serit.dataset.durdu;
+  };
+
+  function adim(zaman) {
+    if (onceki !== null && !duraklat && !document.hidden) {
+      const yari = akis.scrollWidth / 2;
+      // Sekme uzun süre arka planda kaldıysa büyük sıçrama olmasın
+      konum += Math.min(zaman - onceki, 100) / 1000 * HIZ;
+      if (yari > 0 && konum >= yari) konum -= yari;
+      akis.style.transform = `translate3d(${-konum}px, 0, 0)`;
+    }
+    onceki = zaman;
+    kare = requestAnimationFrame(adim);
+  }
 
   function ayarla() {
     akis.querySelectorAll("[data-kopya]").forEach((o) => o.remove());
     serit.classList.remove("kayan");
+    cancelAnimationFrame(kare);
+    akis.style.transform = "";
+    konum = 0;
+    onceki = null;
     if (azHareket.matches) return;
     Array.from(akis.children).forEach(function (oge) {
       const kopya = oge.cloneNode(true);
@@ -452,10 +480,17 @@ function seridiKaydir(serit, akis) {
       kopya.tabIndex = -1;
       akis.appendChild(kopya);
     });
-    // Hız sabit kalsın: genişliğe göre süre (saniyede ~40 piksel)
-    akis.style.setProperty("--kayma-suresi", `${Math.max(20, akis.scrollWidth / 2 / 40)}s`);
     serit.classList.add("kayan");
+    kare = requestAnimationFrame(adim);
   }
+
+  serit.addEventListener("mouseenter", durdur);
+  serit.addEventListener("mouseleave", surdur);
+  serit.addEventListener("focusin", durdur);
+  serit.addEventListener("focusout", surdur);
+  // Dokunmatik ekranda parmak kalkınca iki saniye daha durur, okunabilsin
+  serit.addEventListener("touchstart", durdur, { passive: true });
+  serit.addEventListener("touchend", () => setTimeout(surdur, 2000), { passive: true });
 
   ayarla();
   azHareket.addEventListener("change", ayarla);

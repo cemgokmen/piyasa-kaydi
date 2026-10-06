@@ -7,6 +7,7 @@ Chrome ya da selenium yoksa atlanır.
 """
 
 import threading
+import time
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -471,11 +472,18 @@ def test_piyasa_seridi(tarayici, sunucu):
     assert len(ogeler) == 2 * len(set(adlar))
     kopyalar = serit.find_elements(By.CSS_SELECTOR, "[data-kopya]")
     assert all(k.get_attribute("aria-hidden") == "true" for k in kopyalar)
-    # Fare üzerine gelince durur
+    # Kayıyor; fare üzerine gelince tam o anda durur ve yerinden oynamaz
+    konum = "return document.querySelector('.serit-akis').style.transform"
+    ilk = tarayici.execute_script(konum)
+    bekle(tarayici, lambda t: t.execute_script(konum) != ilk)
     ActionChains(tarayici).move_to_element(serit).perform()
-    durum = tarayici.execute_script(
-        "return getComputedStyle(document.querySelector('.serit-akis')).animationPlayState")
-    assert durum == "paused"
+    assert serit.get_attribute("data-durdu") == "1"
+    durdugu = tarayici.execute_script(konum)
+    time.sleep(0.4)
+    assert tarayici.execute_script(konum) == durdugu
+    # Fare çıkınca devam eder
+    ActionChains(tarayici).move_by_offset(0, 300).perform()
+    bekle(tarayici, lambda t: t.execute_script(konum) != durdugu)
     # Bağlantılı öğe çalışır (hareket ettiği için tıklama JS ile)
     brent = serit.find_element(By.XPATH, ".//a[contains(@class,'serit-oge')][.//span[text()='Brent']]")
     tarayici.execute_script("arguments[0].click()", brent)

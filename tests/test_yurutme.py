@@ -128,3 +128,51 @@ def test_ceviri_yedek_servise_gecer(monkeypatch):
     assert sirket_profili.cevir("Hello") == "Merhaba"
     monkeypatch.setattr(sirket_profili, "_mymemory", bozuk)
     assert sirket_profili.cevir("Hello") is None
+
+
+def test_tanim_sadelestirme():
+    from piyasa.sirket_profili import kurulus_yili, sadelestir
+
+    tanim = ("VeriSign, Inc., together with its subsidiaries, provides domain name registry services "
+             "in the United States, Europe, the Asia-Pacific, and internationally. "
+             "It operates through Registry and Other segments. "
+             "The company was founded in 1995 and is headquartered in Reston, Virginia.")
+    assert sadelestir(tanim, "VeriSign, Inc.") == "VeriSign provides domain name registry services."
+    assert kurulus_yili(tanim) == 1995
+    assert sadelestir("Arista Networks, Inc. engages in the development, marketing, and sale of networking "
+                      "solutions worldwide.", "Arista Networks, Inc.") == \
+        "Arista Networks develops, markets, and sells networking solutions."
+    # Sözlükte olmayan bir ad varsa kalıp olduğu gibi kalır
+    assert "engages in the brewing of" in sadelestir("Acme engages in the brewing of beer.")
+
+
+def test_turkce_duzeltme():
+    from piyasa.sirket_profili import baslik_duzelt, turkcelestir
+
+    assert turkcelestir("Şirket telefon tasarlıyor ve satıyor; iki segmentte faaliyet gösteriyor.") == \
+        "Şirket telefon tasarlar ve satar; iki bölümde faaliyet gösterir."
+    assert turkcelestir("Amerika Birleşik Devletleri'nde bankacılık hizmeti sunar.") == "ABD'de bankacılık hizmeti sunar."
+    assert baslik_duzelt("Otomobil Üreticileri") == "Otomobil üreticileri"
+    assert baslik_duzelt("İnternet İçeriği ve REIT") == "İnternet içeriği ve REIT"
+
+
+def test_ceviri_sirket_adini_korur(monkeypatch):
+    from piyasa import sirket_profili
+
+    def sahte(metin):
+        return metin.replace("Applied Materials", "Uygulamalı Malzemeler").replace("provides", "sağlar")
+
+    monkeypatch.setattr(sirket_profili, "cevir", sahte)
+    assert sirket_profili.adi_koruyarak_cevir("Applied Materials provides tools.", "Applied Materials") == \
+        "Applied Materials sağlar tools."
+
+
+def test_sirket_kisa_ad():
+    from piyasa.bicim import sirket_kisa_ad
+
+    assert sirket_kisa_ad("General Dynamics Corporation Common Stock") == "General Dynamics"
+    assert sirket_kisa_ad("Alphabet Inc. - Class A") == "Alphabet"
+    assert sirket_kisa_ad("KKR & Co. Inc.") == "KKR & Co"
+    assert sirket_kisa_ad("Eli Lilly and Company") == "Eli Lilly and Company"
+    assert sirket_kisa_ad("The Hershey Company") == "Hershey"
+    assert sirket_kisa_ad("Berkshire Hathaway Inc. New") == "Berkshire Hathaway"
