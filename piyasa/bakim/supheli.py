@@ -20,6 +20,11 @@ MUTLAK_FIYAT_TAVANI = 50_000
 
 TAVAN_ISTISNALARI = {"BRK-A", "BRK.A", "BRKA"}
 
+def fiyat_imkansiz_mi(ticker, fiyat):
+    """Tek başına bakıldığında bile hatalı olduğu belli olan hisse fiyatı."""
+    return bool(fiyat) and fiyat > MUTLAK_FIYAT_TAVANI and ticker not in TAVAN_ISTISNALARI
+
+
 # Bir hisse için en az kaç kayıt olsun ki ortanca anlamlı olsun
 ASGARI_KAYIT = 3
 

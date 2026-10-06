@@ -12,6 +12,7 @@ import requests
 from piyasa.ayarlar import USER_AGENT
 from piyasa.veritabani import get_connection, init_db
 from piyasa.slug import slugify
+from piyasa.bakim.supheli import fiyat_imkansiz_mi
 
 # Kaç bildirim işlensin. Test için düşük tut.
 LIMIT = 1196
@@ -268,6 +269,10 @@ COLUMNS = [
 def kaydet(conn, kayit):
     if not kayit.get("person_slug"):
         kayit = {**kayit, "person_slug": slugify(kayit.get("person"))}
+    # Hiçbir hissenin ulaşamayacağı fiyatlar yazım hatasıdır; şüpheli kontrolü
+    # (python -m piyasa supheli) çalışana kadar da sitede görünmesin
+    if fiyat_imkansiz_mi(kayit.get("ticker"), kayit.get("share_price")):
+        kayit = {**kayit, "suspect": 1}
     degerler = [kayit.get(sutun) for sutun in COLUMNS]
     yer_tutucu = ", ".join("?" for _ in COLUMNS)
     imlec = conn.execute(

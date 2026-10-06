@@ -5,7 +5,7 @@
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / Fonlar</p>
+    
     <h1>Fonlar ve bankalar</h1>
     <p class="sayfa-not">100 milyon doların üzerinde varlık yöneten kurumlar portföylerini her çeyrek
     13F formuyla bildirir. Bildirim, çeyrek bitiminden en geç 45 gün sonra yayımlanır; yani bu veriler
@@ -15,7 +15,7 @@
 
 <section class="kpi-izgara kpi-3">
   {{ kpi('Dönem', donem_adi) }}
-  {{ kpi('Takip edilen kurum', rows|length, birim='fon') }}
+  {{ kpi('Takip edilen kurum', fonlar|length, birim='fon') }}
   {{ kpi('Toplam bildirilen portföy', genel_toplam) }}
 </section>
 
@@ -26,10 +26,10 @@
           <th scope="col" class="sag">Portföy değeri</th><th scope="col" class="genis">Büyüklük</th></tr>
     </thead>
     <tbody>
-      {% for row in rows %}
+      {% for row in fonlar %}
       <tr>
         <td class="soluk sayi">{{ loop.index }}</td>
-        <td data-etiket="Kurum"><a class="kisi-ad" href="{{ url_for('fon', slug=row.fon_slug) }}">{{ row.fon_adi }}</a></td>
+        <td data-etiket="Kurum"><a class="kisi-ad" href="{{ url_for('site.fon', slug=row.fon_slug) }}">{{ row.fon_adi }}</a></td>
         <td data-etiket="Pozisyon" class="sag sayi">{{ row.pozisyon|sayi }}</td>
         <td data-etiket="Değer" class="sag sayi"><b>{{ row.toplam_kisa }}</b></td>
         <td class="genis"><span class="yatay-cubuk"><span style="width: {{ (row.oran * 100)|round(1) }}%"></span></span></td>

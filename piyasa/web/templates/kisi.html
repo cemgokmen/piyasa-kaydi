@@ -1,18 +1,19 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, islem_tablosu, parti_rozeti %}
+{% from "_bilesenler.html" import kpi, islem_tablosu %}
 {% block baslik %}{{ kimlik.person }} · Piyasa Kaydı{% endblock %}
 
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> /
-      {% if siyasetci %}<a href="{{ url_for('siyasetciler') }}">Siyasetçiler</a>
-      {% else %}<a href="{{ url_for('islemler', kaynak='yonetici') }}">Yönetici işlemleri</a>{% endif %}</p>
+    <p class="ust-yol">
+      {% if siyasetci %}<a href="{{ url_for('site.siyasetciler') }}">← Siyasetçiler</a>
+      {% else %}<a href="{{ url_for('site.islemler', kaynak='yonetici') }}">← Şirket yöneticileri</a>{% endif %}
+    </p>
     <h1>{{ kimlik.person }}</h1>
     <p class="kimlik">
       {% if siyasetci %}
         {% if parti %}<span class="parti-uzun parti-{{ parti.sinif }}">{{ parti.ad }}</span>{% endif %}
-        <span>{{ kimlik.chamber }}</span><span class="soluk">·</span><span>{{ kimlik.state }}</span>
+        <span>{{ kimlik.chamber }} üyesi</span><span class="soluk">·</span><span>{{ kimlik.state }}</span>
       {% else %}
         <span>{{ kimlik.job_title or 'Bildirim yükümlüsü' }}</span>
         {% if kimlik.company %}<span class="soluk">·</span><span>{{ kimlik.company }}</span>{% endif %}
@@ -22,22 +23,22 @@
 </header>
 
 <section class="kpi-izgara">
-  {{ kpi('Bildirim', ozet.adet|sayi, ozet.hisse_adet ~ ' farklı hisse', birim='işlem') }}
-  {{ kpi('Alım' ~ (' · tahmini tutar' if siyasetci else ''), alim_tutar, ozet.alim|sayi ~ ' işlem', 'alim') }}
-  {{ kpi('Satım' ~ (' · tahmini tutar' if siyasetci else ''), satim_tutar, ozet.satim|sayi ~ ' işlem', 'satim') }}
-  {{ kpi('Ortalama gecikme', ort_gecikme ~ ' gün', 'en geç ' ~ max_gecikme ~ ' gün', 'uyari' if gec_sayisi else '') }}
+  {{ kpi('Toplam işlem', ozet.adet|sayi, ozet.hisse_adet ~ ' farklı hisse', birim='işlem') }}
+  {{ kpi('Alım' ~ (' · tahmini tutar' if siyasetci else ' tutarı'), alim_tutar, ozet.alim|sayi ~ ' alım işlemi', 'alim') }}
+  {{ kpi('Satım' ~ (' · tahmini tutar' if siyasetci else ' tutarı'), satim_tutar, ozet.satim|sayi ~ ' satım işlemi', 'satim') }}
+  {{ kpi('Ortalama bildirim süresi', ort_gecikme, 'en uzunu ' ~ max_gecikme ~ ' gün', 'uyari' if gec_sayisi else '', birim='gün') }}
 </section>
 
 {% if gec_sayisi %}
 <p class="uyari-kutu"><strong>{{ gec_sayisi }} işlem yasal süreden sonra bildirilmiş.</strong>
-{% if siyasetci %}STOCK Act, işlemlerin en geç {{ yasal_gun }} gün içinde bildirilmesini şart koşar.
-{% else %}Form 4 bildirimleri işlemden sonraki 2 iş günü içinde yapılmalıdır.{% endif %}</p>
+{% if siyasetci %}Kongre üyeleri işlemlerini en geç {{ yasal_gun }} gün içinde bildirmek zorunda.
+{% else %}Şirket yöneticileri işlemlerini {{ form4_gun }} iş günü içinde bildirmek zorunda.{% endif %}</p>
 {% endif %}
 
 <div class="izgara-yan">
   <section>
-    <h2 class="bolum-baslik">İşlemler</h2>
-    {{ islem_tablosu(rows, kisi=False) }}
+    <h2 class="bolum-baslik">İşlemleri</h2>
+    {{ islem_tablosu(islemler, kisi=False) }}
   </section>
   <aside>
     {% if hisseler %}
@@ -46,9 +47,11 @@
       <ul class="akis akis-sik">
         {% for h in hisseler %}
         <li>
-          <a class="ticker" href="{{ url_for('hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
-          <span class="akis-orta soluk kucuk">{{ h.adet }} işlem</span>
-          <span class="kucuk"><span class="tutar-buy">{{ h.alim }} alım</span> · <span class="tutar-sell">{{ h.satim }} satım</span></span>
+          <a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+          <span class="akis-orta">
+            <span class="kucuk"><span class="tutar-buy">{{ h.alim }} alım</span> · <span class="tutar-sell">{{ h.satim }} satım</span></span>
+          </span>
+          <span class="sayi soluk kucuk">{{ h.hacim }}</span>
         </li>
         {% endfor %}
       </ul>

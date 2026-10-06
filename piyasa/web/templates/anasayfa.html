@@ -1,127 +1,103 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, parti_rozeti, islem_rozeti %}
-{% block baslik %}Piyasa Kaydı — kim ne aldı, ne sattı{% endblock %}
+{% from "_bilesenler.html" import parti_rozeti, islem_rozeti, yuklu_kartlar %}
+{% block baslik %}Piyasa Kaydı — ABD'de kim hangi hisseyi aldı, sattı?{% endblock %}
 
 {% block icerik %}
 <section class="giris">
-  <div>
-    <h1>Kim ne aldı, ne sattı?</h1>
-    <p class="giris-metin">ABD'de şirket yöneticilerinin, Kongre üyelerinin ve büyük fonların
-    yasal olarak bildirdiği hisse işlemleri. Resmî kayıtlardan derlendi, Türkçeleştirildi.</p>
-  </div>
-  {% if guncel %}<p class="guncel"><span class="canli"></span>Son bildirim: {{ guncel|uzun_tarih }}</p>{% endif %}
+  <h1>ABD'de kim hangi hisseyi aldı, sattı?</h1>
+  <p class="giris-metin">Siyasetçilerin, şirket yöneticilerinin ve büyük fonların yasal olarak
+  bildirdiği hisse işlemleri — resmî kayıtlardan, Türkçe.</p>
+  <form class="giris-arama" method="get" action="{{ url_for('site.islemler') }}" role="search">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
+    <input type="search" name="q" placeholder="Hisse kodu (AAPL), şirket ya da kişi adı" aria-label="Ara" autocomplete="off">
+    <input type="hidden" name="donem" value="365">
+    <button class="dugme dugme-ana" type="submit">Ara</button>
+  </form>
+  {% if guncel %}<p class="guncel"><span class="canli"></span>Son bildirim {{ guncel|uzun_tarih }}</p>{% endif %}
 </section>
 
-<section class="kpi-izgara" aria-label="Özet">
-  {{ kpi('Yönetici alımı · 30 gün', yonetici.alim_tutar|tutar, (yonetici.alim or 0)|sayi ~ ' işlem', 'alim') }}
-  {{ kpi('Yönetici satımı · 30 gün', yonetici.satim_tutar|tutar, (yonetici.satim or 0)|sayi ~ ' işlem', 'satim') }}
-  {{ kpi('Siyasetçi işlemi · 1 yıl', (siyaset.adet or 0)|sayi, (siyaset.kisi or 0) ~ ' Kongre üyesi', birim='işlem') }}
-  {{ kpi('Takip edilen fon', fon_sayisi, donem_adi, birim='fon') }}
+<section class="kaynak-kartlari" aria-label="Veri kaynakları">
+  <a class="kaynak-kart" href="{{ url_for('site.siyasetciler') }}">
+    <span class="kaynak-kart-baslik">Siyasetçiler</span>
+    <span class="kaynak-kart-sayi">{{ (siyaset.adet or 0)|sayi }} <small>işlem</small></span>
+    <span class="kaynak-kart-metin">{{ siyaset.kisi or 0 }} Kongre üyesinin son 1 yılda bildirdiği hisse alım ve satımları</span>
+    <span class="kaynak-kart-link">Siyasetçileri gör →</span>
+  </a>
+  <a class="kaynak-kart" href="{{ url_for('site.islemler', kaynak='yonetici') }}">
+    <span class="kaynak-kart-baslik">Şirket yöneticileri</span>
+    <span class="kaynak-kart-sayi">{{ (yonetici.adet or 0)|sayi }} <small>işlem</small></span>
+    <span class="kaynak-kart-metin">Son 30 günde yöneticilerin kendi şirketlerinde yaptığı işlemler:
+      <span class="tutar-buy">{{ yonetici.alim_tutar|tutar }} alım</span>,
+      <span class="tutar-sell">{{ yonetici.satim_tutar|tutar }} satım</span></span>
+    <span class="kaynak-kart-link">Yönetici işlemlerini gör →</span>
+  </a>
+  <a class="kaynak-kart" href="{{ url_for('site.fonlar') }}">
+    <span class="kaynak-kart-baslik">Fonlar ve bankalar</span>
+    <span class="kaynak-kart-sayi">{{ fon_sayisi }} <small>kurum</small></span>
+    <span class="kaynak-kart-metin">Büyük yatırım kurumlarının {{ fon_donemi }} sonundaki portföyleri ve değişimleri</span>
+    <span class="kaynak-kart-link">Fonları gör →</span>
+  </a>
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Siyasetçilerin en çok para yatırdığı hisseler</h2>
+      <p class="bolum-not">Son 1 yılda Kongre üyelerinin bildirdiği alımlar, toplam tutara göre.
+      <b>Yüklü</b>: tek seferde 50.000 dolardan fazla alım.</p>
+    </div>
+    <a class="bolum-link" href="{{ url_for('site.siyasetciler') }}">Tümü →</a>
+  </header>
+  {% if siyaset_yuklu %}{{ yuklu_kartlar(siyaset_yuklu) }}
+  {% else %}<p class="bos">Henüz siyasetçi kaydı yok.</p>{% endif %}
 </section>
 
 <div class="izgara-2">
-
   <section class="panel">
     <header class="panel-ust">
       <div>
-        <h2>Küme alımları</h2>
-        <p class="panel-not">Son 30 günde birden fazla yöneticinin kendi parasıyla aldığı hisseler</p>
+        <h2>Birden fazla yöneticinin aldığı hisseler</h2>
+        <p class="panel-not">Son 30 gün. Aynı şirketin birkaç yöneticisinin kendi parasıyla hisse
+        alması, tek bir alımdan daha dikkat çekici kabul edilir.</p>
       </div>
-      <a class="panel-link" href="{{ url_for('islemler', kaynak='yonetici', islem='buy', donem='30') }}">Tüm alımlar →</a>
     </header>
-    {% if kume %}
+    {% if yonetici_toplu %}
     <table class="tablo tablo-sade">
-      <thead><tr><th>Hisse</th><th class="sag">Yönetici sayısı</th><th class="sag">İşlem sayısı</th><th class="sag">Toplam tutar</th></tr></thead>
+      <thead><tr><th>Hisse</th><th class="sag">Alan yönetici</th><th class="sag">Toplam tutar</th></tr></thead>
       <tbody>
-        {% for k in kume %}
-        <tr>
-          <td><a class="ticker" href="{{ url_for('hisse', ticker=k.ticker) }}">{{ k.ticker }}</a>
-              <span class="soluk kirp">{{ k.sirket or '' }}</span></td>
-          <td class="sag sayi"><b>{{ k.kisi }}</b></td>
-          <td class="sag sayi">{{ k.adet }}</td>
-          <td class="sag sayi tutar-buy">{{ k.tutar_kisa }}</td>
+        {% for h in yonetici_toplu %}
+        <tr class="tiklanir" data-href="{{ url_for('site.hisse', ticker=h.ticker) }}">
+          <td><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+              <span class="alt-satir kirp">{{ h.sirket or '' }}</span></td>
+          <td class="sag"><b>{{ h.kisi }}</b> <span class="soluk">kişi</span></td>
+          <td class="sag sayi tutar-buy">{{ h.tutar }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    {% else %}<p class="bos">Son 30 günde küme alımı yok.</p>{% endif %}
+    {% else %}<p class="bos">Son 30 günde birden fazla yöneticinin aldığı hisse yok.</p>{% endif %}
   </section>
 
   <section class="panel">
     <header class="panel-ust">
       <div>
-        <h2>En büyük yönetici alımları</h2>
-        <p class="panel-not">Son 30 gün, açık piyasadan</p>
+        <h2>Siyasetçilerin son bildirimleri</h2>
+        <p class="panel-not">ABD Temsilciler Meclisi üyeleri</p>
       </div>
-      <a class="panel-link" href="{{ url_for('islemler', kaynak='yonetici', islem='buy', donem='30', sira='tutar') }}">Hepsi →</a>
+      <a class="panel-link" href="{{ url_for('site.islemler', kaynak='siyasetci') }}">Tümü →</a>
     </header>
     <ul class="akis">
-      {% for r in buyuk_alimlar %}
+      {% for k in son_siyaset %}
       <li>
-        <a class="ticker" href="{{ url_for('hisse', ticker=r.ticker) }}">{{ r.ticker }}</a>
-        <div class="akis-orta">
-          <a class="kisi-ad" href="{{ url_for('kisi', slug=r.person_slug) }}">{{ r.person }}</a>
-          <span class="soluk kirp">{{ r.role_text }} · {{ r.bildirim_tarih_kisa }}</span>
-        </div>
-        <span class="sayi tutar-buy">{{ r.amount_kisa }}</span>
+        <a class="ticker" href="{{ url_for('site.hisse', ticker=k.ticker) }}">{{ k.ticker }}</a>
+        <span class="akis-orta">
+          <span><a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</span>
+          <span class="alt-satir">{{ k.transaction_date|kisa_tarih }} tarihli işlem</span>
+        </span>
+        <span class="akis-sag">{{ islem_rozeti(k) }}<span class="sayi soluk">{{ k.tutar_kisa }}</span></span>
       </li>
-      {% else %}<li class="bos">Kayıt yok.</li>{% endfor %}
+      {% else %}<li class="bos">Henüz kayıt yok.</li>{% endfor %}
     </ul>
   </section>
-
-  <section class="panel">
-    <header class="panel-ust">
-      <div>
-        <h2>Siyasetçilerin son işlemleri</h2>
-        <p class="panel-not">ABD Temsilciler Meclisi üyeleri · STOCK Act bildirimleri</p>
-      </div>
-      <a class="panel-link" href="{{ url_for('siyasetciler') }}">Siyasetçiler →</a>
-    </header>
-    <ul class="akis">
-      {% for r in siyaset_son %}
-      <li>
-        <a class="ticker" href="{{ url_for('hisse', ticker=r.ticker) }}">{{ r.ticker }}</a>
-        <div class="akis-orta">
-          <span><a class="kisi-ad" href="{{ url_for('kisi', slug=r.person_slug) }}">{{ r.person }}</a> {{ parti_rozeti(r.parti) }}</span>
-          <span class="soluk">{{ r.state }} · işlem {{ r.islem_tarih_kisa }}, bildirim {{ r.bildirim_tarih_kisa }}
-            {% if r.gec %}<span class="gec">geç</span>{% endif %}</span>
-        </div>
-        <span class="akis-sag">{{ islem_rozeti(r) }}<span class="sayi soluk">{{ r.amount_kisa }}</span></span>
-      </li>
-      {% else %}<li class="bos">Henüz siyasetçi kaydı yok. <code>python -m piyasa kongre</code> ile çekilir.</li>{% endfor %}
-    </ul>
-  </section>
-
-  <section class="panel">
-    <header class="panel-ust">
-      <div>
-        <h2>Kongre'de en çok işlem gören hisseler</h2>
-        <p class="panel-not">Son 1 yıl, işlem yapan üye sayısına göre</p>
-      </div>
-      <a class="panel-link" href="{{ url_for('islemler', kaynak='siyasetci') }}">Tüm işlemler →</a>
-    </header>
-    {% if siyaset_hisse %}
-    <table class="tablo tablo-sade">
-      <thead><tr><th>Hisse</th><th class="sag">Üye sayısı</th><th>Alım / satım dağılımı</th></tr></thead>
-      <tbody>
-        {% for h in siyaset_hisse %}
-        {% set toplam = h.alim + h.satim %}
-        <tr>
-          <td><a class="ticker" href="{{ url_for('hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
-              <span class="soluk kirp">{{ h.sirket or '' }}</span></td>
-          <td class="sag sayi"><b>{{ h.kisi }}</b></td>
-          <td class="oran-hucre">
-            <span class="oran-cubuk" title="{{ h.alim }} alım, {{ h.satim }} satım">
-              <span class="oran-alim" style="width: {{ (h.alim / toplam * 100) if toplam else 0 }}%"></span>
-            </span>
-            <span class="soluk kucuk">{{ h.alim }} alım · {{ h.satim }} satım</span>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}<p class="bos">Kayıt yok.</p>{% endif %}
-  </section>
-
 </div>
 {% endblock %}

@@ -1,81 +1,96 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, parti_rozeti %}
+{% from "_bilesenler.html" import kpi, parti_rozeti, yuklu_kartlar %}
 {% block baslik %}Siyasetçilerin hisse işlemleri · Piyasa Kaydı{% endblock %}
 
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / Siyasetçiler</p>
-    <h1>Siyasetçiler</h1>
-    <p class="sayfa-not">ABD Temsilciler Meclisi üyeleri, 2012 tarihli STOCK Act gereği kendilerinin,
-    eşlerinin ve bakmakla yükümlü oldukları çocuklarının 1.000 doları aşan hisse işlemlerini en geç
-    {{ yasal_gun }} gün içinde bildirmek zorunda. Tutarlar tam rakam değil, bildirimdeki aralıktır.</p>
+    <h1>Siyasetçilerin hisse işlemleri</h1>
+    <p class="sayfa-not">ABD Kongre üyeleri, kendilerinin ve ailelerinin 1.000 doları aşan hisse
+    işlemlerini en geç {{ yasal_gun }} gün içinde bildirmek zorunda (STOCK Act). Bildirimlerde tam tutar
+    değil, aralık yazar; bu yüzden tutarlar “en az – en çok” olarak gösterilir.</p>
   </div>
-  <a class="dugme" href="{{ url_for('islemler', kaynak='siyasetci') }}">Tüm işlemleri gör →</a>
+  <a class="dugme" href="{{ url_for('site.islemler', kaynak='siyasetci') }}">Bütün işlemleri listele →</a>
 </header>
 
 <section class="kpi-izgara">
   {{ kpi('İşlem bildiren üye', (ozet.kisi or 0)|sayi, 'ABD Temsilciler Meclisi', birim='kişi') }}
   {{ kpi('Toplam işlem', (ozet.adet or 0)|sayi, (ozet.ilk|uzun_tarih) ~ ' sonrası' if ozet.ilk else '', birim='işlem') }}
-  {{ kpi('Alım · tahmini tutar', aralik(ozet.alim_alt, ozet.alim_tutar), (ozet.alim or 0)|sayi ~ ' işlem', 'alim') }}
-  {{ kpi('Satım · tahmini tutar', aralik(ozet.satim_alt, ozet.satim_tutar), (ozet.satim or 0)|sayi ~ ' işlem', 'satim') }}
+  {{ kpi('Alım · tahmini tutar', aralik(ozet.alim_alt, ozet.alim_tutar), (ozet.alim or 0)|sayi ~ ' alım işlemi', 'alim') }}
+  {{ kpi('Satım · tahmini tutar', aralik(ozet.satim_alt, ozet.satim_tutar), (ozet.satim or 0)|sayi ~ ' satım işlemi', 'satim') }}
 </section>
 
-<div class="filtre-satir">
-  <div class="segment" role="group" aria-label="Parti">
-    <a class="{% if not parti %}secili{% endif %}" href="{{ url_for('siyasetciler') }}">Tüm partiler</a>
-    {% for kod, bilgi in partiler.items() if parti_sayilari.get(kod) %}
-    <a class="{% if parti == kod %}secili{% endif %}" href="{{ url_for('siyasetciler', parti=kod) }}">{{ bilgi[0] }} <span class="soluk">{{ parti_sayilari[kod] }}</span></a>
-    {% endfor %}
-  </div>
-  <label class="secim filtre-kutu">
-    <span>Süz</span>
-    <input type="search" id="tablo-suz" data-tablo="siyasetci-tablosu" placeholder="İsim veya eyalet" autocomplete="off">
-  </label>
-</div>
-
-{% if kisiler %}
-<div class="tablo-kap">
-  <table class="tablo" id="siyasetci-tablosu" data-siralanabilir>
-    <thead>
-      <tr>
-        <th scope="col">Üye</th>
-        <th scope="col">Bölge</th>
-        <th scope="col" class="sag" data-sirala="sayi">İşlem sayısı</th>
-        <th scope="col" class="sag" data-sirala="sayi">Alım</th>
-        <th scope="col" class="sag" data-sirala="sayi">Satım</th>
-        <th scope="col" class="sag" data-sirala="sayi">Tahmini hacim</th>
-        <th scope="col" class="sag" data-sirala="sayi">Farklı hisse</th>
-        <th scope="col" class="sag" data-sirala="sayi">Ort. gecikme</th>
-        <th scope="col" class="sag" data-sirala="sayi">Geç bildirim</th>
-        <th scope="col" data-sirala="metin">Son işlem</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for k in kisiler %}
-      <tr>
-        <td data-etiket="Üye"><a class="kisi-ad" href="{{ url_for('kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</td>
-        <td data-etiket="Bölge" class="sayi">{{ k.state }}</td>
-        <td data-etiket="İşlem sayısı" class="sag sayi" data-deger="{{ k.adet }}"><b>{{ k.adet|sayi }}</b></td>
-        <td data-etiket="Alım" class="sag sayi tutar-buy" data-deger="{{ k.alim }}">{{ k.alim|sayi }} <span class="soluk kucuk">alım</span></td>
-        <td data-etiket="Satım" class="sag sayi tutar-sell" data-deger="{{ k.satim }}">{{ k.satim|sayi }} <span class="soluk kucuk">satım</span></td>
-        <td data-etiket="Tahmini hacim" class="sag sayi" data-deger="{{ k.ust_tutar or 0 }}">{{ k.hacim_aralik }}</td>
-        <td data-etiket="Farklı hisse" class="sag sayi" data-deger="{{ k.hisse }}">{{ k.hisse }}</td>
-        <td data-etiket="Ort. gecikme" class="sag sayi" data-deger="{{ k.ort_gecikme }}">{{ k.ort_gecikme }} gün</td>
-        <td data-etiket="Geç bildirim" class="sag sayi" data-deger="{{ k.gec }}">{% if k.gec %}<span class="gec">{{ k.gec }}</span>{% else %}<span class="soluk">0</span>{% endif %}</td>
-        <td data-etiket="Son işlem" class="tarih" data-deger="{{ k.son_islem }}">{{ k.son_islem|uzun_tarih }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-<p class="dipnot">Sütun başlıklarına tıklayarak sıralayabilirsiniz. Taranmış (elle doldurulmuş) bildirimler
-okunamadığı için listeye dahil değildir. Senato bildirimleri henüz eklenmedi.
-Tahmini hacim, bildirim formundaki tutar aralıklarının alt ve üst sınırlarının toplamıdır.</p>
-{% else %}
-<div class="bos-durum">
-  <p><strong>Henüz siyasetçi kaydı yok.</strong></p>
-  <p><code>python -m piyasa kongre</code> komutuyla Temsilciler Meclisi bildirimleri çekilir.</p>
-</div>
+{% if yuklu %}
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>En çok para yatırdıkları hisseler</h2>
+      <p class="bolum-not">Son 1 yıl, alım tutarına göre. <b>Yüklü</b>: tek seferde 50.000 dolardan fazla alım.</p>
+    </div>
+  </header>
+  {{ yuklu_kartlar(yuklu) }}
+</section>
 {% endif %}
+
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Üyeler</h2>
+      <p class="bolum-not">Bir üyenin işlemlerini görmek için adına tıklayın. Sütun başlıklarına tıklayarak sıralayabilirsiniz.</p>
+    </div>
+  </header>
+
+  <div class="filtre-satir">
+    <div class="segment" role="group" aria-label="Parti">
+      <a class="{% if not parti %}secili{% endif %}" href="{{ url_for('site.siyasetciler') }}">Tüm partiler</a>
+      {% for kod, bilgi in partiler.items() if parti_sayilari.get(kod) %}
+      <a class="{% if parti == kod %}secili{% endif %}" href="{{ url_for('site.siyasetciler', parti=kod) }}">{{ bilgi[0] }} <span class="soluk">{{ parti_sayilari[kod] }}</span></a>
+      {% endfor %}
+    </div>
+    <label class="secim filtre-kutu">
+      <span>İsim ara</span>
+      <input type="search" id="tablo-suz" data-tablo="siyasetci-tablosu" placeholder="İsim veya eyalet" autocomplete="off">
+    </label>
+  </div>
+
+  {% if kisiler %}
+  <div class="tablo-kap">
+    <table class="tablo" id="siyasetci-tablosu" data-siralanabilir>
+      <thead>
+        <tr>
+          <th scope="col" data-sirala="metin">Üye</th>
+          <th scope="col" data-sirala="metin">Eyalet</th>
+          <th scope="col" class="sag" data-sirala="sayi">İşlem sayısı</th>
+          <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Tahmini hacim</th>
+          <th scope="col" class="sag" data-sirala="sayi">Yüklü alım</th>
+          <th scope="col" class="sag" data-sirala="sayi">Geç bildirim</th>
+          <th scope="col" data-sirala="metin">Son işlem</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for k in kisiler %}
+        <tr class="tiklanir" data-href="{{ url_for('site.kisi', slug=k.person_slug) }}">
+          <td data-etiket="Üye" data-deger="{{ k.person }}"><a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</td>
+          <td data-etiket="Eyalet" class="sayi" data-deger="{{ k.state }}">{{ k.state }}</td>
+          <td data-etiket="İşlem sayısı" class="sag" data-deger="{{ k.adet }}">
+            <b>{{ k.adet|sayi }}</b>
+            <span class="alt-satir"><span class="tutar-buy">{{ k.alim|sayi }} alım</span> · <span class="tutar-sell">{{ k.satim|sayi }} satım</span></span>
+          </td>
+          <td data-etiket="Tahmini hacim" class="sag sayi" data-deger="{{ k.ust or 0 }}">{{ k.hacim }}</td>
+          <td data-etiket="Yüklü alım" class="sag" data-deger="{{ k.yuklu }}">{% if k.yuklu %}<span class="rozet rozet-yuklu">{{ k.yuklu }}</span>{% else %}<span class="soluk">—</span>{% endif %}</td>
+          <td data-etiket="Geç bildirim" class="sag" data-deger="{{ k.gec }}">{% if k.gec %}<span class="gec">{{ k.gec }} işlem</span>{% else %}<span class="soluk">—</span>{% endif %}</td>
+          <td data-etiket="Son işlem" class="tarih" data-deger="{{ k.son_islem }}">{{ k.son_islem|uzun_tarih }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">Taranmış (elle doldurulmuş) bildirimler okunamadığı için listede yoktur. Senato bildirimleri henüz eklenmedi.</p>
+  {% else %}
+  <div class="bos-durum">
+    <p><strong>Henüz siyasetçi kaydı yok.</strong></p>
+    <p><code>python -m piyasa kongre</code> komutuyla Temsilciler Meclisi bildirimleri indirilir.</p>
+  </div>
+  {% endif %}
+</section>
 {% endblock %}

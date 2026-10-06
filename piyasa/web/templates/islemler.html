@@ -1,88 +1,84 @@
 {% extends "base.html" %}
 {% from "_bilesenler.html" import kpi, islem_tablosu %}
-{% block baslik %}{{ kaynaklar[kaynak][0] }} — işlemler · Piyasa Kaydı{% endblock %}
+{% set basliklar = {
+    'siyasetci': ('Siyasetçilerin işlemleri', 'ABD Temsilciler Meclisi üyelerinin bildirdiği hisse alım ve satımları. Tutarlar bildirim formundaki aralıktır.'),
+    'yonetici': ('Şirket yöneticilerinin işlemleri', 'Yöneticilerin ve büyük ortakların kendi şirketlerinin hisselerinde, açık piyasada yaptığı alım ve satımlar.'),
+    'hepsi': ('Tüm işlemler', 'Siyasetçilerin ve şirket yöneticilerinin bildirdiği bütün hisse işlemleri.'),
+} %}
+{% block baslik %}{{ basliklar[filtre.kaynak][0] }} · Piyasa Kaydı{% endblock %}
 
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / İşlemler</p>
-    <h1>{% if kaynak == 'siyasetci' %}Siyasetçilerin işlemleri{% elif kaynak == 'yonetici' %}Yönetici işlemleri{% else %}Tüm işlemler{% endif %}</h1>
-    <p class="sayfa-not">
-      {% if kaynak == 'siyasetci' %}ABD Temsilciler Meclisi üyelerinin STOCK Act kapsamında bildirdiği hisse alım satımları. Tutarlar bildirimdeki aralıktır.
-      {% elif kaynak == 'yonetici' %}Şirket yöneticileri ve %10'un üzerindeki ortakların SEC'e bildirdiği açık piyasa alım satımları (Form 4).
-      {% else %}Şirket yöneticileri ve Kongre üyelerinin bildirdiği tüm hisse işlemleri.{% endif %}
-    </p>
+    <h1>{{ basliklar[filtre.kaynak][0] }}</h1>
+    <p class="sayfa-not">{{ basliklar[filtre.kaynak][1] }}</p>
   </div>
 </header>
 
-<form class="filtreler" method="get" action="{{ url_for('islemler') }}" id="filtre-formu">
-  <input type="hidden" name="islem" value="{{ islem }}">
-  <input type="hidden" name="kaynak" value="{{ kaynak }}">
-  <input type="hidden" name="donem" value="{{ donem }}">
-  <input type="hidden" name="sira" value="{{ sira }}">
+<form class="filtreler" method="get" action="{{ url_for('site.islemler') }}" id="filtre-formu">
   <div class="arama-kutu">
     <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
-    <input id="search" type="search" name="q" value="{{ arama }}" placeholder="Hisse kodu, kişi veya şirket ara" autocomplete="off" aria-label="Kayıtlarda ara">
+    <input id="search" type="search" name="q" value="{{ filtre.q }}" placeholder="Hisse kodu, şirket ya da kişi ara" autocomplete="off" aria-label="Kayıtlarda ara">
   </div>
 
   <div class="filtre-satir">
-    <div class="segment" role="group" aria-label="Kaynak">
-      {% for deger, bilgi in kaynaklar.items() %}
-      <a class="{% if kaynak == deger %}secili{% endif %}" href="{{ url_for('islemler', q=arama, islem=islem, kaynak=deger, sira=sira) }}">{{ bilgi[0] }}</a>
-      {% endfor %}
-    </div>
-    <div class="segment" role="group" aria-label="İşlem türü">
-      {% for deger, etiket in [('hepsi', 'Hepsi'), ('buy', 'Alım'), ('sell', 'Satım')] %}
-      <a class="{% if islem == deger %}secili{% endif %}" href="{{ url_for('islemler', q=arama, islem=deger, kaynak=kaynak, donem=donem, sira=sira) }}">{{ etiket }}</a>
-      {% endfor %}
-    </div>
-    <div class="segment" role="group" aria-label="Dönem">
-      {% for deger, bilgi in donemler.items() %}
-      <a class="{% if donem == deger %}secili{% endif %}" href="{{ url_for('islemler', q=arama, islem=islem, kaynak=kaynak, donem=deger, sira=sira) }}">{{ bilgi[0] }}</a>
-      {% endfor %}
-    </div>
-    <label class="secim">
-      <span>Sırala</span>
-      <select name="sira_sec" data-hedef="sira" aria-label="Sıralama">
-        {% for deger, bilgi in siralamalar.items() %}
-        <option value="{{ deger }}" {% if sira == deger %}selected{% endif %}>{{ bilgi[0] }}</option>
-        {% endfor %}
+    <label class="secim"><span>Kim?</span>
+      <select name="kaynak" data-otomatik>
+        {% for deger, bilgi in kaynaklar.items() %}<option value="{{ deger }}" {% if filtre.kaynak == deger %}selected{% endif %}>{{ bilgi[0] }}</option>{% endfor %}
       </select>
     </label>
-    <noscript><button class="dugme" type="submit">Uygula</button></noscript>
+    <label class="secim"><span>İşlem</span>
+      <select name="islem" data-otomatik>
+        {% for deger, etiket in [('hepsi', 'Alım ve satım'), ('buy', 'Yalnız alım'), ('sell', 'Yalnız satım')] %}<option value="{{ deger }}" {% if filtre.islem == deger %}selected{% endif %}>{{ etiket }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="secim"><span>Dönem</span>
+      <select name="donem" data-otomatik>
+        {% for deger, bilgi in donemler.items() %}<option value="{{ deger }}" {% if filtre.donem == deger %}selected{% endif %}>{{ bilgi[0] }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="secim"><span>Sırala</span>
+      <select name="sira" data-otomatik>
+        {% for deger, bilgi in siralamalar.items() %}<option value="{{ deger }}" {% if filtre.sira == deger %}selected{% endif %}>{{ bilgi[0] }}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="dugme" type="submit">Uygula</button>
+    {% if filtre.q or filtre.islem != 'hepsi' %}<a class="temizle" href="{{ url_for('site.islemler', kaynak=filtre.kaynak) }}">Filtreleri temizle</a>{% endif %}
   </div>
 </form>
 
 {% if toplam %}
-<section class="kpi-izgara">
-  {{ kpi('Bildirim', toplam|sayi, (ozet.kisi or 0)|sayi ~ ' kişi') }}
-  {{ kpi('Alım', alim_tutar, (ozet.alim or 0)|sayi ~ ' işlem', 'alim') }}
-  {{ kpi('Satım', satim_tutar, (ozet.satim or 0)|sayi ~ ' işlem', 'satim') }}
-  {% set a, s = (ozet.alim_tutar or 0), (ozet.satim_tutar or 0) %}
-  {{ kpi('Alım / satım oranı', ('%.2f'|format(a / s)).replace('.', ',') if s else '—', 'tutar bazında') }}
+<section class="kpi-izgara kpi-3">
+  {{ kpi('Bulunan işlem', toplam|sayi, (ozet.kisi or 0)|sayi ~ ' farklı kişi', birim='işlem') }}
+  {% if filtre.kaynak == 'siyasetci' %}
+  {{ kpi('Alım · tahmini tutar', aralik(ozet.alim_alt, ozet.alim_tutar), (ozet.alim or 0)|sayi ~ ' alım işlemi', 'alim') }}
+  {{ kpi('Satım · tahmini tutar', aralik(ozet.satim_alt, ozet.satim_tutar), (ozet.satim or 0)|sayi ~ ' satım işlemi', 'satim') }}
+  {% else %}
+  {{ kpi('Alım tutarı', ozet.alim_tutar|tutar, (ozet.alim or 0)|sayi ~ ' alım işlemi', 'alim') }}
+  {{ kpi('Satım tutarı', ozet.satim_tutar|tutar, (ozet.satim or 0)|sayi ~ ' satım işlemi', 'satim') }}
+  {% endif %}
 </section>
+
+{{ islem_tablosu(satirlar) }}
+
+{% if son_sayfa > 1 %}
+<nav class="sayfalama" aria-label="Sayfalar">
+  {% if sayfa > 1 %}<a class="dugme" href="{{ url_for('site.islemler', **dict(filtre, sayfa=sayfa - 1)) }}">← Önceki</a>
+  {% else %}<span class="dugme pasif" aria-disabled="true">← Önceki</span>{% endif %}
+  <span class="sayfa-bilgi">Sayfa {{ sayfa }} / {{ son_sayfa }}</span>
+  {% if sayfa < son_sayfa %}<a class="dugme" href="{{ url_for('site.islemler', **dict(filtre, sayfa=sayfa + 1)) }}">Sonraki →</a>
+  {% else %}<span class="dugme pasif" aria-disabled="true">Sonraki →</span>{% endif %}
+</nav>
 {% endif %}
 
-{% if rows %}
-  {{ islem_tablosu(rows) }}
-
-  {% if son_sayfa > 1 %}
-  <nav class="sayfalama" aria-label="Sayfalar">
-    {% if sayfa > 1 %}<a class="dugme" href="{{ url_for('islemler', q=arama, islem=islem, kaynak=kaynak, donem=donem, sira=sira, sayfa=sayfa-1) }}">← Önceki</a>
-    {% else %}<span class="dugme pasif">← Önceki</span>{% endif %}
-    <span class="sayfa-bilgi">Sayfa {{ sayfa }} / {{ son_sayfa }}</span>
-    {% if sayfa < son_sayfa %}<a class="dugme" href="{{ url_for('islemler', q=arama, islem=islem, kaynak=kaynak, donem=donem, sira=sira, sayfa=sayfa+1) }}">Sonraki →</a>
-    {% else %}<span class="dugme pasif">Sonraki →</span>{% endif %}
-  </nav>
-  {% endif %}
-
-  <p class="dipnot"><span class="gec">kırmızı gecikme</span> yasal süreden sonra yapılan bildirimi gösterir
-  (yöneticiler için 2 iş günü, Kongre üyeleri için {{ yasal_gun }} gün).</p>
+<p class="dipnot"><span class="gec">“gün geç”</span> uyarısı, bildirimin yasal süreden sonra yapıldığını gösterir
+(yöneticiler için {{ form4_gun }} iş günü, siyasetçiler için {{ yasal_gun }} gün).
+<span class="rozet rozet-yuklu">Yüklü</span> 50.000 doları aşan siyasetçi alımıdır.</p>
 {% else %}
-  <div class="bos-durum">
-    <p><strong>Bu filtrelere uyan kayıt yok.</strong></p>
-    <p>Dönemi genişletmeyi ya da aramayı değiştirmeyi deneyin.</p>
-    <a class="dugme" href="{{ url_for('islemler', q=arama, kaynak=kaynak, donem='365') }}">Son 1 yılda ara</a>
-  </div>
+<div class="bos-durum">
+  <p><strong>Bu filtrelere uyan kayıt yok.</strong></p>
+  <p>Dönemi uzatmayı ya da aramayı değiştirmeyi deneyin.</p>
+  <a class="dugme" href="{{ url_for('site.islemler', **dict(filtre, donem='365', sayfa=1)) }}">Son 1 yılda ara</a>
+</div>
 {% endif %}
 {% endblock %}

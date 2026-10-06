@@ -3,74 +3,88 @@
 {% block baslik %}{{ ticker }} — {{ sirket }} · Piyasa Kaydı{% endblock %}
 
 {% block icerik %}
-<header class="sayfa-ust">
+<header class="sayfa-ust hisse-ust">
   <div>
-    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / <a href="{{ url_for('islemler', kaynak='hepsi', donem='365') }}">İşlemler</a> / {{ ticker }}</p>
     <h1><span class="ticker ticker-buyuk">{{ ticker }}</span> <span class="h1-alt">{{ sirket }}</span></h1>
   </div>
 </header>
 
-<section class="kpi-izgara">
-  {{ kpi('Bildirim', (ozet.adet or 0)|sayi, (ozet.kisi or 0) ~ ' kişi', birim='işlem') }}
-  {{ kpi('Alım', alim_tutar, (ozet.alim or 0) ~ ' işlem', 'alim') }}
-  {{ kpi('Satım', satim_tutar, (ozet.satim or 0) ~ ' işlem', 'satim') }}
-  {% if fon_ozet %}
-  {{ kpi('Fon pozisyonu', fon_ozet.toplam_kisa, fon_ozet.sayi ~ ' fon · ' ~ fon_ozet.donem_adi) }}
-  {% else %}
-  {{ kpi('Siyasetçi işlemi', ozet.siyasetci or 0, 'Kongre üyeleri', birim='işlem') }}
-  {% endif %}
-</section>
+{% block fiyat %}{% endblock %}
 
-<div class="izgara-yan">
-  <div>
-    {% if cubuklar %}
-    <section class="panel">
-      <header class="panel-ust">
-        <div><h2>Aylık işlem sayısı</h2><p class="panel-not">Son 12 ay, işlem tarihine göre</p></div>
-        <p class="lejant"><span class="lejant-alim"></span>Alım <span class="lejant-satim"></span>Satım</p>
-      </header>
-      <div class="grafik" role="img" aria-label="Son 12 ayın aylık alım ve satım sayıları">
-        {% for c in cubuklar %}
-        <div class="grafik-sutun" title="{{ c.ay }}: {{ c.alim }} alım, {{ c.satim }} satım">
-          <div class="grafik-ust"><span class="cubuk cubuk-alim" style="height: {{ (c.alim_oran * 100)|round(1) }}%"></span></div>
-          <div class="grafik-alt"><span class="cubuk cubuk-satim" style="height: {{ (c.satim_oran * 100)|round(1) }}%"></span></div>
-          <span class="grafik-ay">{{ c.ay }}</span>
-        </div>
-        {% endfor %}
-      </div>
-    </section>
-    {% endif %}
+<nav class="bolum-menu" aria-label="Bu sayfada">
+  {% if siyaset_islemleri %}<a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ siyaset.adet }}</span></a>{% endif %}
+  {% if yonetici_islemleri %}<a href="#yoneticiler">Şirket yöneticileri <span class="sayac">{{ yonetici.adet }}</span></a>{% endif %}
+  {% if fonlar %}<a href="#fonlar">Fonlar <span class="sayac">{{ fon_sayisi }}</span></a>{% endif %}
+</nav>
 
-    <section>
-      <h2 class="bolum-baslik">İşlemler</h2>
-      {% if rows %}{{ islem_tablosu(rows, hisse=False) }}
-      {% else %}<p class="bos">Bu hissede yönetici ya da siyasetçi işlemi yok.</p>{% endif %}
-    </section>
+{% if cubuklar %}
+<section class="panel bolum">
+  <header class="panel-ust">
+    <div><h2>Aylık işlem sayısı</h2><p class="panel-not">Siyasetçiler ve yöneticiler birlikte, son 12 ay</p></div>
+    <p class="lejant"><span class="lejant-alim"></span>Alım <span class="lejant-satim"></span>Satım</p>
+  </header>
+  <div class="grafik" role="img" aria-label="Son 12 ayın aylık alım ve satım sayıları">
+    {% for c in cubuklar %}
+    <div class="grafik-sutun" title="{{ c.ay }} {{ c.yil }}: {{ c.alim }} alım, {{ c.satim }} satım">
+      <div class="grafik-ust"><span class="cubuk cubuk-alim" style="height: {{ (c.alim_oran * 100)|round(1) }}%"></span></div>
+      <div class="grafik-alt"><span class="cubuk cubuk-satim" style="height: {{ (c.satim_oran * 100)|round(1) }}%"></span></div>
+      <span class="grafik-ay">{{ c.ay }}</span>
+    </div>
+    {% endfor %}
   </div>
+</section>
+{% endif %}
 
-  <aside>
-    {% if fon_ozet %}
-    <section class="panel">
-      <header class="panel-ust">
-        <div><h2>Bu hisseyi tutan fonlar</h2><p class="panel-not">{{ fon_ozet.donem_adi }} sonu</p></div>
-      </header>
-      <ul class="akis akis-sik">
-        {% for f in fonlar_listesi %}
-        <li>
-          <a class="akis-orta" href="{{ url_for('fon', slug=f.fon_slug) }}">{{ f.fon_adi }}</a>
-          <span class="sayi">{{ f.deger_kisa }}</span>
-        </li>
+{% if siyaset_islemleri %}
+<section class="bolum" id="siyasetciler">
+  <header class="bolum-ust">
+    <div>
+      <h2>Siyasetçilerin işlemleri</h2>
+      <p class="bolum-not">{{ siyaset.kisi }} Kongre üyesi ·
+        <span class="tutar-buy">{{ siyaset.alim }} alım ({{ aralik(siyaset.alim_alt, siyaset.alim_tutar) }})</span> ·
+        <span class="tutar-sell">{{ siyaset.satim }} satım ({{ aralik(siyaset.satim_alt, siyaset.satim_tutar) }})</span></p>
+    </div>
+  </header>
+  {{ islem_tablosu(siyaset_islemleri, hisse=False) }}
+</section>
+{% endif %}
+
+{% if yonetici_islemleri %}
+<section class="bolum" id="yoneticiler">
+  <header class="bolum-ust">
+    <div>
+      <h2>Şirket yöneticilerinin işlemleri</h2>
+      <p class="bolum-not">{{ yonetici.kisi }} kişi ·
+        <span class="tutar-buy">{{ yonetici.alim }} alım ({{ yonetici.alim_tutar|tutar }})</span> ·
+        <span class="tutar-sell">{{ yonetici.satim }} satım ({{ yonetici.satim_tutar|tutar }})</span></p>
+    </div>
+  </header>
+  {{ islem_tablosu(yonetici_islemleri, hisse=False) }}
+</section>
+{% endif %}
+
+{% if fonlar %}
+<section class="bolum" id="fonlar">
+  <header class="bolum-ust">
+    <div>
+      <h2>Bu hisseyi tutan fonlar</h2>
+      <p class="bolum-not">{{ fon_donemi }} sonu · takip edilen {{ fon_sayisi }} kurum, toplam {{ fon_toplam }}</p>
+    </div>
+  </header>
+  <div class="tablo-kap">
+    <table class="tablo tablo-sade">
+      <thead><tr><th>Kurum</th><th class="sag">Adet</th><th class="sag">Değer</th></tr></thead>
+      <tbody>
+        {% for f in fonlar %}
+        <tr class="tiklanir" data-href="{{ url_for('site.fon', slug=f.fon_slug) }}">
+          <td><a class="kisi-ad" href="{{ url_for('site.fon', slug=f.fon_slug) }}">{{ f.fon_adi }}</a></td>
+          <td class="sag sayi">{{ (f.adet or 0)|int|sayi }}</td>
+          <td class="sag sayi"><b>{{ f.deger_kisa }}</b></td>
+        </tr>
         {% endfor %}
-      </ul>
-    </section>
-    {% endif %}
-    <section class="panel panel-bilgi">
-      <h2>Dış bağlantılar</h2>
-      <ul class="baglantilar">
-        <li><a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;company=&amp;CIK={{ ticker }}&amp;type=4&amp;owner=only" target="_blank" rel="noopener">SEC'teki Form 4 bildirimleri ↗</a></li>
-        <li><a href="https://finance.yahoo.com/quote/{{ ticker }}" target="_blank" rel="noopener">Fiyat grafiği (Yahoo Finance) ↗</a></li>
-      </ul>
-    </section>
-  </aside>
-</div>
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
 {% endblock %}

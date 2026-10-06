@@ -7,7 +7,7 @@
   <ul class="akis akis-sik">
     {% for p in liste %}
     <li>
-      {% if p.ticker %}<a class="ticker" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
+      {% if p.ticker %}<a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
       {% else %}<span class="ticker soluk">—</span>{% endif %}
       <span class="akis-orta soluk kirp" title="{{ p.sirket_adi }}">{{ p.sirket_adi }}</span>
       <span class="sayi">
@@ -24,7 +24,7 @@
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol"><a href="{{ url_for('anasayfa') }}">Genel bakış</a> / <a href="{{ url_for('fonlar') }}">Fonlar</a></p>
+    <p class="ust-yol"><a href="{{ url_for('site.fonlar') }}">← Tüm fonlar</a></p>
     <h1>{{ fon_adi }}</h1>
     <p class="sayfa-not">{{ donem_adi }} sonu itibarıyla bildirilen portföy{% if onceki_adi %}; değişimler {{ onceki_adi }} ile karşılaştırıldı{% endif %}.</p>
   </div>
@@ -81,7 +81,7 @@
       {% for p in portfoy %}
       <tr>
         <td class="soluk sayi">{{ loop.index }}</td>
-        <td data-etiket="Hisse">{% if p.ticker %}<a class="ticker" href="{{ url_for('hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>{% else %}<span class="soluk">—</span>{% endif %}</td>
+        <td data-etiket="Hisse">{% if p.ticker %}<a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>{% else %}<span class="soluk">—</span>{% endif %}</td>
         <td data-etiket="Şirket" class="kirp-hucre">{{ p.sirket_adi }}</td>
         <td data-etiket="Adet" class="sag sayi">{{ (p.adet or 0)|int|sayi }}</td>
         <td data-etiket="Değer" class="sag sayi"><b>{{ p.deger_kisa }}</b></td>

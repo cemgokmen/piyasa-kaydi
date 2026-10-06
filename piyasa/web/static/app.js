@@ -1,41 +1,45 @@
-// --- İşlemler sayfası: arama kutusu yazmayı bırakınca formu gönderir ---
+"use strict";
 
-const form = document.querySelector("#filtre-formu");
-const searchInput = document.querySelector("#search");
+// ---------------------------------------------------------------------------
+// Filtre formu: arama kutusu yazmayı bırakınca, seçim kutuları değişince gönderilir
+// ---------------------------------------------------------------------------
 
-if (form && searchInput) {
+const filtreFormu = document.querySelector("#filtre-formu");
+const aramaKutusu = document.querySelector("#search");
+
+if (filtreFormu) {
   let zamanlayici = null;
 
-  searchInput.addEventListener("input", function () {
-    clearTimeout(zamanlayici);
-    zamanlayici = setTimeout(function () {
-      form.submit();
-    }, 450);
+  if (aramaKutusu) {
+    aramaKutusu.addEventListener("input", function () {
+      clearTimeout(zamanlayici);
+      zamanlayici = setTimeout(() => filtreFormu.requestSubmit(), 500);
+    });
+
+    if (aramaKutusu.value) {
+      aramaKutusu.focus();
+      aramaKutusu.setSelectionRange(aramaKutusu.value.length, aramaKutusu.value.length);
+    }
+  }
+
+  filtreFormu.querySelectorAll("select[data-otomatik]").forEach(function (secim) {
+    secim.addEventListener("change", () => filtreFormu.requestSubmit());
   });
 
-  if (searchInput.value) {
-    searchInput.focus();
-    searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-  }
+  // Boş arama kutusu adres çubuğunda "q=" olarak görünmesin
+  filtreFormu.addEventListener("submit", function () {
+    if (aramaKutusu && !aramaKutusu.value.trim()) aramaKutusu.disabled = true;
+  });
 }
 
-// --- Sıralama seçimi değişince gizli alanı güncelleyip gönderir ---
-
-document.querySelectorAll("select[data-hedef]").forEach(function (secim) {
-  secim.addEventListener("change", function () {
-    const hedef = secim.form.querySelector(`input[name="${secim.dataset.hedef}"]`);
-    if (hedef) hedef.value = secim.value;
-    secim.removeAttribute("name");
-    secim.form.submit();
-  });
-});
-
-// --- Klavye kısayolu: / tuşu arama kutusuna götürür ---
+// ---------------------------------------------------------------------------
+// Klavye kısayolu: "/" tuşu arama kutusuna götürür
+// ---------------------------------------------------------------------------
 
 const genelArama = document.querySelector("#genel-arama");
 
 document.addEventListener("keydown", function (olay) {
-  const hedef = searchInput || genelArama;
+  const hedef = aramaKutusu || genelArama;
   const yaziyor = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName);
   if (olay.key === "/" && !yaziyor && hedef) {
     olay.preventDefault();
@@ -43,7 +47,26 @@ document.addEventListener("keydown", function (olay) {
   }
 });
 
-// --- Tabloyu süz: isim veya eyalete göre satırları gizler ---
+// ---------------------------------------------------------------------------
+// Tıklanabilir satırlar: satırın herhangi bir yerine tıklayınca sayfayı açar.
+// Satırdaki bağlantılar kendi işini yapar; metin seçerken de tetiklenmez.
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll("tr.tiklanir[data-href]").forEach(function (satir) {
+  satir.addEventListener("click", function (olay) {
+    if (olay.target.closest("a, button, input, select")) return;
+    if (window.getSelection().toString()) return;
+    if (olay.metaKey || olay.ctrlKey) {
+      window.open(satir.dataset.href, "_blank");
+    } else {
+      window.location.href = satir.dataset.href;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tabloyu süz: isim veya eyalete göre satırları gizler
+// ---------------------------------------------------------------------------
 
 document.querySelectorAll("#tablo-suz").forEach(function (kutu) {
   const tablo = document.getElementById(kutu.dataset.tablo);
@@ -53,12 +76,14 @@ document.querySelectorAll("#tablo-suz").forEach(function (kutu) {
   kutu.addEventListener("input", function () {
     const aranan = kucult(kutu.value.trim());
     tablo.querySelectorAll("tbody tr").forEach(function (satir) {
-      satir.hidden = aranan && !kucult(satir.textContent).includes(aranan);
+      satir.hidden = Boolean(aranan) && !kucult(satir.textContent).includes(aranan);
     });
   });
 });
 
-// --- Sıralanabilir tablolar: başlığa tıklayınca sıralar ---
+// ---------------------------------------------------------------------------
+// Sıralanabilir tablolar: başlığa tıklayınca (ya da Enter) sıralar
+// ---------------------------------------------------------------------------
 
 document.querySelectorAll("table[data-siralanabilir]").forEach(function (tablo) {
   const basliklar = Array.from(tablo.querySelectorAll("th"));
@@ -68,6 +93,7 @@ document.querySelectorAll("table[data-siralanabilir]").forEach(function (tablo) 
     if (!tur) return;
 
     baslik.tabIndex = 0;
+    baslik.title = "Sıralamak için tıklayın";
 
     function sirala() {
       const azalan = baslik.getAttribute("aria-sort") !== "descending";
@@ -75,14 +101,14 @@ document.querySelectorAll("table[data-siralanabilir]").forEach(function (tablo) 
       baslik.setAttribute("aria-sort", azalan ? "descending" : "ascending");
 
       const govde = tablo.tBodies[0];
-      const satirlar = Array.from(govde.rows);
-      satirlar.sort(function (a, b) {
-        const x = a.cells[sutun].dataset.deger ?? a.cells[sutun].textContent;
-        const y = b.cells[sutun].dataset.deger ?? b.cells[sutun].textContent;
-        const fark = tur === "sayi" ? parseFloat(x) - parseFloat(y) : x.localeCompare(y, "tr");
+      const deger = (satir) => satir.cells[sutun].dataset.deger ?? satir.cells[sutun].textContent.trim();
+      const satirlar = Array.from(govde.rows).sort(function (a, b) {
+        const fark = tur === "sayi"
+          ? (parseFloat(deger(a)) || 0) - (parseFloat(deger(b)) || 0)
+          : deger(a).localeCompare(deger(b), "tr");
         return azalan ? -fark : fark;
       });
-      satirlar.forEach((s) => govde.appendChild(s));
+      govde.append(...satirlar);
     }
 
     baslik.addEventListener("click", sirala);

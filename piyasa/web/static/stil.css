@@ -346,9 +346,7 @@ h1 {
   font-size: 22px;
   font-weight: 600;
   letter-spacing: -.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .kpi-alt { color: var(--yazi-3); font-size: 12.5px; }
@@ -959,3 +957,191 @@ a.kisi-ad:hover { color: var(--vurgu); }
 }
 
 .kaynak:hover { color: var(--vurgu); }
+
+/* ==========================================================================
+   Sade düzen: giriş, kaynak kartları, bölümler
+   ========================================================================== */
+
+.giris {
+  display: block;
+  margin-bottom: 28px;
+  padding: 36px 0 8px;
+  text-align: center;
+}
+
+.giris h1 { font-size: 36px; }
+.giris .giris-metin { margin: 10px auto 0; }
+
+.giris-arama {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  max-width: 620px;
+  margin: 22px auto 0;
+}
+
+.giris-arama input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 16px 0 42px;
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  background: var(--kart);
+  color: var(--yazi);
+  font: inherit;
+  font-size: 16px;
+  box-shadow: var(--golge);
+}
+
+.giris-arama input:focus {
+  outline: none;
+  border-color: var(--vurgu);
+  box-shadow: 0 0 0 3px var(--vurgu-yumusak);
+}
+
+.giris-arama svg {
+  position: absolute;
+  left: 14px; top: 50%;
+  width: 18px; height: 18px;
+  transform: translateY(-50%);
+  fill: none; stroke: var(--yazi-3); stroke-width: 2; stroke-linecap: round;
+  pointer-events: none;
+}
+
+.giris-arama .dugme { height: 48px; padding: 0 22px; border-radius: 12px; }
+.giris .guncel { margin-top: 14px; justify-content: center; }
+
+.kaynak-kartlari {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.kaynak-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yaricap);
+  box-shadow: var(--golge);
+  text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease;
+}
+
+.kaynak-kart:hover { border-color: var(--vurgu); transform: translateY(-1px); }
+
+.kaynak-kart-baslik { font-size: 14px; font-weight: 600; color: var(--yazi-2); }
+.kaynak-kart-sayi { font-family: var(--mono); font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
+.kaynak-kart-sayi small { font-family: var(--sans); font-size: 14px; font-weight: 500; color: var(--yazi-3); }
+.kaynak-kart-metin { color: var(--yazi-2); font-size: 14px; line-height: 1.5; }
+.kaynak-kart-link { margin-top: auto; padding-top: 6px; color: var(--vurgu); font-size: 14px; font-weight: 500; }
+
+.bolum { margin-bottom: 32px; scroll-margin-top: 80px; }
+
+.bolum-ust {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.bolum-ust h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.015em; }
+.bolum-not { margin: 4px 0 0; color: var(--yazi-2); font-size: 14px; max-width: 60em; }
+.bolum-link { flex: none; color: var(--vurgu); font-size: 14px; font-weight: 500; text-decoration: none; }
+.bolum-link:hover { text-decoration: underline; }
+.panel.bolum .panel-ust { margin: 0; }
+
+/* Siyasetçilerin yüklü aldığı hisseler */
+
+.kart-izgara {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.hisse-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yaricap);
+  box-shadow: var(--golge);
+  text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease;
+  min-width: 0;
+}
+
+.hisse-kart:hover { border-color: var(--vurgu); transform: translateY(-1px); }
+.hisse-kart-ust { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hisse-kart-ust .ticker { font-size: 16px; }
+.partiler { display: inline-flex; gap: 3px; }
+.hisse-kart-ad { color: var(--yazi-3); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hisse-kart-tutar { margin-top: 4px; color: var(--alim); font-family: var(--mono); font-size: 15px; font-weight: 600; }
+.hisse-kart-alt { color: var(--yazi-2); font-size: 12.5px; }
+
+/* Tablolarda ikinci satır ve tıklanabilir satır */
+
+.alt-satir { display: block; margin-top: 1px; color: var(--yazi-3); font-size: 12.5px; font-family: var(--sans); }
+.alt-satir.kirp { max-width: 240px; }
+
+.tablo tr.tiklanir { cursor: pointer; }
+.tablo tr.tiklanir:hover td { background: var(--vurgu-yumusak); }
+
+.rozet-yuklu {
+  margin-left: 4px;
+  background: var(--uyari-yumusak);
+  color: var(--uyari);
+}
+
+/* Hisse sayfası bölüm menüsü */
+
+.bolum-menu {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 20px;
+}
+
+.bolum-menu a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--cizgi);
+  border-radius: 999px;
+  background: var(--kart);
+  color: var(--yazi-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.bolum-menu a:hover { border-color: var(--vurgu); color: var(--vurgu); }
+.sayac { padding: 0 7px; border-radius: 999px; background: var(--cizgi-2); color: var(--yazi-3); font-size: 12px; }
+
+.temizle { color: var(--yazi-3); font-size: 13.5px; }
+.temizle:hover { color: var(--vurgu); }
+
+.secim select { min-width: 0; cursor: pointer; }
+
+@media (max-width: 860px) {
+  .kaynak-kartlari { grid-template-columns: minmax(0, 1fr); }
+  .giris { text-align: left; padding-top: 12px; }
+  .giris .giris-metin { margin-left: 0; }
+  .giris .guncel { justify-content: flex-start; }
+  .giris h1 { font-size: 26px; }
+  .bolum-ust { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+@media (max-width: 520px) {
+  .giris-arama .dugme { display: none; }
+  .filtre-satir .secim { flex: 1 1 45%; }
+  .filtre-satir .secim select { flex: 1; }
+}
