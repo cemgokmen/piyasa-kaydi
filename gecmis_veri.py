@@ -21,6 +21,11 @@ from toplayici import (
 # Kaç gün geriye gidilsin (takvim günü, hafta sonları dahil sayılır)
 GERIYE_GUN = 90
 
+# SEC günlük indeksi gün bittikten sonra yayımlar. Dosyası henüz olmayan
+# yakın bir gün "tatil" diye işaretlenirse bir daha hiç indirilmez; bu
+# yüzden dosyasız günler ancak bu kadar gün geçtikten sonra kapanır.
+KESINLESME_GUN = 3
+
 
 def gun_tablosunu_hazirla(conn):
     """Tamamlanan günleri kaydettiğimiz tablo."""
@@ -32,6 +37,22 @@ def gun_tablosunu_hazirla(conn):
         )
     """)
     conn.commit()
+
+
+def erken_kapanan_gunleri_ac(conn):
+    """
+    Eski sürüm, indeksi henüz yayımlanmamış hafta içi günleri de 0 kayıtla
+    tamamlandı saydı. Bu günleri listeden çıkarır ki yeniden indirilsin.
+    """
+    silinen = conn.execute("""
+        DELETE FROM fetched_days
+        WHERE kayit_sayisi = 0
+          AND strftime('%w', gun) NOT IN ('0', '6')
+          AND date(substr(biten_zaman, 1, 10)) < date(gun, '+' || ? || ' days')
+    """, (KESINLESME_GUN,)).rowcount
+    conn.commit()
+    if silinen:
+        print(f"Erken kapatılmış {silinen} gün yeniden indirilecek.\n")
 
 
 def gun_tamamlandi_mi(conn, gun):
@@ -82,6 +103,7 @@ def main():
     init_db()
     conn = get_connection()
     gun_tablosunu_hazirla(conn)
+    erken_kapanan_gunleri_ac(conn)
 
     bugun = date.today()
     gunler = [bugun - timedelta(days=i) for i in range(GERIYE_GUN)]
@@ -102,6 +124,9 @@ def main():
         sonuc = gunu_isle(conn, gun)
 
         if sonuc is None:
+            if (bugun - gun).days < KESINLESME_GUN:
+                print("      dosya henüz yayımlanmamış, sonra tekrar denenecek")
+                continue
             print("      dosya yok (hafta sonu / tatil)")
             conn.execute(
                 "INSERT OR REPLACE INTO fetched_days VALUES (?, ?, ?)",
