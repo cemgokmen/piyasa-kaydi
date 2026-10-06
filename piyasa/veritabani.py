@@ -101,6 +101,16 @@ def init_db():
         )
     """)
 
+    # --- 13F CUSIP → hisse kodu eşlemesi (OpenFIGI) ---
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS cusip_ticker (
+            cusip       TEXT PRIMARY KEY,
+            ticker      TEXT,
+            kaynak      TEXT,
+            guncelleme  TEXT
+        )
+    """)
+
     # --- Tamamlanan indirme günleri ---
     conn.execute("""
         CREATE TABLE IF NOT EXISTS fetched_days (
@@ -205,6 +215,44 @@ def init_db():
             tarih     TEXT                -- OGE'nin belgeyi yayımladığı gün
         )
     """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS yurutme_rapor (
+            adres    TEXT PRIMARY KEY,
+            kisi     TEXT NOT NULL,
+            sayfa    INTEGER,
+            islenme  TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS yurutme_varlik (
+            kisi     TEXT NOT NULL,
+            hesap    TEXT,
+            ad       TEXT,
+            ticker   TEXT,               -- eşlenemediyse boş
+            alt      INTEGER,
+            ust      INTEGER,
+            eslesme  TEXT,               -- tam | onek | yakin | kod | bitisik | elendi | tahvil_hesabi
+            rapor    TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS yurutme_islem (
+            kisi     TEXT NOT NULL,
+            hesap    TEXT,
+            ad       TEXT,
+            ticker   TEXT,
+            islem    TEXT,               -- buy | sell
+            tarih    TEXT,
+            alt      INTEGER,
+            ust      INTEGER,
+            eslesme  TEXT,
+            rapor    TEXT
+        )
+    """)
+
+    sutunlari_tamamla(conn, "yurutme_varlik", [("sirket", "TEXT")])
+    sutunlari_tamamla(conn, "yurutme_islem", [("sirket", "TEXT")])
 
     # --- İndeksler ---
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ticker ON transactions(ticker)")

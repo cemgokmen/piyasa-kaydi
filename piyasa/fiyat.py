@@ -10,7 +10,14 @@ import re
 import pandas as pd
 import yfinance as yf
 
+from piyasa.ayarlar import VERI_DIZINI
 from piyasa.onbellek import sureli
+
+# yfinance saat dilimi önbelleğini proje klasöründe tut: arka planda
+# (launchd) çalışırken kullanıcı önbellek klasörüne erişim sorun çıkarabiliyor
+_YF_ONBELLEK = VERI_DIZINI / "yfinance_onbellek"
+_YF_ONBELLEK.mkdir(parents=True, exist_ok=True)
+yf.set_tz_cache_location(str(_YF_ONBELLEK))
 
 ONBELLEK_SURESI = 15 * 60
 

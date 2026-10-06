@@ -1804,3 +1804,5 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 
 
 .ozet-govde { max-width: 860px; }
+
+.onay-serit.onay-yurutme { background: var(--uyari-yumusak); border-color: color-mix(in srgb, var(--uyari) 25%, transparent); }

@@ -51,10 +51,6 @@
     "cik": "0001040273",
     "sec_adi": "Third Point LLC"
   },
-  "Greenlight Capital": {
-    "cik": "0001079114",
-    "sec_adi": "Greenlight Capital"
-  },
   "Icahn Carl": {
     "cik": "0000921669",
     "sec_adi": "Icahn Carl"
@@ -87,10 +83,6 @@
     "cik": "0001214717",
     "sec_adi": "Geode Capital Management LLC"
   },
-  "Northern Trust": {
-    "cik": "0001065441",
-    "sec_adi": "Northern Trust"
-  },
   "Goldman Sachs Group Inc": {
     "cik": "0000886982",
     "sec_adi": "Goldman Sachs Group Inc"
@@ -119,20 +111,88 @@
     "cik": "0000873630",
     "sec_adi": "HSBC Holdings PLC"
   },
-  "Morgan Stanley Institutional Investment": {
-    "cik": "0002026079",
-    "sec_adi": "Morgan Stanley Institutional Investment"
-  },
-  "BlackRock Finance": {
-    "cik": "0001364742",
-    "sec_adi": "BlackRock Finance"
-  },
-    "Berkshire Hathaway": {
+  "Berkshire Hathaway": {
     "cik": "0001067983",
     "sec_adi": "Berkshire Hathaway"
   },
-    "Lone Pine Capital LLC": {
+  "Lone Pine Capital LLC": {
     "cik": "0001061165",
     "sec_adi": "Lone Pine Capital LLC"
+  },
+  "Vanguard Portfolio Management": {
+    "cik": "0002100121",
+    "sec_adi": "Vanguard Portfolio Management"
+  },
+  "Vanguard Capital Management": {
+    "cik": "0002100119",
+    "sec_adi": "Vanguard Capital Management"
+  },
+  "BlackRock": {
+    "cik": "0002012383",
+    "sec_adi": "BlackRock"
+  },
+  "State Street": {
+    "cik": "0000093751",
+    "sec_adi": "State Street"
+  },
+  "JPMorgan Chase": {
+    "cik": "0000019617",
+    "sec_adi": "JPMorgan Chase"
+  },
+  "Morgan Stanley": {
+    "cik": "0000895421",
+    "sec_adi": "Morgan Stanley"
+  },
+  "Citigroup": {
+    "cik": "0000831001",
+    "sec_adi": "Citigroup"
+  },
+  "T. Rowe Price": {
+    "cik": "0000080255",
+    "sec_adi": "T. Rowe Price"
+  },
+  "Wellington Management": {
+    "cik": "0000902219",
+    "sec_adi": "Wellington Management"
+  },
+  "Northern Trust": {
+    "cik": "0000073124",
+    "sec_adi": "Northern Trust"
+  },
+  "Bank of New York Mellon": {
+    "cik": "0001390777",
+    "sec_adi": "Bank of New York Mellon"
+  },
+  "Charles Schwab Investment Management": {
+    "cik": "0000884546",
+    "sec_adi": "Charles Schwab Investment Management"
+  },
+  "Dimensional Fund Advisors": {
+    "cik": "0000354204",
+    "sec_adi": "Dimensional Fund Advisors"
+  },
+  "Norges Bank (Norveç Varlık Fonu)": {
+    "cik": "0001374170",
+    "sec_adi": "Norges Bank (Norveç Varlık Fonu)"
+  },
+  "D. E. Shaw": {
+    "cik": "0001009207",
+    "sec_adi": "D. E. Shaw"
+  },
+  "Baupost Group": {
+    "cik": "0001061768",
+    "sec_adi": "Baupost Group"
+  },
+  "Capital World Investors": {
+    "cik": "0001422849",
+    "sec_adi": "Capital World Investors"
+  },
+  "Jane Street": {
+    "cik": "0001595888",
+    "sec_adi": "Jane Street"
+  },
+  "Susquehanna International Group": {
+    "cik": "0001446194",
+    "sec_adi": "Susquehanna International Group"
   }
 }

@@ -7,6 +7,7 @@ from flask import Blueprint, abort, jsonify, redirect, render_template, request,
 
 from piyasa import fiyat, uyeler
 from piyasa.analiz import cakisma, performans, portfoy, sinyaller
+from piyasa.analiz import yurutme as yurutme_analizi
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kurallar import PARTILER, parti_bilgisi
 from piyasa.web import arama, sorgular
@@ -115,9 +116,14 @@ def yurutme(slug):
     kisi = uyeler.YURUTME_SLUG.get(slug)
     if kisi is None:
         abort(404)
-    bildirimler = uyeler.yurutme_bildirimleri(slug)
-    return render_template("yurutme.html", aktif="siyasetci", kisi=kisi, bildirimler=bildirimler,
-                           parti=parti_bilgisi(kisi["parti"]))
+    portfoy_verisi = yurutme_analizi.portfoy(slug)
+    return render_template(
+        "yurutme.html", aktif="siyasetci", kisi=kisi, parti=parti_bilgisi(kisi["parti"]),
+        bildirimler=uyeler.yurutme_bildirimleri(slug),
+        portfoy=portfoy_verisi,
+        portfoy_dilimleri=sorgular.pasta_dilimleri(portfoy_verisi["pozisyonlar"], adet=10) if portfoy_verisi else [],
+        islemler=yurutme_analizi.islemler(slug),
+    )
 
 
 @site.route("/fonlar")

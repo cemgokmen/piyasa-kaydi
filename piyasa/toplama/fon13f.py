@@ -70,12 +70,13 @@ def portfoy_oku(cik, dosya_no):
 
     icerik = indir(f"{klasor}/index.json").json()
 
-    tablo_adi = None
-    for item in icerik["directory"]["item"]:
-        ad = item["name"]
-        if ad.endswith(".xml") and "primary_doc" not in ad:
-            tablo_adi = ad
-            break
+    # Portföy tablosu, kapak sayfası (primary_doc) dışındaki XML dosyasıdır.
+    # Uzantı büyük harf olabilir (file.XML); birden çok varsa en büyüğü alınır.
+    adaylar = [
+        item for item in icerik["directory"]["item"]
+        if item["name"].lower().endswith(".xml") and "primary_doc" not in item["name"].lower()
+    ]
+    tablo_adi = max(adaylar, key=lambda i: int(i.get("size") or 0))["name"] if adaylar else None
 
     if not tablo_adi:
         return [], klasor
@@ -97,6 +98,10 @@ def portfoy_oku(cik, dosya_no):
 
         cusip = alanlar.get("cusip")
         if not cusip:
+            continue
+        # Opsiyonlar (put/call) hisse pozisyonu değildir; adetleri dayanak
+        # hisse cinsindendir ve pozisyonu şişirir
+        if alanlar.get("putCall"):
             continue
 
         try:
@@ -149,6 +154,13 @@ def kaydet(conn, kayit):
 
 
 def main():
+    """
+    Listedeki fonların son 4 çeyreğini indirir; daha önce indirilmiş çeyrekleri
+    atlar. --yeniden: fonların bütün pozisyonlarını silip baştan indirir.
+    Listeden çıkarılan fonların pozisyonları silinir.
+    """
+    import sys
+    yeniden = "--yeniden" in sys.argv[1:]
     init_db()
 
     with open(FON_LISTESI, encoding="utf-8") as f:
@@ -158,6 +170,13 @@ def main():
 
     conn = get_connection()
     simdi = datetime.now(UTC).isoformat()
+
+    listedekiler = [b["cik"] if isinstance(b, dict) else b for b in fonlar.values()]
+    yer = ",".join("?" * len(listedekiler))
+    silinen = conn.execute(f"DELETE FROM holdings WHERE cik NOT IN ({yer})", listedekiler).rowcount
+    conn.commit()
+    if silinen:
+        print(f"Listeden çıkarılan fonların {silinen} pozisyonu silindi.")
 
     toplam_eklenen = 0
 
@@ -177,7 +196,14 @@ def main():
         fon_slug = slugify(ad)
         eklenen = 0
 
+        if yeniden:
+            conn.execute("DELETE FROM holdings WHERE cik = ?", (cik,))
+            conn.commit()
+        indirilmis = {s[0] for s in conn.execute("SELECT DISTINCT donem FROM holdings WHERE cik = ?", (cik,))}
+
         for bildirim in bildirimler:
+            if bildirim["donem"] in indirilmis:
+                continue
             try:
                 kalemler, klasor = portfoy_oku(cik, bildirim["dosya_no"])
             except Exception as hata:
@@ -208,7 +234,7 @@ def main():
             time.sleep(BEKLEME)
 
         toplam_eklenen += eklenen
-        print(f"  ✓ {ad:42} {len(bildirimler)} çeyrek, {eklenen} pozisyon")
+        print(f"  ✓ {ad:42} {len(bildirimler)} çeyrek, {eklenen} yeni pozisyon", flush=True)
 
     toplam = conn.execute("SELECT COUNT(*) FROM holdings").fetchone()[0]
     conn.close()

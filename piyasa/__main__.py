@@ -5,6 +5,8 @@ Kullanım:
     python -m piyasa site                 siteyi başlatır (http://127.0.0.1:5001)
     python -m piyasa site --ag            aynı Wi-Fi'daki telefondan da açılabilir
     python -m piyasa guncelle             tüm veriyi günceller (Form 4 + Kongre + emtia + bakım)
+    python -m piyasa zamanla              güncellemeyi her sabah 07:30'da otomatik çalıştırır
+                                          (--saat 6:15 ile saat, --kaldir ile kapatma)
 
     python -m piyasa form4                son 90 günün eksik Form 4 günlerini indirir
     python -m piyasa kongre [yıl ...]     Temsilciler Meclisi işlemlerini indirir
@@ -13,6 +15,7 @@ Kullanım:
     python -m piyasa fiyatlar             işlem yapılan hisselerin günlük fiyatlarını indirir
     python -m piyasa sirketler            şirket sektörleri ve Meclis komite üyelikleri
     python -m piyasa yurutme              Başkan ve Başkan Yardımcısının OGE bildirimleri
+    python -m piyasa yurutme-portfoy      yıllık bildirimden hisse portföyü ve işlemleri
     python -m piyasa analiz               işlem sonrası getirileri hesaplar
     python -m piyasa cusip                13F CUSIP numaralarını hisse kodlarına eşler
     python -m piyasa supheli              anormal fiyatlı kayıtları işaretler
@@ -37,7 +40,9 @@ KOMUTLAR = {
     "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
     "sirketler": "piyasa.toplama.sirketler",
     "yurutme": "piyasa.toplama.yurutme",
+    "yurutme-portfoy": "piyasa.toplama.oge_yillik",
     "analiz": "piyasa.analiz.getiri",
+    "zamanla": "piyasa.zamanlama",
     "cusip": "piyasa.toplama.cusip",
     "supheli": "piyasa.bakim.supheli",
     "slug": "piyasa.bakim.slug_ekle",
@@ -49,7 +54,7 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
-GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "yurutme", "fiyatlar", "analiz"]
+GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "analiz"]
 
 
 def yerel_ip():
@@ -70,6 +75,34 @@ def calistir(komut, argumanlar):
     modul.main()
 
 
+def guncelle():
+    """
+    Bütün adımları sırayla çalıştırır. Bir adım hata verirse (ör. bir kaynağa
+    geçici olarak ulaşılamazsa) kalan adımlar yine çalışır; sonunda hata
+    veren adımlar listelenir ve komut hata koduyla biter.
+    """
+    import time
+    import traceback
+    from datetime import datetime
+
+    print(f"\n##### Güncelleme başladı: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
+    hatalar = []
+    for adim in GUNCELLEME:
+        baslangic = time.time()
+        print(f"\n=== {adim} ===", flush=True)
+        try:
+            calistir(adim, [])
+        except Exception:
+            traceback.print_exc()
+            hatalar.append(adim)
+        print(f"--- {adim}: {time.time() - baslangic:.0f} sn", flush=True)
+
+    if hatalar:
+        print(f"\nHata veren adımlar: {', '.join(hatalar)}", flush=True)
+        sys.exit(1)
+    print(f"\n##### Güncelleme bitti: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
+
+
 def main():
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "yardim"):
         print(__doc__)
@@ -88,9 +121,7 @@ def main():
         else:
             create_app().run(debug="--uretim" not in argumanlar, port=5001)
     elif komut == "guncelle":
-        for adim in GUNCELLEME:
-            print(f"\n=== {adim} ===")
-            calistir(adim, [])
+        guncelle()
     elif komut in KOMUTLAR:
         calistir(komut, argumanlar)
     else:

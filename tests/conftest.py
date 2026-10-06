@@ -138,6 +138,18 @@ def ornek_analiz_verisi(conn):
         ("https://oge.gov/t1.pdf", "donald-j-trump", "islem", "278 Transaction", gun(14)),
         ("https://oge.gov/y1.pdf", "donald-j-trump", "yillik", "Annual (2026)", gun(90)),
     ])
+    conn.executemany(
+        "INSERT INTO yurutme_varlik (kisi, hesap, ad, ticker, alt, ust, eslesme, rapor, sirket) VALUES (?,?,?,?,?,?,?,?,?)", [
+            ("donald-j-trump", "INVESTMENT ACCOUNT #1", "NVIDIACORP", "NVDA", 1_000_001, 5_000_000, "tam", "https://oge.gov/y1.pdf", "NVIDIA CORP"),
+            ("donald-j-trump", "INVESTMENT ACCOUNT #2", "APPLE INC", "AAPL", 250_001, 500_000, "tam", "https://oge.gov/y1.pdf", "Apple Inc."),
+            ("donald-j-trump", "INVESTMENT ACCOUNT #4", "CITY OF X GO BONDS", None, 100_001, 250_000, "tahvil_hesabi", "https://oge.gov/y1.pdf", None),
+        ])
+    conn.executemany(
+        "INSERT INTO yurutme_islem (kisi, hesap, ad, ticker, islem, tarih, alt, ust, eslesme, rapor, sirket) VALUES (?,?,?,?,?,?,?,?,?,?,?)", [
+            ("donald-j-trump", "INVESTMENT ACCOUNT #2", "APPLE INC", "AAPL", "buy", gun(200), 15_001, 50_000, "tam", "https://oge.gov/y1.pdf", "Apple Inc."),
+            ("donald-j-trump", "INVESTMENT ACCOUNT #2", "NVIDIACORP", "NVDA", "sell", gun(150), 1_001, 15_000, "tam", "https://oge.gov/y1.pdf", "NVIDIA CORP"),
+        ])
+    conn.execute("INSERT INTO yurutme_rapor VALUES (?, ?, ?, ?)", ("https://oge.gov/y1.pdf", "donald-j-trump", 927, gun(0)))
     conn.executemany("INSERT INTO sirket VALUES (?, ?, ?, ?, ?)", [
         ("NVDA", 1045810, 3674, "Semiconductors", "Teknoloji"),
         ("AAPL", 320193, 3571, "Electronic Computers", "Teknoloji"),

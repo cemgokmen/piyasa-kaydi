@@ -324,7 +324,14 @@ def hisse(ticker):
             (ticker,),
         ).fetchone()
 
-        if not (yonetici["adet"] or siyaset["adet"] or fon_kaydi):
+        # Başkan / Başkan Yardımcısının yıllık bildirimindeki pozisyonlar
+        yurutme = [dict(s) for s in conn.execute(
+            """SELECT kisi, SUM(alt) AS alt, SUM(ust) AS ust, MAX(COALESCE(sirket, ad)) AS ad
+               FROM yurutme_varlik WHERE ticker = ? GROUP BY kisi""",
+            (ticker,),
+        )]
+
+        if not (yonetici["adet"] or siyaset["adet"] or fon_kaydi or yurutme):
             return None
 
         sirket = conn.execute(
@@ -333,7 +340,8 @@ def hisse(ticker):
             (ticker,),
         ).fetchone()
         sirket_adi = (sirket["asset_name"] if sirket
-                      else fon_kaydi["sirket_adi"] if fon_kaydi else ticker)
+                      else fon_kaydi["sirket_adi"] if fon_kaydi
+                      else yurutme[0]["ad"] if yurutme else ticker)
 
         def islemler(kaynak):
             return cakisma.isaretle([islem_hazirla(s) for s in conn.execute(
@@ -354,6 +362,7 @@ def hisse(ticker):
             "fon_toplam": kisa_tutar(sum(f["deger"] or 0 for f in fonlar)),
             "fon_donemi": donem_metni(son_donem) if son_donem else "",
             "cubuklar": _aylik_dagilim(conn, ticker),
+            "yurutme": [dict(y, kisi_bilgi=uyeler.YURUTME_SLUG.get(y["kisi"])) for y in yurutme],
         }
 
 

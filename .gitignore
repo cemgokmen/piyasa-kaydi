@@ -4,4 +4,4 @@ __pycache__/
 data/*.db
 data/*.db-journal
 data/*.db-yedek
-.DS_Store
+.DS_Storedata/guncelleme.log

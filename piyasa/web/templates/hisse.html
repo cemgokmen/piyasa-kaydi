@@ -13,6 +13,13 @@
 
 {{ fiyat_paneli(url_for('site.fiyat_api', ticker=ticker)) }}
 
+{% for y in yurutme if y.kisi_bilgi %}
+<a class="onay-serit onay-yurutme" href="{{ url_for('site.yurutme', slug=y.kisi) }}#portfoy">
+  <b>{{ y.kisi_bilgi.ad }}</b> ({{ y.kisi_bilgi.gorev }}) bu hisseyi portföyünde bildirdi: {{ aralik(y.alt, y.ust) }}
+  <span class="soluk">→ portföy</span>
+</a>
+{% endfor %}
+
 {% if onay %}
 <a class="onay-serit onay-{{ onay.kaynak }}" href="{{ url_for('analiz.sinyaller_sayfasi') }}#uclu-onay">
   <b>{{ 'Üçlü onay' if onay.kaynak == 3 else 'İkili onay' }}:</b>

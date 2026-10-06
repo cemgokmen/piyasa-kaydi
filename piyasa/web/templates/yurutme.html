@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, avatar %}
+{% from "_bilesenler.html" import kpi, avatar, pasta_grafigi %}
 {% block baslik %}{{ kisi.ad }} — mali durum bildirimleri · Piyasa Kaydı{% endblock %}
 {% block geri_adres %}{{ url_for('site.siyasetciler') }}{% endblock %}
 
-{% set islemler = bildirimler|selectattr('tur', 'equalto', 'islem')|list %}
+{% set islemler_belgeleri = bildirimler|selectattr('tur', 'equalto', 'islem')|list %}
 {% set yilliklar = bildirimler|selectattr('tur', 'equalto', 'yillik')|list %}
 {% set turler = {'islem': 'İşlem bildirimi (OGE 278-T)', 'yillik': 'Yıllık mali durum bildirimi',
                  'ayrilis': 'Görevden ayrılış bildirimi', 'giris': 'Göreve başlangıç bildirimi', 'diger': 'Diğer'} %}
@@ -20,17 +20,112 @@
   </div>
 </header>
 
-<p class="yorum-kutu">
-  <b>Neden işlemleri tabloda değil?</b> Başkan ve Başkan Yardımcısı, Kongre'ye değil ABD Hükümet Etiği
-  Ofisi'ne (OGE) bildirim yapar. {% if islemler %}Başkan'ın işlem bildirimleri büyük ölçüde taranmış belgelerdir ve
-  içerikleri ağırlıklı olarak belediye ve şirket tahvilleridir; bu yüzden tek tek işlemleri güvenilir biçimde
-  tabloya aktaramıyoruz.{% endif %} Aşağıda her bildirimin resmî belgesine ulaşabilirsiniz.
-</p>
+{% if portfoy %}
+<section class="bolum" id="portfoy">
+  <header class="bolum-ust">
+    <div>
+      <h2>Hisse ve fon portföyü</h2>
+      <p class="bolum-not">{{ portfoy.rapor.tarih[:4]|int - 1 if portfoy.rapor else '' }} yılı sonu itibarıyla, yıllık mali durum
+      bildiriminden ({{ portfoy.rapor.sayfa if portfoy.rapor }} sayfa) ayıklanan borsada işlem gören hisse ve fonlar.
+      Değerler bildirimdeki aralıklardır.</p>
+    </div>
+  </header>
+  <div class="kpi-izgara">
+    {{ kpi('Hisse ve fon', portfoy.sayi|sayi, 'farklı kod', birim='adet') }}
+    {{ kpi('Bildirilen değer', aralik(portfoy.alt, portfoy.ust), 'aralıkların toplamı') }}
+    {{ kpi('Elenen kalem', portfoy.elenen.kalem|sayi, 'tahvil, şirket payı, nakit, eşlenemeyen', birim='kalem') }}
+    {{ kpi('Elenenlerin değeri', aralik(portfoy.elenen.alt, portfoy.elenen.ust), 'portföye dahil edilmedi') }}
+  </div>
+  {{ pasta_grafigi(portfoy_dilimleri, 'Hisse ve fon portföyü dağılımı') }}
+  <div class="tablo-kap">
+    <table class="tablo" data-siralanabilir>
+      <thead>
+        <tr>
+          <th scope="col" data-sirala="metin">Hisse / fon</th>
+          <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Bildirilen değer</th>
+          <th scope="col" class="sag" data-sirala="sayi">Pay</th>
+          <th scope="col" class="sag" data-sirala="sayi">Hesap</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in portfoy.pozisyonlar[:60] %}
+        <tr>
+          <td data-etiket="Hisse / fon" data-deger="{{ p.ticker }}"><a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
+            <span class="alt-satir kirp">{{ p.ad }}</span></td>
+          <td data-etiket="Bildirilen değer" class="sag sayi" data-deger="{{ p.deger }}">{{ aralik(p.alt, p.ust) }}</td>
+          <td data-etiket="Pay" class="sag sayi" data-deger="{{ p.pay }}">%{{ (p.pay * 100)|ondalik }}</td>
+          <td data-etiket="Hesap" class="sag sayi" data-deger="{{ p.hesap }}">{{ p.hesap }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if portfoy.sayi > 60 %}<p class="dipnot">En büyük 60 pozisyon gösteriliyor; toplam {{ portfoy.sayi|sayi }} hisse ve fon var.</p>{% endif %}
+  <p class="dipnot">Nasıl ayıklandı: çoğunluğu tahvil olan hesaplar ve tahvil, mevduat, şirket payı (LLC) gibi kalemler
+  çıkarıldı; şirket adları SEC'in resmî şirket-kod listesiyle eşlendi, güvenle eşlenemeyenler dahil edilmedi.
+  Bu nedenle portföy olduğundan küçük görünebilir; büyük hisse pozisyonlarının neredeyse tamamı eşlenmiştir.</p>
+</section>
+{% endif %}
 
-<section class="kpi-izgara kpi-3">
-  {{ kpi('İşlem bildirimi', islemler|length, 'OGE 278-T, 2025 sonrası', birim='belge') }}
-  {{ kpi('Yıllık bildirim', yilliklar|length, 'varlıklar ve gelir kaynakları', birim='belge') }}
-  {{ kpi('Son bildirim', (bildirimler[0].tarih|uzun_tarih) if bildirimler else '—', 'OGE yayın tarihi') }}
+{% if islemler and islemler.ozet.hisse %}
+<section class="bolum" id="islemler">
+  <header class="bolum-ust">
+    <div>
+      <h2>{{ islemler.ozet.ilk[:4] }} yılındaki hisse ve fon işlemleri</h2>
+      <p class="bolum-not">Yıllık bildirimin işlemler bölümünden; {{ islemler.ozet.ilk|uzun_tarih }} – {{ islemler.ozet.son|uzun_tarih }}.
+      Hesaplar varlık yöneticileri tarafından yönetilir; işlemlerin çoğu tek tek kişinin kararı değildir.</p>
+    </div>
+  </header>
+  <div class="kpi-izgara">
+    {{ kpi('Hisse ve fon işlemi', islemler.ozet.hisse|sayi, 'toplam ' ~ (islemler.ozet.toplam|sayi) ~ ' işlemden', birim='işlem') }}
+    {{ kpi('Alım', islemler.ozet.alim|sayi, aralik(islemler.ozet.alim_alt, islemler.ozet.alim_ust), 'alim', birim='işlem') }}
+    {{ kpi('Satım', islemler.ozet.satim|sayi, aralik(islemler.ozet.satim_alt, islemler.ozet.satim_ust), 'satim', birim='işlem') }}
+    {{ kpi('Dönem', islemler.ozet.ilk[:4], 'yıllık bildirim') }}
+  </div>
+  <div class="izgara-2">
+    {% for baslik, liste, sinif in [('En çok alınanlar', islemler.en_cok_alinan, 'tutar-buy'), ('En çok satılanlar', islemler.en_cok_satilan, 'tutar-sell')] %}
+    <section class="panel">
+      <header class="panel-ust"><div><h2>{{ baslik }}</h2><p class="panel-not">tutar aralığına göre</p></div></header>
+      <ul class="akis akis-sik">
+        {% for h in liste %}
+        <li><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+          <span class="akis-orta soluk kucuk kirp">{{ h.ad }}</span>
+          <span class="sayi {{ sinif }}">{{ aralik(h.alt, h.ust) }}</span>
+          <span class="soluk kucuk">{{ h.adet }}×</span></li>
+        {% else %}<li class="bos">Yok.</li>{% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </div>
+  <div class="tablo-kap">
+    <table class="tablo">
+      <thead><tr><th scope="col">Hisse / fon</th><th scope="col">İşlem</th><th scope="col">Tarih</th><th scope="col" class="sag">Tutar</th></tr></thead>
+      <tbody>
+        {% for i in islemler.son %}
+        <tr>
+          <td data-etiket="Hisse / fon"><a class="ticker" href="{{ url_for('site.hisse', ticker=i.ticker) }}">{{ i.ticker }}</a> <span class="alt-satir kirp">{{ i.ad }}</span></td>
+          <td data-etiket="İşlem"><span class="rozet rozet-{{ i.islem }}">{{ 'Alım' if i.islem == 'buy' else 'Satım' }}</span></td>
+          <td data-etiket="Tarih" class="tarih">{{ i.tarih|uzun_tarih }}</td>
+          <td data-etiket="Tutar" class="sag sayi tutar-{{ i.islem }}">{{ aralik(i.alt, i.ust) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">Son {{ islemler.son|length }} işlem gösteriliyor.</p>
+</section>
+{% endif %}
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Resmî bildirimler</h2>
+    <p class="bolum-not">Başkan ve Başkan Yardımcısı, Kongre'ye değil ABD Hükümet Etiği Ofisi'ne (OGE) bildirim yapar.
+    Dönemsel işlem bildirimleri (278-T) taranmış belgelerdir; yukarıdaki portföy ve işlemler okunabilir durumdaki
+    yıllık bildirimden çıkarılmıştır.</p></div></header>
+  <div class="kpi-izgara kpi-3">
+    {{ kpi('İşlem bildirimi', islemler_belgeleri|length, 'OGE 278-T', birim='belge') }}
+    {{ kpi('Yıllık bildirim', yilliklar|length, 'varlıklar, gelirler ve işlemler', birim='belge') }}
+    {{ kpi('Son bildirim', (bildirimler[0].tarih|uzun_tarih) if bildirimler else '—', 'OGE yayın tarihi') }}
+  </div>
 </section>
 
 {% if bildirimler %}

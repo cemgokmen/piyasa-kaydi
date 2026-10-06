@@ -239,3 +239,13 @@ def test_serit_api(istemci):
     adlar = [g["ad"] for g in gostergeler]
     assert adlar[:3] == ["BIST 100", "S&P 500", "Nasdaq"] and "Gram altın" in adlar
     assert all(g["deger"] > 0 for g in gostergeler)
+
+
+def test_baskan_portfoyu(istemci):
+    html = istemci.get("/yurutme/donald-j-trump").get_data(as_text=True)
+    assert "Hisse ve fon portföyü" in html and 'class="pasta"' in html
+    assert "NVIDIA CORP" in html and "/hisse/NVDA" in html
+    assert "Elenen kalem" in html
+    assert "En çok alınanlar" in html and "Apple Inc." in html
+    hisse = istemci.get("/hisse/NVDA").get_data(as_text=True)
+    assert "portföyünde bildirdi" in hisse
