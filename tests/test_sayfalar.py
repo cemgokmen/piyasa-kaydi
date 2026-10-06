@@ -302,3 +302,23 @@ def test_sirket_rakamlari(istemci):
     # Son çeyrek geçen yılın aynı çeyreğiyle karşılaştırılır: 109 / 94 - 1 = +%15,96
     assert "+%15,96" in parca
     assert istemci.get("/hisse/ORNK/rakamlar").status_code == 204
+
+
+def test_sayfa_onbellegi_ve_yayin_basliklari(uygulama):
+    from piyasa.web import create_app
+
+    app = create_app()
+    app.config["TESTING"] = False        # önbellek yalnızca test dışında açık
+    istemci = app.test_client()
+    ilk = istemci.get("/siyasetciler", headers={"Accept-Encoding": "gzip"})
+    ikinci = istemci.get("/siyasetciler", headers={"Accept-Encoding": "gzip"})
+    assert ilk.status_code == ikinci.status_code == 200
+    assert "X-Onbellek" not in ilk.headers and ikinci.headers["X-Onbellek"] == "hit"
+    assert ikinci.headers["Content-Encoding"] == "gzip"           # önbellekten gelen de sıkıştırılır
+    assert ikinci.headers["X-Content-Type-Options"] == "nosniff"
+    # API adresleri sayfa önbelleğine girmez
+    istemci.get("/api/serit")
+    assert "X-Onbellek" not in istemci.get("/api/serit").headers
+    # Statik dosya adresi sürümlüdür ve uzun süre önbellekte tutulur
+    assert "/static/stil.css?v=" in istemci.get("/siyasetciler").get_data(as_text=True)
+    assert istemci.get("/robots.txt").get_data(as_text=True).startswith("User-agent: *")

@@ -1,6 +1,7 @@
 """Fon listesi ve fon sayfası: portföy, çeyrekler arası değişim, pasta grafiği."""
 
 from piyasa.bicim import donem_metni, kisa_tutar
+from piyasa.onbellek import sureli
 from piyasa.web.sorgular.ortak import FON_SON_DONEM, baglanti
 
 # Pasta dilimi renkleri: ilk on pozisyon + diğerleri
@@ -43,8 +44,10 @@ def pasta_dilimleri(pozisyonlar, adet=10):
     return dilimler
 
 
+@sureli(10 * 60)
 def fonlar():
-    """Her fon kendi son çeyreğiyle; daha eski çeyrekte kalan fon da listelenir."""
+    """Her fon kendi son çeyreğiyle; daha eski çeyrekte kalan fon da listelenir. 10 dk önbellekli
+    (fon verisi çeyrekte bir değişir)."""
     with baglanti() as conn:
         son_donem = conn.execute("SELECT MAX(donem) FROM holdings").fetchone()[0]
         satirlar = conn.execute(

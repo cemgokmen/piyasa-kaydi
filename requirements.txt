@@ -6,3 +6,5 @@ scipy
 yfinance
 pdfplumber
 xlrd
+gunicorn
+flask-compress

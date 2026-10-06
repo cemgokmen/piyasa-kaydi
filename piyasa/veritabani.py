@@ -279,6 +279,8 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_h_donem ON holdings(donem)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_h_cusip ON holdings(cusip)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_h_ticker ON holdings(ticker)")
+    # Fon başına son çeyrek sorgusu (fon listesi, hisse sayfası) bu dizinle hızlanır
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_h_fon_donem ON holdings(fon_slug, donem)")
 
     conn.commit()
     conn.close()

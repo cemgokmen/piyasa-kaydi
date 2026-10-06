@@ -182,6 +182,12 @@ def favicon():
                           "Cache-Control": "public, max-age=604800"}
 
 
+@site.route("/robots.txt")
+def robots():
+    return ("User-agent: *\nDisallow: /api/\n", 200,
+            {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=86400"})
+
+
 @site.route("/hakkinda")
 def hakkinda():
     return render_template("hakkinda.html", aktif="hakkinda")

@@ -13,6 +13,8 @@ dependencies = [
     "yfinance",
     "pdfplumber",
     "xlrd",
+    "gunicorn",
+    "flask-compress",
 ]
 
 [project.optional-dependencies]

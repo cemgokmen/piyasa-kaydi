@@ -4,6 +4,7 @@ Piyasa Kaydı komut satırı.
 Kullanım:
     python -m piyasa site                 siteyi başlatır (http://127.0.0.1:5001)
     python -m piyasa site --ag            aynı Wi-Fi'daki telefondan da açılabilir
+    python -m piyasa yayin                sitenin yayın sürümü (gunicorn); --kur ile Mac açılınca başlar
     python -m piyasa guncelle             tüm veriyi günceller (Form 4 + Kongre + emtia + bakım)
     python -m piyasa zamanla              güncellemeyi her sabah 07:30'da otomatik çalıştırır
                                           (--saat 6:15 ile saat, --kaldir ile kapatma)
@@ -44,6 +45,7 @@ KOMUTLAR = {
     "yurutme-portfoy": "piyasa.toplama.oge_yillik",
     "analiz": "piyasa.analiz.getiri",
     "zamanla": "piyasa.zamanlama",
+    "yayin": "piyasa.yayin",
     "cusip": "piyasa.toplama.cusip",
     "profiller": "piyasa.toplama.profiller",
     "supheli": "piyasa.bakim.supheli",

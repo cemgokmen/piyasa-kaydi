@@ -1,11 +1,11 @@
 # Piyasa Kaydı
 
-ABD'deki resmî mali bildirimleri Türkçeleştirip okunur hale getiren bir
+ABD'deki resmi mali bildirimleri Türkçeleştirip okunur hale getiren bir
 şeffaflık sitesi: Kongre üyelerinin, Başkan ve Başkan Yardımcısının, şirket
 yöneticilerinin hisse işlemleri; büyük fon ve bankaların portföyleri;
 emtialar ve bunlar üzerine istatistiksel analizler.
 
-Veriler resmî kaynaklardan çekilir (SEC EDGAR, House Clerk, OGE, CFTC, EIA,
+Veriler resmi kaynaklardan çekilir (SEC EDGAR, House Clerk, OGE, CFTC, EIA,
 FRED). Her kaydın yanında kaynak belgeye bağlantı vardır.
 
 **Bu sitede yatırım tavsiyesi verilmez.** Yalnızca kamuya açık bildirimler
@@ -31,7 +31,7 @@ ve pozisyon değişimlerini gösterir.
 
 **Siyasetçiler**
 Temsilciler Meclisi üyelerinin STOCK Act işlem bildirimleri (House Clerk PDF'leri
-ayrıştırılarak), resmî fotoğraflar, liderlik görevleri ve komiteler. Her
+ayrıştırılarak), resmi fotoğraflar, liderlik görevleri ve komiteler. Her
 üyenin tahmini portföyü (alıp satmadığı hisseler) dairesel grafikle gösterilir.
 Başkan ve Başkan Yardımcısının OGE yıllık bildiriminden hisse/fon portföyü ve
 yıl içindeki işlemleri ayıklanır (tahvil ve şirket payları elenerek).
@@ -135,6 +135,8 @@ Ağustos ve Kasım aylarının ortasında yayımlanır:
 python -m piyasa fon              # yeni çeyrekleri indirir (indirilmişleri atlar)
 python -m piyasa fon --yeniden    # bütün fonları baştan indirir
 python -m piyasa cusip            # CUSIP → hisse kodu (OpenFIGI)
+python -m piyasa yayin            # yayın sürümü (gunicorn, sıkıştırma, sayfa önbelleği); --kur: Mac açılınca başlar
+python -m piyasa profiller        # hisse sayfalarındaki "Şirket ne iş yapıyor?" kutusu
 ```
 
 Takip edilen fonlar `data/fonlar.json` dosyasındadır (ad ve SEC CIK numarası).
@@ -168,7 +170,7 @@ veritabanı kurulur, fiyat servisi sahte veriyle değiştirilir.
 
 ```mermaid
 flowchart LR
-    K["Resmî kaynaklar<br/>SEC · House Clerk · OGE<br/>CFTC · EIA · FRED · Yahoo"] --> T["piyasa/toplama<br/>indirme ve ayrıştırma"]
+    K["Resmi kaynaklar<br/>SEC · House Clerk · OGE<br/>CFTC · EIA · FRED · Yahoo"] --> T["piyasa/toplama<br/>indirme ve ayrıştırma"]
     T --> V[("SQLite<br/>data/kayitlar.db")]
     V --> A["piyasa/analiz<br/>getiri · performans · çıkar çatışması<br/>sinyaller · portföy · özet"]
     V --> S["piyasa/web/sorgular<br/>sayfa sorguları"]
@@ -200,19 +202,21 @@ piyasa/
   kurallar.py              Yasal süreler, eşikler, partiler, ortak SQL koşulları
   bicim.py                 Tutar, yüzde ve tarihlerin Türkçe gösterimi
   kayitlar.py              İşlem kayıtlarını gösterime hazırlama
-  fiyat.py                 Yahoo Finance fiyatları, değişimler, hacim
+  fiyat.py                 Yahoo Finance: anlık fiyat (1 dk) ve günlük geçmiş, değişimler, hacim
+  sirket_profili.py        şirket tanımı (Yahoo) + ücretsiz Türkçe çeviri, veritabanında saklanır
   onbellek.py              Süreli bellek önbelleği (@sureli)
   uyeler.py                Siyasetçi fotoğrafları, görevleri, önemli siyasetçiler
   eslestirme.py            Şirket adı → borsa kodu (SEC listesiyle, tutucu)
   zamanlama.py             Günlük otomatik güncelleme (launchd)
   slug.py                  İsimleri adres dostu metne çevirir
 
-  toplama/                 Resmî kaynaklardan veri indirenler
+  toplama/                 Resmi kaynaklardan veri indirenler
     form4.py               Form 4 ayrıştırma; son iş gününü indirir
     form4_gecmis.py        Eksik günleri paralel indirir
     kongre.py              House Clerk işlem bildirimleri (PDF)
     fon13f.py              Fonların 13F bildirimleri
     cusip.py               CUSIP → hisse kodu eşlemesi
+    profiller.py           şirket tanımlarını önceden doldurur
     yurutme.py             Trump ve Vance'in OGE mali durum bildirimleri (liste)
     oge_yillik.py          OGE yıllık bildiriminden hisse portföyü ve işlemler
     emtia.py               CFTC fon konumları, EIA stokları, FRED faizleri
