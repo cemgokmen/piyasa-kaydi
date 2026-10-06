@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from piyasa import veritabani
+from piyasa.emtia import haberler
 from piyasa.web import create_app, fiyat
 
 BUGUN = date.today()
@@ -99,6 +100,37 @@ def ornek_fonlar():
     return satirlar
 
 
+def ornek_emtia_verisi(conn):
+    """CFTC, EIA ve FRED tablolarına iki yıllık sahte haftalık veri."""
+    for hafta in range(104):
+        t = gun(7 * (103 - hafta))
+        for slug in ("altin", "gumus", "petrol"):
+            conn.execute(
+                "INSERT INTO cot VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (slug, t, 500_000, 100_000 + hafta * 500, 50_000, 20_000, 60_000),
+            )
+        conn.execute("INSERT INTO eia_stok VALUES ('ham_petrol', ?, ?)", (t, 420_000 + hafta * 10))
+        conn.execute("INSERT INTO eia_stok VALUES ('dogalgaz', ?, ?)", (t, 3_000 + hafta))
+    for i in range(800):
+        t = gun(800 - i)
+        conn.execute("INSERT INTO makro VALUES ('fed_faiz', ?, ?)", (t, 4.25 if i < 400 else 4.0))
+        conn.execute("INSERT INTO makro VALUES ('abd_10y', ?, ?)", (t, 4.0 + i / 1000))
+        conn.execute("INSERT INTO makro VALUES ('reel_faiz', ?, ?)", (t, 2.0 + i / 2000))
+    conn.execute("INSERT INTO emtia_guncelleme VALUES ('son', ?)", (gun(0) + "T00:00:00",))
+
+
+def sahte_haberler(sorgu):
+    from datetime import datetime, timezone
+    return [{
+        "baslik": f"Örnek haber {i}: OPEC üretim kararı" if i % 2 else f"Fed faiz kararı sonrası emtialar {i}",
+        "kaynak": "Örnek Ajans",
+        "adres": f"https://ornek.com/haber/{i}",
+        "zaman": datetime(2026, 10, 1 + i, tzinfo=timezone.utc),
+        "tarih": f"2026-10-0{1 + i}",
+        "etiketler": ["OPEC", "Arz"] if i % 2 else ["Merkez bankası"],
+    } for i in range(5)]
+
+
 def sahte_fiyat(kod):
     if kod in ("YOK", "HATA"):
         return None
@@ -132,6 +164,7 @@ def veritabani_yolu(tmp_path_factory):
                 f"INSERT INTO {tablo} ({', '.join(k)}) VALUES ({', '.join('?' * len(k))})",
                 list(k.values()),
             )
+    ornek_emtia_verisi(conn)
     conn.commit()
     conn.close()
 
@@ -141,13 +174,15 @@ def veritabani_yolu(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def uygulama(veritabani_yolu):
-    eski = fiyat._indir
+    eski = fiyat._indir, haberler._indir
     fiyat._indir = sahte_fiyat
+    haberler._indir = sahte_haberler
     fiyat._onbellek.clear()
+    haberler._onbellek.clear()
     app = create_app()
     app.config["TESTING"] = True
     yield app
-    fiyat._indir = eski
+    fiyat._indir, haberler._indir = eski
 
 
 @pytest.fixture()

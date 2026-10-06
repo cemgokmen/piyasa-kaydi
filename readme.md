@@ -27,6 +27,13 @@ portföylerini bildirir. Site 34 büyük fon ve bankayı takip eder; çeyrekler
 arası farkı hesaplayarak hangi hisseye girildiğini, hangisinden çıkıldığını
 ve pozisyon değişimlerini gösterir.
 
+**Emtialar**
+Altın, gümüş, platin, bakır, WTI ve Brent petrol, doğal gaz, buğday ve mısır:
+güncel fiyat, 1 gün – 10 yıl değişimler, hacim; büyük fonların net pozisyonu
+(CFTC), ABD petrol ve doğal gaz stokları (EIA), Fed faiz kararları ve tahvil
+faizleri (FRED), konuya göre etiketlenmiş Türkçe haberler (Google Haberler).
+Altın sayfasında gram altının TL fiyatı da hesaplanır.
+
 ## Kurulum
 
 ```bash
@@ -78,6 +85,13 @@ python -m piyasa supheli
 python -m piyasa kongre 2025 2026
 ```
 
+**Emtia verileri** — fon konumları (CFTC, haftalık), stoklar (EIA, haftalık),
+faizler (FRED, günlük). Fiyatlar ve haberler site açıkken canlı alınır:
+
+```bash
+python -m piyasa emtia
+```
+
 **Fon pozisyonları (13F)** — çeyrekte bir yeterli. Bildirimler Şubat, Mayıs,
 Ağustos ve Kasım aylarının ortasında yayımlanır:
 
@@ -120,12 +134,18 @@ piyasa/
     kongre.py              House Clerk işlem bildirimleri (PDF)
     fon13f.py              Fonların 13F bildirimleri
     cusip.py               CUSIP → hisse kodu eşlemesi
+    emtia.py               CFTC fon konumları, EIA stokları, FRED faizleri
     fon_listesi.py, fon_cik.py, fon_ara.py   Fon listesi ve CIK bulma
 
   bakim/                   Veritabanı bakımı
     supheli.py             Anormal fiyatlı kayıtları işaretler
     slug_ekle.py           Eski kayıtlara kişi adresi ekler
     sutun_ekle.py          Tabloları oluşturur, eksik sütunları ekler
+
+  emtia/                   Emtialar
+    tanimlar.py            Takip edilen emtialar, kodlar, birimler, etkenler
+    sorgular.py            Fon konumu, stok ve faiz hesapları
+    haberler.py            Türkçe haberler (Google Haberler RSS, 30 dk önbellek)
 
   analiz/                  Deneysel analizler (siteye bağlı değil)
     destek_direnc.py       Destek/direnç modeli
@@ -134,10 +154,11 @@ piyasa/
   web/                     Flask sitesi
     __init__.py            create_app()
     rotalar.py             Sayfalar (Blueprint); SQL içermez
+    emtia_rotalari.py      Emtia sayfaları (Blueprint)
     sorgular.py            Bütün veritabanı sorguları
     bicim.py               Tutar, tarih biçimleri ve şablon süzgeçleri
     fiyat.py               Yahoo Finance fiyatları ve değişimler (15 dk önbellek)
-    templates/, static/    Şablonlar, CSS, JS
+    templates/, static/    Şablonlar, CSS, JS (grafik.js: ortak SVG grafik çizici)
 
 tests/                     pytest testleri
 

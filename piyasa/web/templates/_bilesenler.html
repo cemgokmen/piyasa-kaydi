@@ -86,3 +86,62 @@
   </table>
 </div>
 {% endmacro %}
+
+{#
+  Fiyat paneli: son fiyat, 1 gün – 10 yıl değişimler, hacim ve grafik.
+  İçeriği fiyat.js, adres'teki JSON'dan doldurur.
+#}
+{% macro fiyat_paneli(adres, birim='$', etiket='Son kapanış',
+    kaynak_notu='Kaynak: Yahoo Finance · Temettü ve bölünmelere göre düzeltilmiş kapanış fiyatları. Gün içi fiyat değildir.') %}
+<section class="panel fiyat-panel" id="fiyat" data-fiyat-url="{{ adres }}" data-birim="{{ birim }}" aria-live="polite">
+  <div class="fiyat-ust">
+    <div class="fiyat-sol">
+      <span class="fiyat-etiket">{{ etiket }}</span>
+      <span class="fiyat-deger" data-alan="fiyat"><span class="iskelet">000,00</span></span>
+      <span class="fiyat-tarih" data-alan="tarih">Fiyat yükleniyor…</span>
+      <span class="fiyat-hacim" data-alan="hacim" hidden></span>
+    </div>
+    <ul class="degisimler" data-alan="degisimler">
+      {% for etiket in ['1 gün', '1 hafta', '1 ay', '1 yıl', '5 yıl', '10 yıl'] %}
+      <li class="degisim"><span class="degisim-etiket">{{ etiket }}</span><span class="degisim-deger iskelet">+%0,00</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="fiyat-grafik-kap">
+    <div class="grafik-ust-satir">
+      <span class="soluk kucuk">Fiyat grafiği</span>
+      <div class="segment segment-kucuk" role="group" aria-label="Grafik aralığı">
+        {% for anahtar, etiket in [('1a', '1 ay'), ('1y', '1 yıl'), ('5y', '5 yıl'), ('10y', '10 yıl')] %}
+        <button type="button" data-aralik="{{ anahtar }}" {% if anahtar == '1y' %}class="secili" aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>{{ etiket }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="fiyat-grafik" data-alan="grafik"></div>
+  </div>
+  <p class="fiyat-hata" data-alan="hata" hidden></p>
+  <p class="fiyat-kaynak">{{ kaynak_notu }}</p>
+</section>
+{% endmacro %}
+
+{# Haber listesi: başlık resmî kaynağa gider, konu etiketleri yanında #}
+{% macro haber_listesi(liste, bos='Son iki haftada haber bulunamadı.') %}
+{% if liste %}
+<ul class="haberler">
+  {% for h in liste %}
+  <li>
+    <a href="{{ h.adres }}" target="_blank" rel="noopener">{{ h.baslik }}</a>
+    <span class="haber-alt">
+      {% for et in h.etiketler %}<span class="etiket">{{ et }}</span>{% endfor %}
+      <span class="soluk">{{ h.kaynak }} · {{ h.tarih|kisa_tarih }}</span>
+    </span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}<p class="bos">{{ bos }}</p>{% endif %}
+{% endmacro %}
+
+{# Değişim yüzdesi rozeti: + yeşil, − kırmızı #}
+{% macro degisim(oran) -%}
+  {%- if oran is none %}<span class="soluk">—</span>
+  {%- else %}<span class="{{ 'tutar-buy' if oran > 0 else 'tutar-sell' if oran < 0 else 'soluk' }}">{{ oran|yuzde }}</span>{% endif -%}
+{%- endmacro %}

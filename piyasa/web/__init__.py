@@ -12,8 +12,10 @@ def create_app():
     app = Flask(__name__)
 
     from piyasa.web.bicim import sablonlara_kaydet
+    from piyasa.web.emtia_rotalari import emtia
     from piyasa.web.rotalar import site
 
     sablonlara_kaydet(app)
     app.register_blueprint(site)
+    app.register_blueprint(emtia)
     return app

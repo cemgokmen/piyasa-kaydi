@@ -24,6 +24,12 @@ SAYFALAR = [
     "/fonlar",
     "/fon/ornek-fon",
     "/hakkinda",
+    "/emtialar",
+    "/emtia/altin",
+    "/emtia/petrol",
+    "/emtia/dogalgaz",
+    "/emtia/brent",
+    "/emtia/bugday",
 ]
 
 
@@ -34,7 +40,7 @@ def test_sayfa_acilir(istemci, adres):
     assert b"<h1" in cevap.data
 
 
-@pytest.mark.parametrize("adres", ["/yok", "/hisse/YOKBOYLE", "/kisi/yok", "/fon/yok"])
+@pytest.mark.parametrize("adres", ["/yok", "/hisse/YOKBOYLE", "/kisi/yok", "/fon/yok", "/emtia/yok"])
 def test_olmayan_sayfa_404(istemci, adres):
     cevap = istemci.get(adres)
     assert cevap.status_code == 404
@@ -93,7 +99,7 @@ def test_fiyat_api_bulunamayan(istemci):
 
 def test_tum_ic_baglantilar_calisir(istemci):
     """Sitedeki her iç bağlantıyı gezer; hiçbiri 404 ya da 500 vermemeli."""
-    kuyruk = deque(["/", "/siyasetciler", "/fonlar", "/hakkinda", "/islemler?donem=365"])
+    kuyruk = deque(["/", "/siyasetciler", "/fonlar", "/hakkinda", "/islemler?donem=365", "/emtialar"])
     gorulen = set(kuyruk)
     kirik = []
 
@@ -121,3 +127,28 @@ def test_tum_ic_baglantilar_calisir(istemci):
 
     assert not kirik, kirik
     assert len(gorulen) > 30
+
+
+def test_emtia_genel_bakis(istemci):
+    html = istemci.get("/emtialar").get_data(as_text=True)
+    for metin in ("Altın", "Ham petrol (WTI)", "Gram altın", "Fed politika faizi",
+                  "Büyük fonlar ne yapıyor?", "OPEC"):
+        assert metin in html, metin
+    assert "$/ons" in html and "sent/buşel" in html
+
+
+def test_emtia_sayfasi_arz_talep(istemci):
+    html = istemci.get("/emtia/petrol").get_data(as_text=True)
+    assert 'id="cot-verisi"' in html          # fon konumu grafiği
+    assert 'id="eia-verisi"' in html          # stok grafiği
+    assert "ABD ticari ham petrol stokları" in html
+    assert "Örnek haber" in html
+    # Altında stok yok, gram altın var
+    altin = istemci.get("/emtia/altin").get_data(as_text=True)
+    assert 'id="eia-verisi"' not in altin and "Gram altın" in altin
+
+
+def test_emtia_fiyat_api(istemci):
+    veri = istemci.get("/api/emtia/altin/fiyat").get_json()
+    assert veri["kod"] == "GC=F" and veri["hacim"]["son"] > 0
+    assert istemci.get("/api/emtia/yok/fiyat").status_code == 404

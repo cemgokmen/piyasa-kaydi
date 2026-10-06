@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, fiyat_paneli, haber_listesi, degisim %}
+{% block baslik %}{{ e.ad }} fiyatı, fon konumları ve haberler · Piyasa Kaydı{% endblock %}
+{% block geri_adres %}{{ url_for('emtia.liste') }}{% endblock %}
+
+{% macro isaretli(n, ondalik=0) -%}
+  {{- '+' if n > 0 else '−' if n < 0 else '' -}}
+  {{- (n|abs|sayi) if ondalik == 0 else ('%.*f'|format(ondalik, n|abs)).replace('.', ',') -}}
+{%- endmacro %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1>{{ e.ad }}</h1>
+    <p class="sayfa-not">{{ e.grup }} · fiyat birimi {{ e.birim }} · ABD vadeli işlem sözleşmesi ({{ e.yahoo }})</p>
+  </div>
+</header>
+
+{{ fiyat_paneli(url_for('emtia.fiyat_api', slug=e.slug), birim=e.birim, etiket='Son fiyat',
+   kaynak_notu='Kaynak: Yahoo Finance · Vadeli işlem sözleşmesinin günlük kapanışları; hacim, sözleşme adedidir.') }}
+
+<nav class="bolum-menu" aria-label="Bu sayfada">
+  <a href="#etkenler">Fiyatı neler etkiler?</a>
+  {% if cot or eia %}<a href="#arz-talep">Arz ve talep</a>{% endif %}
+  {% if faiz %}<a href="#faiz">Faiz kararları</a>{% endif %}
+  <a href="#haberler">Haberler <span class="sayac">{{ haberler|length }}</span></a>
+</nav>
+
+{% if gram_altin %}
+<section class="bolum">
+  <div class="kpi-izgara">
+    {{ kpi('Gram altın', gram_altin.fiyat|fiyat, 'ons fiyatı × dolar/TL ÷ 31,10', birim='₺') }}
+    {% for d in gram_altin.degisimler if d.anahtar in ('1g', '1a', '1y') %}
+    {{ kpi('Gram altın · ' ~ d.etiket, d.oran|yuzde, 'TL bazında', 'alim' if d.oran and d.oran > 0 else 'satim' if d.oran else '') }}
+    {% endfor %}
+  </div>
+  <p class="dipnot">Gram altın, uluslararası ons fiyatından hesaplanmıştır; Kapalıçarşı ve banka fiyatları alış-satış farkı nedeniyle farklı olabilir.</p>
+</section>
+{% endif %}
+
+<section class="panel bolum panel-bilgi" id="etkenler">
+  <h2>{{ e.ad }} fiyatını neler etkiler?</h2>
+  <ul class="etkenler">
+    {% for madde in e.etkenler %}
+    {% set parca = madde.split(': ', 1) %}
+    <li>{% if parca|length == 2 %}<b>{{ parca[0] }}:</b> {{ parca[1] }}{% else %}{{ madde }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% if cot or eia %}
+<section class="bolum" id="arz-talep">
+  <header class="bolum-ust">
+    <div>
+      <h2>Arz ve talep</h2>
+      <p class="bolum-not">Piyasadaki beklentiyi büyük fonların konumundan{% if eia %}, fiziksel arzı ise ABD stoklarından{% endif %} izleyebilirsiniz.</p>
+    </div>
+  </header>
+
+  {% if cot %}
+  <div class="panel">
+    <header class="panel-ust">
+      <div>
+        <h2>Büyük fonların net pozisyonu</h2>
+        <p class="panel-not">Spekülatif fonların alım eksi satım sözleşmeleri, haftalık. Pozitif: yükseliş beklentisi. Kaynak: CFTC, {{ cot.tarih|uzun_tarih }} raporu.</p>
+      </div>
+    </header>
+    <div class="panel-ic">
+      <div class="kpi-izgara">
+        {{ kpi('Fonların net pozisyonu', isaretli(cot.fon_net), (cot.fon_uzun|sayi) ~ ' alım, ' ~ (cot.fon_kisa|sayi) ~ ' satım', 'alim' if cot.fon_net >= 0 else 'satim', birim='sözleşme') }}
+        {{ kpi('Haftalık değişim', isaretli(cot.haftalik_degisim), 'son 4 haftada ' ~ isaretli(cot.dort_haftalik_degisim), 'alim' if cot.haftalik_degisim >= 0 else 'satim') }}
+        {{ kpi('1 yıllık konum', cot.konum ~ '/100', '0 en kötümser, 100 en iyimser', 'uyari' if cot.konum >= 85 or cot.konum <= 15 else '') }}
+        {{ kpi('Üreticilerin net pozisyonu', isaretli(cot.uretici_net), 'üreticiler genelde fiyat riskine karşı satış yapar', birim='sözleşme') }}
+      </div>
+      <p class="yorum">{{ cot.yorum }}</p>
+      <script type="application/json" id="cot-verisi">{{ cot.seri|tojson }}</script>
+      <div class="grafik-kap" data-grafik="cubuk" data-grafik-veri="cot-verisi" data-birim="sözleşme" data-isaret="1" data-yukseklik="220"
+           aria-label="Haftalık fon net pozisyonu grafiği"></div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if eia %}
+  <div class="panel">
+    <header class="panel-ust">
+      <div>
+        <h2>{{ eia.ad }}</h2>
+        <p class="panel-not">Haftalık, {{ eia.birim }}. Stoklar beklenenden hızlı artarsa arz bolluğu, düşerse talep güçlü demektir. Kaynak: ABD Enerji Bilgi İdaresi (EIA), {{ eia.tarih|uzun_tarih }}.</p>
+      </div>
+    </header>
+    <div class="panel-ic">
+      <div class="kpi-izgara">
+        {{ kpi('Son seviye', ('%.1f'|format(eia.deger)).replace('.', ','), eia.birim) }}
+        {{ kpi('Haftalık değişim', isaretli(eia.haftalik_degisim, 1), eia.birim, 'satim' if eia.haftalik_degisim > 0 else 'alim') }}
+        {{ kpi('Geçen yıla göre', eia.gecen_yila_gore|yuzde, 'aynı hafta') }}
+        {{ kpi('5 yıllık ortalamaya göre', eia.bes_yila_gore|yuzde, 'ortalama ' ~ ('%.1f'|format(eia.bes_yil_ortalamasi)).replace('.', ',') if eia.bes_yil_ortalamasi else '') }}
+      </div>
+      <script type="application/json" id="eia-verisi">{{ eia.seri|tojson }}</script>
+      <div class="grafik-kap" data-grafik="cizgi" data-grafik-veri="eia-verisi" data-birim="{{ eia.birim }}" data-yukseklik="220"
+           aria-label="Haftalık stok grafiği"></div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if faiz %}
+<section class="bolum" id="faiz">
+  <header class="bolum-ust">
+    <div>
+      <h2>Faiz kararları</h2>
+      <p class="bolum-not">Fed'in faiz kararları doları ve dolayısıyla dolarla fiyatlanan bütün emtiaları etkiler.
+      {% if e.grup == 'Değerli metaller' %}Değerli metaller için en önemli gösterge reel faizdir: reel faiz düştükçe getirisi olmayan altın ve gümüş daha cazip hale gelir.{% endif %}</p>
+    </div>
+  </header>
+  <div class="izgara-2">
+    <div class="panel">
+      <div class="panel-ic">
+        <div class="kpi-izgara kpi-2">
+          {{ kpi('Fed politika faizi', '%' ~ ('%.2f'|format(faiz.fed.deger)).replace('.', ','), 'üst sınır') }}
+          {% if faiz.reel %}{{ kpi('10 yıllık reel faiz', '%' ~ ('%.2f'|format(faiz.reel.deger)).replace('.', ','),
+             ('son 1 ayda ' ~ isaretli(faiz.reel.aylik_degisim, 2) ~ ' puan') if faiz.reel.aylik_degisim is not none else '') }}{% endif %}
+        </div>
+        <script type="application/json" id="tahvil-verisi">{{ faiz.tahvil_serisi|tojson }}</script>
+        <p class="kucuk soluk">ABD 10 yıllık tahvil faizi (%), son yıllar</p>
+        <div class="grafik-kap" data-grafik="cizgi" data-grafik-veri="tahvil-verisi" data-birim="%" data-karsilastir="hayir" data-yukseklik="180"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <header class="panel-ust"><div><h2>Son Fed kararları</h2></div></header>
+      <ul class="akis akis-sik">
+        {% for k in faiz.kararlar[:8] %}
+        <li>
+          <span class="akis-orta">{{ k.tarih|uzun_tarih }}</span>
+          <span class="rozet {{ 'rozet-sell' if k.degisim > 0 else 'rozet-buy' }}">{{ 'Artırım' if k.degisim > 0 else 'İndirim' }} {{ ('%.2f'|format(k.degisim|abs)).replace('.', ',') }}</span>
+          <span class="sayi">%{{ ('%.2f'|format(k.faiz)).replace('.', ',') }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="bolum" id="haberler">
+  <header class="bolum-ust">
+    <div>
+      <h2>{{ e.ad }} haberleri</h2>
+      <p class="bolum-not">Son iki haftanın Türkçe haberleri, konuya göre etiketlenmiş. Başlığa tıklayınca haber kaynağında açılır.</p>
+    </div>
+  </header>
+  <div class="panel">{{ haber_listesi(haberler) }}</div>
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Diğer emtialar</h2></div></header>
+  <nav class="bolum-menu">
+    {% for x in diger %}<a href="{{ url_for('emtia.detay', slug=x.slug) }}">{{ x.ad }}</a>{% endfor %}
+  </nav>
+</section>
+
+<p class="dipnot">Fon konumları, stoklar ve faizler: CFTC, EIA ve FRED{% if guncelleme %}, son güncelleme {{ guncelleme|uzun_tarih }}{% endif %}.
+<b>Yatırım tavsiyesi değildir.</b></p>
+{% endblock %}
+
+{% block betik %}
+<script src="{{ url_for('static', filename='grafik.js') }}"></script>
+<script src="{{ url_for('static', filename='fiyat.js') }}"></script>
+{% endblock %}

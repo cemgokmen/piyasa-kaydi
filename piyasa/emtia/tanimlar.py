@@ -3,6 +3,7 @@ Takip edilen emtialar ve onları etkileyen göstergeler.
 
 Her emtia için:
   yahoo   Yahoo Finance vadeli işlem kodu (fiyat ve hacim)
+  birim   Fiyatın birimi; tahıllar ABD borsasında sent/buşel olarak işlem görür
   cot     CFTC raporundaki sözleşme kodu (büyük fonların konumu); yoksa None
   eia     ABD Enerji Bilgi İdaresi haftalık stok serisi; yoksa None
   haber   Google Haberler'de aranacak Türkçe ifade
@@ -13,8 +14,8 @@ ONS_GRAM = 31.1034768   # 1 troy ons kaç gram
 EMTIALAR = [
     {
         "slug": "altin", "ad": "Altın", "grup": "Değerli metaller",
-        "yahoo": "GC=F", "birim": "ons", "cot": "088691", "eia": None,
-        "haber": '"ons altın" OR "altın fiyatları" OR "altın talebi"',
+        "yahoo": "GC=F", "birim": "$/ons", "cot": "088691", "eia": None,
+        "haber": '"ons altın" OR "altın talebi" OR "merkez bankaları altın" OR "altın rezervi"',
         "etkenler": [
             "Faizler: Faiz düştükçe getirisi olmayan altının cazibesi artar; Fed kararları en güçlü etkendir.",
             "Dolar: Altın dolarla fiyatlanır; dolar zayıfladığında altın genellikle yükselir.",
@@ -24,7 +25,7 @@ EMTIALAR = [
     },
     {
         "slug": "gumus", "ad": "Gümüş", "grup": "Değerli metaller",
-        "yahoo": "SI=F", "birim": "ons", "cot": "084691", "eia": None,
+        "yahoo": "SI=F", "birim": "$/ons", "cot": "084691", "eia": None,
         "haber": '"gümüş fiyatları" OR "ons gümüş"',
         "etkenler": [
             "Hem değerli hem sanayi metali: Talebin yarıdan fazlası güneş paneli ve elektronik sanayisinden gelir.",
@@ -34,7 +35,7 @@ EMTIALAR = [
     },
     {
         "slug": "platin", "ad": "Platin", "grup": "Değerli metaller",
-        "yahoo": "PL=F", "birim": "ons", "cot": "076651", "eia": None,
+        "yahoo": "PL=F", "birim": "$/ons", "cot": "076651", "eia": None,
         "haber": '"platin fiyatı" OR platin',
         "etkenler": [
             "Arzın büyük kısmı Güney Afrika ve Rusya'dan gelir; madencilik grevleri ve yaptırımlar fiyatı etkiler.",
@@ -43,7 +44,7 @@ EMTIALAR = [
     },
     {
         "slug": "bakir", "ad": "Bakır", "grup": "Sanayi metalleri",
-        "yahoo": "HG=F", "birim": "libre", "cot": "085692", "eia": None,
+        "yahoo": "HG=F", "birim": "$/libre", "cot": "085692", "eia": None,
         "haber": '"bakır fiyatları" OR "bakır talebi"',
         "etkenler": [
             "Küresel büyümenin göstergesi kabul edilir; inşaat, elektrik şebekesi ve elektrikli araçlarda kullanılır.",
@@ -53,7 +54,7 @@ EMTIALAR = [
     },
     {
         "slug": "petrol", "ad": "Ham petrol (WTI)", "grup": "Enerji",
-        "yahoo": "CL=F", "birim": "varil", "cot": "067651", "eia": "ham_petrol",
+        "yahoo": "CL=F", "birim": "$/varil", "cot": "067651", "eia": "ham_petrol",
         "haber": '"ham petrol" OR "petrol fiyatları" OR OPEC',
         "etkenler": [
             "OPEC+ üretim kararları arzı doğrudan belirler.",
@@ -64,7 +65,7 @@ EMTIALAR = [
     },
     {
         "slug": "brent", "ad": "Brent petrol", "grup": "Enerji",
-        "yahoo": "BZ=F", "birim": "varil", "cot": None, "eia": "ham_petrol",
+        "yahoo": "BZ=F", "birim": "$/varil", "cot": None, "eia": "ham_petrol",
         "haber": '"brent petrol" OR "brent petrolün varili"',
         "etkenler": [
             "Avrupa ve dünya piyasasının referans petrolüdür; Türkiye'deki akaryakıt fiyatları Brent'e bağlıdır.",
@@ -73,7 +74,7 @@ EMTIALAR = [
     },
     {
         "slug": "dogalgaz", "ad": "Doğal gaz", "grup": "Enerji",
-        "yahoo": "NG=F", "birim": "MMBtu", "cot": "023651", "eia": "dogalgaz",
+        "yahoo": "NG=F", "birim": "$/MMBtu", "cot": "023651", "eia": "dogalgaz",
         "haber": '"doğal gaz fiyatları" OR "doğalgaz fiyatı"',
         "etkenler": [
             "Hava durumu: Soğuk kış ve sıcak yaz (klima) talebi artırır.",
@@ -83,7 +84,7 @@ EMTIALAR = [
     },
     {
         "slug": "bugday", "ad": "Buğday", "grup": "Tarım",
-        "yahoo": "ZW=F", "birim": "buşel", "cot": "001602", "eia": None,
+        "yahoo": "ZW=F", "birim": "sent/buşel", "cot": "001602", "eia": None,
         "haber": '"buğday fiyatları" OR "tahıl koridoru" OR "buğday hasadı"',
         "etkenler": [
             "Hasat beklentileri ve hava koşulları (kuraklık) arzı belirler.",
@@ -92,7 +93,7 @@ EMTIALAR = [
     },
     {
         "slug": "misir", "ad": "Mısır", "grup": "Tarım",
-        "yahoo": "ZC=F", "birim": "buşel", "cot": "002602", "eia": None,
+        "yahoo": "ZC=F", "birim": "sent/buşel", "cot": "002602", "eia": None,
         "haber": '"mısır fiyatları" OR "mısır hasadı"',
         "etkenler": [
             "ABD hasadı ve hava koşulları belirleyicidir.",

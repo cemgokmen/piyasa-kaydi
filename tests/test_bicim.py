@@ -66,3 +66,23 @@ def test_kongre_tutar_ve_isim():
     # Bölge değişmiş ama soyadı tek: yine bulunmalı
     assert kongre.uye_bul({"bolge": "GA06", "soyad": "McCormick"}, uyeler)["parti"] == "R"
     assert kongre.uye_bul({"bolge": "TX01", "soyad": "Kimse"}, uyeler) is None
+
+
+def test_haber_secimi():
+    from datetime import datetime, timezone
+    from piyasa.emtia import haberler
+
+    def h(baslik, kaynak="Ajans", gun=1):
+        return {"baslik": baslik, "kaynak": kaynak, "zaman": datetime(2026, 10, gun, tzinfo=timezone.utc),
+                "etiketler": haberler.etiketle(baslik)}
+
+    secilen = haberler._sec([
+        h("Gram altın bugün ne kadar?"),                      # fiyat listesi
+        h("6 Ekim altın fiyatları: gram düşüşte"),             # tarihli fiyat listesi
+        h("Konya'da altın fiyatları güne nasıl başladı?"),     # yerel fiyat listesi
+        h("OPEC üretimi artırma kararı aldı", gun=3),
+        h("OPEC üretimi artırma kararı aldı", gun=2),           # aynı başlık
+        h("Altın için Fed beklentisi", kaynak="instagram.com"),  # sosyal medya
+    ], 10)
+    assert [x["baslik"] for x in secilen] == ["OPEC üretimi artırma kararı aldı"]
+    assert set(secilen[0]["etiketler"]) >= {"OPEC", "Arz"}

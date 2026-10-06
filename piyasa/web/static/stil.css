@@ -1013,7 +1013,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 
 .kaynak-kartlari {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 36px;
 }
@@ -1311,3 +1311,107 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .cubuk-eksi { fill: var(--satim-cubuk); }
 .hacim-cubuklari rect { fill: var(--yazi-3); opacity: .35; }
 .grafik-ipucu small + small { margin-top: 1px; }
+
+/* ==========================================================================
+   Emtialar
+   ========================================================================== */
+
+.kpi-izgara.kpi-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.kpi-izgara.kpi-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kpi-izgara:has(> :nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.emtia-izgara { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+
+.emtia-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yaricap);
+  box-shadow: var(--golge);
+  text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease;
+}
+
+.emtia-kart:hover { border-color: var(--vurgu); transform: translateY(-1px); }
+.emtia-kart-ust { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.emtia-ad { font-size: 15px; font-weight: 600; }
+.emtia-fiyat { font-family: var(--mono); font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.emtia-fiyat small { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--yazi-3); letter-spacing: 0; }
+.emtia-alt { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--yazi-3); font-size: 12.5px; }
+.emtia-alt .tutar-buy, .emtia-alt .tutar-sell { font-family: var(--mono); font-weight: 600; }
+
+.kucuk-grafik { width: 100%; height: 34px; }
+.kucuk-grafik polyline { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.kucuk-grafik .cizgi-artis { stroke: var(--alim-cubuk); }
+.kucuk-grafik .cizgi-azalis { stroke: var(--satim-cubuk); }
+
+.h2-not { color: var(--yazi-3); font-size: 14px; font-weight: 500; }
+
+.etiket {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--vurgu-yumusak);
+  color: var(--vurgu);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.etiket-uyari { background: var(--uyari-yumusak); color: var(--uyari); }
+
+.konum-cubuk {
+  position: relative;
+  display: inline-block;
+  width: 140px;
+  height: 8px;
+  margin-right: 10px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--satim-yumusak), var(--cizgi-2) 50%, var(--alim-yumusak));
+  border: 1px solid var(--cizgi);
+  vertical-align: middle;
+}
+
+.konum-isaret {
+  position: absolute;
+  top: -4px;
+  width: 4px;
+  height: 14px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--yazi);
+}
+
+.konum-etiket { font-family: var(--mono); font-size: 13px; }
+.konum-etiket .etiket { margin-left: 6px; font-family: var(--sans); }
+
+.haberler { margin: 0; padding: 0; list-style: none; }
+.haberler li { padding: 11px 16px; border-bottom: 1px solid var(--cizgi-2); }
+.haberler li:last-child { border-bottom: 0; }
+.haberler a { font-weight: 500; line-height: 1.4; text-decoration: none; }
+.haberler a:hover { color: var(--vurgu); text-decoration: underline; }
+.haber-alt { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 4px; font-size: 12.5px; }
+
+.panel-ic { padding: 14px 16px 16px; }
+.panel-ic .kpi-izgara { margin-bottom: 12px; }
+.panel-ic .kpi { box-shadow: none; background: var(--kart-2); }
+#arz-talep .panel { margin-bottom: 16px; }
+.yorum { margin: 0 0 10px; color: var(--yazi); font-size: 14.5px; }
+
+.etkenler { margin: 0; padding-left: 18px; color: var(--yazi-2); }
+.etkenler li { margin-bottom: 6px; line-height: 1.55; }
+.etkenler b { color: var(--yazi); }
+
+@media (max-width: 1020px) {
+  .kpi-izgara.kpi-6, .kpi-izgara:has(> :nth-child(5):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kaynak-kartlari { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .kpi-izgara.kpi-6, .kpi-izgara:has(> :nth-child(5):last-child), .kpi-izgara.kpi-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kaynak-kartlari { grid-template-columns: minmax(0, 1fr); }
+  .konum-cubuk { width: 100px; }
+}

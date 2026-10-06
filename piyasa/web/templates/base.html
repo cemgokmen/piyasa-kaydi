@@ -28,6 +28,7 @@
           ('siyasetci', url_for('site.siyasetciler'), 'Siyasetçiler'),
           ('yonetici', url_for('site.islemler', kaynak='yonetici'), 'Şirket yöneticileri'),
           ('fonlar', url_for('site.fonlar'), 'Fonlar'),
+          ('emtia', url_for('emtia.liste'), 'Emtialar'),
           ('hakkinda', url_for('site.hakkinda'), 'Nasıl çalışır?'),
       ] %}
       <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}>{{ etiket }}</a>
@@ -70,7 +71,8 @@
       <ul>
         <li><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC EDGAR</a> — yöneticiler ve fonlar</li>
         <li><a href="https://disclosures-clerk.house.gov/FinancialDisclosure" target="_blank" rel="noopener">House Clerk</a> — Kongre üyeleri</li>
-        <li><a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a> — hisse fiyatları</li>
+        <li><a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a> — hisse ve emtia fiyatları</li>
+        <li><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener">CFTC</a>, <a href="https://www.eia.gov" target="_blank" rel="noopener">EIA</a>, <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener">FRED</a> — fon konumları, stoklar, faizler</li>
       </ul>
     </div>
     <div>
@@ -78,6 +80,7 @@
       <ul>
         <li><a href="{{ url_for('site.islemler', kaynak='hepsi', donem='30') }}">Tüm işlemler</a></li>
         <li><a href="{{ url_for('site.siyasetciler') }}">Siyasetçiler</a></li>
+        <li><a href="{{ url_for('emtia.liste') }}">Emtialar</a></li>
         <li><a href="{{ url_for('site.hakkinda') }}">Veriler nasıl derleniyor?</a></li>
       </ul>
     </div>

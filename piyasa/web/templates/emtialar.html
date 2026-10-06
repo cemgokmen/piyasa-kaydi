@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, haber_listesi, degisim %}
+{% block baslik %}Emtialar: altın, gümüş, petrol · Piyasa Kaydı{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1>Emtialar</h1>
+    <p class="sayfa-not">Altın, gümüş, petrol ve diğer temel emtiaların fiyatları; büyük fonların
+    konumu, stoklar, faiz kararları ve ilgili haberler. Bir emtiaya tıklayarak ayrıntısına gidebilirsiniz.</p>
+  </div>
+</header>
+
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Fiyatları etkileyen göstergeler</h2>
+      <p class="bolum-not">Faiz ve dolar, neredeyse bütün emtiaları etkiler: faiz ve dolar yükseldiğinde emtia fiyatları genellikle baskılanır.</p>
+    </div>
+  </header>
+  <div class="kpi-izgara kpi-6">
+    {% if faiz %}
+    {{ kpi('Fed politika faizi', '%' ~ ('%.2f'|format(faiz.fed.deger)).replace('.', ','),
+           ('son karar ' ~ (faiz.son_karar.tarih|kisa_tarih) ~ ' ' ~ faiz.son_karar.tarih[:4] ~ ': ' ~ ('+' if faiz.son_karar.degisim > 0 else '−') ~ ('%.2f'|format(faiz.son_karar.degisim|abs)).replace('.', ',') ~ ' puan') if faiz.son_karar else 'üst sınır') }}
+    {% if faiz.tahvil %}{{ kpi('ABD 10 yıllık faiz', '%' ~ ('%.2f'|format(faiz.tahvil.deger)).replace('.', ','),
+           'son 1 ayda ' ~ ('+' if faiz.tahvil.aylik_degisim > 0 else '−') ~ ('%.2f'|format(faiz.tahvil.aylik_degisim|abs)).replace('.', ',') ~ ' puan' if faiz.tahvil.aylik_degisim is not none else '') }}{% endif %}
+    {% endif %}
+    {% if dolar %}{{ kpi('Dolar endeksi (DXY)', dolar.fiyat|fiyat, 'son 1 ayda ' ~ (dolar_1a|yuzde)) }}{% endif %}
+    {% if gram_altin %}
+    {{ kpi('Gram altın', gram_altin.fiyat|fiyat, 'TL · dolar/TL ' ~ gram_altin.kur|fiyat, birim='₺') }}
+    {% endif %}
+    {% if altin_gumus %}{{ kpi('Altın / gümüş oranı', ('%.1f'|format(altin_gumus)).replace('.', ','), '1 ons altın kaç ons gümüş eder') }}{% endif %}
+  </div>
+</section>
+
+{% for grup, kartlar in gruplar %}
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>{{ grup }}</h2></div></header>
+  <div class="kart-izgara emtia-izgara">
+    {% for k in kartlar %}
+    <a class="emtia-kart" href="{{ url_for('emtia.detay', slug=k.emtia.slug) }}">
+      <span class="emtia-kart-ust">
+        <span class="emtia-ad">{{ k.emtia.ad }}</span>
+        {% if k.g1 is not none %}<span class="rozet {{ 'rozet-buy' if k.g1 >= 0 else 'rozet-sell' }}">{{ k.g1|yuzde }}</span>{% endif %}
+      </span>
+      <span class="emtia-fiyat">{% if k.fiyat %}{{ k.fiyat|fiyat }} <small>{{ k.emtia.birim }}</small>{% else %}<span class="soluk">fiyat alınamadı</span>{% endif %}</span>
+      {% if k.grafik %}
+      <svg class="kucuk-grafik" viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="{{ k.grafik.noktalar }}" class="{{ 'cizgi-artis' if k.grafik.artis else 'cizgi-azalis' }}"/>
+      </svg>
+      {% endif %}
+      <span class="emtia-alt">
+        <span>1 ay {{ degisim(k.a1) }}</span>
+        <span>1 yıl {{ degisim(k.y1) }}</span>
+        {% if k.hacim and k.hacim.oran and k.hacim.oran >= 1.3 %}<span class="etiket etiket-uyari" title="Son işlem gününün hacmi 20 günlük ortalamanın %{{ (k.hacim.oran * 100)|round|int }}'i">Hacim yüksek</span>{% endif %}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+{% if fonlar %}
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Büyük fonlar ne yapıyor? <span class="h2-not">(arz-talep beklentisi)</span></h2>
+      <p class="bolum-not">ABD vadeli işlem piyasasındaki büyük spekülatif fonların net pozisyonu: alım sözleşmeleri eksi
+      satış sözleşmeleri. <b>1 yıllık konum</b>, bugünkü pozisyonun son bir yıl içinde nerede durduğunu gösterir
+      (0 en kötümser, 100 en iyimser). Kaynak: ABD Emtia Vadeli İşlemler Komisyonu (CFTC), haftalık.</p>
+    </div>
+  </header>
+  <div class="tablo-kap">
+    <table class="tablo">
+      <thead>
+        <tr><th>Emtia</th><th class="sag">Net pozisyon</th><th class="sag">Haftalık değişim</th>
+            <th class="genis">1 yıllık konum</th><th>Rapor</th></tr>
+      </thead>
+      <tbody>
+        {% for f in fonlar %}
+        <tr class="tiklanir" data-href="{{ url_for('emtia.detay', slug=f.emtia.slug) }}#arz-talep">
+          <td data-etiket="Emtia"><a class="kisi-ad" href="{{ url_for('emtia.detay', slug=f.emtia.slug) }}#arz-talep">{{ f.emtia.ad }}</a></td>
+          <td data-etiket="Net pozisyon" class="sag sayi {{ 'tutar-buy' if f.fon_net >= 0 else 'tutar-sell' }}">{{ '+' if f.fon_net > 0 }}{{ f.fon_net|sayi }} <span class="soluk kucuk">sözleşme</span></td>
+          <td data-etiket="Haftalık değişim" class="sag sayi {{ 'tutar-buy' if f.haftalik_degisim >= 0 else 'tutar-sell' }}">{{ '+' if f.haftalik_degisim > 0 }}{{ f.haftalik_degisim|sayi }}</td>
+          <td data-etiket="1 yıllık konum" class="genis">
+            <span class="konum-cubuk" title="Son 1 yılın %{{ f.konum }}'lik diliminde">
+              <span class="konum-isaret" style="left: {{ f.konum }}%"></span>
+            </span>
+            <span class="konum-etiket">{{ f.konum }}<span class="soluk">/100</span>
+              {% if f.konum >= 85 %}<span class="etiket etiket-uyari">çok iyimser</span>
+              {% elif f.konum <= 15 %}<span class="etiket etiket-uyari">çok kötümser</span>{% endif %}</span>
+          </td>
+          <td data-etiket="Rapor" class="tarih">{{ f.tarih|kisa_tarih }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">“Çok iyimser” ya da “çok kötümser” konumlar, piyasanın bir yöne fazla yüklendiğini gösterebilir;
+  tek başına yön tahmini değildir.</p>
+</section>
+{% endif %}
+
+<div class="izgara-2">
+  <section class="panel">
+    <header class="panel-ust">
+      <div>
+        <h2>Kararlar ve politika haberleri</h2>
+        <p class="panel-not">OPEC, merkez bankaları, yaptırım ve gümrük kararları · son 2 hafta</p>
+      </div>
+    </header>
+    {{ haber_listesi(karar_haberleri) }}
+  </section>
+
+  {% if faiz %}
+  <section class="panel">
+    <header class="panel-ust">
+      <div>
+        <h2>Fed faiz kararları</h2>
+        <p class="panel-not">ABD Merkez Bankası politika faizi (üst sınır). Faiz indirimi genellikle altını ve emtiaları destekler.</p>
+      </div>
+    </header>
+    <ul class="akis akis-sik">
+      {% for k in faiz.kararlar[:8] %}
+      <li>
+        <span class="akis-orta">{{ k.tarih|uzun_tarih }}</span>
+        <span class="rozet {{ 'rozet-sell' if k.degisim > 0 else 'rozet-buy' }}">{{ 'Artırım' if k.degisim > 0 else 'İndirim' }} {{ ('%.2f'|format(k.degisim|abs)).replace('.', ',') }}</span>
+        <span class="sayi">%{{ ('%.2f'|format(k.faiz)).replace('.', ',') }}</span>
+      </li>
+      {% else %}<li class="bos">Son yıllarda faiz değişikliği yok.</li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</div>
+
+<p class="dipnot">Fiyatlar: Yahoo Finance, vadeli işlem sözleşmeleri (günlük kapanış, 15 dakikada bir yenilenir).
+Fon konumları, stoklar ve faizler: CFTC, EIA ve FRED{% if guncelleme %}, son güncelleme {{ guncelleme|uzun_tarih }}{% endif %}.
+Haberler: Google Haberler. <b>Yatırım tavsiyesi değildir.</b></p>
+{% endblock %}

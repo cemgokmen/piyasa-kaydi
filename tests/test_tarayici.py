@@ -48,6 +48,12 @@ def bekle(tarayici, kosul, sure=6):
     return WebDriverWait(tarayici, sure).until(kosul)
 
 
+def tikla(tarayici, oge):
+    """Öğeyi ekranın ortasına kaydırıp tıklar (yapışkan üst çubuk örtmesin)."""
+    tarayici.execute_script("arguments[0].scrollIntoView({block: 'center'})", oge)
+    oge.click()
+
+
 def sorgu(tarayici):
     return {k: v[0] for k, v in parse_qs(urlparse(tarayici.current_url).query).items()}
 
@@ -71,6 +77,7 @@ def test_ana_menu_baglantilari(tarayici, sunucu):
         "Siyasetçiler": "Siyasetçilerin hisse işlemleri",
         "Şirket yöneticileri": "Şirket yöneticilerinin işlemleri",
         "Fonlar": "Fonlar ve bankalar",
+        "Emtialar": "Emtialar",
         "Nasıl çalışır?": "Veriler nasıl derleniyor?",
         "Ana sayfa": "ABD'de kim hangi hisseyi aldı, sattı?",
     }
@@ -237,7 +244,8 @@ def test_fon_sayfasi(tarayici, sunucu):
 def test_telefon_gorunumu_tasmaz(tarayici, sunucu):
     tarayici.set_window_size(500, 900)
     try:
-        for adres in ("/", "/islemler?kaynak=siyasetci", "/siyasetciler", "/hisse/NVDA"):
+        for adres in ("/", "/islemler?kaynak=siyasetci", "/siyasetciler", "/hisse/NVDA",
+                      "/emtialar", "/emtia/petrol"):
             tarayici.get(sunucu + adres)
             genislik = tarayici.execute_script("return document.documentElement.scrollWidth")
             pencere = tarayici.execute_script("return window.innerWidth")
@@ -280,3 +288,39 @@ def test_geri_dugmesi_dogrudan_acilan_sayfada_ust_sayfaya_gider(tarayici, sunucu
         tarayici.get(sunucu + adres)
         tarayici.find_element(By.CSS_SELECTOR, "a.geri").click()
         bekle(tarayici, EC.url_contains(ust))
+
+
+def test_emtia_sayfalari(tarayici, sunucu):
+    tarayici.get(sunucu + "/emtialar")
+    tarayici.find_element(By.XPATH, "//a[contains(@class,'emtia-kart')][.//span[text()='Ham petrol (WTI)']]").click()
+    bekle(tarayici, EC.url_contains("/emtia/petrol"))
+
+    # Fiyat paneli, hacim ve grafik
+    bekle(tarayici, lambda t: "$/varil" in t.find_element(By.CSS_SELECTOR, '[data-alan="fiyat"]').text)
+    assert tarayici.find_element(By.CSS_SELECTOR, '[data-alan="hacim"]').is_displayed()
+
+    # Fon konumu (çubuk) ve stok (çizgi) grafikleri çizilmiş olmalı
+    assert tarayici.find_elements(By.CSS_SELECTOR, '[data-grafik-veri="cot-verisi"] rect.cubuk-arti')
+    assert tarayici.find_elements(By.CSS_SELECTOR, '[data-grafik-veri="eia-verisi"] polyline')
+    stok = tarayici.find_element(By.CSS_SELECTOR, '[data-grafik-veri="eia-verisi"] svg')
+    ActionChains(tarayici).move_to_element(stok).perform()
+    ipucu = tarayici.find_element(By.CSS_SELECTOR, '[data-grafik-veri="eia-verisi"] .grafik-ipucu')
+    bekle(tarayici, lambda t: ipucu.is_displayed())
+    assert "milyon varil" in ipucu.text
+
+    # Bölüm menüsü ve haber bağlantıları
+    tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, '.bolum-menu a[href="#haberler"]'))
+    bekle(tarayici, EC.url_contains("#haberler"))
+    haber = tarayici.find_element(By.CSS_SELECTOR, ".haberler a")
+    assert haber.get_attribute("target") == "_blank"
+
+    # Diğer emtialar ve geri düğmesi
+    tikla(tarayici, tarayici.find_element(By.LINK_TEXT, "Altın"))
+    bekle(tarayici, EC.url_contains("/emtia/altin"))
+    tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "a.geri"))
+    bekle(tarayici, EC.url_contains("/emtia/petrol"))
+
+    # Fon tablosu satırı detay sayfasına gider
+    tarayici.get(sunucu + "/emtialar")
+    tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "tr.tiklanir td:nth-child(2)"))
+    bekle(tarayici, EC.url_contains("#arz-talep"))
