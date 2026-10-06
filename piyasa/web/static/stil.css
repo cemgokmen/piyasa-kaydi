@@ -1538,6 +1538,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .ozet-maddeler li { display: flex; align-items: baseline; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--cizgi-2); line-height: 1.5; }
 .ozet-maddeler li:last-child { border-bottom: 0; }
 .ozet-maddeler li > span:not(.ticker) { flex: 1; }
+.ozet-maddeler a.ticker { flex: none; }
 .ozet-link { flex: none; color: var(--vurgu); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; }
 .ozet-link:hover { text-decoration: underline; }
 

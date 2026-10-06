@@ -124,6 +124,7 @@ _SIRKET_EKI = re.compile(
 def sirket_kisa_ad(ad):
     """'General Dynamics Corporation Common Stock' -> 'General Dynamics'; 'RTX Corporation' -> 'RTX'"""
     ad = re.split(r"\s+-\s+", (ad or "").strip())[0]       # 'Alphabet Inc. - Class A'
+    ad = re.sub(r"\s*/[A-Z]{2,}/?\s*$", "", ad)              # 'LENNAR CORP /NEW/', 'XYZ INC /DE/'
     ad = _HISSE_TURU.sub("", ad)
     onceki = None
     while onceki != ad:

@@ -31,7 +31,7 @@
       <ul class="ozet-maddeler">
         {% for m in maddeler %}
         <li>
-          {% if m.vurgu %}<span class="ticker">{{ m.vurgu }}</span>{% endif %}
+          {% if m.vurgu %}<a class="ticker" href="{{ url_for('site.hisse', ticker=m.vurgu) }}" title="{{ m.vurgu }} hisse sayfası">{{ m.vurgu }}</a>{% endif %}
           <span>{{ m.metin }}</span>
           {% if m.adres %}<a class="ozet-link" href="{{ m.adres }}" aria-label="Ayrıntı">Ayrıntı →</a>{% endif %}
         </li>

@@ -189,6 +189,8 @@ def test_sinyaller_ve_ozet(istemci):
         assert metin in html
     ozet = istemci.get("/gunluk-ozet").get_data(as_text=True)
     assert "yönetici" in ozet
+    # Maddelerdeki hisse kodu hisse sayfasına gider
+    assert re.search(r'<a class="ticker" href="/hisse/[A-Z.\-]+"', ozet)
     # Paylaşım metni ziyaretçilere gösterilmez
     assert "Metni kopyala" not in ozet and "ozet-metni" not in ozet
 

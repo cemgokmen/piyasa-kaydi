@@ -176,3 +176,4 @@ def test_sirket_kisa_ad():
     assert sirket_kisa_ad("Eli Lilly and Company") == "Eli Lilly and Company"
     assert sirket_kisa_ad("The Hershey Company") == "Hershey"
     assert sirket_kisa_ad("Berkshire Hathaway Inc. New") == "Berkshire Hathaway"
+    assert sirket_kisa_ad("LENNAR CORP /NEW/") == "LENNAR"

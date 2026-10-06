@@ -9,7 +9,7 @@ from datetime import date, timedelta
 
 from piyasa import fiyat
 from piyasa.analiz import cakisma
-from piyasa.bicim import kisa_aralik, kisa_tutar, sayi, uzun_tarih, yuzde
+from piyasa.bicim import kisa_aralik, kisa_tutar, sayi, sirket_kisa_ad, uzun_tarih, yuzde
 from piyasa.emtia import sorgular as emtia_sorgulari
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kurallar import GECERLI_KOD as GECERLI
@@ -58,7 +58,7 @@ def _yoneticiler(conn, gun):
         (gun,),
     ):
         maddeler.append(_madde(
-            f"En büyük alımlardan: {s['kisi']} ({s['unvan'] or 'yönetici'}), {s['sirket'] or s['ticker']} "
+            f"En büyük alımlardan: {s['kisi']} ({s['unvan'] or 'yönetici'}), {sirket_kisa_ad(s['sirket']) or s['ticker']} "
             f"hissesinden {kisa_tutar(s['tutar'])} aldı.",
             f"/hisse/{s['ticker']}", s["ticker"],
         ))
@@ -74,7 +74,7 @@ def _yoneticiler(conn, gun):
         ((date.fromisoformat(gun) - timedelta(days=30)).isoformat(), gun, gun),
     ):
         maddeler.append(_madde(
-            f"Küme alımı: {s['sirket'] or s['ticker']} hissesini son 30 günde {s['kisi']} farklı yönetici aldı.",
+            f"Küme alımı: {sirket_kisa_ad(s['sirket']) or s['ticker']} hissesini son 30 günde {s['kisi']} farklı yönetici aldı.",
             f"/hisse/{s['ticker']}", s["ticker"],
         ))
     return maddeler
@@ -102,7 +102,7 @@ def _siyasetciler(conn, gun):
         p = parti_bilgisi(s["party"])
         parti = f" ({p['ad']})" if p else ""
         maddeler.append(_madde(
-            f"Yüklü alım: {s['person']}{parti}, {s['asset_name'] or s['ticker']} "
+            f"Yüklü alım: {s['person']}{parti}, {sirket_kisa_ad(s['asset_name']) or s['ticker']} "
             f"hissesinden {kisa_aralik(s['amount_min'], s['amount_max'])} aldı "
             f"(işlem {uzun_tarih(s['transaction_date'])}).",
             f"/kisi/{s['person_slug']}", s["ticker"],
@@ -113,7 +113,7 @@ def _siyasetciler(conn, gun):
         c = cakisanlar[s["id"]]
         maddeler.append(_madde(
             f"Olası çıkar çatışması: {s['person']} ({', '.join(c['komiteler'])}), "
-            f"{c['sektor'].lower()} sektöründen {s['ticker']} hissesinde "
+            f"{c['sektor'].lower()} sektöründen {sirket_kisa_ad(s['asset_name']) or s['ticker']} hissesinde "
             f"{'alım' if s['action'] == 'buy' else 'satım'} yaptı.",
             f"/kisi/{s['person_slug']}", s["ticker"],
         ))
