@@ -70,6 +70,27 @@ def kaydet(conn, cusip, ticker):
     )
 
 
+def sonuclari_kaydet(conn, grup, sonuc):
+    """OpenFIGI cevabını kaydeder; (bulunan, bulunamayan, hatalı) döndürür.
+
+    "warning" kodun tanınmadığını gösterir ve boş eşleme olarak kaydedilir.
+    "error" geçicidir (çoğunlukla hız sınırı): kaydedilmez, sonraki
+    çalıştırmada yeniden sorulur.
+    """
+    bulunan = bulunamayan = hatali = 0
+    for cusip, kayit in zip(grup, sonuc, strict=True):
+        veri = kayit.get("data")
+        if veri:
+            kaydet(conn, cusip, us_ticker_sec(veri))
+            bulunan += 1
+        elif "warning" in kayit:
+            kaydet(conn, cusip, None)
+            bulunamayan += 1
+        else:
+            hatali += 1
+    return bulunan, bulunamayan, hatali
+
+
 def hisse_kodlarini_yaz(conn):
     """Bulunan eşlemeleri fon pozisyonlarına işler."""
     guncellenen = conn.execute(
@@ -108,14 +129,12 @@ def main():
             if sonuc == "sinir" or sonuc is None:
                 continue
 
-        for cusip, kayit in zip(grup, sonuc, strict=True):
-            veri = kayit.get("data")
-            if veri:
-                kaydet(conn, cusip, us_ticker_sec(veri))
-                bulunan += 1
-            else:
-                kaydet(conn, cusip, None)
-                bulunamayan += 1
+        b, y, hatali = sonuclari_kaydet(conn, grup, sonuc)
+        bulunan += b
+        bulunamayan += y
+        if hatali == len(grup):
+            print("  OpenFIGI hata döndürüyor (hız sınırı); 60 sn bekleniyor.", flush=True)
+            time.sleep(60)
 
         conn.commit()
         ilerleme = min(i + GRUP_BOYUTU, toplam)

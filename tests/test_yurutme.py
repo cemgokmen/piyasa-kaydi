@@ -88,3 +88,20 @@ def test_tahvil_hesabi_tespiti():
 def test_tutar():
     assert oge_yillik.tutar("$15,001 - $50,000") == (15_001, 50_000)
     assert oge_yillik.tutar("Over $50,000,000") == (50_000_001, 50_000_001)
+
+
+def test_cusip_hatasi_kalici_bos_esleme_olarak_kaydedilmez():
+    import sqlite3
+
+    from piyasa.toplama.cusip import sonuclari_kaydet
+
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE cusip_ticker (cusip TEXT PRIMARY KEY, ticker TEXT, kaynak TEXT, guncelleme TEXT)")
+    sonuc = [
+        {"data": [{"ticker": "AAPL", "exchCode": "US"}]},
+        {"warning": "No identifier found."},
+        {"error": "Too many requests."},
+    ]
+    assert sonuclari_kaydet(conn, ["A", "B", "C"], sonuc) == (1, 1, 1)
+    kayitlar = dict(conn.execute("SELECT cusip, ticker FROM cusip_ticker"))
+    assert kayitlar == {"A": "AAPL", "B": None}
