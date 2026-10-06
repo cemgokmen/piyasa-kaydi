@@ -56,6 +56,22 @@
     farkı nedeniyle farklı olabilir.</li>
   </ul>
 
+  <h2>Analizler</h2>
+  <ul>
+    <li><strong>Kim piyasayı yendi?</strong> Her siyasetçi alımı için hissenin 90 gün sonraki getirisinden aynı dönemdeki
+    S&amp;P 500 (SPY) getirisi çıkarılır. Hem işlem gününden (siyasetçinin kendi zamanlaması) hem bildirim gününden
+    (izleyen birinin yakalayabileceği) hesaplanır. Aynı gün aynı hissedeki bölünmüş bildirimler tek işlem sayılır.</li>
+    <li><strong>Çıkar çatışması:</strong> Şirketin sektörü SEC sanayi kodundan (SIC), üyenin komiteleri açık
+    congress-legislators verisinden alınır; komitenin yetki alanındaki sektörlerle eşleşen işlemler işaretlenir.
+    Komite üyelikleri günceldir.</li>
+    <li><strong>Üçlü onay:</strong> Son 90 günde yönetici alımı, son 180 günde siyasetçi alımı ve son çeyrekte
+    fonların artırması aynı hissede buluşuyorsa.</li>
+    <li><strong>Sinyal başarısı:</strong> Ortalama fark, endeksi yenme oranı, %95 güven aralığı (bootstrap) ve t testi.
+    Çok sayıda test aynı anda yapıldığından kararlar Holm yöntemiyle düzeltilir. “Şanstan ayırt edilemiyor”, sonucun
+    rastgele seçimle de elde edilebileceği anlamına gelir.</li>
+    <li><strong>Günlük özet:</strong> O gün açıklanan bildirimlerden kural tabanlı olarak üretilir; her cümle doğrudan kayıtlara dayanır.</li>
+  </ul>
+
   <h2>Hisse fiyatları</h2>
   <p>Hisse sayfalarındaki son kapanış fiyatı, 1 gün – 10 yıl arası değişimler ve fiyat grafiği
   Yahoo Finance'ten alınır. Fiyatlar temettü ve hisse bölünmelerine göre düzeltilmiş günlük

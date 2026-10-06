@@ -34,6 +34,18 @@ güncel fiyat, 1 gün – 10 yıl değişimler, hacim; büyük fonların net poz
 faizleri (FRED), konuya göre etiketlenmiş Türkçe haberler (Google Haberler).
 Altın sayfasında gram altının TL fiyatı da hesaplanır.
 
+**Analizler**
+- *Kim piyasayı yendi?* — Kongre üyelerinin aldığı hisselerin alımdan 90 gün
+  sonra S&P 500'e göre durumu; üye üye sıralama, satış isabeti ve “bildirimden
+  sonra alan biri” karşılaştırması.
+- *Çıkar çatışması* — üyelerin, komitelerinin denetlediği sektörden (SEC sanayi
+  kodlarına göre) yaptığı işlemler.
+- *Üçlü onay* — yöneticilerin, siyasetçilerin ve fonların birlikte aldığı hisseler.
+- *Sinyaller işe yarıyor mu?* — siyasetçi, yüklü, çıkar çatışmalı, yönetici ve
+  küme alımlarının 30/90/180 gün sonraki endekse göre getirisi; güven aralığı,
+  t testi ve çoklu karşılaştırma (Holm) düzeltmesiyle.
+- *Günlük özet* — günün bildirimlerinden kural tabanlı, paylaşılabilir Türkçe özet.
+
 ## Kurulum
 
 ```bash
@@ -92,6 +104,15 @@ faizler (FRED, günlük). Fiyatlar ve haberler site açıkken canlı alınır:
 python -m piyasa emtia
 ```
 
+**Analiz verisi** — işlem yapılan hisselerin fiyat geçmişi, şirket sektörleri,
+Meclis komiteleri ve işlem sonrası getiriler:
+
+```bash
+python -m piyasa sirketler
+python -m piyasa fiyatlar
+python -m piyasa analiz
+```
+
 **Fon pozisyonları (13F)** — çeyrekte bir yeterli. Bildirimler Şubat, Mayıs,
 Ağustos ve Kasım aylarının ortasında yayımlanır:
 
@@ -113,7 +134,9 @@ veritabanı kurulur, fiyat servisi sahte veriyle değiştirilir.
 - `tests/test_sayfalar.py` — her sayfa, 404'ler ve sitedeki bütün iç
   bağlantıların gezilmesi
 - `tests/test_bicim.py` — tutar/tarih biçimleri, fiyat değişimi hesabı,
-  Kongre bildirimi yardımcıları
+  Kongre bildirimi yardımcıları, haber seçimi
+- `tests/test_analiz.py` — getiri hesabı, istatistik ve Holm düzeltmesi,
+  sektör eşlemeleri
 - `tests/test_tarayici.py` — başsız Chrome'da menüler, arama, seçim
   kutuları, sıralama, süzme, tıklanabilir satırlar, fiyat grafiği ve
   telefon görünümü. Chrome yoksa atlanır.
@@ -135,6 +158,8 @@ piyasa/
     fon13f.py              Fonların 13F bildirimleri
     cusip.py               CUSIP → hisse kodu eşlemesi
     emtia.py               CFTC fon konumları, EIA stokları, FRED faizleri
+    fiyat_gecmisi.py       İşlem yapılan hisselerin ve SPY'nin günlük kapanışları
+    sirketler.py           SEC sektörleri, Meclis üyeleri ve komite üyelikleri
     fon_listesi.py, fon_cik.py, fon_ara.py   Fon listesi ve CIK bulma
 
   bakim/                   Veritabanı bakımı
@@ -147,14 +172,22 @@ piyasa/
     sorgular.py            Fon konumu, stok ve faiz hesapları
     haberler.py            Türkçe haberler (Google Haberler RSS, 30 dk önbellek)
 
-  analiz/                  Deneysel analizler (siteye bağlı değil)
-    destek_direnc.py       Destek/direnç modeli
+  analiz/                  Analizler
+    getiri.py              İşlem sonrası getiri (30/90/180 gün, bugüne) ve SPY
+    performans.py          Siyasetçilerin yatırım performansı
+    cakisma.py             Komite ↔ sektör çıkar çatışmaları
+    sektorler.py           SIC → sektör ve komite → sektör eşlemeleri
+    sinyaller.py           Üçlü onay ve sinyallerin geçmiş başarısı
+    istatistik.py          Güven aralığı, t testi, Holm düzeltmesi
+    ozet.py                Günlük özet
+    destek_direnc.py       Destek/direnç modeli (deneysel, siteye bağlı değil)
     sr_dene.py, sr_tarama.py
 
   web/                     Flask sitesi
     __init__.py            create_app()
     rotalar.py             Sayfalar (Blueprint); SQL içermez
     emtia_rotalari.py      Emtia sayfaları (Blueprint)
+    analiz_rotalari.py     Performans, çıkar çatışması, sinyaller, günlük özet
     sorgular.py            Bütün veritabanı sorguları
     bicim.py               Tutar, tarih biçimleri ve şablon süzgeçleri
     fiyat.py               Yahoo Finance fiyatları ve değişimler (15 dk önbellek)

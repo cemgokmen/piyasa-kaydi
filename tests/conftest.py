@@ -81,6 +81,12 @@ def ornek_kayitlar():
                amount_max=15_000, transaction_date=gun(120), disclosed_date=gun(20),
                **siyaset),
     ]
+    for i in range(12):
+        kayitlar.append(_islem(
+            300 + i, person="Jane Senator", person_slug="jane-senator", party="D", state="CA-11",
+            ticker="NVDA", asset_name="NVIDIA Corporation", amount_min=15_001, amount_max=50_000,
+            transaction_date=gun(200 + i * 10), disclosed_date=gun(180 + i * 10), **siyaset,
+        ))
     return kayitlar
 
 
@@ -116,6 +122,30 @@ def ornek_emtia_verisi(conn):
         conn.execute("INSERT INTO makro VALUES ('abd_10y', ?, ?)", (t, 4.0 + i / 1000))
         conn.execute("INSERT INTO makro VALUES ('reel_faiz', ?, ?)", (t, 2.0 + i / 2000))
     conn.execute("INSERT INTO emtia_guncelleme VALUES ('son', ?)", (gun(0) + "T00:00:00",))
+
+
+def ornek_analiz_verisi(conn):
+    """Komiteler, sektörler, fiyat geçmişi; ardından getiriler hesaplanır."""
+    conn.executemany("INSERT INTO uye VALUES (?, ?, ?, ?, ?)", [
+        ("J000001", "Jane Senator", "jane-senator", "D", "CA-11"),
+        ("B000001", "Bob Rep", "bob-rep", "R", "TX-02"),
+    ])
+    # Jane, teknolojiyi denetleyen Bilim komitesinde: NVDA alımları çıkar çatışması sayılır
+    conn.executemany("INSERT INTO komite_uyeligi VALUES (?, ?, ?)", [
+        ("J000001", "HSSY", None), ("B000001", "HSAG", "Chairman"),
+    ])
+    conn.executemany("INSERT INTO sirket VALUES (?, ?, ?, ?, ?)", [
+        ("NVDA", 1045810, 3674, "Semiconductors", "Teknoloji"),
+        ("AAPL", 320193, 3571, "Electronic Computers", "Teknoloji"),
+        ("ORNK", 1, 3812, "Defense", "Savunma ve havacılık"),
+    ])
+    tarihler = pd.bdate_range(end=pd.Timestamp.today().normalize(), periods=500)
+    for i, t in enumerate(tarihler):
+        g = t.strftime("%Y-%m-%d")
+        conn.executemany("INSERT INTO fiyat_gecmisi VALUES (?, ?, ?)", [
+            ("SPY", g, 400 + i * 0.2), ("NVDA", g, 100 + i * 0.5),
+            ("AAPL", g, 200 - i * 0.1), ("ORNK", g, 50 + (i % 20)),
+        ])
 
 
 def sahte_haberler(sorgu):
@@ -164,8 +194,14 @@ def veritabani_yolu(tmp_path_factory):
                 list(k.values()),
             )
     ornek_emtia_verisi(conn)
+    ornek_analiz_verisi(conn)
     conn.commit()
     conn.close()
+
+    from piyasa.analiz import cakisma, getiri, sinyaller
+    getiri.main()
+    cakisma.onbellegi_temizle()
+    sinyaller._onbellek["veri"] = sinyaller._onay_onbellek["veri"] = None
 
     yield yol
     veritabani.DB_PATH = eski

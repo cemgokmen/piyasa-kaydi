@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import parti_rozeti, fark, karar_rozeti %}
+{% block baslik %}Sinyaller: üçlü onay ve geçmiş başarı · Piyasa Kaydı{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1>Sinyaller</h1>
+    <p class="sayfa-not">Şirket yöneticileri, Kongre üyeleri ve büyük fonların aynı hisseye yöneldiği durumlar —
+    ve bu tür sinyallerin geçmişte gerçekten işe yarayıp yaramadığı.</p>
+  </div>
+  <nav class="bolum-menu">
+    <a href="#uclu-onay">Üçlü onay</a>
+    <a href="#basari">Sinyaller işe yarıyor mu?</a>
+  </nav>
+</header>
+
+{% set ucluler = onay.liste|selectattr('kaynak', 'equalto', 3)|list %}
+{% set ikililer = onay.liste|selectattr('kaynak', 'equalto', 2)|list %}
+
+<section class="bolum" id="uclu-onay">
+  <header class="bolum-ust">
+    <div>
+      <h2>Üçlü onay <span class="h2-not">({{ ucluler|length }} hisse)</span></h2>
+      <p class="bolum-not">Son {{ onay.pencereler.yonetici }} günde en az bir yöneticinin açık piyasadan aldığı,
+      son {{ onay.pencereler.siyaset }} günde en az bir Kongre üyesinin aldığı ve {{ onay.fon_donemi|uzun_tarih if onay.fon_donemi }}
+      çeyreğinde takip edilen fonlardan pozisyonunu artıranların azaltanlardan çok olduğu hisseler.</p>
+    </div>
+  </header>
+
+  {% macro onay_tablosu(liste) %}
+  <div class="tablo-kap">
+    <table class="tablo">
+      <thead>
+        <tr><th scope="col">Hisse</th><th scope="col">Yöneticiler</th><th scope="col">Siyasetçiler</th><th scope="col">Fonlar</th></tr>
+      </thead>
+      <tbody>
+        {% for h in liste %}
+        <tr class="tiklanir" data-href="{{ url_for('site.hisse', ticker=h.ticker) }}">
+          <td data-etiket="Hisse"><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+            <span class="alt-satir kirp">{{ h.sirket }}</span></td>
+          <td data-etiket="Yöneticiler">{% if h.yonetici %}<span class="onay onay-var">✓</span> {{ h.yonetici.kisi }} kişi aldı
+            <span class="alt-satir">{{ h.yonetici.tutar }} · son {{ h.yonetici.son|kisa_tarih }}</span>{% else %}<span class="onay onay-yok">—</span>{% endif %}</td>
+          <td data-etiket="Siyasetçiler">{% if h.siyaset %}<span class="onay onay-var">✓</span> {{ h.siyaset.kisi }} üye aldı
+            {% for p in h.siyaset.partiler %}{{ parti_rozeti(p) }}{% endfor %}
+            <span class="alt-satir">{{ h.siyaset.tutar }} · son {{ h.siyaset.son|kisa_tarih }}</span>{% else %}<span class="onay onay-yok">—</span>{% endif %}</td>
+          <td data-etiket="Fonlar">{% if h.fon %}<span class="onay onay-var">✓</span> {{ h.fon.artiran }} fon artırdı
+            <span class="alt-satir">{{ h.fon.azaltan }} fon azalttı</span>{% else %}<span class="onay onay-yok">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endmacro %}
+
+  {% if ucluler %}{{ onay_tablosu(ucluler) }}
+  {% else %}<p class="bos">Şu an üç kaynağın birlikte aldığı hisse yok.</p>{% endif %}
+
+  {% if ikililer %}
+  <details class="acilir">
+    <summary>İki kaynağın birlikte aldığı hisseler ({{ ikililer|length }})</summary>
+    {{ onay_tablosu(ikililer[:60]) }}
+    {% if ikililer|length > 60 %}<p class="dipnot">İlk 60 hisse gösteriliyor.</p>{% endif %}
+  </details>
+  {% endif %}
+  <p class="dipnot">Üçlü onay yeni bir sinyaldir; geçmiş başarısını ölçecek kadar uzun bir yönetici verisi henüz yok.
+  Fon verisi çeyreklik ve 45 gün gecikmelidir.</p>
+</section>
+
+<section class="bolum" id="basari">
+  <header class="bolum-ust">
+    <div>
+      <h2>Sinyaller işe yarıyor mu?</h2>
+      <p class="bolum-not">Her sinyalin ardından hisse S&amp;P 500'ü yendi mi? Hesap, bildirimin kamuya açıklandığı günden
+      başlar — sinyali izleyen birinin gerçekte yakalayabileceği getiri. Değerler, hisse getirisi eksi endeks getirisinin ortalamasıdır.</p>
+    </div>
+  </header>
+  <div class="tablo-kap">
+    <table class="tablo basari-tablosu">
+      <thead>
+        <tr>
+          <th scope="col">Sinyal</th>
+          {% for u in ufuklar %}<th scope="col" class="sag">{{ u }} gün sonra</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in basari %}
+        <tr>
+          <td data-etiket="Sinyal"><b>{{ s.ad }}</b><span class="alt-satir">{{ s.aciklama }} · {{ s.olay|sayi }} olay</span></td>
+          {% for u in ufuklar %}{% set o = s.ufuklar[u] %}
+          <td data-etiket="{{ u }} gün sonra" class="sag">
+            {% if o.n %}
+              {{ fark(o.ortalama) }}
+              <span class="alt-satir">%{{ (o.yenme * 100)|round|int }} endeksi yendi · {{ o.n|sayi }} olay</span>
+              <span class="alt-satir">{{ karar_rozeti(o.karar) }}</span>
+            {% else %}<span class="soluk">henüz yok</span>{% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="yorum-kutu">
+    <p><b>Nasıl okunmalı?</b> “Şanstan ayırt edilemiyor”, ortalama farkın rastgele hisse seçen birinin de
+    tutturabileceği aralıkta kaldığı anlamına gelir. Aynı anda {{ basari|length * ufuklar|length }} test yapıldığı için
+    kararlar çoklu karşılaştırma düzeltmesiyle (Holm) verilir; tek başına “anlamlı” görünen bir sonuç bu düzeltmeden
+    sonra şans olabilir.</p>
+    <p>Sınırlamalar: Aynı dönemdeki olaylar birbirinden bağımsız değildir; borsadan çıkmış şirketlerin fiyatı
+    bulunamadığından bazı olaylar ölçülemez; yönetici verisi yalnızca son birkaç ayı kapsar. <b>Yatırım tavsiyesi değildir.</b></p>
+  </div>
+</section>
+{% endblock %}

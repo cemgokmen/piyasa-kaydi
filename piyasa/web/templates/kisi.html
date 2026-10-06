@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, islem_tablosu %}
+{% from "_bilesenler.html" import kpi, islem_tablosu, fark, karar_rozeti %}
 {% block baslik %}{{ kimlik.person }} · Piyasa Kaydı{% endblock %}
 
 {% block geri_adres %}{% if siyasetci %}{{ url_for('site.siyasetciler') }}{% else %}{{ url_for('site.islemler', kaynak='yonetici') }}{% endif %}{% endblock %}
@@ -33,12 +33,70 @@
 {% else %}Şirket yöneticileri işlemlerini {{ form4_gun }} iş günü içinde bildirmek zorunda.{% endif %}</p>
 {% endif %}
 
+{% if siyasetci and performans and performans.alim.n %}
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Yatırım performansı</h2>
+      <p class="bolum-not">Aldığı hisselerin alımdan 90 gün sonra S&amp;P 500'e göre durumu.
+      <a href="{{ url_for('analiz.performans_sayfasi') }}">Bütün üyelerle karşılaştır →</a></p>
+    </div>
+  </header>
+  <div class="kpi-izgara">
+    {{ kpi('Endekse göre ortalama', performans.alim.ortalama|yuzde, (performans.alim.n) ~ ' ölçülen alım',
+           'alim' if performans.alim.ortalama > 0 else 'satim') }}
+    {{ kpi('Endeksi yenen alımlar', '%' ~ (performans.alim.yenme * 100)|round|int, 'alımların oranı') }}
+    {{ kpi('Takip eden biri', performans.takipci.ortalama|yuzde if performans.takipci.n else '—', 'bildirimden sonra alsaydı') }}
+    {{ kpi('Satış isabeti', ('%' ~ (performans.satim_isabet * 100)|round|int) if performans.satim_isabet is not none else '—',
+           (performans.satim_n ~ ' satıştan sonra hisse endeksin gerisinde kaldı') if performans.satim_n else 'ölçülen satış yok') }}
+  </div>
+  <p class="dipnot">Güvenilirlik: {{ karar_rozeti(performans.alim.karar) }}</p>
+
+  {% if performans.en_iyi %}
+  <div class="izgara-2">
+    <section class="panel">
+      <header class="panel-ust"><div><h2>En iyi giden alımları</h2><p class="panel-not">Alımdan bugüne, endekse göre</p></div></header>
+      <ul class="akis akis-sik">
+        {% for a in performans.en_iyi %}
+        <li><a class="ticker" href="{{ url_for('site.hisse', ticker=a.ticker) }}">{{ a.ticker }}</a>
+          <span class="akis-orta soluk kucuk">{{ a.transaction_date|uzun_tarih }}</span>{{ fark(a.fark_islem) }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% if performans.en_kotu %}
+    <section class="panel">
+      <header class="panel-ust"><div><h2>En kötü giden alımları</h2><p class="panel-not">Alımdan bugüne, endekse göre</p></div></header>
+      <ul class="akis akis-sik">
+        {% for a in performans.en_kotu %}
+        <li><a class="ticker" href="{{ url_for('site.hisse', ticker=a.ticker) }}">{{ a.ticker }}</a>
+          <span class="akis-orta soluk kucuk">{{ a.transaction_date|uzun_tarih }}</span>{{ fark(a.fark_islem) }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
 <div class="izgara-yan">
   <section>
     <h2 class="bolum-baslik">İşlemleri</h2>
     {{ islem_tablosu(islemler, kisi=False) }}
   </section>
   <aside>
+    {% if siyasetci and komiteler %}
+    <section class="panel">
+      <header class="panel-ust"><div><h2>Komiteleri</h2>
+        <p class="panel-not">{% if cakisma_sayisi %}<a href="{{ url_for('analiz.cakisma_sayfasi') }}">{{ cakisma_sayisi }} işlem</a> komitesinin denetlediği sektörde{% else %}Komitelerinin sektörlerinde işlem görünmüyor{% endif %}</p></div></header>
+      <ul class="komite-listesi">
+        {% for k in komiteler %}
+        <li><b>{{ k.ad }}</b>{% if k.unvan %} <span class="soluk kucuk">({{ k.unvan }})</span>{% endif %}
+          {% if k.sektorler %}<span class="alt-satir">{% for s in k.sektorler %}<span class="etiket">{{ s }}</span> {% endfor %}</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
     {% if hisseler %}
     <section class="panel">
       <header class="panel-ust"><div><h2>En çok işlem yaptığı hisseler</h2></div></header>

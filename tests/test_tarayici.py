@@ -75,15 +75,16 @@ def js_hatasi_olmasin(tarayici):
 def test_ana_menu_baglantilari(tarayici, sunucu):
     beklenen = {
         "Siyasetçiler": "Siyasetçilerin hisse işlemleri",
-        "Şirket yöneticileri": "Şirket yöneticilerinin işlemleri",
+        "Yöneticiler": "Şirket yöneticilerinin işlemleri",
         "Fonlar": "Fonlar ve bankalar",
         "Emtialar": "Emtialar",
-        "Nasıl çalışır?": "Veriler nasıl derleniyor?",
+        "Günlük özet": "",
+        "Sinyaller": "Sinyaller",
         "Ana sayfa": "ABD'de kim hangi hisseyi aldı, sattı?",
     }
     tarayici.get(sunucu + "/")
     for etiket, baslik in beklenen.items():
-        tarayici.find_element(By.LINK_TEXT, etiket).click()
+        tarayici.find_element(By.CSS_SELECTOR, ".ana-menu").find_element(By.LINK_TEXT, etiket).click()
         bekle(tarayici, EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), baslik))
         aktif = tarayici.find_element(By.CSS_SELECTOR, '.ana-menu [aria-current="page"]')
         assert aktif.text == etiket
@@ -245,7 +246,8 @@ def test_telefon_gorunumu_tasmaz(tarayici, sunucu):
     tarayici.set_window_size(500, 900)
     try:
         for adres in ("/", "/islemler?kaynak=siyasetci", "/siyasetciler", "/hisse/NVDA",
-                      "/emtialar", "/emtia/brent"):
+                      "/emtialar", "/emtia/brent", "/siyasetciler/performans",
+                      "/siyasetciler/cikar-catismasi", "/sinyaller", "/gunluk-ozet"):
             tarayici.get(sunucu + adres)
             genislik = tarayici.execute_script("return document.documentElement.scrollWidth")
             pencere = tarayici.execute_script("return window.innerWidth")
@@ -260,19 +262,19 @@ def test_geri_dugmesi_onceki_sayfaya_doner(tarayici, sunucu):
     onceki = tarayici.current_url
     tarayici.find_element(By.CSS_SELECTOR, ".islem-tablosu .ticker").click()
     bekle(tarayici, EC.url_contains("/hisse/"))
-    tarayici.find_element(By.CSS_SELECTOR, "a.geri").click()
+    tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "a.geri"))
     bekle(tarayici, EC.url_to_be(onceki))
 
     # Birkaç adım: ana sayfa → siyasetçiler → kişi → hisse, sonra geri geri
     tarayici.get(sunucu + "/")
-    tarayici.find_element(By.LINK_TEXT, "Siyasetçiler").click()
+    tarayici.find_element(By.CSS_SELECTOR, ".ana-menu").find_element(By.LINK_TEXT, "Siyasetçiler").click()
     bekle(tarayici, EC.url_contains("/siyasetciler"))
     tarayici.find_element(By.LINK_TEXT, "Jane Senator").click()
     bekle(tarayici, EC.url_contains("/kisi/jane-senator"))
     tarayici.find_element(By.CSS_SELECTOR, ".islem-tablosu .ticker").click()
     bekle(tarayici, EC.url_contains("/hisse/"))
     for beklenen in ("/kisi/jane-senator", "/siyasetciler", sunucu + "/"):
-        tarayici.find_element(By.CSS_SELECTOR, "a.geri").click()
+        tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "a.geri"))
         bekle(tarayici, EC.url_contains(beklenen) if beklenen != sunucu + "/"
               else EC.url_to_be(beklenen))
 
@@ -286,7 +288,7 @@ def test_geri_dugmesi_dogrudan_acilan_sayfada_ust_sayfaya_gider(tarayici, sunucu
                        ("/hisse/NVDA", "/islemler")):
         tarayici.get("about:blank")
         tarayici.get(sunucu + adres)
-        tarayici.find_element(By.CSS_SELECTOR, "a.geri").click()
+        tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "a.geri"))
         bekle(tarayici, EC.url_contains(ust))
 
 
@@ -324,3 +326,54 @@ def test_emtia_sayfalari(tarayici, sunucu):
     tarayici.get(sunucu + "/emtialar")
     tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "tr.tiklanir td:nth-child(2)"))
     bekle(tarayici, EC.url_contains("#arz-talep"))
+
+
+
+def test_ana_menu_tasmaz(tarayici, sunucu):
+    tarayici.get(sunucu + "/")
+    menu = tarayici.find_element(By.CSS_SELECTOR, ".ana-menu")
+    assert tarayici.execute_script("return arguments[0].scrollWidth <= arguments[0].clientWidth", menu)
+
+
+def test_siyaset_sekmeleri_ve_performans(tarayici, sunucu):
+    tarayici.get(sunucu + "/siyasetciler")
+    tarayici.find_element(By.LINK_TEXT, "Kim piyasayı yendi?").click()
+    bekle(tarayici, EC.url_contains("/siyasetciler/performans"))
+    assert tarayici.find_element(By.CSS_SELECTOR, '.sekmeler [aria-current="page"]').text == "Kim piyasayı yendi?"
+    tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "#performans-tablosu tr.tiklanir td:nth-child(4)"))
+    bekle(tarayici, EC.url_contains("/kisi/jane-senator"))
+
+    tarayici.get(sunucu + "/siyasetciler/performans")
+    tarayici.find_element(By.LINK_TEXT, "Çıkar çatışması").click()
+    bekle(tarayici, EC.url_contains("/cikar-catismasi"))
+    rozet = tarayici.find_element(By.CSS_SELECTOR, ".rozet-cakisma")
+    assert "Teknoloji" in rozet.get_attribute("title")
+
+
+def test_sinyaller_sayfasi(tarayici, sunucu):
+    tarayici.get(sunucu + "/sinyaller")
+    tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, '.sayfa-ust .bolum-menu a[href="#basari"]'))
+    bekle(tarayici, EC.url_contains("#basari"))
+    acilir = tarayici.find_elements(By.CSS_SELECTOR, "details.acilir summary")
+    if acilir:
+        tikla(tarayici, acilir[0])
+        assert tarayici.find_element(By.CSS_SELECTOR, "details.acilir").get_attribute("open") is not None
+
+
+def test_gunluk_ozet(tarayici, sunucu):
+    tarayici.get(sunucu + "/gunluk-ozet")
+    baslik = tarayici.find_element(By.TAG_NAME, "h1").text
+    assert tarayici.find_element(By.ID, "ozet-metni").get_attribute("value").startswith("Piyasa Kaydı")
+
+    # Kopyala: pano izni olsun olmasın kullanıcıya bir durum mesajı gösterilir
+    tarayici.find_element(By.ID, "kopyala").click()
+    bekle(tarayici, lambda t: t.find_element(By.ID, "kopyala-durum").text != "")
+
+    # Önceki gün, sonra gün seçimiyle geri
+    onceki = tarayici.find_elements(By.CSS_SELECTOR, 'a[rel="prev"]')
+    if onceki:
+        tikla(tarayici, onceki[0])
+        bekle(tarayici, lambda t: t.find_element(By.TAG_NAME, "h1").text != baslik)
+        secim = Select(tarayici.find_element(By.ID, "gun-sec"))
+        secim.select_by_index(0)
+        bekle(tarayici, lambda t: t.find_element(By.TAG_NAME, "h1").text == baslik)

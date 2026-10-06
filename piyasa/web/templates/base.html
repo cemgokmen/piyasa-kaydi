@@ -25,11 +25,12 @@
     <nav class="ana-menu" aria-label="Ana menü">
       {% for ad, adres, etiket in [
           ('anasayfa', url_for('site.anasayfa'), 'Ana sayfa'),
+          ('ozet', url_for('analiz.gunluk_ozet'), 'Günlük özet'),
           ('siyasetci', url_for('site.siyasetciler'), 'Siyasetçiler'),
-          ('yonetici', url_for('site.islemler', kaynak='yonetici'), 'Şirket yöneticileri'),
+          ('yonetici', url_for('site.islemler', kaynak='yonetici'), 'Yöneticiler'),
+          ('sinyal', url_for('analiz.sinyaller_sayfasi'), 'Sinyaller'),
           ('fonlar', url_for('site.fonlar'), 'Fonlar'),
           ('emtia', url_for('emtia.liste'), 'Emtialar'),
-          ('hakkinda', url_for('site.hakkinda'), 'Nasıl çalışır?'),
       ] %}
       <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}>{{ etiket }}</a>
       {% endfor %}
@@ -81,7 +82,9 @@
         <li><a href="{{ url_for('site.islemler', kaynak='hepsi', donem='30') }}">Tüm işlemler</a></li>
         <li><a href="{{ url_for('site.siyasetciler') }}">Siyasetçiler</a></li>
         <li><a href="{{ url_for('emtia.liste') }}">Emtialar</a></li>
-        <li><a href="{{ url_for('site.hakkinda') }}">Veriler nasıl derleniyor?</a></li>
+        <li><a href="{{ url_for('analiz.performans_sayfasi') }}">Kim piyasayı yendi?</a></li>
+        <li><a href="{{ url_for('analiz.cakisma_sayfasi') }}">Çıkar çatışmaları</a></li>
+        <li><a href="{{ url_for('site.hakkinda') }}">Nasıl çalışır? Veriler nasıl derleniyor?</a></li>
       </ul>
     </div>
   </div>

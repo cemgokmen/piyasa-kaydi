@@ -75,6 +75,7 @@
         <td data-etiket="İşlem">
           {{ islem_rozeti(k) }}
           {% if k.yuklu %}<span class="rozet rozet-yuklu" title="Bildirilen tutarın alt sınırı 50.000 doları aşıyor">Yüklü</span>{% endif %}
+          {% if k.cakisma %}<span class="rozet rozet-cakisma" title="{{ k.cakisma.sektor }} sektörü · {{ k.cakisma.komiteler|join(', ') }}">Komite ↔ sektör</span>{% endif %}
         </td>
         <td data-etiket="Tutar" class="sag sayi tutar-{{ k.action }}" title="{{ k.tutar_tam }}">{{ k.tutar_kisa }}</td>
         <td class="sag">
@@ -144,4 +145,24 @@
 {% macro degisim(oran) -%}
   {%- if oran is none %}<span class="soluk">—</span>
   {%- else %}<span class="{{ 'tutar-buy' if oran > 0 else 'tutar-sell' if oran < 0 else 'soluk' }}">{{ oran|yuzde }}</span>{% endif -%}
+{%- endmacro %}
+
+{# Siyasetçiler bölümünün sekmeleri #}
+{% macro siyaset_sekmeleri(sekme) %}
+<nav class="sekmeler" aria-label="Siyasetçiler bölümü">
+  <a href="{{ url_for('site.siyasetciler') }}" {% if sekme == 'genel' %}aria-current="page"{% endif %}>Üyeler ve işlemler</a>
+  <a href="{{ url_for('analiz.performans_sayfasi') }}" {% if sekme == 'performans' %}aria-current="page"{% endif %}>Kim piyasayı yendi?</a>
+  <a href="{{ url_for('analiz.cakisma_sayfasi') }}" {% if sekme == 'cakisma' %}aria-current="page"{% endif %}>Çıkar çatışması</a>
+</nav>
+{% endmacro %}
+
+{# Endekse göre fark: +%5,2 yeşil, −%3,1 kırmızı #}
+{% macro fark(oran) -%}
+  {%- if oran is none %}<span class="soluk">—</span>
+  {%- else %}<span class="sayi {{ 'tutar-buy' if oran > 0 else 'tutar-sell' if oran < 0 else 'soluk' }}">{{ oran|yuzde }}</span>{% endif -%}
+{%- endmacro %}
+
+{# İstatistik kararı rozeti #}
+{% macro karar_rozeti(k) -%}
+  {%- if k %}<span class="karar karar-{{ k.kod }}">{{ k.metin }}</span>{% endif -%}
 {%- endmacro %}

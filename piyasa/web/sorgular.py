@@ -8,6 +8,7 @@ buradaki fonksiyonlardan alır. Her fonksiyon kendi bağlantısını açıp kapa
 from contextlib import closing
 from datetime import date, timedelta
 
+from piyasa.analiz import cakisma
 from piyasa.veritabani import get_connection
 from piyasa.web.bicim import (
     AYLAR, STOCK_ACT_GUN, YUKLU_ALIM_ALT_SINIR,
@@ -103,7 +104,7 @@ def islem_listesi(arama, islem, donem, kaynak, sira, sayfa):
             "LIMIT ? OFFSET ?",
             parametreler + [SAYFA_BOYUTU, (sayfa - 1) * SAYFA_BOYUTU],
         ).fetchall()
-    return [islem_hazirla(s) for s in satirlar], ozet
+    return cakisma.isaretle([islem_hazirla(s) for s in satirlar]), ozet
 
 
 # ---------------------------------------------------------------------------
@@ -336,11 +337,11 @@ def hisse(ticker):
                       else fon_kaydi["sirket_adi"] if fon_kaydi else ticker)
 
         def islemler(kaynak):
-            return [islem_hazirla(s) for s in conn.execute(
+            return cakisma.isaretle([islem_hazirla(s) for s in conn.execute(
                 f"SELECT * FROM transactions WHERE ticker = ? AND {TEMIZ} AND {kaynak} "
                 "ORDER BY disclosed_date DESC, id DESC LIMIT 100",
                 (ticker,),
-            )]
+            )])
 
         return {
             "ticker": ticker,
@@ -394,11 +395,11 @@ def kisi(slug):
             )
         ]
 
-        islemler = [islem_hazirla(s) for s in conn.execute(
+        islemler = cakisma.isaretle([islem_hazirla(s) for s in conn.execute(
             f"SELECT * FROM transactions WHERE person_slug = ? AND {TEMIZ} "
             "ORDER BY disclosed_date DESC, id DESC LIMIT 200",
             (slug,),
-        )]
+        )])
 
     siyasetci = bool(kimlik.get("chamber"))
     return {

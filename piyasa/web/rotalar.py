@@ -5,6 +5,7 @@ ve şablonu çizer; SQL burada yazılmaz.
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
+from piyasa.analiz import cakisma, performans, sinyaller
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.web import fiyat, sorgular
 from piyasa.web.bicim import PARTILER
@@ -72,7 +73,8 @@ def hisse(ticker):
     veri = sorgular.hisse(ticker.upper())
     if veri is None:
         abort(404)
-    return render_template("hisse.html", aktif=None, **veri)
+    onay = next((h for h in sinyaller.uclu_onay()["liste"] if h["ticker"] == veri["ticker"]), None)
+    return render_template("hisse.html", aktif=None, onay=onay, **veri)
 
 
 @site.route("/api/fiyat/<ticker>")
@@ -90,6 +92,10 @@ def kisi(slug):
     if veri is None:
         abort(404)
     aktif = "siyasetci" if veri["siyasetci"] else "yonetici"
+    if veri["siyasetci"]:
+        veri["performans"] = performans.kisi(slug)
+        veri["komiteler"] = cakisma.uye_komiteleri(slug)
+        veri["cakisma_sayisi"] = sum(1 for i in veri["islemler"] if i["cakisma"])
     return render_template("kisi.html", aktif=aktif, **veri)
 
 

@@ -13,6 +13,16 @@
 
 {{ fiyat_paneli(url_for('site.fiyat_api', ticker=ticker)) }}
 
+{% if onay %}
+<a class="onay-serit onay-{{ onay.kaynak }}" href="{{ url_for('analiz.sinyaller_sayfasi') }}#uclu-onay">
+  <b>{{ 'Üçlü onay' if onay.kaynak == 3 else 'İkili onay' }}:</b>
+  {% if onay.yonetici %}{{ onay.yonetici.kisi }} yönetici aldı{% endif %}{% if onay.yonetici and (onay.siyaset or onay.fon) %} · {% endif %}
+  {% if onay.siyaset %}{{ onay.siyaset.kisi }} Kongre üyesi aldı{% endif %}{% if onay.siyaset and onay.fon %} · {% endif %}
+  {% if onay.fon %}{{ onay.fon.artiran }} fon pozisyon artırdı{% endif %}
+  <span class="soluk">→ Sinyaller</span>
+</a>
+{% endif %}
+
 <nav class="bolum-menu" aria-label="Bu sayfada">
   {% if siyaset_islemleri %}<a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ siyaset.adet }}</span></a>{% endif %}
   {% if yonetici_islemleri %}<a href="#yoneticiler">Şirket yöneticileri <span class="sayac">{{ yonetici.adet }}</span></a>{% endif %}

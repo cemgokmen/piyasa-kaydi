@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, parti_rozeti, yuklu_kartlar %}
+{% from "_bilesenler.html" import kpi, parti_rozeti, yuklu_kartlar, siyaset_sekmeleri %}
 {% block baslik %}Siyasetçilerin hisse işlemleri · Piyasa Kaydı{% endblock %}
 
 {% block icerik %}
@@ -12,6 +12,7 @@
   </div>
   <a class="dugme" href="{{ url_for('site.islemler', kaynak='siyasetci') }}">Bütün işlemleri listele →</a>
 </header>
+{{ siyaset_sekmeleri('genel') }}
 
 <section class="kpi-izgara">
   {{ kpi('İşlem bildiren üye', (ozet.kisi or 0)|sayi, 'ABD Temsilciler Meclisi', birim='kişi') }}

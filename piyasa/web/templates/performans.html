@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, parti_rozeti, siyaset_sekmeleri, fark, karar_rozeti %}
+{% block baslik %}Kim piyasayı yendi? Siyasetçilerin yatırım performansı · Piyasa Kaydı{% endblock %}
+{% block geri_adres %}{{ url_for('site.siyasetciler') }}{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1>Kim piyasayı yendi?</h1>
+    <p class="sayfa-not">Kongre üyelerinin aldığı hisseler, alımdan {{ ufuk }} gün sonra S&amp;P 500 endeksine
+    göre ne yaptı? Her alım için hissenin getirisinden aynı dönemdeki endeks getirisi çıkarılır;
+    pozitif değer endeksi yendiğini gösterir.</p>
+  </div>
+</header>
+{{ siyaset_sekmeleri('performans') }}
+
+<section class="bolum">
+  <div class="kpi-izgara kpi-3">
+    {{ kpi('Bütün siyasetçi alımları · ' ~ ufuk ~ ' gün', genel.islem.ortalama|yuzde, (genel.islem.n|sayi) ~ ' alım, endekse göre ortalama fark',
+           'alim' if genel.islem.ortalama > 0 else 'satim') }}
+    {{ kpi('Endeksi yenen alımların oranı', '%' ~ (genel.islem.yenme * 100)|round|int, 'yarısından azı endeksi yendi' if genel.islem.yenme < 0.5 else 'yarısından fazlası endeksi yendi') }}
+    {{ kpi('Bildirimden sonra alan biri', genel.bildirim.ortalama|yuzde, 'işlem kamuya açıklandıktan sonra aynı hisseyi alsaydı') }}
+  </div>
+  <p class="yorum-kutu">
+    <b>Sonuç: {{ genel.islem.karar.metin|lower }}.</b>
+    Siyasetçilerin aldığı hisseler {{ ufuk }} gün içinde endekse göre ortalama {{ genel.islem.ortalama|yuzde }}
+    ({% if genel.islem.alt is defined %}%95 güven aralığı {{ genel.islem.alt|yuzde }} ile {{ genel.islem.ust|yuzde }}{% endif %}) getiri sağladı.
+    Bu fark sıfırdan istatistiksel olarak ayırt edilemiyorsa, siyasetçileri izlemenin endeks fonu almaktan
+    daha iyi sonuç verdiğine dair kanıt yok demektir.
+  </p>
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Üyelerin sıralaması</h2>
+      <p class="bolum-not">En az {{ asgari }} ölçülebilir alımı olan üyeler, alımlarının endekse göre ortalama farkına göre.
+      Çok sayıda üye aynı anda karşılaştırıldığı için “anlamlı” kararı çoklu karşılaştırma düzeltmesiyle verilir.</p>
+    </div>
+  </header>
+  <div class="tablo-kap">
+    <table class="tablo" id="performans-tablosu" data-siralanabilir>
+      <thead>
+        <tr>
+          <th scope="col" data-sirala="sayi">#</th>
+          <th scope="col" data-sirala="metin">Üye</th>
+          <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Endekse göre ({{ ufuk }} gün)</th>
+          <th scope="col" class="sag" data-sirala="sayi">Endeksi yenen</th>
+          <th scope="col" class="sag" data-sirala="sayi">Ölçülen alım</th>
+          <th scope="col" class="sag" data-sirala="sayi">Takip eden biri</th>
+          <th scope="col" class="sag" data-sirala="sayi">Satış isabeti</th>
+          <th scope="col">Güvenilirlik</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for k in siralama %}
+        <tr class="tiklanir" data-href="{{ url_for('site.kisi', slug=k.slug) }}">
+          <td data-etiket="Sıra" class="soluk sayi" data-deger="{{ k.sira }}">{{ k.sira }}</td>
+          <td data-etiket="Üye" data-deger="{{ k.ad }}"><a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.slug) }}">{{ k.ad }}</a> {{ parti_rozeti(k.parti) }}
+            <span class="alt-satir">{{ k.bolge }}</span></td>
+          <td data-etiket="Endekse göre" class="sag" data-deger="{{ k.alim.ortalama }}">{{ fark(k.alim.ortalama) }}
+            {% if k.alim.alt is defined %}<span class="alt-satir">{{ k.alim.alt|yuzde }} … {{ k.alim.ust|yuzde }}</span>{% endif %}</td>
+          <td data-etiket="Endeksi yenen" class="sag sayi" data-deger="{{ k.alim.yenme }}">%{{ (k.alim.yenme * 100)|round|int }}</td>
+          <td data-etiket="Ölçülen alım" class="sag sayi" data-deger="{{ k.alim.n }}">{{ k.alim.n }}</td>
+          <td data-etiket="Takip eden biri" class="sag" data-deger="{{ k.takipci.ortalama if k.takipci.n else 0 }}">{{ fark(k.takipci.ortalama if k.takipci.n else none) }}</td>
+          <td data-etiket="Satış isabeti" class="sag sayi" data-deger="{{ k.satim_isabet or 0 }}">{% if k.satim_isabet is not none %}%{{ (k.satim_isabet * 100)|round|int }} <span class="soluk kucuk">/ {{ k.satim_n }}</span>{% else %}<span class="soluk">—</span>{% endif %}</td>
+          <td data-etiket="Güvenilirlik">{{ karar_rozeti(k.alim.karar) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="bos">Henüz yeterli veri yok. <code>python -m piyasa fiyatlar</code> ve <code>python -m piyasa analiz</code> çalıştırılmalı.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <dl class="sozluk">
+    <dt>Endekse göre</dt><dd>Alımdan {{ ufuk }} gün sonra hissenin getirisi eksi aynı dönemde S&amp;P 500 getirisi; alımların ortalaması. Altındaki aralık %95 güven aralığıdır.</dd>
+    <dt>Takip eden biri</dt><dd>Aynı hesap, işlem tarihinden değil bildirimin kamuya açıklandığı günden başlayarak: siyasetçiyi izleyen birinin gerçekte yakalayabileceği getiri.</dd>
+    <dt>Satış isabeti</dt><dd>Sattıktan sonraki {{ ufuk }} günde hissenin endeksin gerisinde kaldığı satışların oranı.</dd>
+    <dt>Güvenilirlik</dt><dd>“Şanstan ayırt edilemiyor”: sonuç, rastgele hisse seçen birinin de tutturabileceği bir sonuç. Aynı gün aynı hissedeki bölünmüş bildirimler tek işlem sayılır; her işlem eşit ağırlıklıdır.</dd>
+  </dl>
+</section>
+{% endblock %}

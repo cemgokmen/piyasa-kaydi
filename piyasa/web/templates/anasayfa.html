@@ -13,7 +13,26 @@
     <input type="hidden" name="donem" value="365">
     <button class="dugme dugme-ana" type="submit">Ara</button>
   </form>
-  {% if guncel %}<p class="guncel"><span class="canli"></span>Son bildirim {{ guncel|uzun_tarih }}</p>{% endif %}
+  {% if guncel %}<p class="guncel"><span class="canli"></span>Son bildirim {{ guncel|uzun_tarih }} ·
+    <a href="{{ url_for('analiz.gunluk_ozet') }}">Günün özetini oku →</a></p>{% endif %}
+</section>
+
+<section class="one-cikan" aria-label="Analizler">
+  <a class="one-cikan-kart" href="{{ url_for('analiz.performans_sayfasi') }}">
+    <span class="etiket">Analiz</span>
+    <b>Kim piyasayı yendi?</b>
+    <span>Siyasetçilerin aldığı hisseler sonrasında S&amp;P 500'ü yendi mi? Üye üye sıralama.</span>
+  </a>
+  <a class="one-cikan-kart" href="{{ url_for('analiz.cakisma_sayfasi') }}">
+    <span class="etiket etiket-uyari">Şeffaflık</span>
+    <b>Olası çıkar çatışmaları</b>
+    <span>Üyelerin, komitelerinin denetlediği sektörlerden yaptığı hisse işlemleri.</span>
+  </a>
+  <a class="one-cikan-kart" href="{{ url_for('analiz.sinyaller_sayfasi') }}">
+    <span class="etiket">Sinyal</span>
+    <b>Üçlü onay</b>
+    <span>Yöneticilerin, siyasetçilerin ve fonların birlikte aldığı hisseler — ve bu sinyaller işe yarıyor mu?</span>
+  </a>
 </section>
 
 <section class="kaynak-kartlari" aria-label="Veri kaynakları">

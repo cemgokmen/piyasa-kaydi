@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block baslik %}{{ baslik }} günlük özet · Piyasa Kaydı{% endblock %}
+{% block aciklama %}{{ baslik }}: ABD'de siyasetçilerin ve şirket yöneticilerinin bildirdiği hisse işlemlerinin Türkçe özeti.{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol">Günlük özet</p>
+    <h1>{{ baslik }}</h1>
+    <p class="sayfa-not">O gün kamuya açıklanan bildirimlerden derlenen kısa özet. Her madde resmî kayıtlara dayanır.</p>
+  </div>
+  <div class="ozet-gezinti">
+    {% if onceki %}<a class="dugme" href="{{ url_for('analiz.gunluk_ozet', gun=onceki) }}" rel="prev">← {{ onceki|kisa_tarih }}</a>
+    {% else %}<span class="dugme pasif" aria-disabled="true">← Önceki</span>{% endif %}
+    <label class="secim">
+      <span class="gorunmez">Gün seç</span>
+      <select id="gun-sec" aria-label="Gün seç">
+        {% for g in gunler %}<option value="{{ url_for('analiz.gunluk_ozet', gun=g) }}" {% if g == gun %}selected{% endif %}>{{ g|uzun_tarih }}</option>{% endfor %}
+      </select>
+    </label>
+    {% if sonraki %}<a class="dugme" href="{{ url_for('analiz.gunluk_ozet', gun=sonraki) }}" rel="next">{{ sonraki|kisa_tarih }} →</a>
+    {% else %}<span class="dugme pasif" aria-disabled="true">Sonraki →</span>{% endif %}
+  </div>
+</header>
+
+<div class="izgara-yan">
+  <div>
+    {% for bolum, maddeler in bolumler %}
+    <section class="panel ozet-bolum">
+      <header class="panel-ust"><div><h2>{{ bolum }}</h2></div></header>
+      <ul class="ozet-maddeler">
+        {% for m in maddeler %}
+        <li>
+          {% if m.vurgu %}<span class="ticker">{{ m.vurgu }}</span>{% endif %}
+          <span>{{ m.metin }}</span>
+          {% if m.adres %}<a class="ozet-link" href="{{ m.adres }}" aria-label="Ayrıntı">Ayrıntı →</a>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% else %}
+    <p class="bos">Bu gün için özetlenecek bildirim yok.</p>
+    {% endfor %}
+  </div>
+
+  <aside>
+    <section class="panel panel-bilgi">
+      <h2>Paylaş</h2>
+      <p class="kucuk soluk">Özetin düz metni; kopyalayıp sosyal medyada ya da mesajla paylaşabilirsiniz.</p>
+      <textarea id="ozet-metni" class="ozet-metni" readonly rows="12">{{ duz_metin }}</textarea>
+      <button type="button" class="dugme dugme-ana" id="kopyala" data-hedef="ozet-metni">Metni kopyala</button>
+      <span class="kopyala-durum" id="kopyala-durum" role="status"></span>
+    </section>
+  </aside>
+</div>
+{% endblock %}

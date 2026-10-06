@@ -28,6 +28,8 @@ YONETICI_PENCERE = 90      # gün: yönetici alımları
 SIYASET_PENCERE = 180      # gün: siyasetçi alımları
 KUME_PENCERE = 30          # gün: küme alımında alımlar arası en fazla süre
 
+_kilit = threading.Lock()
+
 
 def gun_once(gun):
     return (date.today() - timedelta(days=gun)).isoformat()
@@ -65,8 +67,21 @@ def _fon_degisimleri(conn):
     return fonlar, son
 
 
+_onay_onbellek = {"zaman": 0, "veri": None}
+
+
 def uclu_onay():
-    """Kaynak sayısına göre sıralı hisse listesi (en az iki kaynak)."""
+    """Kaynak sayısına göre sıralı hisse listesi (en az iki kaynak). 10 dk önbellekli."""
+    with _kilit:
+        if _onay_onbellek["veri"] and time.time() - _onay_onbellek["zaman"] < 600:
+            return _onay_onbellek["veri"]
+    veri = _uclu_onay_hesapla()
+    with _kilit:
+        _onay_onbellek.update(zaman=time.time(), veri=veri)
+    return veri
+
+
+def _uclu_onay_hesapla():
     with closing(get_connection()) as conn:
         yonetici = {s["ticker"]: dict(s) for s in conn.execute(
             f"""SELECT t.ticker, MAX(t.asset_name) AS sirket, COUNT(DISTINCT t.person_slug) AS kisi,
@@ -172,7 +187,6 @@ def _olaylar(conn):
 
 
 _onbellek = {"zaman": 0, "veri": None}
-_kilit = threading.Lock()
 
 
 def basari():

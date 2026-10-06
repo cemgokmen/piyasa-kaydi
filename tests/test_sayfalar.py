@@ -28,6 +28,10 @@ SAYFALAR = [
     "/emtia/altin",
     "/emtia/brent",
     "/emtia/bakir",
+    "/siyasetciler/performans",
+    "/siyasetciler/cikar-catismasi",
+    "/sinyaller",
+    "/gunluk-ozet",
 ]
 
 
@@ -39,7 +43,8 @@ def test_sayfa_acilir(istemci, adres):
 
 
 @pytest.mark.parametrize("adres", ["/yok", "/hisse/YOKBOYLE", "/kisi/yok", "/fon/yok", "/emtia/yok",
-                                   "/emtia/petrol", "/emtia/dogalgaz", "/emtia/bugday", "/emtia/misir"])
+                                   "/emtia/petrol", "/emtia/dogalgaz", "/emtia/bugday", "/emtia/misir",
+                                   "/gunluk-ozet/2000-01-01", "/gunluk-ozet/yok"])
 def test_olmayan_sayfa_404(istemci, adres):
     cevap = istemci.get(adres)
     assert cevap.status_code == 404
@@ -153,3 +158,28 @@ def test_emtia_fiyat_api(istemci):
     veri = istemci.get("/api/emtia/altin/fiyat").get_json()
     assert veri["kod"] == "GC=F" and veri["hacim"]["son"] > 0
     assert istemci.get("/api/emtia/yok/fiyat").status_code == 404
+
+
+def test_performans_siralamasi(istemci):
+    html = istemci.get("/siyasetciler/performans").get_data(as_text=True)
+    # Jane'in 12 NVDA alımı var, NVDA endeksten hızlı yükseliyor: sıralamada ve pozitif
+    assert "Jane Senator" in html
+    assert "Bob Rep" not in html          # 10'dan az ölçülebilir alım
+    kisi = istemci.get("/kisi/jane-senator").get_data(as_text=True)
+    assert "Yatırım performansı" in kisi and "Komiteleri" in kisi
+
+
+def test_cikar_catismasi(istemci):
+    html = istemci.get("/siyasetciler/cikar-catismasi").get_data(as_text=True)
+    assert "Jane Senator" in html and "Bilim, Uzay ve Teknoloji Komitesi" in html
+    # Jane'in AAPL satımı da teknoloji: çatışma; Bob'un tarım komitesi NVDA ile çatışmaz
+    assert "Bob Rep" not in html
+    assert "Komite ↔ sektör" in istemci.get("/hisse/NVDA").get_data(as_text=True)
+
+
+def test_sinyaller_ve_ozet(istemci):
+    html = istemci.get("/sinyaller").get_data(as_text=True)
+    for metin in ("Üçlü onay", "Sinyaller işe yarıyor mu?", "Siyasetçi alımları", "Küme alımları"):
+        assert metin in html
+    ozet = istemci.get("/gunluk-ozet").get_data(as_text=True)
+    assert "Metni kopyala" in ozet and "yönetici" in ozet

@@ -146,3 +146,30 @@ document.querySelectorAll("[data-geri]").forEach(function (dugme) {
     dugme.title = "Üst sayfaya git";
   }
 });
+
+// ---------------------------------------------------------------------------
+// Günlük özet: gün seçimi ve "metni kopyala"
+// ---------------------------------------------------------------------------
+
+const gunSec = document.getElementById("gun-sec");
+if (gunSec) {
+  gunSec.addEventListener("change", () => { window.location.href = gunSec.value; });
+}
+
+const kopyala = document.getElementById("kopyala");
+if (kopyala) {
+  const durum = document.getElementById("kopyala-durum");
+  const metin = document.getElementById(kopyala.dataset.hedef);
+
+  kopyala.addEventListener("click", async function () {
+    try {
+      await navigator.clipboard.writeText(metin.value);
+      durum.textContent = "Kopyalandı.";
+    } catch (hata) {
+      // Pano izni yoksa metni seç; kullanıcı Ctrl/Cmd+C ile kopyalayabilir
+      metin.focus();
+      metin.select();
+      durum.textContent = "Metin seçildi, Ctrl+C (Mac'te Cmd+C) ile kopyalayın.";
+    }
+  });
+}

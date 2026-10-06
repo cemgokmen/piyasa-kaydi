@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import parti_rozeti, siyaset_sekmeleri, islem_tablosu %}
+{% block baslik %}Olası çıkar çatışmaları · Piyasa Kaydı{% endblock %}
+{% block geri_adres %}{{ url_for('site.siyasetciler') }}{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1>Olası çıkar çatışmaları</h1>
+    <p class="sayfa-not">Kongre üyelerinin, üyesi oldukları komitenin yasama ve denetim alanına giren sektörden
+    yaptığı hisse işlemleri. Örneğin Silahlı Kuvvetler Komitesi üyesinin bir savunma şirketinin hissesini alması.</p>
+  </div>
+</header>
+{{ siyaset_sekmeleri('cakisma') }}
+
+<p class="uyari-kutu"><strong>Bu bir suçlama değildir.</strong> Komitelerin yetki alanı geniştir; işlemi üyenin eşi ya da
+bir varlık yöneticisi yapmış olabilir. Komite üyelikleri günceldir: eski bir işlemin yapıldığı gün üye başka bir
+komitede olabilir. Sektörler SEC'in resmî sanayi kodlarından (SIC) belirlenir.</p>
+
+{% if uyeler %}
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2>Üyeler</h2>
+      <p class="bolum-not">{{ toplam|sayi }} işlem, {{ uyeler|length }} üye. Tahmini hacme göre sıralı; başlıklara tıklayarak sıralayabilirsiniz.</p>
+    </div>
+  </header>
+  <div class="tablo-kap">
+    <table class="tablo" data-siralanabilir>
+      <thead>
+        <tr>
+          <th scope="col" data-sirala="metin">Üye</th>
+          <th scope="col">Komite</th>
+          <th scope="col">Sektör</th>
+          <th scope="col" class="sag" data-sirala="sayi">İşlem</th>
+          <th scope="col" class="sag" data-sirala="sayi">Bütün işlemlerine oranı</th>
+          <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Tahmini hacim</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in uyeler %}
+        <tr class="tiklanir" data-href="{{ url_for('site.kisi', slug=u.slug) }}">
+          <td data-etiket="Üye" data-deger="{{ u.ad }}"><a class="kisi-ad" href="{{ url_for('site.kisi', slug=u.slug) }}">{{ u.ad }}</a> {{ parti_rozeti(u.parti) }}
+            <span class="alt-satir">{{ u.bolge }}</span></td>
+          <td data-etiket="Komite" class="kucuk">{{ u.komiteler|join(', ') }}</td>
+          <td data-etiket="Sektör">{% for s in u.sektorler %}<span class="etiket">{{ s }}</span> {% endfor %}</td>
+          <td data-etiket="İşlem" class="sag" data-deger="{{ u.adet }}"><b>{{ u.adet }}</b> <span class="alt-satir">{{ u.alim }} alım</span></td>
+          <td data-etiket="Oran" class="sag sayi" data-deger="{{ u.oran }}">%{{ (u.oran * 100)|round|int }} <span class="soluk kucuk">/ {{ u.toplam }}</span></td>
+          <td data-etiket="Tahmini hacim" class="sag sayi" data-deger="{{ u.ust }}">{{ u.hacim }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Son işlemler</h2>
+    <p class="bolum-not">Rozetin üzerine gelince sektör ve komite görünür.</p></div></header>
+  {{ islem_tablosu(islemler) }}
+</section>
+{% else %}
+<div class="bos-durum">
+  <p><strong>Henüz veri yok.</strong></p>
+  <p><code>python -m piyasa sirketler</code> komutuyla sektörler ve komite üyelikleri indirilir.</p>
+</div>
+{% endif %}
+{% endblock %}
