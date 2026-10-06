@@ -126,9 +126,13 @@
   "BlackRock Finance": {
     "cik": "0001364742",
     "sec_adi": "BlackRock Finance"
-  }
+  },
     "Berkshire Hathaway": {
     "cik": "0001067983",
     "sec_adi": "Berkshire Hathaway"
   },
+    "Lone Pine Capital LLC": {
+    "cik": "0001061165",
+    "sec_adi": "Lone Pine Capital LLC"
+  }
 }
