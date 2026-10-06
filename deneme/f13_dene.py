@@ -2,11 +2,17 @@
 13F verisinin nasıl geldiğine bakıyoruz.
 """
 
+import sys
+from pathlib import Path
+
 import xml.etree.ElementTree as ET
 
 import requests
 
-USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
+# Proje kökündeki ayarlar.py'yi bulabilmek için
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from ayarlar import USER_AGENT  # noqa: E402
 
 # Berkshire Hathaway'in SEC kimlik numarası
 CIK = "0001067983"

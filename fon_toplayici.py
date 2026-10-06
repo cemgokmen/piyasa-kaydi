@@ -13,10 +13,9 @@ from pathlib import Path
 
 import requests
 
+from ayarlar import USER_AGENT
 from database import get_connection, init_db
 from slug import slugify
-
-USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
 BASE_DIR = Path(__file__).parent
 
 # Her fon için kaç çeyrek geriye gidilsin

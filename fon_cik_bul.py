@@ -11,9 +11,8 @@ from pathlib import Path
 
 import requests
 
+from ayarlar import USER_AGENT
 from fon_listesi import FONLAR
-
-USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
 BASE_DIR = Path(__file__).parent
 
 

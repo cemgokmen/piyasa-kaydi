@@ -3,13 +3,17 @@ SEC EDGAR'a bağlanıp günlük bildirim listesini indirir.
 Şu an sadece deniyoruz: veriyi ekrana basıp nasıl geldiğine bakacağız.
 """
 
+import sys
+from pathlib import Path
+
 from datetime import date, timedelta
 
 import requests
 
-# SEC kendisine istek atan herkesin kim olduğunu bildirmesini istiyor.
-# Buraya kendi e-posta adresini yaz.
-USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
+# Proje kökündeki ayarlar.py'yi bulabilmek için
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from ayarlar import USER_AGENT  # noqa: E402
 
 
 def daily_index_url(gun):

@@ -8,7 +8,7 @@ import time
 
 import requests
 
-USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
+from ayarlar import USER_AGENT
 
 
 def indir(url, params=None):

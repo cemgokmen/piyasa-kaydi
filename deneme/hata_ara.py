@@ -15,7 +15,7 @@ import requests
 
 from database import get_connection
 
-USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
+from ayarlar import USER_AGENT
 
 
 def ham_dosya_url(index_url):

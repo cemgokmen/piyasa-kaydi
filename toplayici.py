@@ -9,11 +9,9 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 
+from ayarlar import USER_AGENT
 from database import get_connection, init_db
 from slug import slugify
-
-# SEC'in istediği kimlik. Kendi e-posta adresini yaz.
-USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
 
 # Kaç bildirim işlensin. Test için düşük tut.
 LIMIT = 1196
