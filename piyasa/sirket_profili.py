@@ -67,7 +67,13 @@ _ULKELER = [
     "China", "Japan", "Canada", "Mexico", "Brazil", "United Kingdom", "Germany", "France",
     "Ireland", "Israel", "Taiwan", "Hong Kong", "India", "Australia", "New Zealand", "Korea",
     "South Korea", "Singapore", "Switzerland", "Netherlands", "Italy", "Spain", "Sweden",
-    "Norway", "Denmark", "Belgium", "Luxembourg", "internationally", "other countries",
+    "Norway", "Denmark", "Belgium", "Luxembourg", "Austria", "Finland", "Portugal", "Greece",
+    "Poland", "Czech Republic", "Hungary", "Romania", "Ukraine", "Armenia", "Russia", "Turkey",
+    "Scotland", "Bermuda", "Cayman Islands", "Scandinavia", "Nordic countries", "Greater China",
+    "Mainland China", "Macau", "Argentina", "Chile", "Colombia", "Peru", "Philippines", "Indonesia",
+    "Malaysia", "Thailand", "Vietnam", "South Africa", "Nigeria", "Egypt", "Saudi Arabia",
+    "United Arab Emirates", "Qatar", "Continental Europe", "Guyana", "U.S. Virgin Islands",
+    "internationally", "other countries",
 ]
 _ULKE = r"(?:the\s+)?(?:rest of (?:the\s+)?)?(?:" + "|".join(re.escape(u) for u in sorted(_ULKELER, key=len, reverse=True)) + ")"
 # ", in the United States, China, and internationally" gibi yer listeleri
