@@ -12,3 +12,6 @@ data/yfinance_onbellek/
 
 .pytest_cache/
 .ruff_cache/
+data/son_guncelleme.json
+data/guncelleme.kilit
+data/site.log

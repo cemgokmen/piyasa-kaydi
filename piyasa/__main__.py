@@ -79,12 +79,41 @@ def calistir(komut, argumanlar):
     modul.main()
 
 
-def guncelle():
+def guncelle(argumanlar=()):
     """
     Bütün adımları sırayla çalıştırır. Bir adım hata verirse (ör. bir kaynağa
     geçici olarak ulaşılamazsa) kalan adımlar yine çalışır; sonunda hata
     veren adımlar listelenir ve komut hata koduyla biter.
+
+    --gerekirse [7:30]: günün güncellemesi zaten yapıldıysa hiçbir şey yapmadan
+    çıkar (zamanlanmış görev bunu saat başı çalıştırır; bkz. piyasa/zamanlama.py).
     """
+    from datetime import datetime
+
+    from piyasa import zamanlama
+
+    saat, dakika = 7, 30
+    if "--gerekirse" in argumanlar:
+        sira = list(argumanlar).index("--gerekirse")
+        if sira + 1 < len(argumanlar) and ":" in argumanlar[sira + 1]:
+            saat, dakika = (int(x) for x in argumanlar[sira + 1].split(":"))
+        if not zamanlama.gerekli_mi(datetime.now(), zamanlama.durum_oku(), saat, dakika):
+            return
+
+    with zamanlama.tek_guncelleme() as kilit:
+        if not kilit:
+            print("Başka bir güncelleme sürüyor; bu çalıştırma atlandı.", flush=True)
+            return
+        hatalar = adimlari_calistir()
+    zamanlama.durum_yaz(datetime.now(), not hatalar, hatalar, saat, dakika)
+    if hatalar:
+        print(f"\nHata veren adımlar: {', '.join(hatalar)}", flush=True)
+        sys.exit(1)
+    print(f"\n##### Güncelleme bitti: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
+
+
+def adimlari_calistir():
+    """GUNCELLEME adımlarını sırayla çalıştırır; hata veren adımların listesini döndürür."""
     import time
     import traceback
     from datetime import datetime
@@ -101,10 +130,7 @@ def guncelle():
             hatalar.append(adim)
         print(f"--- {adim}: {time.time() - baslangic:.0f} sn", flush=True)
 
-    if hatalar:
-        print(f"\nHata veren adımlar: {', '.join(hatalar)}", flush=True)
-        sys.exit(1)
-    print(f"\n##### Güncelleme bitti: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
+    return hatalar
 
 
 def main():
@@ -125,7 +151,7 @@ def main():
         else:
             create_app().run(debug="--uretim" not in argumanlar, port=5001)
     elif komut == "guncelle":
-        guncelle()
+        guncelle(argumanlar)
     elif komut in KOMUTLAR:
         calistir(komut, argumanlar)
     else:

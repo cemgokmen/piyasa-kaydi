@@ -201,3 +201,27 @@ def test_temel_fon():
                  "ytdReturn": 12.7, "fundFamily": "State Street"})
     assert t["tur"] == "fon"
     assert [k["deger"] for k in t["ozet"]] == ["800,0 mr $", "%0,09", "%0,99", "+%12,70"]
+
+
+def test_gunluk_guncelleme_gerekli_mi():
+    from datetime import datetime
+
+    from piyasa.zamanlama import DENEME_SINIRI, gerekli_mi
+
+    def an(metin):
+        return datetime.fromisoformat(metin)
+
+    basarili_dun = {"zaman": "2026-10-05T08:00:00", "basarili": True, "deneme": 1}
+    # Mac 15:00'te açıldı, bugün güncelleme yok: hemen yapılır
+    assert gerekli_mi(an("2026-10-06T15:00"), basarili_dun)
+    # Gece 03:00: gün 07:30'da başlar, dünkü güncelleme hâlâ geçerli
+    assert not gerekli_mi(an("2026-10-06T03:00"), basarili_dun)
+    # Bugün başarıyla yapıldıysa saat başı kontroller bir şey yapmaz
+    assert not gerekli_mi(an("2026-10-06T16:00"), {"zaman": "2026-10-06T07:31:00", "basarili": True})
+    # Hata verdiyse yeniden denenir, ama günde en çok DENEME_SINIRI kez
+    hatali = {"zaman": "2026-10-06T07:31:00", "basarili": False, "deneme": 1}
+    assert gerekli_mi(an("2026-10-06T08:31"), hatali)
+    assert not gerekli_mi(an("2026-10-06T12:00"), dict(hatali, deneme=DENEME_SINIRI))
+    # Hiç kayıt yoksa yapılır; farklı saat ayarı da çalışır
+    assert gerekli_mi(an("2026-10-06T10:00"), {})
+    assert not gerekli_mi(an("2026-10-06T06:00"), {"zaman": "2026-10-05T06:30:00", "basarili": True}, 6, 15)
