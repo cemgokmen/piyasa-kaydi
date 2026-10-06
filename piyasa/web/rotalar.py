@@ -3,9 +3,9 @@ Sitenin sayfaları. Her fonksiyon isteği okur, sorgular.py'den veriyi alır
 ve şablonu çizer; SQL burada yazılmaz.
 """
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
-from piyasa.web import sorgular
+from piyasa.web import fiyat, sorgular
 from piyasa.web.bicim import PARTILER
 
 site = Blueprint("site", __name__)
@@ -71,6 +71,15 @@ def hisse(ticker):
     if veri is None:
         abort(404)
     return render_template("hisse.html", aktif=None, **veri)
+
+
+@site.route("/api/fiyat/<ticker>")
+def fiyat_api(ticker):
+    """Hisse sayfası fiyat kutusunu ve grafiğini bu adresten doldurur."""
+    bilgi = fiyat.fiyat_bilgisi(ticker)
+    if bilgi is None:
+        return jsonify({"hata": "Bu hisse için güncel fiyat bulunamadı."}), 404
+    return jsonify(bilgi)
 
 
 @site.route("/kisi/<slug>")

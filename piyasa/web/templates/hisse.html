@@ -9,7 +9,33 @@
   </div>
 </header>
 
-{% block fiyat %}{% endblock %}
+<section class="panel fiyat-panel" id="fiyat" data-fiyat-url="{{ url_for('site.fiyat_api', ticker=ticker) }}" aria-live="polite">
+  <div class="fiyat-ust">
+    <div class="fiyat-sol">
+      <span class="fiyat-etiket">Son kapanış</span>
+      <span class="fiyat-deger" data-alan="fiyat"><span class="iskelet">000,00</span></span>
+      <span class="fiyat-tarih" data-alan="tarih">Fiyat yükleniyor…</span>
+    </div>
+    <ul class="degisimler" data-alan="degisimler">
+      {% for etiket in ['1 gün', '1 hafta', '1 ay', '1 yıl', '5 yıl', '10 yıl'] %}
+      <li class="degisim"><span class="degisim-etiket">{{ etiket }}</span><span class="degisim-deger iskelet">+%0,00</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="fiyat-grafik-kap">
+    <div class="grafik-ust-satir">
+      <span class="soluk kucuk">Fiyat grafiği</span>
+      <div class="segment segment-kucuk" role="group" aria-label="Grafik aralığı">
+        {% for anahtar, etiket in [('1a', '1 ay'), ('1y', '1 yıl'), ('5y', '5 yıl'), ('10y', '10 yıl')] %}
+        <button type="button" data-aralik="{{ anahtar }}" {% if anahtar == '1y' %}class="secili" aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>{{ etiket }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="fiyat-grafik" data-alan="grafik"></div>
+  </div>
+  <p class="fiyat-hata" data-alan="hata" hidden></p>
+  <p class="fiyat-kaynak">Kaynak: Yahoo Finance · Temettü ve bölünmelere göre düzeltilmiş kapanış fiyatları. Gün içi fiyat değildir.</p>
+</section>
 
 <nav class="bolum-menu" aria-label="Bu sayfada">
   {% if siyaset_islemleri %}<a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ siyaset.adet }}</span></a>{% endif %}
@@ -88,3 +114,5 @@
 </section>
 {% endif %}
 {% endblock %}
+
+{% block betik %}<script src="{{ url_for('static', filename='fiyat.js') }}"></script>{% endblock %}

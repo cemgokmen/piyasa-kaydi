@@ -68,6 +68,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* display tanımlı öğelerde de hidden özniteliği çalışsın */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -1144,4 +1147,122 @@ a.kisi-ad:hover { color: var(--vurgu); }
   .giris-arama .dugme { display: none; }
   .filtre-satir .secim { flex: 1 1 45%; }
   .filtre-satir .secim select { flex: 1; }
+}
+
+/* ==========================================================================
+   Hisse fiyatı ve grafiği
+   ========================================================================== */
+
+.fiyat-panel { margin-bottom: 20px; padding: 18px 20px 14px; }
+
+.fiyat-ust {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.fiyat-sol { display: flex; flex-direction: column; gap: 2px; }
+.fiyat-etiket { color: var(--yazi-3); font-size: 12.5px; font-weight: 500; }
+.fiyat-deger { font-family: var(--mono); font-size: 34px; font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
+.fiyat-tarih { color: var(--yazi-3); font-size: 13px; }
+
+.degisimler {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(78px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.degisim {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--cizgi-2);
+  text-align: center;
+}
+
+.degisim-etiket { color: var(--yazi-3); font-size: 12px; font-weight: 500; }
+.degisim-deger { font-family: var(--mono); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.degisim.artis { background: var(--alim-yumusak); }
+.degisim.artis .degisim-deger { color: var(--alim); }
+.degisim.azalis { background: var(--satim-yumusak); }
+.degisim.azalis .degisim-deger { color: var(--satim); }
+.degisim.notr .degisim-deger { color: var(--yazi-3); }
+
+.iskelet {
+  color: transparent !important;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--cizgi-2), var(--cizgi), var(--cizgi-2));
+  background-size: 200% 100%;
+  animation: iskelet 1.2s ease infinite;
+}
+
+@keyframes iskelet { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+.fiyat-grafik-kap { margin-top: 18px; border-top: 1px solid var(--cizgi-2); padding-top: 12px; }
+.grafik-ust-satir { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+
+.segment-kucuk button {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--yazi-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.segment-kucuk button:hover { background: var(--cizgi-2); color: var(--yazi); }
+.segment-kucuk button.secili { background: var(--yazi); color: var(--kart); }
+
+.fiyat-grafik { position: relative; min-height: 240px; }
+.fiyat-grafik svg { display: block; width: 100%; height: 240px; cursor: crosshair; touch-action: pan-y; }
+
+.fiyat-grafik .kilavuz { stroke: var(--cizgi-2); stroke-width: 1; }
+.fiyat-grafik .eksen-yazi { fill: var(--yazi-3); font-family: var(--mono); font-size: 11px; }
+.fiyat-grafik .cizgi { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.fiyat-grafik .alan { opacity: .1; stroke: none; }
+.fiyat-grafik .cizgi-artis { stroke: var(--alim-cubuk); }
+.fiyat-grafik .alan.cizgi-artis { fill: var(--alim-cubuk); }
+.fiyat-grafik .cizgi-azalis { stroke: var(--satim-cubuk); }
+.fiyat-grafik .alan.cizgi-azalis { fill: var(--satim-cubuk); }
+.fiyat-grafik .imlec-cizgi { stroke: var(--yazi-3); stroke-dasharray: 3 3; }
+.fiyat-grafik .imlec-nokta { fill: var(--kart); stroke-width: 2; }
+
+.grafik-ipucu {
+  position: absolute;
+  top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--cizgi);
+  border-radius: 8px;
+  background: var(--kart);
+  box-shadow: var(--golge);
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.grafik-ipucu b { font-family: var(--mono); font-size: 14px; }
+.grafik-ipucu span { color: var(--yazi-2); }
+.grafik-ipucu small { color: var(--yazi-3); }
+
+.fiyat-hata { margin: 12px 0 0; color: var(--yazi-2); font-size: 14px; }
+.fiyat-kaynak { margin: 8px 0 0; color: var(--yazi-3); font-size: 11.5px; }
+.fiyat-yok .fiyat-deger { color: var(--yazi-3); }
+
+@media (max-width: 860px) {
+  .degisimler { grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .fiyat-deger { font-size: 28px; }
 }
