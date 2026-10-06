@@ -21,7 +21,8 @@ def goster(kod):
     s = bolgeleri_hesapla(df)
     print(f"=== {kod} ===")
     print(f"Fiyat {s['fiyat']:.2f}   ATR {s['atr']:.2f}   "
-          f"şans oranı %{s['sans_orani'] * 100:.0f}   ({s['tarih']})\n")
+          f"şans oranı %{s['sans_orani'] * 100:.0f}   "
+          f"yarılanma {s['yarilanma_mum']:g} mum   ({s['tarih']})\n")
     print(f"{'bölge':>17} {'tür':7} {'puan':>5} {'uzak%':>7} {'tutunan':>8} {'z':>5}  kaynak")
 
     for b in s["bolgeler"]:

@@ -18,7 +18,7 @@ import warnings
 import yfinance as yf
 from scipy.stats import norm, binom
 
-from destek_direnc import bolgeleri_hesapla
+from destek_direnc import YARILANMA_GUN, bolgeleri_hesapla
 
 warnings.filterwarnings("ignore")
 
@@ -41,7 +41,8 @@ def main():
     aralik = sys.argv[1] if len(sys.argv) > 1 else "1wk"
     donem = sys.argv[2] if len(sys.argv) > 2 else "max"
 
-    print(f"Zaman dilimi: {ARALIK_ADI.get(aralik, aralik)}   dönem: {donem}\n")
+    print(f"Zaman dilimi: {ARALIK_ADI.get(aralik, aralik)}   dönem: {donem}")
+    print(f"Yarılanma süresi: {YARILANMA_GUN} işlem günü (mum sayısına otomatik çevrilir)\n")
     if aralik == "1mo":
         print("UYARI: aylık mumlarda bu test istatistik gücüne sahip değil.")
         print("Gerçek seviyeler bile z >= 2'ye ulaşamıyor. Sonuç yalnızca bilgi amaçlı.\n")

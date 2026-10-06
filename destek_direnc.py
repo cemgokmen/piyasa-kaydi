@@ -1,7 +1,9 @@
 """
 Destek / direnç modeli.
 
-Girdi : günlük OHLCV tablosu (Open, High, Low, Close, Volume), tarih indeksli.
+Girdi : OHLCV tablosu (Open, High, Low, Close, Volume), tarih indeksli.
+        Günlük, haftalık ya da aylık mum olabilir; mum aralığı tarih
+        indeksinden anlaşılır ve gün cinsinden ayarlar ona göre çevrilir.
 Çıktı : fiyat bölgeleri, her biri 0-100 arası güç puanıyla.
 
 Tüm mesafeler ATR cinsinden ölçülür. Böylece 10 TL'lik bir hisseyle
@@ -20,7 +22,7 @@ PIVOT_OLCEKLERI = (3, 5, 10, 20)   # dönüş noktası pencereleri (gün)
 MIN_BELIRGINLIK = 0.75             # dönüş noktası çevresinden en az kaç ATR sivri olmalı
 KDE_BANT = 0.35                    # kümeleme bant genişliği (ATR)
 BOLGE_YARI = 0.30                  # bölgenin yarı genişliği (ATR)
-YARILANMA_GUN = 120                # eski olayların ağırlığı bu kadar günde yarıya iner
+YARILANMA_GUN = 120                # eski olayların ağırlığı bu kadar işlem gününde yarıya iner
 TEPKI_PENCERE = 10                 # dokunuştan sonra tepkinin ölçüldüğü gün sayısı
 KIRILMA_ESIGI = 0.75               # kapanış bölgenin bu kadar ATR ötesine geçerse kırılma
 SEKME_ESIGI = 1.0                  # fiyat bölgeden bu kadar ATR geri dönerse sekme
@@ -37,6 +39,28 @@ AGIRLIK = {
     "cakisma":     0.10,
     "yuvarlak":    0.05,
 }
+
+
+# ---------------------------------------------------------------------------
+# 0. MUM ARALIĞI
+# ---------------------------------------------------------------------------
+
+def mum_basina_gun(df):
+    """
+    Bir mumun kaç işlem gününe karşılık geldiğini tahmin eder:
+    günlük 1, haftalık 5, aylık 21.
+
+    Gün cinsinden verilen ayarlar (YARILANMA_GUN) mum sayısına bu oranla
+    çevrilir. Yoksa haftalık veride 120 "gün" fiilen 120 hafta olur.
+    """
+    if len(df) < 3:
+        return 1.0
+    aralik = np.median(np.diff(df.index.values).astype("timedelta64[D]").astype(float))
+    if aralik >= 25:
+        return 21.0
+    if aralik >= 5:
+        return 5.0
+    return 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +150,7 @@ def donus_noktalari(df, atr_seri):
     return pd.DataFrame(kayitlar)
 
 
-def donus_agirligi(noktalar, son_indeks):
+def donus_agirligi(noktalar, son_indeks, yarilanma=YARILANMA_GUN):
     """
     Her dönüş noktasının kümelemeye katkısı:
       ölçek (büyük pencere → daha önemli)
@@ -141,7 +165,7 @@ def donus_agirligi(noktalar, son_indeks):
     belirg_w = np.clip(noktalar["belirginlik"] / 2.0, 0.25, 2.0)
     hacim_w = np.sqrt(noktalar["hacim_oran"])
     yas = son_indeks - noktalar["indeks"]
-    yakinlik_w = 0.5 ** (yas / YARILANMA_GUN)
+    yakinlik_w = 0.5 ** (yas / yarilanma)
 
     return (olcek_w * belirg_w * hacim_w * yakinlik_w).to_numpy()
 
@@ -167,7 +191,7 @@ def yogunluk_egrisi(noktalar, agirliklar, izgara):
 # 4. HACİM PROFİLİ
 # ---------------------------------------------------------------------------
 
-def hacim_profili(df, izgara, son_indeks):
+def hacim_profili(df, izgara, son_indeks, yarilanma=YARILANMA_GUN):
     """
     Her günün hacmini o günün en düşük–en yüksek aralığına eşit dağıtır
     (gün içi veri olmadığı için standart yaklaşım). Eski günler söner.
@@ -181,7 +205,7 @@ def hacim_profili(df, izgara, son_indeks):
         b = np.searchsorted(izgara, h)
         if b <= a:
             b = a + 1
-        yakinlik = 0.5 ** ((son_indeks - i) / YARILANMA_GUN)
+        yakinlik = 0.5 ** ((son_indeks - i) / yarilanma)
         profil[a:b] += v * yakinlik / (b - a)
 
     # Hafif yumuşatma: tek bir kutucuktaki gürültü tepe sayılmasın
@@ -265,7 +289,8 @@ def adaylari_birlestir(adaylar, tolerans):
 # 7. SINAMA: fiyat bölgeye kaç kez geldi, ne oldu
 # ---------------------------------------------------------------------------
 
-def bolgeyi_sina(df, atr_seri, merkez, yari_genislik, son_indeks):
+def bolgeyi_sina(df, atr_seri, merkez, yari_genislik, son_indeks,
+                 yarilanma=YARILANMA_GUN):
     """
     Fiyatın bölgeye her gelişini bir "test" sayar (art arda günler tek test).
 
@@ -334,7 +359,7 @@ def bolgeyi_sina(df, atr_seri, merkez, yari_genislik, son_indeks):
             "indeks": bit,
             "tutundu": sonuc,
             "tepki": max(0.0, float(tepki)),
-            "agirlik": 0.5 ** ((son_indeks - bit) / YARILANMA_GUN),
+            "agirlik": 0.5 ** ((son_indeks - bit) / yarilanma),
         })
 
     return testler
@@ -344,7 +369,7 @@ def bolgeyi_sina(df, atr_seri, merkez, yari_genislik, son_indeks):
 # 8. ŞANS ORANI (boş hipotez)
 # ---------------------------------------------------------------------------
 
-def taban_oranlari(df, atr_seri, yari, son_indeks, rng):
+def taban_oranlari(df, atr_seri, yari, son_indeks, rng, yarilanma=YARILANMA_GUN):
     """
     Aynı fiyat serisinde rastgele çizgiler çeker ve onların tutunma
     oranını ölçer. Bu, "hiçbir özelliği olmayan bir seviye ne sıklıkla
@@ -359,7 +384,7 @@ def taban_oranlari(df, atr_seri, yari, son_indeks, rng):
     toplam = tutunan = 0.0
     tepkiler = []
     for sev in seviyeler:
-        for t in bolgeyi_sina(df, atr_seri, sev, yari, son_indeks):
+        for t in bolgeyi_sina(df, atr_seri, sev, yari, son_indeks, yarilanma):
             toplam += t["agirlik"]
             if t["tutundu"]:
                 tutunan += t["agirlik"]
@@ -398,7 +423,11 @@ def bolgeleri_hesapla(df, bitis=None):
 
     df = df.dropna(subset=["Open", "High", "Low", "Close"]).copy()
     if len(df) < 60:
-        raise ValueError("En az 60 günlük veri gerekli.")
+        raise ValueError("En az 60 mumluk veri gerekli.")
+
+    # Gün cinsinden yarılanma süresini mum sayısına çevir
+    mum_gun = mum_basina_gun(df)
+    yarilanma = YARILANMA_GUN / mum_gun
 
     atr_seri = atr(df)
     son = len(df) - 1
@@ -411,11 +440,11 @@ def bolgeleri_hesapla(df, bitis=None):
 
     # --- Kaynak 1: dönüş noktası kümeleri
     noktalar = donus_noktalari(df, atr_seri)
-    agirliklar = donus_agirligi(noktalar, son)
+    agirliklar = donus_agirligi(noktalar, son, yarilanma)
     yogunluk = yogunluk_egrisi(noktalar, agirliklar, izgara) if len(noktalar) else np.zeros_like(izgara)
 
     # --- Kaynak 2: hacim profili
-    profil = hacim_profili(df, izgara, son)
+    profil = hacim_profili(df, izgara, son, yarilanma)
 
     min_aralik = int((2 * BOLGE_YARI * son_atr) / adim)
     adaylar = []
@@ -441,7 +470,7 @@ def bolgeleri_hesapla(df, bitis=None):
 
     # Aynı veri her çağrıda aynı sonucu versin diye sabit tohum
     rng = np.random.default_rng(12345)
-    taban_p, taban_tepki = taban_oranlari(df, atr_seri, yari, son, rng)
+    taban_p, taban_tepki = taban_oranlari(df, atr_seri, yari, son, rng, yarilanma)
 
     for b in bolgeler:
         merkez = b["merkez"]
@@ -449,7 +478,7 @@ def bolgeleri_hesapla(df, bitis=None):
         if abs(uzaklik_atr) > TARAMA_ARALIGI:
             continue
 
-        testler = bolgeyi_sina(df, atr_seri, merkez, yari, son)
+        testler = bolgeyi_sina(df, atr_seri, merkez, yari, son, yarilanma)
         w_toplam = sum(t["agirlik"] for t in testler)
         w_tutunan = sum(t["agirlik"] for t in testler if t["tutundu"])
 
@@ -509,5 +538,7 @@ def bolgeleri_hesapla(df, bitis=None):
         "sans_orani": round(taban_p, 3),
         "sans_tepki": round(taban_tepki, 2),
         "tarih": df.index[-1].date(),
+        "mum_gun": mum_gun,
+        "yarilanma_mum": round(yarilanma, 1),
         "bolgeler": sonuc,
     }
