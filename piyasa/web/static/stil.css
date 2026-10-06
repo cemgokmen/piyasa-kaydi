@@ -1287,3 +1287,27 @@ a.kisi-ad:hover { color: var(--vurgu); }
   fill: none; stroke: currentColor; stroke-width: 2;
   stroke-linecap: round; stroke-linejoin: round;
 }
+
+/* ---------- Ortak grafik öğeleri (grafik.js) ---------- */
+
+.fiyat-hacim { margin-top: 4px; color: var(--yazi-2); font-size: 12.5px; }
+
+.grafik-kap { position: relative; min-height: 200px; }
+.grafik-kap svg, .fiyat-grafik svg { display: block; width: 100%; cursor: crosshair; touch-action: pan-y; }
+.grafik-kap .kilavuz { stroke: var(--cizgi-2); stroke-width: 1; }
+.grafik-kap .sifir-cizgi, .fiyat-grafik .sifir-cizgi { stroke: var(--yazi-3); stroke-width: 1; }
+.grafik-kap .eksen-yazi { fill: var(--yazi-3); font-family: var(--mono); font-size: 11px; }
+.grafik-kap .cizgi, .fiyat-grafik .cizgi { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.grafik-kap .alan { opacity: .1; stroke: none; }
+.grafik-kap .imlec-cizgi { stroke: var(--yazi-3); stroke-dasharray: 3 3; }
+.grafik-kap .imlec-nokta { fill: var(--kart); stroke-width: 2; }
+.cizgi-notr { stroke: var(--vurgu); }
+.alan.cizgi-notr { fill: var(--vurgu); }
+.grafik-kap .cizgi-artis { stroke: var(--alim-cubuk); }
+.grafik-kap .alan.cizgi-artis { fill: var(--alim-cubuk); }
+.grafik-kap .cizgi-azalis { stroke: var(--satim-cubuk); }
+.grafik-kap .alan.cizgi-azalis { fill: var(--satim-cubuk); }
+.cubuk-arti { fill: var(--alim-cubuk); }
+.cubuk-eksi { fill: var(--satim-cubuk); }
+.hacim-cubuklari rect { fill: var(--yazi-3); opacity: .35; }
+.grafik-ipucu small + small { margin-top: 1px; }

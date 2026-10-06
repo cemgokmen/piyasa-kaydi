@@ -104,6 +104,7 @@ def sahte_fiyat(kod):
         return None
     tarihler = pd.bdate_range(end=pd.Timestamp.today().normalize(), periods=2700)
     kapanis = pd.Series(range(100, 100 + len(tarihler)), index=tarihler, dtype=float)
+    tablo = pd.DataFrame({"Close": kapanis, "Volume": 1_000})
     return {
         "kod": kod,
         "fiyat": float(kapanis.iloc[-1]),
@@ -112,7 +113,8 @@ def sahte_fiyat(kod):
             {"anahtar": a, "etiket": e, "oran": fiyat._degisim(kapanis, g)}
             for a, e, g in fiyat.DEGISIM_DONEMLERI
         ],
-        "seriler": {a: fiyat._seri(kapanis, g, o) for a, g, o in fiyat.GRAFIK_ARALIKLARI},
+        "hacim": fiyat._hacim_ozeti(tablo),
+        "seriler": {a: fiyat._seri(tablo, g, o) for a, g, o in fiyat.GRAFIK_ARALIKLARI},
     }
 
 

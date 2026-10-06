@@ -186,6 +186,9 @@ def test_hisse_fiyat_paneli(tarayici, sunucu):
     degisimler = tarayici.find_elements(By.CSS_SELECTOR, ".degisim .degisim-deger")
     assert len(degisimler) == 6
     assert all("%" in d.text for d in degisimler)
+    hacim = tarayici.find_element(By.CSS_SELECTOR, '[data-alan="hacim"]')
+    assert hacim.is_displayed() and "20 günlük ortalama" in hacim.text
+    assert tarayici.find_elements(By.CSS_SELECTOR, ".fiyat-grafik .hacim-cubuklari rect")
 
     grafik = tarayici.find_element(By.CSS_SELECTOR, ".fiyat-grafik svg")
     for aralik in ("1a", "5y", "10y", "1y"):

@@ -1,5 +1,5 @@
 """
-Hisse fiyatları ve dönemsel değişimler (Yahoo Finance, yfinance ile).
+Hisse ve emtia fiyatları, dönemsel değişimler ve hacim (Yahoo Finance, yfinance ile).
 
 Sonuçlar 15 dakika bellekte tutulur; aynı hisse sayfası tekrar açıldığında
 Yahoo'ya yeniden gidilmez.
@@ -62,13 +62,41 @@ def _degisim(kapanis, geri):
     return float(son / onceki - 1)
 
 
-def _seri(kapanis, geri, ornekleme):
-    parca = kapanis[kapanis.index >= kapanis.index[-1] - geri]
+def _seri(tablo, geri, ornekleme):
+    """
+    Grafik serisi: [tarih, kapanış] ya da hacim varsa [tarih, kapanış, hacim].
+    Haftalık örneklemede kapanış haftanın sonuncusu, hacim haftanın toplamıdır.
+    """
+    parca = tablo[tablo.index >= tablo.index[-1] - geri]
     if ornekleme:
-        # Haftalık örneklemede son günü de koru ki grafik bugünle bitsin
-        haftalik = parca.resample(ornekleme).last().dropna()
+        haftalik = parca.resample(ornekleme).agg({"Close": "last", "Volume": "sum"}).dropna()
+        # Son günü de koru ki grafik bugünle bitsin
         parca = pd.concat([haftalik[haftalik.index < parca.index[-1]], parca.iloc[-1:]])
-    return [[t.strftime("%Y-%m-%d"), round(float(v), 4)] for t, v in parca.items()]
+    hacimli = parca["Volume"].sum() > 0
+    return [
+        [t.strftime("%Y-%m-%d"), round(float(k), 4)] + ([int(h)] if hacimli else [])
+        for t, k, h in zip(parca.index, parca["Close"], parca["Volume"])
+    ]
+
+
+def _hacim_ozeti(tablo):
+    """
+    Son tamamlanmış işlem gününün hacmi ve 20 günlük ortalamaya oranı.
+    Bugünün satırı gün içinde eksik hacim taşıyabileceği için atlanır.
+    """
+    hacim = tablo["Volume"]
+    if hacim.sum() <= 0:
+        return None
+    if tablo.index[-1].date() >= pd.Timestamp.today().date() and len(hacim) > 21:
+        hacim = hacim.iloc[:-1]
+    son = int(hacim.iloc[-1])
+    ortalama = float(hacim.iloc[-21:-1].mean())
+    return {
+        "son": son,
+        "tarih": hacim.index[-1].strftime("%Y-%m-%d"),
+        "ortalama": round(ortalama),
+        "oran": round(son / ortalama, 3) if ortalama else None,
+    }
 
 
 def _indir(kod):
@@ -78,10 +106,11 @@ def _indir(kod):
     if gecmis.empty:
         return None
 
-    kapanis = gecmis["Close"].dropna()
-    kapanis.index = kapanis.index.tz_localize(None)
-    if len(kapanis) < 2:
+    tablo = gecmis[["Close", "Volume"]].dropna(subset=["Close"])
+    tablo.index = tablo.index.tz_localize(None)
+    if len(tablo) < 2:
         return None
+    kapanis = tablo["Close"]
 
     return {
         "kod": kod,
@@ -91,13 +120,17 @@ def _indir(kod):
             {"anahtar": a, "etiket": e, "oran": _degisim(kapanis, g)}
             for a, e, g in DEGISIM_DONEMLERI
         ],
-        "seriler": {a: _seri(kapanis, g, o) for a, g, o in GRAFIK_ARALIKLARI},
+        "hacim": _hacim_ozeti(tablo),
+        "seriler": {a: _seri(tablo, g, o) for a, g, o in GRAFIK_ARALIKLARI},
     }
 
 
-def fiyat_bilgisi(ticker):
-    """Fiyat, değişimler ve grafik serileri; veri yoksa None."""
-    kod = yahoo_kodu(ticker)
+def fiyat_bilgisi(ticker, ham=False):
+    """
+    Fiyat, değişimler, hacim ve grafik serileri; veri yoksa None.
+    ham=True: kod olduğu gibi kullanılır (emtia ve endeks kodları: 'GC=F', 'DX-Y.NYB').
+    """
+    kod = ticker if ham else yahoo_kodu(ticker)
     if not kod:
         return None
 
