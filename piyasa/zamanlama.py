@@ -39,6 +39,9 @@ def kur(saat=7, dakika=30):
                                  **({"SEC_USER_AGENT": os.environ["SEC_USER_AGENT"]}
                                     if "SEC_USER_AGENT" in os.environ else {})},
         "ProcessType": "Background",
+        # Arka plan görevlerinde açık dosya sınırı varsayılan olarak 256'dır;
+        # paralel fiyat indirme buna takılıyordu
+        "SoftResourceLimits": {"NumberOfFiles": 4096},
     }
     with open(PLIST, "wb") as f:
         plistlib.dump(ayar, f)

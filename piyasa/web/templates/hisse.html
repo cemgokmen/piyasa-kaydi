@@ -16,6 +16,10 @@
 
 {{ fiyat_paneli(url_for('site.fiyat_api', ticker=ticker), anlik_adres=url_for('site.anlik_api', ticker=ticker)) }}
 
+<section class="panel temel temel-iskelet" data-parca-adres="{{ url_for('site.hisse_rakamlari', ticker=ticker) }}" aria-busy="true">
+  <p class="soluk kucuk">Şirketin rakamları yükleniyor…</p>
+</section>
+
 {% for y in yurutme if y.kisi_bilgi %}
 <a class="onay-serit onay-yurutme" href="{{ url_for('site.yurutme', slug=y.kisi) }}#portfoy">
   <b>{{ y.kisi_bilgi.ad }}</b> ({{ y.kisi_bilgi.gorev }}) bu hisseyi portföyünde bildirdi: {{ aralik(y.alt, y.ust) }}

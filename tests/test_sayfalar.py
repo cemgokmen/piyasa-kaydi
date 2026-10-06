@@ -280,7 +280,7 @@ def test_sirket_hakkinda_kayitli_profil_sayfada(istemci):
     assert "Şirket ne iş yapıyor?" in html
     assert "yapay zeka ve grafik işlemcileri" in html
     assert "36.000" in html and "nvidia.com" in html
-    assert "data-parca-adres" not in html
+    assert "/hisse/NVDA/hakkinda" not in html
 
 
 def test_sirket_hakkinda_sonradan_yuklenir(istemci):
@@ -289,3 +289,16 @@ def test_sirket_hakkinda_sonradan_yuklenir(istemci):
     parca = istemci.get("/hisse/AAPL/hakkinda")
     assert parca.status_code == 200 and "akıllı telefon" in parca.get_data(as_text=True)
     assert istemci.get("/hisse/ORNK/hakkinda").status_code == 204
+
+
+def test_sirket_rakamlari(istemci):
+    html = istemci.get("/hisse/AAPL").get_data(as_text=True)
+    assert 'data-parca-adres="/hisse/AAPL/rakamlar"' in html
+    parca = istemci.get("/hisse/AAPL/rakamlar").get_data(as_text=True)
+    for metin in ("Şirketin rakamları", "Piyasa değeri", "4,9 trl $", "F/K", "38,2", "%0,32",
+                  "Değerleme", "Karlılık", "Bilanço", "Sahiplik", "Son bilanço", "Nis–Haz 2026",
+                  "Sonraki bilanço", "Analist beklentisi", "52 haftalık aralık"):
+        assert metin in parca, metin
+    # Son çeyrek geçen yılın aynı çeyreğiyle karşılaştırılır: 109 / 94 - 1 = +%15,96
+    assert "+%15,96" in parca
+    assert istemci.get("/hisse/ORNK/rakamlar").status_code == 204

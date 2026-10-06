@@ -9,7 +9,7 @@ from datetime import UTC, date, timedelta
 import pandas as pd
 import pytest
 
-from piyasa import fiyat, sirket_profili, veritabani
+from piyasa import fiyat, sirket_profili, temel, veritabani
 from piyasa.emtia import haberler, serit
 from piyasa.web import create_app
 
@@ -203,6 +203,24 @@ def sahte_anlik(kod):
             "gecikme": 0, "seans_disi": None}
 
 
+def sahte_temel_veri(kod):
+    """temel._veri_al yerine: AAPL için örnek bilanço, diğerleri için veri yok."""
+    if kod != "AAPL":
+        return {}, None, None, None, None
+    ceyrekler = pd.to_datetime(["2025-06-30", "2025-09-30", "2025-12-31", "2026-03-31", "2026-06-30"])
+    gelir = pd.DataFrame(
+        [[94e9, 102e9, 124e9, 111e9, 109e9], [23e9, 27e9, 36e9, 29e9, 30e9], [1.57, 1.85, 2.40, 2.01, 2.02]],
+        index=["Total Revenue", "Net Income", "Diluted EPS"], columns=ceyrekler)
+    bilanco = pd.DataFrame([[350e9], [70e9]], index=["Total Assets", "Stockholders Equity"], columns=ceyrekler[-1:])
+    bilgi = {"quoteType": "EQUITY", "currency": "USD", "financialCurrency": "USD", "currentPrice": 300.0,
+             "marketCap": 4.9e12, "trailingPE": 38.17, "forwardPE": 34.7, "priceToBook": 45.2,
+             "dividendYield": 0.32, "profitMargins": 0.276, "trailingEps": 8.72, "totalCash": 62e9,
+             "totalDebt": 84e9, "debtToEquity": 78.4, "fiftyTwoWeekLow": 243.0, "fiftyTwoWeekHigh": 345.0,
+             "targetMeanPrice": 330.0, "targetLowPrice": 215.0, "targetHighPrice": 405.0,
+             "numberOfAnalystOpinions": 39, "recommendationKey": "buy", "heldPercentInstitutions": 0.66}
+    return bilgi, gelir, bilanco, None, {"Earnings Date": [BUGUN + timedelta(days=20)], "Earnings Average": 1.98}
+
+
 def sahte_profil(ticker):
     if ticker != "AAPL":
         return None
@@ -249,11 +267,13 @@ def veritabani_yolu(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def uygulama(veritabani_yolu):
-    eski = fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir
+    eski = fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al
     fiyat._indir = sahte_fiyat
     fiyat._anlik_indir = sahte_anlik
     haberler._indir = sahte_haberler
     sirket_profili._getir = sahte_profil
+    temel._veri_al = sahte_temel_veri
+    temel._temel.temizle()
     fiyat._bilgi.temizle()
     fiyat._anlik.temizle()
     serit.serit.temizle()
@@ -261,7 +281,7 @@ def uygulama(veritabani_yolu):
     app = create_app()
     app.config["TESTING"] = True
     yield app
-    fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir = eski
+    fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al = eski
 
 
 @pytest.fixture()

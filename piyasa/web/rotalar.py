@@ -5,7 +5,7 @@ ve şablonu çizer; SQL burada yazılmaz.
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
-from piyasa import fiyat, sirket_profili, uyeler
+from piyasa import fiyat, sirket_profili, temel, uyeler
 from piyasa.analiz import cakisma, performans, portfoy, sinyaller
 from piyasa.analiz import yurutme as yurutme_analizi
 from piyasa.emtia.tanimlar import EMTIALAR
@@ -96,6 +96,15 @@ def fiyat_api(ticker):
     if bilgi is None:
         return jsonify({"hata": "Bu hisse için güncel fiyat bulunamadı."}), 404
     return jsonify(bilgi)
+
+
+@site.route("/hisse/<ticker>/rakamlar")
+def hisse_rakamlari(ticker):
+    """Şirketin rakamları: sayfa açıldıktan sonra yüklenir (Yahoo yavaş olabilir)."""
+    bilgiler = temel.temel_bilgiler(ticker)
+    if not bilgiler:
+        return "", 204
+    return render_template("_temel.html", t=bilgiler)
 
 
 @site.route("/api/anlik/<ticker>")

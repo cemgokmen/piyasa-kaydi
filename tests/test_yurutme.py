@@ -177,3 +177,27 @@ def test_sirket_kisa_ad():
     assert sirket_kisa_ad("The Hershey Company") == "Hershey"
     assert sirket_kisa_ad("Berkshire Hathaway Inc. New") == "Berkshire Hathaway"
     assert sirket_kisa_ad("LENNAR CORP /NEW/") == "LENNAR"
+
+
+def test_temel_hazirla_eksi_ve_para_birimi():
+    from piyasa.temel import hazirla
+
+    t = hazirla({"quoteType": "EQUITY", "currency": "USD", "financialCurrency": "TWD", "marketCap": 2.5e12,
+                 "trailingPE": -3.0, "trailingEps": -1.2, "profitMargins": -0.55, "priceToBook": 99.6,
+                 "enterpriseValue": 17.7e12, "totalRevenue": 4.4e12})
+    ozet = {k["etiket"]: k["deger"] for k in t["ozet"]}
+    assert ozet["F/K"] == "Zararda" and ozet["Net kar marjı"] == "−%55,0"
+    satirlar = {r["etiket"]: r["deger"] for s in t["sekmeler"] for r in s["satirlar"]}
+    # Bilanço başka para biriminde: karışık hesaplanan oranlar gösterilmez
+    assert "PD/DD" not in satirlar and "Firma değeri" not in satirlar
+    assert satirlar["Gelir (son 12 ay)"] == "4,4 trl TWD"
+    assert t["birim_notu"]
+
+
+def test_temel_fon():
+    from piyasa.temel import hazirla
+
+    t = hazirla({"quoteType": "ETF", "totalAssets": 8e11, "netExpenseRatio": 0.0945, "yield": 0.0099,
+                 "ytdReturn": 12.7, "fundFamily": "State Street"})
+    assert t["tur"] == "fon"
+    assert [k["deger"] for k in t["ozet"]] == ["800,0 mr $", "%0,09", "%0,99", "+%12,70"]

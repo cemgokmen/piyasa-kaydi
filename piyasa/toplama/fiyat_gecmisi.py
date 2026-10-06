@@ -22,6 +22,7 @@ from piyasa.veritabani import get_connection, init_db
 
 ENDEKS = "SPY"
 PARCA = 150            # tek istekte indirilen hisse sayısı
+PARALEL = 8            # aynı anda açık bağlantı: fazlası arka planda dosya sınırına takılıyor
 YENILEME_GUN = 10      # son kaç günün fiyatı her seferinde yeniden yazılsın
 
 
@@ -50,7 +51,7 @@ def parca_indir(hisseler, baslangic):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         tablo = yf.download(list(yahoo), start=baslangic.isoformat(), auto_adjust=True,
-                            progress=False, threads=True)
+                            progress=False, threads=PARALEL)
     if tablo.empty:
         return {}
     kapanis = tablo["Close"] if isinstance(tablo.columns, pd.MultiIndex) else tablo[["Close"]].rename(

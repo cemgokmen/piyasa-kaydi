@@ -511,12 +511,52 @@ document.querySelectorAll("[data-arama-odak]").forEach(function (bag) {
 // ---------------------------------------------------------------------------
 // Sonradan yüklenen parçalar: data-parca-adres taşıyan yer tutucu, sunucunun
 // döndürdüğü HTML ile değiştirilir (ör. profili henüz kaydedilmemiş hissenin
-// "Şirket ne iş yapıyor?" kutusu). Cevap boşsa yer tutucu sessizce kalır.
+// "Şirket ne iş yapıyor?" kutusu, şirketin rakamları). Cevap boşsa ya da
+// istek başarısızsa yer tutucu kaldırılır.
 // ---------------------------------------------------------------------------
 
 document.querySelectorAll("[data-parca-adres]").forEach(function (yer) {
   fetch(yer.dataset.parcaAdres)
     .then((cevap) => (cevap.status === 200 ? cevap.text() : ""))
-    .then(function (html) { if (html) yer.outerHTML = html; })
-    .catch(() => {});
+    .then(function (html) {
+      if (html) yer.outerHTML = html;
+      else yer.remove();
+    })
+    .catch(() => yer.remove());
+});
+
+
+// ---------------------------------------------------------------------------
+// Sekmeler: [data-sekmeler] içinde [data-sekme] düğmesi aynı numaralı
+// [data-sekme-panel]'i açar. Sonradan yüklenen parçalarda da çalışsın diye
+// tıklama belge düzeyinde dinlenir. Ok tuşlarıyla sekmeler arasında gezilir.
+// ---------------------------------------------------------------------------
+
+function sekmeAc(dugme) {
+  const kap = dugme.closest("[data-sekmeler]");
+  if (!kap) return;
+  kap.querySelectorAll("[data-sekme]").forEach(function (d) {
+    const secili = d === dugme;
+    d.classList.toggle("secili", secili);
+    d.setAttribute("aria-selected", secili ? "true" : "false");
+    d.tabIndex = secili ? 0 : -1;
+  });
+  kap.querySelectorAll("[data-sekme-panel]").forEach(function (p) {
+    p.hidden = p.dataset.sekmePanel !== dugme.dataset.sekme;
+  });
+}
+
+document.addEventListener("click", function (olay) {
+  const dugme = olay.target.closest("[data-sekme]");
+  if (dugme) sekmeAc(dugme);
+});
+
+document.addEventListener("keydown", function (olay) {
+  const dugme = olay.target.closest && olay.target.closest("[data-sekme]");
+  if (!dugme || (olay.key !== "ArrowRight" && olay.key !== "ArrowLeft")) return;
+  const hepsi = Array.from(dugme.closest("[data-sekmeler]").querySelectorAll("[data-sekme]"));
+  const sira = (hepsi.indexOf(dugme) + (olay.key === "ArrowRight" ? 1 : -1) + hepsi.length) % hepsi.length;
+  sekmeAc(hepsi[sira]);
+  hepsi[sira].focus();
+  olay.preventDefault();
 });

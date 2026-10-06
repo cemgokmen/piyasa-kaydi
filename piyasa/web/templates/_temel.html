@@ -1,0 +1,107 @@
+{# Hisse sayfası: şirketin rakamları (sayfa açıldıktan sonra yüklenir) #}
+<section class="panel temel" id="rakamlar" aria-labelledby="rakamlar-baslik">
+  <header class="temel-ust">
+    <h2 id="rakamlar-baslik">{{ 'Fonun rakamları' if t.tur == 'fon' else 'Şirketin rakamları' }}</h2>
+    <span class="temel-kaynak">Kaynak: Yahoo Finance{% if t.son_ceyrek %} · son bilanço {{ t.son_ceyrek.donem }}{% endif %}</span>
+  </header>
+
+  <dl class="temel-ozet">
+    {% for k in t.ozet %}
+    <div>
+      <dt>{{ k.etiket }}</dt>
+      <dd{% if not (k.deger|select('in', '0123456789')|list) %} class="yazi"{% endif %}>{{ k.deger }}</dd>
+      {% if k.alt %}<span>{{ k.alt }}</span>{% endif %}
+    </div>
+    {% endfor %}
+  </dl>
+
+  <div class="temel-govde{% if not (t.son_ceyrek or t.aralik or t.analist) %} tek{% endif %}">
+    <div class="temel-sekmeler" data-sekmeler>
+      {% if t.sekmeler|length > 1 %}
+      <div class="segment segment-kucuk" role="tablist" aria-label="Rakam grupları">
+        {% for s in t.sekmeler %}
+        <button type="button" role="tab" id="sekme-{{ loop.index }}" aria-controls="sekme-panel-{{ loop.index }}"
+          data-sekme="{{ loop.index }}" aria-selected="{{ 'true' if loop.first else 'false' }}"
+          {% if loop.first %}class="secili"{% else %}tabindex="-1"{% endif %}>{{ s.ad }}</button>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% for s in t.sekmeler %}
+      <dl class="temel-liste" role="tabpanel" id="sekme-panel-{{ loop.index }}" aria-labelledby="sekme-{{ loop.index }}"
+        data-sekme-panel="{{ loop.index }}" {% if not loop.first %}hidden{% endif %}>
+        {% for r in s.satirlar %}
+        <div>
+          <dt>{{ r.etiket }}{% if r.aciklama %}<span>{{ r.aciklama }}</span>{% endif %}</dt>
+          <dd{% if not (r.deger|select('in', '0123456789')|list) %} class="yazi"{% endif %}>{{ r.deger }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+      {% endfor %}
+      {% if t.birim_notu %}<p class="temel-not">{{ t.birim_notu }}</p>{% endif %}
+    </div>
+
+    {% if t.son_ceyrek or t.aralik or t.analist %}
+    <aside class="temel-yan">
+      {% if t.son_ceyrek %}
+      <div class="temel-kart">
+        <h3>Son bilanço <span>{{ t.son_ceyrek.donem }}</span></h3>
+        <ul class="ceyrek-kalemler">
+          {% for k in t.son_ceyrek.kalemler %}
+          <li>
+            <span class="ceyrek-etiket">{{ k.etiket }}</span>
+            <b>{{ k.deger }}</b>
+            {% if k.degisim is not none %}<span class="{{ 'artis' if k.degisim > 0 else 'azalis' if k.degisim < 0 else '' }}">{{ k.degisim|yuzde }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% if t.son_ceyrek.karsilastirma %}<p class="temel-not">Değişimler {{ t.son_ceyrek.karsilastirma }}.</p>{% endif %}
+
+        {% if t.ceyrekler|length > 1 %}
+        <figure class="ceyrek-grafik" aria-label="Son çeyreklerde gelir ve net kar">
+          <div class="ceyrek-sutunlar">
+            {% for c in t.ceyrekler %}
+            <div class="ceyrek-sutun" title="{{ c.ad }} · gelir {{ c.gelir_yazi }} · net kar {{ c.net_yazi }}">
+              <div class="ceyrek-cubuklar">
+                <span class="cubuk-gelir" style="height: {{ c.gelir_boy }}%"></span>
+                <span class="cubuk-net{% if c.net_eksi %} eksi{% endif %}" style="height: {{ [c.net_boy, 1.5]|max }}%"></span>
+              </div>
+              <span class="ceyrek-ad">{{ c.ad.split('–')[-1] }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          <figcaption><span class="renk-gelir"></span>Gelir <span class="renk-net"></span>Net kar
+            {% if t.ceyrekler|selectattr('net_eksi')|list %}<span class="renk-zarar"></span>Zarar{% endif %}</figcaption>
+        </figure>
+        {% endif %}
+
+        {% if t.sonraki %}
+        <p class="sonraki-bilanco">Sonraki bilanço: <b>{{ t.sonraki.tarih }}</b>
+          {% if t.sonraki.hbk %}<span>Beklenen hisse başına kar {{ t.sonraki.hbk }}{% if t.sonraki.gelir %}, gelir {{ t.sonraki.gelir }}{% endif %}</span>{% endif %}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if t.aralik %}
+      <div class="temel-kart">
+        <h3>52 haftalık aralık</h3>
+        <div class="aralik-cubuk" role="img" aria-label="Fiyat, 52 haftalık aralığın %{{ t.aralik.konum|round|int }} noktasında">
+          <span style="left: {{ t.aralik.konum }}%"></span>
+        </div>
+        <div class="aralik-uclar"><span>{{ t.aralik.dusuk }}</span><span>{{ t.aralik.yuksek }}</span></div>
+      </div>
+      {% endif %}
+
+      {% if t.analist %}
+      <div class="temel-kart">
+        <h3>Analist beklentisi <span>{{ t.analist.adet }} analist</span></h3>
+        <p class="analist-hedef">
+          <b>{{ t.analist.hedef }}</b> ortalama hedef fiyat
+          {% if t.analist.potansiyel is not none %}<span class="{{ 'artis' if t.analist.potansiyel > 0 else 'azalis' }}">{{ t.analist.potansiyel|yuzde }}</span>{% endif %}
+        </p>
+        <p class="temel-not">En düşük {{ t.analist.dusuk }} · en yüksek {{ t.analist.yuksek }}{% if t.analist.oneri %} · genel görüş <b class="oneri-{{ t.analist.ton }}">{{ t.analist.oneri }}</b>{% endif %}</p>
+      </div>
+      {% endif %}
+    </aside>
+    {% endif %}
+  </div>
+</section>

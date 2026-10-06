@@ -1837,3 +1837,89 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .cakisma-sektor .ticker { text-decoration: none; }
 .cakisma-sirket { color: var(--yazi-2); }
 .cakisma-adet { color: var(--yazi-3); font-size: 12px; white-space: nowrap; }
+
+
+/* ---------------------------------------------------------------------------
+   Hisse sayfası: şirketin rakamları
+   --------------------------------------------------------------------------- */
+.temel { margin-bottom: 20px; padding: 18px 20px 20px; }
+.temel-iskelet { min-height: 380px; }
+.temel-ust { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 14px; }
+.temel-ust h2 { margin: 0; font-size: 17px; }
+.temel-kaynak { color: var(--yazi-3); font-size: 12px; }
+
+/* Öne çıkan dört rakam */
+.temel-ozet { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 18px; border: 1px solid var(--cizgi); border-radius: 10px; overflow: hidden; }
+.temel-ozet > div { padding: 12px 14px; background: var(--kart-2); }
+.temel-ozet > div + div { border-left: 1px solid var(--cizgi); }
+.temel-ozet dt { color: var(--yazi-3); font-size: 12px; font-weight: 500; }
+.temel-ozet dd { margin: 3px 0 0; font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+.temel-ozet span { color: var(--yazi-3); font-size: 11.5px; }
+
+.temel-govde { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.temel-govde.tek { grid-template-columns: 1fr; }
+.temel-sekmeler .segment { margin-bottom: 6px; }
+
+/* Etiket solda (altında kısa açıklama), değer sağda */
+.temel-liste { margin: 0; }
+.temel-liste > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 2px; border-bottom: 1px solid var(--cizgi-2); }
+.temel-liste > div:last-child { border-bottom: 0; }
+.temel-liste dt { font-size: 13.5px; font-weight: 500; }
+.temel-liste dt span { display: block; margin-top: 1px; color: var(--yazi-3); font-size: 11.5px; font-weight: 400; }
+.temel-liste dd { margin: 0; font-family: var(--mono); font-size: 14px; font-weight: 600; white-space: nowrap; text-align: right; }
+.temel-not { margin: 8px 0 0; color: var(--yazi-3); font-size: 11.5px; }
+
+.temel-yan { display: grid; gap: 12px; }
+.temel-kart { padding: 14px 16px; border: 1px solid var(--cizgi); border-radius: 10px; background: var(--kart-2); }
+.temel-kart h3 { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 10px; font-size: 13.5px; }
+.temel-kart h3 span { color: var(--yazi-3); font-weight: 500; font-size: 12px; }
+.temel-kart .artis { color: var(--alim); }
+.temel-kart .azalis { color: var(--satim); }
+
+.ceyrek-kalemler { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ceyrek-kalemler li { display: grid; grid-template-columns: 1fr auto 70px; align-items: baseline; gap: 10px; font-size: 13px; }
+.ceyrek-etiket { color: var(--yazi-2); }
+.ceyrek-kalemler b { font-family: var(--mono); font-weight: 600; text-align: right; }
+.ceyrek-kalemler li > span:last-child { font-family: var(--mono); font-size: 12px; text-align: right; }
+
+/* Son beş çeyrek: gelir ve net kar sütunları */
+.ceyrek-grafik { margin: 14px 0 0; }
+.ceyrek-sutunlar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; height: 96px; align-items: end; }
+.ceyrek-sutun { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.ceyrek-cubuklar { flex: 1; width: 100%; display: flex; justify-content: center; align-items: flex-end; gap: 3px; }
+.ceyrek-cubuklar span { width: min(14px, 40%); border-radius: 3px 3px 0 0; }
+.cubuk-gelir { background: color-mix(in srgb, var(--vurgu) 35%, transparent); }
+.cubuk-net { background: var(--alim-cubuk); }
+.cubuk-net.eksi { background: var(--satim-cubuk); }
+.ceyrek-ad { color: var(--yazi-3); font-size: 10.5px; white-space: nowrap; }
+.ceyrek-grafik figcaption { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--yazi-3); font-size: 11.5px; }
+.ceyrek-grafik figcaption span { width: 9px; height: 9px; border-radius: 2px; }
+.ceyrek-grafik figcaption .renk-net { margin-left: 8px; }
+.renk-gelir { background: color-mix(in srgb, var(--vurgu) 35%, transparent); }
+.renk-net { background: var(--alim-cubuk); }
+.renk-zarar { margin-left: 8px; background: var(--satim-cubuk); }
+.temel-ozet dd.yazi { font-family: var(--sans); font-size: 18px; letter-spacing: -.01em; }
+.temel-liste dd.yazi { font-family: var(--sans); font-weight: 500; white-space: normal; }
+
+.sonraki-bilanco { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--cizgi); font-size: 13px; }
+.sonraki-bilanco span { display: block; margin-top: 2px; color: var(--yazi-3); font-size: 12px; }
+
+/* 52 haftalık aralıkta fiyatın yeri */
+.aralik-cubuk { position: relative; height: 6px; margin: 8px 0 6px; border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--satim-cubuk) 45%, transparent), color-mix(in srgb, var(--alim-cubuk) 45%, transparent)); }
+.aralik-cubuk span { position: absolute; top: 50%; width: 12px; height: 12px; border: 2px solid var(--kart); border-radius: 50%;
+  background: var(--yazi); transform: translate(-50%, -50%); box-shadow: var(--golge); }
+.aralik-uclar { display: flex; justify-content: space-between; color: var(--yazi-3); font-family: var(--mono); font-size: 11.5px; }
+
+.analist-hedef { margin: 0; font-size: 13px; color: var(--yazi-2); }
+.analist-hedef b { font-family: var(--mono); font-size: 18px; color: var(--yazi); margin-right: 4px; }
+.analist-hedef span { font-family: var(--mono); font-size: 12.5px; margin-left: 4px; }
+.oneri-artis { color: var(--alim); }
+.oneri-azalis { color: var(--satim); }
+
+@media (max-width: 860px) {
+  .temel-ozet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .temel-ozet > div:nth-child(3) { border-left: 0; }
+  .temel-ozet > div:nth-child(n + 3) { border-top: 1px solid var(--cizgi); }
+  .temel-govde { grid-template-columns: 1fr; }
+}

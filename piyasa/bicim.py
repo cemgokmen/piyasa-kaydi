@@ -42,6 +42,24 @@ def kisa_tutar(n):
     return f"{sayi(n)} $"
 
 
+PARA_BIRIMLERI = {"USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "TRY": "₺"}
+
+
+def para(n, birim="USD"):
+    """Eksi değer ve farklı para birimiyle kısa tutar: -2.5e9 -> '−2,5 mr $'; TWD -> '4,4 trl TWD'"""
+    if n is None:
+        return "—"
+    simge = PARA_BIRIMLERI.get(birim or "USD", birim)
+    isaret = "−" if n < 0 else ""
+    n = abs(n)
+    for bolen, ek in ((1e12, "trl"), (1e9, "mr"), (1e6, "mn")):
+        if n >= bolen:
+            return f"{isaret}{n / bolen:.1f}".replace(".", ",") + f" {ek} {simge}"
+    if n >= 1_000:
+        return f"{isaret}{n / 1_000:.0f} bin {simge}"
+    return f"{isaret}{fiyat(n)} {simge}"
+
+
 def kisa_aralik(alt, ust):
     """Kongre bildirimleri aralık verir: '1 bin – 15 bin $'"""
     if alt is None:
