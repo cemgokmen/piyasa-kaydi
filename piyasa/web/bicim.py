@@ -19,7 +19,9 @@ def sablonlara_kaydet(app):
 
     @app.context_processor
     def ortak():
+        from piyasa.web.sorgular import veri_guncelligi
         return {
+            "veri_guncelligi": veri_guncelligi(),
             "yasal_gun": STOCK_ACT_GUN,
             "form4_gun": FORM4_IS_GUNU,
             "partiler": PARTILER,

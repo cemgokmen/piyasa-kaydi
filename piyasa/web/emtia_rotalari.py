@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from flask import Blueprint, abort, jsonify, render_template
 
 from piyasa import fiyat
-from piyasa.emtia import haberler, sorgular
+from piyasa.emtia import haberler, serit, sorgular
 from piyasa.emtia.tanimlar import EMTIA, EMTIALAR, GOSTERGELER, GRUPLAR, ONS_GRAM
 
 emtia = Blueprint("emtia", __name__)
@@ -123,3 +123,9 @@ def fiyat_api(slug):
     if bilgi is None:
         return jsonify({"hata": "Bu emtia için güncel fiyat bulunamadı."}), 404
     return jsonify(bilgi)
+
+
+@emtia.route("/api/serit")
+def serit_api():
+    """Sayfanın üstündeki piyasa şeridi."""
+    return jsonify({"gostergeler": serit.serit()})

@@ -338,3 +338,89 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
     }
   });
 });
+
+
+// ---------------------------------------------------------------------------
+// Tema: sistem → açık → koyu. Seçim tarayıcıda saklanır.
+// ---------------------------------------------------------------------------
+
+const temaDugmesi = document.getElementById("tema-dugmesi");
+if (temaDugmesi) {
+  const sira = [undefined, "acik", "koyu"];
+  const adlar = { undefined: "sistem", acik: "açık", koyu: "koyu" };
+  const guncelle = () => {
+    temaDugmesi.title = `Tema: ${adlar[document.documentElement.dataset.tema]} (değiştirmek için tıklayın)`;
+  };
+  guncelle();
+  temaDugmesi.addEventListener("click", function () {
+    const simdiki = document.documentElement.dataset.tema;
+    const sonraki = sira[(sira.indexOf(simdiki) + 1) % sira.length];
+    if (sonraki) document.documentElement.dataset.tema = sonraki;
+    else delete document.documentElement.dataset.tema;
+    try {
+      if (sonraki) localStorage.setItem("tema", sonraki);
+      else localStorage.removeItem("tema");
+    } catch (hata) { /* gizli pencerede saklanamayabilir */ }
+    guncelle();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Telefon menüsü ve kaydırınca üst çubuk gölgesi
+// ---------------------------------------------------------------------------
+
+const ustCubuk = document.querySelector(".ust");
+const menuDugmesi = document.getElementById("menu-dugmesi");
+if (menuDugmesi && ustCubuk) {
+  menuDugmesi.addEventListener("click", function () {
+    const acik = ustCubuk.classList.toggle("menu-acik");
+    menuDugmesi.setAttribute("aria-expanded", acik ? "true" : "false");
+    menuDugmesi.setAttribute("aria-label", acik ? "Menüyü kapat" : "Menüyü aç");
+  });
+  document.addEventListener("keydown", function (olay) {
+    if (olay.key === "Escape" && ustCubuk.classList.contains("menu-acik")) menuDugmesi.click();
+  });
+}
+if (ustCubuk) {
+  const golge = () => ustCubuk.classList.toggle("kaydirildi", window.scrollY > 4);
+  window.addEventListener("scroll", golge, { passive: true });
+  golge();
+}
+
+// ---------------------------------------------------------------------------
+// Piyasa şeridi: sayfa açıldıktan sonra doldurulur
+// ---------------------------------------------------------------------------
+
+const serit = document.getElementById("piyasa-seridi");
+if (serit) {
+  const bicim = (n, basamak) => new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: basamak, maximumFractionDigits: basamak,
+  }).format(n);
+
+  fetch(serit.dataset.adres)
+    .then((cevap) => (cevap.ok ? cevap.json() : Promise.reject(cevap.status)))
+    .then(function (veri) {
+      const ic = serit.querySelector(".serit-ic");
+      veri.gostergeler.forEach(function (g) {
+        const oge = document.createElement(g.adres ? "a" : "span");
+        oge.className = "serit-oge";
+        if (g.adres) oge.href = g.adres;
+        const ad = document.createElement("span");
+        ad.className = "serit-ad";
+        ad.textContent = g.ad;
+        const deger = document.createElement("span");
+        deger.className = "serit-deger";
+        deger.textContent = `${g.birim === "$" ? "$" : ""}${bicim(g.deger, g.basamak)}${g.birim === "₺" ? " ₺" : ""}`;
+        oge.append(ad, deger);
+        if (g.degisim !== null) {
+          const degisim = document.createElement("span");
+          degisim.className = "serit-degisim " + (g.degisim >= 0 ? "tutar-buy" : "tutar-sell");
+          degisim.textContent = `${g.degisim >= 0 ? "▲" : "▼"} %${bicim(Math.abs(g.degisim * 100), 2)}`;
+          oge.appendChild(degisim);
+        }
+        ic.appendChild(oge);
+      });
+      if (veri.gostergeler.length) serit.hidden = false;
+    })
+    .catch(() => { /* şerit yalnızca süs; hata olursa gizli kalır */ });
+}

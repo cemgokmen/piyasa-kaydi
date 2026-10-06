@@ -425,3 +425,49 @@ def test_arama_onerileri_listesi(tarayici, sunucu):
     hepsi = bekle(tarayici, EC.visibility_of_element_located((By.CSS_SELECTOR, ".giris-arama .oneri-hepsi")))
     hepsi.click()
     bekle(tarayici, lambda t: sorgu(t).get("q") == "nvidia")
+
+
+def test_tema_dugmesi(tarayici, sunucu):
+    tarayici.get(sunucu + "/")
+    tarayici.execute_script("localStorage.removeItem('tema')")
+    tarayici.get(sunucu + "/")
+    tema = lambda: tarayici.execute_script("return document.documentElement.dataset.tema || 'sistem'")  # noqa: E731
+    dugme = tarayici.find_element(By.ID, "tema-dugmesi")
+    assert tema() == "sistem"
+    dugme.click()
+    assert tema() == "acik"
+    dugme.click()
+    assert tema() == "koyu"
+    # Seçim sayfalar arasında korunur
+    tarayici.get(sunucu + "/fonlar")
+    assert tema() == "koyu"
+    tarayici.find_element(By.ID, "tema-dugmesi").click()
+    assert tema() == "sistem"
+
+
+def test_telefon_menusu(tarayici, sunucu):
+    tarayici.set_window_size(500, 900)
+    try:
+        tarayici.get(sunucu + "/")
+        menu = tarayici.find_element(By.ID, "ana-menu")
+        dugme = tarayici.find_element(By.ID, "menu-dugmesi")
+        assert not menu.is_displayed()
+        dugme.click()
+        assert menu.is_displayed() and dugme.get_attribute("aria-expanded") == "true"
+        tarayici.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+        bekle(tarayici, lambda t: not menu.is_displayed())
+        dugme.click()
+        menu.find_element(By.LINK_TEXT, "Emtialar").click()
+        bekle(tarayici, EC.url_contains("/emtialar"))
+    finally:
+        tarayici.set_window_size(1366, 1000)
+
+
+def test_piyasa_seridi(tarayici, sunucu):
+    tarayici.get(sunucu + "/")
+    serit = tarayici.find_element(By.ID, "piyasa-seridi")
+    bekle(tarayici, lambda t: serit.is_displayed())
+    adlar = [o.find_element(By.CLASS_NAME, "serit-ad").text for o in serit.find_elements(By.CLASS_NAME, "serit-oge")]
+    assert {"BIST 100", "S&P 500", "Dolar/TL", "Gram altın", "Brent"} <= set(adlar)
+    tarayici.find_element(By.XPATH, "//a[contains(@class,'serit-oge')][.//span[text()='Brent']]").click()
+    bekle(tarayici, EC.url_contains("/emtia/brent"))

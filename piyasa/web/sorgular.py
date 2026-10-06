@@ -14,6 +14,7 @@ from piyasa.bicim import AYLAR, donem_metni, kisa_aralik, kisa_tutar
 from piyasa.kayitlar import islem_hazirla
 from piyasa.kurallar import GECERLI_KOD as GECERLI_TICKER
 from piyasa.kurallar import STOCK_ACT_GUN, TEMIZ, YUKLU_ALIM_ALT_SINIR, parti_bilgisi
+from piyasa.onbellek import sureli
 from piyasa.veritabani import get_connection
 
 SAYFA_BOYUTU = 50
@@ -544,3 +545,20 @@ def fon(slug):
         "dilimler": pasta_dilimleri(list(su_an.values())),
         "portfoy": hazirla(list(su_an.values()))[:50],
     }
+
+
+@sureli(5 * 60)
+def veri_guncelligi():
+    """Alt bilgide gösterilen: her kaynağın en son kaydı."""
+    with baglanti() as conn:
+        def tek(sorgu):
+            try:
+                return conn.execute(sorgu).fetchone()[0]
+            except Exception:
+                return None
+        return [
+            ("Yönetici bildirimleri", tek(f"SELECT MAX(disclosed_date) FROM transactions WHERE chamber IS NULL AND {TEMIZ}")),
+            ("Kongre bildirimleri", tek("SELECT MAX(disclosed_date) FROM transactions WHERE chamber IS NOT NULL")),
+            ("Fon bildirimleri", tek("SELECT MAX(bildirim_tarihi) FROM holdings")),
+            ("Emtia verileri", (tek("SELECT zaman FROM emtia_guncelleme WHERE anahtar = 'son'") or "")[:10] or None),
+        ]

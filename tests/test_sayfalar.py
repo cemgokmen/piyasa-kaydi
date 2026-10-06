@@ -223,3 +223,17 @@ def test_onemli_siyasetciler_ve_trump(istemci):
 
     oneri = istemci.get("/api/oneri?q=trump").get_json()["oneriler"]
     assert oneri[0]["adres"] == "/yurutme/donald-j-trump"
+
+
+def test_paylasim_etiketleri_ve_guncellik(istemci):
+    html = istemci.get("/kisi/jane-senator").get_data(as_text=True)
+    assert '<meta property="og:title" content="Jane Senator · Piyasa Kaydı">' in html
+    assert 'property="og:locale" content="tr_TR"' in html
+    assert "Veri güncelliği" in html and "Kongre bildirimleri" in html
+
+
+def test_serit_api(istemci):
+    gostergeler = istemci.get("/api/serit").get_json()["gostergeler"]
+    adlar = [g["ad"] for g in gostergeler]
+    assert adlar[:3] == ["BIST 100", "S&P 500", "Nasdaq"] and "Gram altın" in adlar
+    assert all(g["deger"] > 0 for g in gostergeler)

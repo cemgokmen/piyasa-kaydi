@@ -105,10 +105,12 @@ python -m piyasa emtia
 ```
 
 **Analiz verisi** — işlem yapılan hisselerin fiyat geçmişi, şirket sektörleri,
-Meclis komiteleri ve işlem sonrası getiriler:
+Meclis komiteleri ve liderlik görevleri, Başkan ve Başkan Yardımcısının OGE
+bildirimleri, işlem sonrası getiriler:
 
 ```bash
 python -m piyasa sirketler
+python -m piyasa yurutme
 python -m piyasa fiyatlar
 python -m piyasa analiz
 ```
@@ -159,6 +161,7 @@ piyasa/
   kayitlar.py              İşlem kayıtlarını gösterime hazırlama
   fiyat.py                 Yahoo Finance fiyatları, değişimler, hacim
   onbellek.py              Süreli bellek önbelleği (@sureli)
+  uyeler.py                Siyasetçi fotoğrafları, görevleri, önemli siyasetçiler
   slug.py                  İsimleri adres dostu metne çevirir
 
   toplama/                 Resmî kaynaklardan veri indirenler
@@ -167,6 +170,7 @@ piyasa/
     kongre.py              House Clerk işlem bildirimleri (PDF)
     fon13f.py              Fonların 13F bildirimleri
     cusip.py               CUSIP → hisse kodu eşlemesi
+    yurutme.py             Trump ve Vance'in OGE mali durum bildirimleri
     emtia.py               CFTC fon konumları, EIA stokları, FRED faizleri
     fiyat_gecmisi.py       İşlem yapılan hisselerin ve SPY'nin günlük kapanışları
     sirketler.py           SEC sektörleri, Meclis üyeleri ve komite üyelikleri
@@ -181,10 +185,12 @@ piyasa/
     tanimlar.py            Takip edilen emtialar, kodlar, birimler, etkenler
     sorgular.py            Fon konumu, stok ve faiz hesapları
     haberler.py            Türkçe haberler (Google Haberler RSS, 30 dk önbellek)
+    serit.py               Üstteki piyasa şeridi (BIST 100, S&P 500, dolar/TL, altın...)
 
   analiz/                  Analizler
     getiri.py              İşlem sonrası getiri (30/90/180 gün, bugüne) ve SPY
     performans.py          Siyasetçilerin yatırım performansı
+    portfoy.py             Siyasetçinin tahmini portföyü (alıp satmadığı hisseler)
     cakisma.py             Komite ↔ sektör çıkar çatışmaları
     sektorler.py           SIC → sektör ve komite → sektör eşlemeleri
     sinyaller.py           Üçlü onay ve sinyallerin geçmiş başarısı
