@@ -3,7 +3,7 @@ Piyasa Kaydı komut satırı.
 
 Kullanım:
     python -m piyasa site                 siteyi başlatır (http://127.0.0.1:5001)
-    python -m piyasa guncelle             tüm veriyi günceller (Form 4 + Kongre + kontrol)
+    python -m piyasa guncelle             tüm veriyi günceller (Form 4 + Kongre + bakım)
 
     python -m piyasa form4                son 90 günün eksik Form 4 günlerini indirir
     python -m piyasa kongre [yıl ...]     Temsilciler Meclisi işlemlerini indirir
@@ -38,7 +38,7 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
-GUNCELLEME = ["form4", "kongre", "supheli"]
+GUNCELLEME = ["form4", "kongre", "slug", "supheli"]
 
 
 def calistir(komut, argumanlar):

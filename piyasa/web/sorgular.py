@@ -317,7 +317,14 @@ def hisse(ticker):
             )
         ] if son_donem else []
 
-        if not (yonetici["adet"] or siyaset["adet"] or fonlar):
+        # Fonun önceki çeyrekte çıktığı hisseler de bağlantı alır; o yüzden
+        # yalnız son çeyrek değil, herhangi bir 13F kaydı yeterli
+        fon_kaydi = conn.execute(
+            "SELECT sirket_adi FROM holdings WHERE ticker = ? ORDER BY donem DESC LIMIT 1",
+            (ticker,),
+        ).fetchone()
+
+        if not (yonetici["adet"] or siyaset["adet"] or fon_kaydi):
             return None
 
         sirket = conn.execute(
@@ -325,7 +332,8 @@ def hisse(ticker):
             "ORDER BY chamber IS NOT NULL LIMIT 1",
             (ticker,),
         ).fetchone()
-        sirket_adi = sirket["asset_name"] if sirket else (fonlar[0]["sirket_adi"] if fonlar else ticker)
+        sirket_adi = (sirket["asset_name"] if sirket
+                      else fon_kaydi["sirket_adi"] if fon_kaydi else ticker)
 
         def islemler(kaynak):
             return [islem_hazirla(s) for s in conn.execute(

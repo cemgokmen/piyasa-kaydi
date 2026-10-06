@@ -86,6 +86,24 @@ python -m piyasa fon
 python -m piyasa cusip
 ```
 
+## Testler
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Testler gerçek veritabanına ve internete dokunmaz; geçici bir örnek
+veritabanı kurulur, fiyat servisi sahte veriyle değiştirilir.
+
+- `tests/test_sayfalar.py` — her sayfa, 404'ler ve sitedeki bütün iç
+  bağlantıların gezilmesi
+- `tests/test_bicim.py` — tutar/tarih biçimleri, fiyat değişimi hesabı,
+  Kongre bildirimi yardımcıları
+- `tests/test_tarayici.py` — başsız Chrome'da menüler, arama, seçim
+  kutuları, sıralama, süzme, tıklanabilir satırlar, fiyat grafiği ve
+  telefon görünümü. Chrome yoksa atlanır.
+
 ## Yapı
 
 ```
@@ -114,7 +132,14 @@ piyasa/
     sr_dene.py, sr_tarama.py
 
   web/                     Flask sitesi
+    __init__.py            create_app()
+    rotalar.py             Sayfalar (Blueprint); SQL içermez
+    sorgular.py            Bütün veritabanı sorguları
+    bicim.py               Tutar, tarih biçimleri ve şablon süzgeçleri
+    fiyat.py               Yahoo Finance fiyatları ve değişimler (15 dk önbellek)
     templates/, static/    Şablonlar, CSS, JS
+
+tests/                     pytest testleri
 
 deneme/                    İlk denemeler ve tek seferlik scriptler
 data/                      Veritabanı ve fon listesi

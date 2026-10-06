@@ -104,6 +104,21 @@ def fon(slug):
     return render_template("fon.html", aktif="fonlar", **veri)
 
 
+FAVICON = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+    '<rect width="32" height="32" rx="7" fill="#1B4DFF"/>'
+    '<path d="M7 22l6-7 5 4 7-9" stroke="white" stroke-width="3" fill="none" '
+    'stroke-linecap="round" stroke-linejoin="round"/></svg>'
+)
+
+
+@site.route("/favicon.ico")
+def favicon():
+    # Simge sayfalarda satır içi; tarayıcıların kendiliğinden istediği adres için
+    return FAVICON, 200, {"Content-Type": "image/svg+xml",
+                          "Cache-Control": "public, max-age=604800"}
+
+
 @site.route("/hakkinda")
 def hakkinda():
     return render_template("hakkinda.html", aktif="hakkinda")

@@ -944,10 +944,6 @@ a.kisi-ad:hover { color: var(--vurgu); }
   .akis li { padding-inline: 12px; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .panel, .kpi, .tablo-kap { animation: belir .25s ease both; }
-  @keyframes belir { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-}
 
 /* ---------- Kaynak belge bağlantısı ---------- */
 
