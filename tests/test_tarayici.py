@@ -81,7 +81,7 @@ def test_ana_menu_baglantilari(tarayici, sunucu):
         "Emtialar": "Emtialar",
         "Günlük özet": "",
         "Sinyaller": "Sinyaller",
-        "Ana sayfa": "ABD'de kim hangi hisseyi aldı, sattı?",
+        "Ana sayfa": "Siyasetçilerin, yöneticilerin ve fonların hisse işlemleri",
     }
     tarayici.get(sunucu + "/")
     for etiket, baslik in beklenen.items():

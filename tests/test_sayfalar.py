@@ -218,7 +218,7 @@ def test_onemli_siyasetciler_ve_trump(istemci):
     assert "Donald J. Trump" in html and "/yurutme/donald-j-trump" in html
     assert "Azınlık grup başkanvekili" in html            # Jane'in liderlik görevi
     assert "Tarım Komitesi başkanı" in html                # Bob komite başkanı
-    assert "congress/225x275/J000001.jpg" in html          # resmî fotoğraf
+    assert "congress/225x275/J000001.jpg" in html          # resmi fotoğraf
 
     trump = istemci.get("/yurutme/donald-j-trump").get_data(as_text=True)
     assert "İşlem bildirimi (OGE 278-T)" in trump and "https://oge.gov/t1.pdf" in trump
@@ -276,7 +276,7 @@ def test_hisse_sayfasi_anlik_fiyat_adresi(istemci):
 def test_sirket_hakkinda_kayitli_profil_sayfada(istemci):
     html = istemci.get("/hisse/NVDA").get_data(as_text=True)
     assert "Şirket ne iş yapıyor?" in html
-    assert "yapay zekâ ve grafik işlemcileri" in html
+    assert "yapay zeka ve grafik işlemcileri" in html
     assert "36.000" in html and "nvidia.com" in html
     assert "data-parca-adres" not in html
 

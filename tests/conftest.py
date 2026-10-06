@@ -229,7 +229,7 @@ def veritabani_yolu(tmp_path_factory):
     ornek_analiz_verisi(conn)
     conn.execute(
         "INSERT INTO sirket_profili (ticker, ozet, ozet_en, sektor, endustri, calisan, merkez, site, guncelleme) "
-        "VALUES ('NVDA', 'NVIDIA yapay zekâ ve grafik işlemcileri tasarlar.', 'NVIDIA designs GPUs.', 'Teknoloji', "
+        "VALUES ('NVDA', 'NVIDIA yapay zeka ve grafik işlemcileri tasarlar.', 'NVIDIA designs GPUs.', 'Teknoloji', "
         "'Yarı iletkenler', 36000, 'Santa Clara, CA', 'https://www.nvidia.com', '2999-01-01T00:00:00+00:00')"
     )
     conn.commit()

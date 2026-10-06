@@ -3,7 +3,7 @@
 
 Mali durum bildirimlerinde hisseler kod yerine adla, çoğu zaman kısaltılmış
 ya da boşluksuz yazılır: "SUNSTONE HOTEL INVS INC", "TESLAMOTORSINC".
-Bu modül adları sadeleştirip SEC'in resmî şirket-kod listesiyle eşler.
+Bu modül adları sadeleştirip SEC'in resmi şirket-kod listesiyle eşler.
 
 Kurallar bilinçli olarak tutucudur: emin olunamayan ad eşlenmez. Yanlış bir
 hisseyi göstermektense o kalemi dışarıda bırakmak tercih edilir.
@@ -87,7 +87,7 @@ class Eslestirici:
             sec_listesi = cevap.json().values()
         self.kodlar = {}
         self.gecerli = set()
-        self.adlar = {}          # kod → SEC'teki resmî şirket adı
+        self.adlar = {}          # kod → SEC'teki resmi şirket adı
         for k in sec_listesi:
             kod = k["ticker"].upper()
             self.gecerli.add(kod)

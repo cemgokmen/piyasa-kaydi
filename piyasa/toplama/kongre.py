@@ -11,7 +11,7 @@ ayrıştırılır. Elle doldurulup taranmış bildirimler (DocID 8 veya 9 ile
 başlar) resimdir; onlar atlanır.
 
 Parti bilgisi PDF'te yok; açık "congress-legislators" veri setinden
-eyalet + seçim bölgesiyle eşleştirilir. Aynı veri setindeki resmî tam ad,
+eyalet + seçim bölgesiyle eşleştirilir. Aynı veri setindeki resmi tam ad,
 House Clerk listesindeki hatalı yazımların yerine kullanılır
 (ör. listede ad alanı "Scott Scott" olarak geçiyor).
 

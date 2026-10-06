@@ -3,7 +3,7 @@
 
 İş tanımı, sektör, çalışan sayısı ve merkez Yahoo Finance'ten alınır.
 İngilizce tanım önce sadeleştirilir (uzun ülke listeleri, "bağlı
-ortaklıklarıyla birlikte" gibi kalıplar, segment ayrıntıları ve resmî unvan
+ortaklıklarıyla birlikte" gibi kalıplar, segment ayrıntıları ve resmi unvan
 çıkarılır), sonra ücretsiz çeviri servisiyle Türkçeye çevrilir ve fiil
 kipleri tek tipe getirilir. Sonuç veritabanında saklanır; profil 120 günde
 bir yenilenir.
@@ -192,7 +192,12 @@ def fon_tanimi(ad, yonetici=None):
     return f"{ad}{yonetim} borsada işlem gören bir yatırım fonudur (ETF). Tek bir şirket değil, bir hisse sepetini temsil eder."
 
 
+# Şapkalı harfler (a, i, u üstünde) kullanılmaz; çeviriden gelse de sade harfe çevrilir
+_SAPKASIZ = str.maketrans({"\u00e2": "a", "\u00ee": "i", "\u00fb": "u", "\u00c2": "A", "\u00ce": "\u0130", "\u00db": "U"})
+
+
 def turkcelestir(metin):
+    metin = (metin or "").translate(_SAPKASIZ)
     metin = _YOR.sub(lambda m: _GENIS_ZAMAN[m.group(1)], metin or "")
     metin = _KELIME.sub(lambda m: _KELIMELER[m.group(0)], metin)
     metin = re.sub(r"\s+([,.;])", r"\1", metin)
@@ -259,7 +264,7 @@ def _getir(ticker):
         "ozet": turkcelestir(ozet) if ozet and ozet_en else ozet,
         "ozet_en": ozet_en,
         "sektor": SEKTORLER.get(sektor, sektor),
-        "endustri": baslik_duzelt(cevir(endustri)) if endustri else None,
+        "endustri": baslik_duzelt(turkcelestir(cevir(endustri))) if endustri else None,
         "kurulus": kurulus_yili(tanim),
         "calisan": bilgi.get("fullTimeEmployees"),
         "merkez": merkez or None,

@@ -79,7 +79,7 @@
         </td>
         <td data-etiket="Tutar" class="sag sayi tutar-{{ k.action }} h-tutar" title="{{ k.tutar_tam }}">{{ k.tutar_kisa }}</td>
         <td class="sag h-belge">
-          {% if k.source_url %}<a class="kaynak" href="{{ k.source_url }}" target="_blank" rel="noopener" title="Resmî bildirim belgesini aç">Belge ↗</a>{% endif %}
+          {% if k.source_url %}<a class="kaynak" href="{{ k.source_url }}" target="_blank" rel="noopener" title="Resmi bildirim belgesini aç">Belge ↗</a>{% endif %}
         </td>
       </tr>
       {% endfor %}
@@ -125,7 +125,7 @@
 </section>
 {% endmacro %}
 
-{# Haber listesi: başlık resmî kaynağa gider, konu etiketleri yanında #}
+{# Haber listesi: başlık resmi kaynağa gider, konu etiketleri yanında #}
 {% macro haber_listesi(liste, bos='Son iki haftada haber bulunamadı.') %}
 {% if liste %}
 <ul class="haberler">

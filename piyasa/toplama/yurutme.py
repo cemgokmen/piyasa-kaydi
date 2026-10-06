@@ -4,7 +4,7 @@ Başkan ve Başkan Yardımcısının mali durum bildirimleri.
 Yürütme organı Kongre'ye değil ABD Hükümet Etiği Ofisi'ne (OGE) bildirir.
 Başkan'ın işlem bildirimleri (OGE 278-T) çoğunlukla taranmış belgedir ve
 içerikleri büyük ölçüde belediye ve şirket tahvilleridir; bu yüzden tek tek
-işlemleri tabloya aktarmıyoruz, her bildirimi tarih ve resmî belge
+işlemleri tabloya aktarmıyoruz, her bildirimi tarih ve resmi belge
 bağlantısıyla listeliyoruz.
 
 Çalıştırmak için:  python -m piyasa yurutme

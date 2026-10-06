@@ -1,8 +1,8 @@
 """
-Siyasetçiler hakkında ek bilgi: resmî fotoğraf, liderlik görevi ve
+Siyasetçiler hakkında ek bilgi: resmi fotoğraf, liderlik görevi ve
 "önemli siyasetçiler" listesi.
 
-Fotoğraflar, kamu malı olan resmî Kongre portrelerinin congress-legislators
+Fotoğraflar, kamu malı olan resmi Kongre portrelerinin congress-legislators
 projesindeki kopyalarıdır.
 """
 
@@ -40,7 +40,7 @@ TANINMIS = {
 # Yürütme: Başkan ve Başkan Yardımcısı (OGE bildirimleri)
 YURUTME = [
     {"slug": "donald-j-trump", "ad": "Donald J. Trump", "gorev": "ABD Başkanı", "parti": "R",
-     # Resmî Başkanlık portresi (kamu malı), Wikimedia Commons
+     # Resmi Başkanlık portresi (kamu malı), Wikimedia Commons
      "foto": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Official_Presidential_Portrait_of_President_Donald_J._Trump_%282025%29.jpg/250px-Official_Presidential_Portrait_of_President_Donald_J._Trump_%282025%29.jpg"},
     {"slug": "jd-vance", "ad": "JD Vance", "gorev": "ABD Başkan Yardımcısı", "parti": "R",
      "foto": FOTO.format("V000137")},
@@ -71,7 +71,7 @@ def onbellegi_temizle():
 
 
 def foto(slug):
-    """Üyenin resmî fotoğrafının adresi; bilinmiyorsa None."""
+    """Üyenin resmi fotoğrafının adresi; bilinmiyorsa None."""
     uye = _uyeler().get(slug)
     return FOTO.format(uye["bioguide"]) if uye else None
 
