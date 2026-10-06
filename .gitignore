@@ -1,7 +1,14 @@
 venv/
 __pycache__/
 *.pyc
+.DS_Store
+
+# Veritabanı, yedekler ve yerel çalışma dosyaları
 data/*.db
 data/*.db-journal
 data/*.db-yedek
-.DS_Storedata/guncelleme.log
+data/guncelleme.log
+data/yfinance_onbellek/
+
+.pytest_cache/
+.ruff_cache/
