@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from flask import Flask, render_template, request
 
 from database import get_connection
+from slug import slugify
 
 app = Flask(__name__)
 
@@ -37,10 +38,9 @@ def filtre_kur(arama, islem, donem):
         parametreler.append(islem)
 
     gun_sayisi = DONEMLER.get(donem, DONEMLER[VARSAYILAN_DONEM])[1]
-    if gun_sayisi is not None:
-        sinir = (date.today() - timedelta(days=gun_sayisi)).isoformat()
-        kosullar.append("disclosed_date >= ?")
-        parametreler.append(sinir)
+    sinir = (date.today() - timedelta(days=gun_sayisi)).isoformat()
+    kosullar.append("disclosed_date >= ?")
+    parametreler.append(sinir)
 
     if arama:
         kosullar.append(
@@ -48,12 +48,11 @@ def filtre_kur(arama, islem, donem):
         )
         desen = f"%{arama}%"
         parametreler.extend([desen, desen, desen, desen])
-        
 
     # Anormal fiyatlı kayıtları hiçbir zaman gösterme
     kosullar.append("(suspect IS NULL OR suspect = 0)")
 
-    where = " WHERE " + " AND ".join(kosullar) if kosullar else ""
+    where = " WHERE " + " AND ".join(kosullar)
     return where, parametreler
 
 
@@ -152,7 +151,6 @@ def enrich(row):
     row["islem_tarih_kisa"] = tarih_bicimle(row["transaction_date"])
     row["bildirim_tarih_kisa"] = tarih_bicimle(row["disclosed_date"])
     if not row.get("person_slug"):
-        from slug import slugify
         row["person_slug"] = slugify(row["person"])
     return row
 
@@ -232,6 +230,12 @@ def hisse(ticker):
         "SELECT asset_name FROM transactions WHERE ticker = ? LIMIT 1",
         (ticker,),
     ).fetchone()
+    if sirket is None:
+        # Yalnızca fon pozisyonu olan hisselerde adı 13F'ten al
+        sirket = conn.execute(
+            "SELECT sirket_adi AS asset_name FROM holdings WHERE ticker = ? LIMIT 1",
+            (ticker,),
+        ).fetchone()
 
     rows = conn.execute(
         "SELECT * FROM transactions WHERE ticker = ? AND (suspect IS NULL OR suspect = 0) "
