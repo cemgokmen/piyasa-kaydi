@@ -3,6 +3,7 @@ Piyasa Kaydı komut satırı.
 
 Kullanım:
     python -m piyasa site                 siteyi başlatır (http://127.0.0.1:5001)
+    python -m piyasa site --ag            aynı Wi-Fi'daki telefondan da açılabilir
     python -m piyasa guncelle             tüm veriyi günceller (Form 4 + Kongre + emtia + bakım)
 
     python -m piyasa form4                son 90 günün eksik Form 4 günlerini indirir
@@ -51,6 +52,17 @@ KOMUTLAR = {
 GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "yurutme", "fiyatlar", "analiz"]
 
 
+def yerel_ip():
+    """Bilgisayarın yerel ağdaki adresi (ör. 192.168.1.20)."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            s.connect(("10.255.255.255", 1))   # paket gönderilmez; yalnızca çıkış arayüzü seçilir
+            return s.getsockname()[0]
+        except OSError:
+            return "127.0.0.1"
+
+
 def calistir(komut, argumanlar):
     modul = importlib.import_module(KOMUTLAR[komut])
     # Modüller argümanlarını sys.argv'den okuyor
@@ -67,7 +79,14 @@ def main():
 
     if komut == "site":
         from piyasa.web import create_app
-        create_app().run(debug="--uretim" not in argumanlar, port=5001)
+        if "--ag" in argumanlar:
+            # Aynı Wi-Fi'daki telefon ve bilgisayarlar açabilsin. Hata ayıklayıcı
+            # ağda kod çalıştırmaya izin verdiği için bu modda kapalıdır.
+            ip = yerel_ip()
+            print(f"\nAynı Wi-Fi'daki cihazlardan açın:  http://{ip}:5001\n")
+            create_app().run(host="0.0.0.0", port=5001, debug=False, threaded=True)
+        else:
+            create_app().run(debug="--uretim" not in argumanlar, port=5001)
     elif komut == "guncelle":
         for adim in GUNCELLEME:
             print(f"\n=== {adim} ===")

@@ -78,6 +78,7 @@ Bütün işler tek bir komut üzerinden yapılır. Komut listesi:
 
 ```bash
 python -m piyasa site          # siteyi başlatır → http://127.0.0.1:5001
+python -m piyasa site --ag     # aynı Wi-Fi'daki telefondan açmak için (adresi yazdırır)
 python -m piyasa guncelle      # Form 4 + Kongre verisini günceller, şüphelileri işaretler
 ```
 
