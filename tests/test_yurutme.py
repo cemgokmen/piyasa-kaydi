@@ -105,3 +105,26 @@ def test_cusip_hatasi_kalici_bos_esleme_olarak_kaydedilmez():
     assert sonuclari_kaydet(conn, ["A", "B", "C"], sonuc) == (1, 1, 1)
     kayitlar = dict(conn.execute("SELECT cusip, ticker FROM cusip_ticker"))
     assert kayitlar == {"A": "AAPL", "B": None}
+
+
+def test_tanim_kisaltma_tam_cumlelerle():
+    from piyasa.sirket_profili import kisalt
+
+    metin = "Acme Inc. makes rockets. " + "It also sells anvils to coyotes. " * 30
+    kisa = kisalt(metin, sinir=80)
+    assert kisa.startswith("Acme Inc. makes rockets.") and kisa.endswith(".")
+    assert len(kisa) <= 80
+    assert kisalt("Tek cümle ama çok uzun " * 50, sinir=40).startswith("Tek")   # ilk cümle her zaman
+
+
+def test_ceviri_yedek_servise_gecer(monkeypatch):
+    from piyasa import sirket_profili
+
+    def bozuk(_):
+        raise ConnectionError
+
+    monkeypatch.setattr(sirket_profili, "_google", bozuk)
+    monkeypatch.setattr(sirket_profili, "_mymemory", lambda m: "Merhaba")
+    assert sirket_profili.cevir("Hello") == "Merhaba"
+    monkeypatch.setattr(sirket_profili, "_mymemory", bozuk)
+    assert sirket_profili.cevir("Hello") is None

@@ -125,6 +125,15 @@ def fiyat_api(slug):
     return jsonify(bilgi)
 
 
+@emtia.route("/api/emtia/<slug>/anlik")
+def anlik_api(slug):
+    e = EMTIA.get(slug)
+    bilgi = fiyat.anlik_fiyat(e["yahoo"], ham=True) if e else None
+    if bilgi is None:
+        return jsonify({"hata": "Anlık fiyat alınamadı."}), 404
+    return jsonify(bilgi)
+
+
 @emtia.route("/api/serit")
 def serit_api():
     """Sayfanın üstündeki piyasa şeridi."""

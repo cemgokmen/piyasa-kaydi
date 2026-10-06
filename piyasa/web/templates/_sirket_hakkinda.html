@@ -1,0 +1,13 @@
+{# Hisse sayfasındaki "Şirket hakkında" kutusu (sayfa içinde ya da sonradan yüklenir) #}
+<section class="panel sirket-hakkinda" id="hakkinda" aria-labelledby="hakkinda-baslik">
+  <h2 id="hakkinda-baslik" class="hakkinda-baslik">Şirket ne iş yapıyor?</h2>
+  <p class="hakkinda-ozet">{{ profil.ozet }}</p>
+  <dl class="hakkinda-bilgiler">
+    {% if profil.sektor %}<div><dt>Sektör</dt><dd>{{ profil.sektor }}</dd></div>{% endif %}
+    {% if profil.endustri %}<div><dt>Faaliyet alanı</dt><dd>{{ profil.endustri }}</dd></div>{% endif %}
+    {% if profil.calisan %}<div><dt>Çalışan</dt><dd>{{ "{:,}".format(profil.calisan).replace(",", ".") }}</dd></div>{% endif %}
+    {% if profil.merkez %}<div><dt>Merkez</dt><dd>{{ profil.merkez }}</dd></div>{% endif %}
+    {% if profil.site %}<div><dt>İnternet sitesi</dt><dd><a href="{{ profil.site }}" target="_blank" rel="noopener">{{ profil.site.split('//')[-1].rstrip('/').removeprefix('www.') }}</a></dd></div>{% endif %}
+  </dl>
+  <p class="hakkinda-kaynak">Kaynak: Yahoo Finance şirket tanımı · Türkçesi makine çevirisidir.</p>
+</section>

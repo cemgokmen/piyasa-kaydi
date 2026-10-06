@@ -16,8 +16,8 @@
   </div>
 </header>
 
-{{ fiyat_paneli(url_for('emtia.fiyat_api', slug=e.slug), birim=e.birim, etiket='Son fiyat',
-   kaynak_notu='Kaynak: Yahoo Finance · Vadeli işlem sözleşmesinin günlük kapanışları; hacim, sözleşme adedidir.') }}
+{{ fiyat_paneli(url_for('emtia.fiyat_api', slug=e.slug), anlik_adres=url_for('emtia.anlik_api', slug=e.slug), birim=e.birim, etiket='Son fiyat',
+   kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Anlık fiyat dakikada bir yenilenir, vadelilerde 10-15 dakika gecikmelidir. Grafik günlük kapanışlardır; hacim, sözleşme adedidir.') }}
 
 <nav class="bolum-menu" aria-label="Bu sayfada">
   <a href="#etkenler">Fiyatı neler etkiler?</a>

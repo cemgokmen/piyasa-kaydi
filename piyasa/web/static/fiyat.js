@@ -104,6 +104,70 @@
       degisimleriYaz();
       hacimYaz();
       grafikCiz();
+      anlikBaslat();
     })
     .catch(() => hataGoster("Fiyat bilgisine şu an ulaşılamıyor. Sayfayı biraz sonra yenileyin."));
+
+  // -------------------------------------------------------------------------
+  // Anlık fiyat: son işlem fiyatı ve seans durumu. Sayfa açık ve görünürken
+  // dakikada bir yenilenir; sekme arka plandayken istek atılmaz.
+  // -------------------------------------------------------------------------
+  const saat = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" });
+  const gunSaat = new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul",
+  });
+
+  function zamanYaz(saniye) {
+    const t = new Date(saniye * 1000);
+    const bugun = new Date().toDateString() === t.toDateString();
+    return (bugun ? saat : gunSaat).format(t);
+  }
+
+  function anlikYaz(a) {
+    const acik = a.durum === "REGULAR";
+    alan("etiket").innerHTML = "";
+    const nokta = document.createElement("span");
+    nokta.className = "canli-nokta" + (acik ? " acik" : "");
+    nokta.setAttribute("aria-hidden", "true");
+    alan("etiket").append(nokta, acik ? "Anlık fiyat" : "Son fiyat");
+
+    alan("fiyat").textContent = fiyatYaz(a.fiyat);
+    const parcalar = [];
+    if (a.durum_etiket) parcalar.push(a.durum_etiket);
+    if (a.zaman) parcalar.push(`${zamanYaz(a.zaman)} (TSİ)`);
+    if (a.gecikme) parcalar.push(`${a.gecikme} dk gecikmeli`);
+    alan("tarih").textContent = parcalar.join(" · ");
+
+    const disi = alan("seans-disi");
+    if (a.seans_disi) {
+      const s = a.seans_disi;
+      disi.textContent = `${s.etiket}: ${fiyatYaz(s.fiyat)}` + (s.degisim === null ? "" : ` (${G.yuzde(s.degisim)})`);
+      disi.className = "fiyat-seans-disi " + (s.degisim > 0 ? "artis" : s.degisim < 0 ? "azalis" : "");
+      disi.hidden = false;
+    } else {
+      disi.hidden = true;
+    }
+
+    // "1 gün" değişimi önceki kapanışa göre anlık fiyattan
+    const gunluk = veri.degisimler.find((d) => d.anahtar === "1g");
+    if (gunluk && a.degisim !== null) {
+      gunluk.oran = a.degisim;
+      degisimleriYaz();
+    }
+  }
+
+  function anlikGetir() {
+    if (document.hidden) return;
+    fetch(panel.dataset.anlikUrl)
+      .then((cevap) => (cevap.ok ? cevap.json() : null))
+      .then((a) => a && anlikYaz(a))
+      .catch(() => { /* anlık fiyat alınamazsa son kapanış görünmeye devam eder */ });
+  }
+
+  function anlikBaslat() {
+    if (!panel.dataset.anlikUrl) return;
+    anlikGetir();
+    setInterval(anlikGetir, 60 * 1000);
+    document.addEventListener("visibilitychange", anlikGetir);
+  }
 })();

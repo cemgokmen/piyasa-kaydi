@@ -92,14 +92,15 @@
   Fiyat paneli: son fiyat, 1 gün – 10 yıl değişimler, hacim ve grafik.
   İçeriği fiyat.js, adres'teki JSON'dan doldurur.
 #}
-{% macro fiyat_paneli(adres, birim='$', etiket='Son kapanış',
-    kaynak_notu='Kaynak: Yahoo Finance · Temettü ve bölünmelere göre düzeltilmiş kapanış fiyatları. Gün içi fiyat değildir.') %}
-<section class="panel fiyat-panel" id="fiyat" data-fiyat-url="{{ adres }}" data-birim="{{ birim }}" aria-live="polite">
+{% macro fiyat_paneli(adres, anlik_adres=None, birim='$', etiket='Son kapanış',
+    kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Anlık fiyat dakikada bir yenilenir; borsaya göre gerçek zamanlı ya da en çok 15-20 dakika gecikmelidir. Değişimler ve grafik temettü ve bölünmelere göre düzeltilmiş kapanışlardır.') %}
+<section class="panel fiyat-panel" id="fiyat" data-fiyat-url="{{ adres }}"{% if anlik_adres %} data-anlik-url="{{ anlik_adres }}"{% endif %} data-birim="{{ birim }}" aria-live="polite">
   <div class="fiyat-ust">
     <div class="fiyat-sol">
-      <span class="fiyat-etiket">{{ etiket }}</span>
+      <span class="fiyat-etiket" data-alan="etiket">{{ etiket }}</span>
       <span class="fiyat-deger" data-alan="fiyat"><span class="iskelet">000,00</span></span>
       <span class="fiyat-tarih" data-alan="tarih">Fiyat yükleniyor…</span>
+      <span class="fiyat-seans-disi" data-alan="seans-disi" hidden></span>
       <span class="fiyat-hacim" data-alan="hacim" hidden></span>
     </div>
     <ul class="degisimler" data-alan="degisimler">

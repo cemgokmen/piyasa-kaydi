@@ -9,8 +9,8 @@ from datetime import UTC, date, timedelta
 import pandas as pd
 import pytest
 
-from piyasa import fiyat, veritabani
-from piyasa.emtia import haberler
+from piyasa import fiyat, sirket_profili, veritabani
+from piyasa.emtia import haberler, serit
 from piyasa.web import create_app
 
 BUGUN = date.today()
@@ -195,6 +195,22 @@ def sahte_fiyat(kod):
     }
 
 
+def sahte_anlik(kod):
+    if kod in ("YOK", "HATA"):
+        return None
+    return {"kod": kod, "fiyat": 123.45, "onceki_kapanis": 120.0, "degisim": 123.45 / 120 - 1,
+            "zaman": 1_791_300_000, "durum": "REGULAR", "durum_etiket": "Piyasa açık",
+            "gecikme": 0, "seans_disi": None}
+
+
+def sahte_profil(ticker):
+    if ticker != "AAPL":
+        return None
+    return {"ticker": "AAPL", "ozet": "Apple akıllı telefon ve bilgisayar üretir.", "ozet_en": "Apple makes phones.",
+            "sektor": "Teknoloji", "endustri": "Tüketici elektroniği", "calisan": 150000,
+            "merkez": "Cupertino, CA", "site": "https://www.apple.com", "guncelleme": "2026-01-01T00:00:00+00:00"}
+
+
 @pytest.fixture(scope="session")
 def veritabani_yolu(tmp_path_factory):
     yol = tmp_path_factory.mktemp("veri") / "test.db"
@@ -211,6 +227,11 @@ def veritabani_yolu(tmp_path_factory):
             )
     ornek_emtia_verisi(conn)
     ornek_analiz_verisi(conn)
+    conn.execute(
+        "INSERT INTO sirket_profili (ticker, ozet, ozet_en, sektor, endustri, calisan, merkez, site, guncelleme) "
+        "VALUES ('NVDA', 'NVIDIA yapay zekâ ve grafik işlemcileri tasarlar.', 'NVIDIA designs GPUs.', 'Teknoloji', "
+        "'Yarı iletkenler', 36000, 'Santa Clara, CA', 'https://www.nvidia.com', '2999-01-01T00:00:00+00:00')"
+    )
     conn.commit()
     conn.close()
 
@@ -228,15 +249,19 @@ def veritabani_yolu(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def uygulama(veritabani_yolu):
-    eski = fiyat._indir, haberler._indir
+    eski = fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir
     fiyat._indir = sahte_fiyat
+    fiyat._anlik_indir = sahte_anlik
     haberler._indir = sahte_haberler
+    sirket_profili._getir = sahte_profil
     fiyat._bilgi.temizle()
+    fiyat._anlik.temizle()
+    serit.serit.temizle()
     haberler._secilmis.temizle()
     app = create_app()
     app.config["TESTING"] = True
     yield app
-    fiyat._indir, haberler._indir = eski
+    fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir = eski
 
 
 @pytest.fixture()

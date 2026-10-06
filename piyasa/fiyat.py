@@ -1,8 +1,11 @@
 """
 Hisse ve emtia fiyatları, dönemsel değişimler ve hacim (Yahoo Finance, yfinance ile).
 
-Sonuçlar 15 dakika bellekte tutulur; aynı hisse sayfası tekrar açıldığında
-Yahoo'ya yeniden gidilmez.
+İki katman vardır:
+  fiyat_bilgisi  günlük kapanış geçmişi, değişimler, grafik (15 dk önbellek)
+  anlik_fiyat    son işlem fiyatı ve seans durumu (1 dk önbellek). Ücretsizdir;
+                 ABD hisselerinde gerçek zamanlı ya da birkaç dakika, bazı
+                 borsa ve vadelilerde en çok 15-20 dakika gecikmelidir.
 """
 
 import re
@@ -20,6 +23,15 @@ _YF_ONBELLEK.mkdir(parents=True, exist_ok=True)
 yf.set_tz_cache_location(str(_YF_ONBELLEK))
 
 ONBELLEK_SURESI = 15 * 60
+ANLIK_SURESI = 60
+
+# Yahoo seans durumu → sitede gösterilen ad
+SEANS = {
+    "REGULAR": "Piyasa açık",
+    "PRE": "Seans öncesi", "PREPRE": "Piyasa kapalı",
+    "POST": "Seans sonrası", "POSTPOST": "Piyasa kapalı",
+    "CLOSED": "Piyasa kapalı",
+}
 
 # (anahtar, etiket, geriye gidilecek süre). 1 gün: bir önceki kapanışa göre.
 DEGISIM_DONEMLERI = [
@@ -143,3 +155,52 @@ def fiyat_bilgisi(ticker, ham=False):
     """
     kod = ticker if ham else yahoo_kodu(ticker)
     return _bilgi(kod) if kod else None
+
+
+def _oran(fiyat, onceki):
+    return float(fiyat / onceki - 1) if fiyat and onceki else None
+
+
+def _anlik_indir(kod):
+    bilgi = yf.Ticker(kod).info or {}
+    fiyat = bilgi.get("regularMarketPrice") or bilgi.get("currentPrice")
+    onceki = bilgi.get("regularMarketPreviousClose") or bilgi.get("previousClose")
+    zaman = bilgi.get("regularMarketTime")
+    if not fiyat:
+        hizli = yf.Ticker(kod).fast_info
+        fiyat, onceki, zaman = hizli.last_price, hizli.previous_close, None
+    if not fiyat:
+        return None
+
+    durum = bilgi.get("marketState")
+    seans_disi = None
+    for alan, etiket, durumlar in (("preMarketPrice", "Seans öncesi", ("PRE", "PREPRE")),
+                                   ("postMarketPrice", "Seans sonrası", ("POST", "POSTPOST", "CLOSED"))):
+        deger = bilgi.get(alan)
+        if deger and durum in durumlar:
+            seans_disi = {"etiket": etiket, "fiyat": round(float(deger), 4), "degisim": _oran(deger, fiyat)}
+    return {
+        "kod": kod,
+        "fiyat": round(float(fiyat), 4),
+        "onceki_kapanis": round(float(onceki), 4) if onceki else None,
+        "degisim": _oran(fiyat, onceki),
+        "zaman": zaman,                                  # Unix saniyesi (UTC)
+        "durum": durum,
+        "durum_etiket": SEANS.get(durum),
+        "gecikme": bilgi.get("exchangeDataDelayedBy"),   # dakika; 0 gerçek zamanlı
+        "seans_disi": seans_disi,
+    }
+
+
+@sureli(ANLIK_SURESI)
+def _anlik(kod):
+    try:
+        return _anlik_indir(kod)
+    except Exception:
+        return None
+
+
+def anlik_fiyat(ticker, ham=False):
+    """Son işlem fiyatı, önceki kapanışa göre değişim ve seans durumu; 1 dk önbellekli."""
+    kod = ticker if ham else yahoo_kodu(ticker)
+    return _anlik(kod) if kod else None

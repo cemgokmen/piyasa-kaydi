@@ -378,6 +378,30 @@ if (serit) {
     minimumFractionDigits: basamak, maximumFractionDigits: basamak,
   }).format(n);
 
+  const degerYaz = (g) => `${g.birim === "$" ? "$" : ""}${bicim(g.deger, g.basamak)}${g.birim === "₺" ? " ₺" : ""}`;
+  const degisimYaz = function (span, oran) {
+    span.className = "serit-degisim " + (oran >= 0 ? "tutar-buy" : "tutar-sell");
+    span.textContent = `${oran >= 0 ? "▲" : "▼"} %${bicim(Math.abs(oran * 100), 2)}`;
+  };
+
+  // Sayfa açıkken dakikada bir: değerler yerinde güncellenir (kayan kopyalar dahil)
+  const tazele = function () {
+    if (document.hidden) return;
+    fetch(serit.dataset.adres)
+      .then((cevap) => (cevap.ok ? cevap.json() : null))
+      .then(function (veri) {
+        if (!veri) return;
+        veri.gostergeler.forEach(function (g) {
+          serit.querySelectorAll(`[data-kod="${CSS.escape(g.kod)}"]`).forEach(function (oge) {
+            oge.querySelector(".serit-deger").textContent = degerYaz(g);
+            const d = oge.querySelector(".serit-degisim");
+            if (d && g.degisim !== null) degisimYaz(d, g.degisim);
+          });
+        });
+      })
+      .catch(() => {});
+  };
+
   fetch(serit.dataset.adres)
     .then((cevap) => (cevap.ok ? cevap.json() : Promise.reject(cevap.status)))
     .then(function (veri) {
@@ -387,24 +411,25 @@ if (serit) {
       veri.gostergeler.forEach(function (g) {
         const oge = document.createElement(g.adres ? "a" : "span");
         oge.className = "serit-oge";
+        oge.dataset.kod = g.kod;
         if (g.adres) oge.href = g.adres;
         const ad = document.createElement("span");
         ad.className = "serit-ad";
         ad.textContent = g.ad;
         const deger = document.createElement("span");
         deger.className = "serit-deger";
-        deger.textContent = `${g.birim === "$" ? "$" : ""}${bicim(g.deger, g.basamak)}${g.birim === "₺" ? " ₺" : ""}`;
+        deger.textContent = degerYaz(g);
         oge.append(ad, deger);
         if (g.degisim !== null) {
           const degisim = document.createElement("span");
-          degisim.className = "serit-degisim " + (g.degisim >= 0 ? "tutar-buy" : "tutar-sell");
-          degisim.textContent = `${g.degisim >= 0 ? "▲" : "▼"} %${bicim(Math.abs(g.degisim * 100), 2)}`;
+          degisimYaz(degisim, g.degisim);
           oge.appendChild(degisim);
         }
         ic.appendChild(oge);
       });
       if (veri.gostergeler.length) serit.hidden = false;
       seridiKaydir(serit, ic);
+      setInterval(tazele, 60 * 1000);
     })
     .catch(() => { /* şerit yalnızca süs; hata olursa gizli kalır */ });
 }
@@ -445,4 +470,18 @@ document.querySelectorAll("[data-arama-odak]").forEach(function (bag) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     kutu.focus({ preventScroll: true });
   });
+});
+
+
+// ---------------------------------------------------------------------------
+// Sonradan yüklenen parçalar: data-parca-adres taşıyan yer tutucu, sunucunun
+// döndürdüğü HTML ile değiştirilir (ör. profili henüz kaydedilmemiş hissenin
+// "Şirket ne iş yapıyor?" kutusu). Cevap boşsa yer tutucu sessizce kalır.
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll("[data-parca-adres]").forEach(function (yer) {
+  fetch(yer.dataset.parcaAdres)
+    .then((cevap) => (cevap.status === 200 ? cevap.text() : ""))
+    .then(function (html) { if (html) yer.outerHTML = html; })
+    .catch(() => {});
 });

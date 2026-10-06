@@ -249,3 +249,38 @@ def test_baskan_portfoyu(istemci):
     assert "En çok alınanlar" in html and "Apple Inc." in html
     hisse = istemci.get("/hisse/NVDA").get_data(as_text=True)
     assert "portföyünde bildirdi" in hisse
+
+
+def test_anlik_fiyat_api(istemci):
+    veri = istemci.get("/api/anlik/NVDA").get_json()
+    assert veri["fiyat"] == 123.45 and veri["durum"] == "REGULAR"
+    assert istemci.get("/api/anlik/YOK").status_code == 404
+    assert istemci.get("/api/emtia/altin/anlik").get_json()["fiyat"] > 0
+    assert istemci.get("/api/emtia/yok/anlik").status_code == 404
+
+
+def test_serit_anlik_fiyat_kullanir(istemci):
+    gostergeler = istemci.get("/api/serit").get_json()["gostergeler"]
+    assert gostergeler and all(g["kod"] for g in gostergeler)
+    assert next(g for g in gostergeler if g["kod"] == "^GSPC")["deger"] == 123.45
+
+
+def test_hisse_sayfasi_anlik_fiyat_adresi(istemci):
+    html = istemci.get("/hisse/NVDA").get_data(as_text=True)
+    assert 'data-anlik-url="/api/anlik/NVDA"' in html
+
+
+def test_sirket_hakkinda_kayitli_profil_sayfada(istemci):
+    html = istemci.get("/hisse/NVDA").get_data(as_text=True)
+    assert "Şirket ne iş yapıyor?" in html
+    assert "yapay zekâ ve grafik işlemcileri" in html
+    assert "36.000" in html and "nvidia.com" in html
+    assert "data-parca-adres" not in html
+
+
+def test_sirket_hakkinda_sonradan_yuklenir(istemci):
+    html = istemci.get("/hisse/AAPL").get_data(as_text=True)
+    assert 'data-parca-adres="/hisse/AAPL/hakkinda"' in html
+    parca = istemci.get("/hisse/AAPL/hakkinda")
+    assert parca.status_code == 200 and "akıllı telefon" in parca.get_data(as_text=True)
+    assert istemci.get("/hisse/ORNK/hakkinda").status_code == 204

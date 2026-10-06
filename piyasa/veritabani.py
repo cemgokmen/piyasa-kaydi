@@ -175,6 +175,19 @@ def init_db():
         )
     """)
     conn.execute("""
+        CREATE TABLE IF NOT EXISTS sirket_profili (
+            ticker      TEXT PRIMARY KEY,
+            ozet        TEXT,
+            ozet_en     TEXT,
+            sektor      TEXT,
+            endustri    TEXT,
+            calisan     INTEGER,
+            merkez      TEXT,
+            site        TEXT,
+            guncelleme  TEXT
+        )
+    """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS uye (
             bioguide  TEXT PRIMARY KEY,
             ad        TEXT,

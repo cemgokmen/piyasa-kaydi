@@ -5,7 +5,7 @@ ve şablonu çizer; SQL burada yazılmaz.
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
-from piyasa import fiyat, uyeler
+from piyasa import fiyat, sirket_profili, uyeler
 from piyasa.analiz import cakisma, performans, portfoy, sinyaller
 from piyasa.analiz import yurutme as yurutme_analizi
 from piyasa.emtia.tanimlar import EMTIALAR
@@ -76,7 +76,17 @@ def hisse(ticker):
     if veri is None:
         abort(404)
     onay = next((h for h in sinyaller.uclu_onay()["liste"] if h["ticker"] == veri["ticker"]), None)
-    return render_template("hisse.html", aktif=None, onay=onay, **veri)
+    profil = sirket_profili.kayitli(veri["ticker"])
+    return render_template("hisse.html", aktif=None, onay=onay, profil=profil, **veri)
+
+
+@site.route("/hisse/<ticker>/hakkinda")
+def hisse_hakkinda(ticker):
+    """Profili henüz kaydedilmemiş hissede kutu sayfa açıldıktan sonra buradan dolar."""
+    profil = sirket_profili.profil(ticker)
+    if not profil or not profil.get("ozet"):
+        return "", 204
+    return render_template("_sirket_hakkinda.html", profil=profil)
 
 
 @site.route("/api/fiyat/<ticker>")
@@ -85,6 +95,15 @@ def fiyat_api(ticker):
     bilgi = fiyat.fiyat_bilgisi(ticker)
     if bilgi is None:
         return jsonify({"hata": "Bu hisse için güncel fiyat bulunamadı."}), 404
+    return jsonify(bilgi)
+
+
+@site.route("/api/anlik/<ticker>")
+def anlik_api(ticker):
+    """Hisse sayfasındaki fiyatı sayfa açıkken dakikada bir tazeler."""
+    bilgi = fiyat.anlik_fiyat(ticker)
+    if bilgi is None:
+        return jsonify({"hata": "Anlık fiyat alınamadı."}), 404
     return jsonify(bilgi)
 
 

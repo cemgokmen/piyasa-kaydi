@@ -18,6 +18,7 @@ Kullanım:
     python -m piyasa yurutme-portfoy      yıllık bildirimden hisse portföyü ve işlemleri
     python -m piyasa analiz               işlem sonrası getirileri hesaplar
     python -m piyasa cusip                13F CUSIP numaralarını hisse kodlarına eşler
+    python -m piyasa profiller [sayı]     hisse sayfalarındaki "Şirket hakkında" bilgisini doldurur
     python -m piyasa supheli              anormal fiyatlı kayıtları işaretler
     python -m piyasa slug                 eski kayıtlara kişi adresi ekler
     python -m piyasa veritabani           tabloları oluşturur / eksik sütunları ekler
@@ -44,6 +45,7 @@ KOMUTLAR = {
     "analiz": "piyasa.analiz.getiri",
     "zamanla": "piyasa.zamanlama",
     "cusip": "piyasa.toplama.cusip",
+    "profiller": "piyasa.toplama.profiller",
     "supheli": "piyasa.bakim.supheli",
     "slug": "piyasa.bakim.slug_ekle",
     "veritabani": "piyasa.bakim.sutun_ekle",
@@ -54,7 +56,7 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
-GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "analiz"]
+GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "analiz"]
 
 
 def yerel_ip():

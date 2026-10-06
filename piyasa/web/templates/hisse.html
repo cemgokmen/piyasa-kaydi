@@ -11,7 +11,10 @@
   </div>
 </header>
 
-{{ fiyat_paneli(url_for('site.fiyat_api', ticker=ticker)) }}
+{% if profil %}{% include "_sirket_hakkinda.html" %}
+{% else %}<div data-parca-adres="{{ url_for('site.hisse_hakkinda', ticker=ticker) }}"></div>{% endif %}
+
+{{ fiyat_paneli(url_for('site.fiyat_api', ticker=ticker), anlik_adres=url_for('site.anlik_api', ticker=ticker)) }}
 
 {% for y in yurutme if y.kisi_bilgi %}
 <a class="onay-serit onay-yurutme" href="{{ url_for('site.yurutme', slug=y.kisi) }}#portfoy">
