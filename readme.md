@@ -28,9 +28,9 @@ arası farkı hesaplayarak hangi hisseye girildiğini, hangisinden çıkıldığ
 ve pozisyon değişimlerini gösterir.
 
 **Emtialar**
-Altın, gümüş, platin, bakır, WTI ve Brent petrol, doğal gaz, buğday ve mısır:
+Altın, gümüş, platin, bakır ve Brent petrol:
 güncel fiyat, 1 gün – 10 yıl değişimler, hacim; büyük fonların net pozisyonu
-(CFTC), ABD petrol ve doğal gaz stokları (EIA), Fed faiz kararları ve tahvil
+(CFTC), ABD ham petrol stokları (EIA), Fed faiz kararları ve tahvil
 faizleri (FRED), konuya göre etiketlenmiş Türkçe haberler (Google Haberler).
 Altın sayfasında gram altının TL fiyatı da hesaplanır.
 

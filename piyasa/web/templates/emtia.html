@@ -62,7 +62,8 @@
     <header class="panel-ust">
       <div>
         <h2>Büyük fonların net pozisyonu</h2>
-        <p class="panel-not">Spekülatif fonların alım eksi satım sözleşmeleri, haftalık. Pozitif: yükseliş beklentisi. Kaynak: CFTC, {{ cot.tarih|uzun_tarih }} raporu.</p>
+        <p class="panel-not">Spekülatif fonların alım eksi satım sözleşmeleri, haftalık. Pozitif: yükseliş beklentisi. Kaynak: CFTC, {{ cot.tarih|uzun_tarih }} raporu.
+        {% if e.cot_notu %}<br><b>Not:</b> {{ e.cot_notu }}{% endif %}</p>
       </div>
     </header>
     <div class="panel-ic">

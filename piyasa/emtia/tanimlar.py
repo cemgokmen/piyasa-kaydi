@@ -3,7 +3,7 @@ Takip edilen emtialar ve onları etkileyen göstergeler.
 
 Her emtia için:
   yahoo   Yahoo Finance vadeli işlem kodu (fiyat ve hacim)
-  birim   Fiyatın birimi; tahıllar ABD borsasında sent/buşel olarak işlem görür
+  birim   Fiyatın birimi
   cot     CFTC raporundaki sözleşme kodu (büyük fonların konumu); yoksa None
   eia     ABD Enerji Bilgi İdaresi haftalık stok serisi; yoksa None
   haber   Google Haberler'de aranacak Türkçe ifade
@@ -53,57 +53,24 @@ EMTIALAR = [
         ],
     },
     {
-        "slug": "petrol", "ad": "Ham petrol (WTI)", "grup": "Enerji",
-        "yahoo": "CL=F", "birim": "$/varil", "cot": "067651", "eia": "ham_petrol",
-        "haber": '"ham petrol" OR "petrol fiyatları" OR OPEC',
-        "etkenler": [
-            "OPEC+ üretim kararları arzı doğrudan belirler.",
-            "ABD ham petrol stokları (haftalık EIA verisi) beklenenden fazla artarsa fiyat baskılanır.",
-            "Yaptırımlar ve savaşlar (Rusya, İran, Venezuela) arzı daraltabilir.",
-            "Küresel büyüme ve özellikle Çin talebi talep tarafını belirler.",
-        ],
-    },
-    {
         "slug": "brent", "ad": "Brent petrol", "grup": "Enerji",
-        "yahoo": "BZ=F", "birim": "$/varil", "cot": None, "eia": "ham_petrol",
-        "haber": '"brent petrol" OR "brent petrolün varili"',
+        "yahoo": "BZ=F", "birim": "$/varil", "cot": "067651", "eia": "ham_petrol",
+        # Brent'in fon verisini Londra borsası (ICE) yayımlar; CFTC'de yok.
+        # Fiyatı Brent'le birlikte hareket eden ABD ham petrolünün (WTI) fon verisi gösterilir.
+        "cot_notu": "Brent'in fon verisi Londra borsasında yayımlandığı için, Brent'le birlikte hareket eden ABD ham petrolünün (WTI) fon verisi gösteriliyor.",
+        "haber": '"brent petrol" OR "petrol fiyatları" OR OPEC',
         "etkenler": [
-            "Avrupa ve dünya piyasasının referans petrolüdür; Türkiye'deki akaryakıt fiyatları Brent'e bağlıdır.",
-            "OPEC+ kararları, Orta Doğu'daki gerilimler ve tanker taşımacılığındaki aksaklıklar fiyatı etkiler.",
-        ],
-    },
-    {
-        "slug": "dogalgaz", "ad": "Doğal gaz", "grup": "Enerji",
-        "yahoo": "NG=F", "birim": "$/MMBtu", "cot": "023651", "eia": "dogalgaz",
-        "haber": '"doğal gaz fiyatları" OR "doğalgaz fiyatı"',
-        "etkenler": [
-            "Hava durumu: Soğuk kış ve sıcak yaz (klima) talebi artırır.",
-            "ABD depo seviyeleri (haftalık EIA verisi) 5 yıllık ortalamanın altındaysa fiyat yükselme eğilimindedir.",
-            "Sıvılaştırılmış doğal gaz (LNG) ihracatı ve Avrupa'nın gaz ihtiyacı.",
-        ],
-    },
-    {
-        "slug": "bugday", "ad": "Buğday", "grup": "Tarım",
-        "yahoo": "ZW=F", "birim": "sent/buşel", "cot": "001602", "eia": None,
-        "haber": '"buğday fiyatları" OR "tahıl koridoru" OR "buğday hasadı"',
-        "etkenler": [
-            "Hasat beklentileri ve hava koşulları (kuraklık) arzı belirler.",
-            "Rusya ve Ukrayna dünya ihracatının önemli bölümünü yapar; ihracat yasakları ve savaş fiyatı etkiler.",
-        ],
-    },
-    {
-        "slug": "misir", "ad": "Mısır", "grup": "Tarım",
-        "yahoo": "ZC=F", "birim": "sent/buşel", "cot": "002602", "eia": None,
-        "haber": '"mısır fiyatları" OR "mısır hasadı"',
-        "etkenler": [
-            "ABD hasadı ve hava koşulları belirleyicidir.",
-            "Hayvan yemi ve etanol üretimi talebin ana kaynaklarıdır; petrol fiyatı etanol üzerinden mısırı etkiler.",
+            "Türkiye için önemi: Akaryakıt pompa fiyatları ve enerji ithalat faturası Brent'e bağlıdır.",
+            "OPEC+ kararları: Üretim kotaları arzı doğrudan belirler.",
+            "Stoklar: ABD ham petrol stokları (haftalık EIA verisi) beklenenden fazla artarsa fiyat baskılanır.",
+            "Jeopolitik: Orta Doğu'daki gerilimler, Hürmüz Boğazı ve tanker taşımacılığı, Rusya ve İran'a yaptırımlar arzı daraltabilir.",
+            "Talep: Küresel büyüme ve özellikle Çin'in petrol ithalatı.",
         ],
     },
 ]
 
 EMTIA = {e["slug"]: e for e in EMTIALAR}
-GRUPLAR = ["Değerli metaller", "Enerji", "Sanayi metalleri", "Tarım"]
+GRUPLAR = ["Değerli metaller", "Enerji", "Sanayi metalleri"]
 
 # Emtiaları etkileyen genel göstergeler (Yahoo kodları)
 GOSTERGELER = {
@@ -125,12 +92,6 @@ EIA_SERILERI = {
         "ad": "ABD ticari ham petrol stokları",
         "birim": "milyon varil",
         "bolen": 1000,   # kaynak bin varil
-    },
-    "dogalgaz": {
-        "url": "https://www.eia.gov/dnav/ng/hist_xls/NW2_EPG0_SWO_R48_BCFw.xls",
-        "ad": "ABD doğal gaz depo seviyesi",
-        "birim": "milyar fit küp",
-        "bolen": 1,
     },
 }
 

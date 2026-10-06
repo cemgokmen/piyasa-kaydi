@@ -5,6 +5,7 @@ ve şablonu çizer; SQL burada yazılmaz.
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
+from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.web import fiyat, sorgular
 from piyasa.web.bicim import PARTILER
 
@@ -22,7 +23,8 @@ def anasayfa():
     # Eski sürümde liste ana sayfadaydı; filtreli eski bağlantılar listeye gitsin
     if request.args:
         return redirect(url_for("site.islemler", **request.args))
-    return render_template("anasayfa.html", aktif="anasayfa", **sorgular.genel_bakis())
+    return render_template("anasayfa.html", aktif="anasayfa", emtia_sayisi=len(EMTIALAR),
+                           **sorgular.genel_bakis())
 
 
 @site.route("/islemler")

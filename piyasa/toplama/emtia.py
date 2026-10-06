@@ -3,7 +3,7 @@ Emtiaların arz-talep ve karar verilerini indirip veritabanına yazar:
 
   CFTC   Haftalık "Commitments of Traders" raporu: büyük spekülatif fonların
          (managed money) ve üreticilerin vadeli işlem konumları
-  EIA    ABD ham petrol stokları ve doğal gaz depo seviyesi (haftalık)
+  EIA    ABD ham petrol stokları (haftalık)
   FRED   Fed politika faizi, ABD 10 yıllık ve reel faiz (günlük)
 
 Fiyatlar ve haberler burada indirilmez; site onları canlı alır.
@@ -43,6 +43,9 @@ def indir(url):
 
 def cot_indir(conn, yillar):
     kodlar = {e["cot"]: e["slug"] for e in EMTIALAR if e["cot"]}
+    # Takipten çıkarılan emtiaların eski kayıtları kalmasın
+    yer = ", ".join("?" for _ in kodlar)
+    conn.execute(f"DELETE FROM cot WHERE emtia NOT IN ({yer})", list(kodlar.values()))
     eklenen = 0
     for yil in yillar:
         try:
@@ -71,6 +74,8 @@ def cot_indir(conn, yillar):
 
 
 def eia_indir(conn):
+    yer = ", ".join("?" for _ in EIA_SERILERI)
+    conn.execute(f"DELETE FROM eia_stok WHERE seri NOT IN ({yer})", list(EIA_SERILERI))
     for anahtar, seri in EIA_SERILERI.items():
         try:
             dosya = pd.ExcelFile(io.BytesIO(indir(seri["url"])))

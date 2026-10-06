@@ -104,13 +104,12 @@ def ornek_emtia_verisi(conn):
     """CFTC, EIA ve FRED tablolarına iki yıllık sahte haftalık veri."""
     for hafta in range(104):
         t = gun(7 * (103 - hafta))
-        for slug in ("altin", "gumus", "petrol"):
+        for slug in ("altin", "gumus", "brent"):
             conn.execute(
                 "INSERT INTO cot VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (slug, t, 500_000, 100_000 + hafta * 500, 50_000, 20_000, 60_000),
             )
         conn.execute("INSERT INTO eia_stok VALUES ('ham_petrol', ?, ?)", (t, 420_000 + hafta * 10))
-        conn.execute("INSERT INTO eia_stok VALUES ('dogalgaz', ?, ?)", (t, 3_000 + hafta))
     for i in range(800):
         t = gun(800 - i)
         conn.execute("INSERT INTO makro VALUES ('fed_faiz', ?, ?)", (t, 4.25 if i < 400 else 4.0))

@@ -26,10 +26,8 @@ SAYFALAR = [
     "/hakkinda",
     "/emtialar",
     "/emtia/altin",
-    "/emtia/petrol",
-    "/emtia/dogalgaz",
     "/emtia/brent",
-    "/emtia/bugday",
+    "/emtia/bakir",
 ]
 
 
@@ -40,7 +38,8 @@ def test_sayfa_acilir(istemci, adres):
     assert b"<h1" in cevap.data
 
 
-@pytest.mark.parametrize("adres", ["/yok", "/hisse/YOKBOYLE", "/kisi/yok", "/fon/yok", "/emtia/yok"])
+@pytest.mark.parametrize("adres", ["/yok", "/hisse/YOKBOYLE", "/kisi/yok", "/fon/yok", "/emtia/yok",
+                                   "/emtia/petrol", "/emtia/dogalgaz", "/emtia/bugday", "/emtia/misir"])
 def test_olmayan_sayfa_404(istemci, adres):
     cevap = istemci.get(adres)
     assert cevap.status_code == 404
@@ -131,15 +130,17 @@ def test_tum_ic_baglantilar_calisir(istemci):
 
 def test_emtia_genel_bakis(istemci):
     html = istemci.get("/emtialar").get_data(as_text=True)
-    for metin in ("Altın", "Ham petrol (WTI)", "Gram altın", "Fed politika faizi",
-                  "Büyük fonlar ne yapıyor?", "OPEC"):
+    for metin in ("Altın", "Gümüş", "Platin", "Bakır", "Brent petrol", "Gram altın",
+                  "Fed politika faizi", "Büyük fonlar ne yapıyor?", "OPEC"):
         assert metin in html, metin
-    assert "$/ons" in html and "sent/buşel" in html
+    for cikarilan in ("Doğal gaz", "Buğday", "Mısır", "WTI)"):
+        assert cikarilan not in html, cikarilan
 
 
 def test_emtia_sayfasi_arz_talep(istemci):
-    html = istemci.get("/emtia/petrol").get_data(as_text=True)
-    assert 'id="cot-verisi"' in html          # fon konumu grafiği
+    html = istemci.get("/emtia/brent").get_data(as_text=True)
+    assert 'id="cot-verisi"' in html          # fon konumu grafiği (WTI vekil)
+    assert "Londra borsasında" in html        # vekil verinin açıklaması
     assert 'id="eia-verisi"' in html          # stok grafiği
     assert "ABD ticari ham petrol stokları" in html
     assert "Örnek haber" in html

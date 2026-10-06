@@ -23,7 +23,7 @@ ONBELLEK_SURESI = 30 * 60
 # Hükümet ve merkez bankası kararları için ortak arama
 KARAR_SORGUSU = (
     '(OPEC OR "Fed faiz" OR "Merkez Bankası faiz" OR yaptırım OR "gümrük vergisi" OR ambargo) '
-    '(petrol OR altın OR emtia OR doğalgaz OR buğday)'
+    '(petrol OR altın OR gümüş OR emtia)'
 )
 
 # Bilgi taşımayan, her gün tekrarlanan fiyat listesi başlıkları

@@ -245,7 +245,7 @@ def test_telefon_gorunumu_tasmaz(tarayici, sunucu):
     tarayici.set_window_size(500, 900)
     try:
         for adres in ("/", "/islemler?kaynak=siyasetci", "/siyasetciler", "/hisse/NVDA",
-                      "/emtialar", "/emtia/petrol"):
+                      "/emtialar", "/emtia/brent"):
             tarayici.get(sunucu + adres)
             genislik = tarayici.execute_script("return document.documentElement.scrollWidth")
             pencere = tarayici.execute_script("return window.innerWidth")
@@ -292,8 +292,8 @@ def test_geri_dugmesi_dogrudan_acilan_sayfada_ust_sayfaya_gider(tarayici, sunucu
 
 def test_emtia_sayfalari(tarayici, sunucu):
     tarayici.get(sunucu + "/emtialar")
-    tarayici.find_element(By.XPATH, "//a[contains(@class,'emtia-kart')][.//span[text()='Ham petrol (WTI)']]").click()
-    bekle(tarayici, EC.url_contains("/emtia/petrol"))
+    tarayici.find_element(By.XPATH, "//a[contains(@class,'emtia-kart')][.//span[text()='Brent petrol']]").click()
+    bekle(tarayici, EC.url_contains("/emtia/brent"))
 
     # Fiyat paneli, hacim ve grafik
     bekle(tarayici, lambda t: "$/varil" in t.find_element(By.CSS_SELECTOR, '[data-alan="fiyat"]').text)
@@ -318,7 +318,7 @@ def test_emtia_sayfalari(tarayici, sunucu):
     tikla(tarayici, tarayici.find_element(By.LINK_TEXT, "Altın"))
     bekle(tarayici, EC.url_contains("/emtia/altin"))
     tikla(tarayici, tarayici.find_element(By.CSS_SELECTOR, "a.geri"))
-    bekle(tarayici, EC.url_contains("/emtia/petrol"))
+    bekle(tarayici, EC.url_contains("/emtia/brent"))
 
     # Fon tablosu satırı detay sayfasına gider
     tarayici.get(sunucu + "/emtialar")
