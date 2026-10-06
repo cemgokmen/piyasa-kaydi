@@ -1,21 +1,17 @@
 """
-transactions tablosuna person_slug sütunu ekler ve doldurur.
+transactions tablosundaki person_slug sütununu doldurur.
+Yeni kayıtlarda toplayici.py bunu kendisi dolduruyor; bu dosya eski
+kayıtlar için.
 Bir kez çalıştırılır.
 """
 
-from database import get_connection
+from database import get_connection, init_db
 from slug import slugify
 
 
 def main():
+    init_db()  # person_slug sütunu ve indeksi yoksa ekler
     conn = get_connection()
-
-    sutunlar = [s["name"] for s in conn.execute("PRAGMA table_info(transactions)")]
-    if "person_slug" not in sutunlar:
-        conn.execute("ALTER TABLE transactions ADD COLUMN person_slug TEXT")
-        print("person_slug sütunu eklendi.")
-    else:
-        print("person_slug sütunu zaten var.")
 
     kisiler = conn.execute(
         "SELECT DISTINCT person FROM transactions WHERE person IS NOT NULL"
@@ -29,9 +25,6 @@ def main():
             (slugify(satir["person"]), satir["person"]),
         )
 
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_person_slug ON transactions(person_slug)"
-    )
     conn.commit()
     conn.close()
     print("Bitti.")

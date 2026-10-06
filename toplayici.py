@@ -10,6 +10,7 @@ from datetime import date, datetime, timedelta, timezone
 import requests
 
 from database import get_connection, init_db
+from slug import slugify
 
 # SEC'in istediği kimlik. Kendi e-posta adresini yaz.
 USER_AGENT = "PiyasaKaydi cemgokmen101@gmail.com"
@@ -262,11 +263,13 @@ COLUMNS = [
     "job_title", "company", "ticker", "asset_name", "action",
     "amount_min", "amount_max", "currency",
     "transaction_date", "disclosed_date", "source_url", "fetched_at",
-    "share_count", "share_price", "security_name", "suspect",
+    "share_count", "share_price", "security_name", "suspect", "person_slug",
 ]
 
 
 def kaydet(conn, kayit):
+    if not kayit.get("person_slug"):
+        kayit = {**kayit, "person_slug": slugify(kayit.get("person"))}
     degerler = [kayit.get(sutun) for sutun in COLUMNS]
     yer_tutucu = ", ".join("?" for _ in COLUMNS)
     imlec = conn.execute(
