@@ -3,6 +3,12 @@ Elimizdeki örnek JSON kayıtlarını veritabanına aktarır.
 Tekrar çalıştırırsan mükerrer kayıt oluşmaz.
 """
 
+import sys
+from pathlib import Path
+
+# Proje kökündeki modülleri (database, toplayici...) bulabilmek için
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import json
 from datetime import datetime, timezone
 

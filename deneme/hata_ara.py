@@ -3,6 +3,12 @@ Anormal büyük tutarlı kayıtları bulur ve kaynak belgedeki
 ham adet/fiyat değerlerini gösterir.
 """
 
+import sys
+from pathlib import Path
+
+# Proje kökündeki modülleri (database, toplayici...) bulabilmek için
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import xml.etree.ElementTree as ET
 
 import requests

@@ -3,6 +3,12 @@ Veritabanındaki eski ham dosya adreslerini okunabilir bildirim
 sayfası adresleriyle değiştirir. Bir kez çalıştırılır.
 """
 
+import sys
+from pathlib import Path
+
+# Proje kökündeki modülleri (database, toplayici...) bulabilmek için
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from database import get_connection
 from toplayici import belge_url
 
