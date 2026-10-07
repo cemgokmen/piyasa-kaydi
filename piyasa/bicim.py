@@ -266,6 +266,8 @@ def unvan(metin):
         if not p:
             continue
         karsilik = UNVANLAR.get(p.lower()) or UNVANLAR.get(p.lower() + ".")
+        if not karsilik and re.match(r"^(chief|principal) .+ officer$", p, re.IGNORECASE):
+            karsilik = "Üst düzey yönetici"
         if not karsilik and p.isupper() and len(p) > 4:
             karsilik = p.capitalize()
         karsilik = karsilik or p

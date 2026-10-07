@@ -322,3 +322,14 @@ def test_rapor_kopyalari_silinir_ayni_rapordakiler_kalir(tmp_path, monkeypatch):
     veri_duzelt.tekrarlari_sil(conn)
     kalan = [tuple(s) for s in conn.execute("SELECT source_url, disclosed_date FROM transactions ORDER BY id")]
     assert kalan == [("rapor1", "2025-10-10"), ("r3", "2026-02-02"), ("r3", "2026-02-02")]
+
+
+def test_unvan():
+    from piyasa.bicim import unvan
+
+    assert unvan("PRESIDENT AND CEO") == "Başkan, CEO"
+    assert unvan("Chairperson & CEO") == "Yönetim kurulu başkanı, CEO"
+    assert unvan("EVP & CFO") == "Kıdemli başkan yardımcısı, Finans direktörü (CFO)"
+    assert unvan("Chief Transformation Officer") == "Üst düzey yönetici"
+    assert unvan("See Remarks") == "Yönetici"
+    assert unvan("Yönetim kurulu üyesi") == "Yönetim kurulu üyesi"
