@@ -72,6 +72,8 @@ document.querySelectorAll("#tablo-suz").forEach(function (kutu) {
     tablo.querySelectorAll("tbody tr").forEach(function (satir) {
       satir.hidden = Boolean(aranan) && !kucult(satir.textContent).includes(aranan);
     });
+    // Kısaltılmış tablo: arama sürerken bütün eşleşenler görünür, bitince kısaltma geri gelir
+    tablo.dispatchEvent(new CustomEvent("suzuldu", { detail: { aranan: aranan } }));
   });
 });
 
@@ -653,23 +655,34 @@ document.addEventListener("keydown", function (olay) {
 
 document.querySelectorAll("[data-kisalt]").forEach(function (kap) {
   const sinir = parseInt(kap.dataset.kisalt, 10);
-  const satirlar = Array.from(kap.querySelectorAll("tbody > tr"));
-  if (satirlar.length <= sinir + 2) return;            // 1-2 fazla satır için düğme gereksiz
-  const fazla = satirlar.slice(sinir);
-  fazla.forEach((s) => { s.hidden = true; });
+  const govde = kap.querySelector("tbody");
+  if (!govde) return;
+  const toplam = govde.children.length;
+  if (toplam <= sinir + 2) return;            // 1-2 fazla satır için düğme gereksiz
+  let acik = false;
+  let suzuluyor = false;
   const dugme = document.createElement("button");
   dugme.type = "button";
   dugme.className = "dugme tumunu-goster";
-  const yaz = (acik) => {
-    dugme.textContent = acik ? "Daha az göster" : `Tümünü göster (${satirlar.length})`;
+  // Sıralamadan sonra da o anki ilk satırlar görünsün diye her seferinde sıraya bakılır
+  const uygula = () => {
+    if (suzuluyor) return;
+    Array.from(govde.children).forEach((s, i) => { s.hidden = !acik && i >= sinir; });
+    dugme.textContent = acik ? "Daha az göster" : `Tümünü göster (${toplam})`;
     dugme.setAttribute("aria-expanded", acik ? "true" : "false");
   };
-  yaz(false);
+  uygula();
   dugme.addEventListener("click", function () {
-    const acik = dugme.getAttribute("aria-expanded") !== "true";
-    fazla.forEach((s) => { s.hidden = !acik; });
-    yaz(acik);
+    acik = !acik;
+    uygula();
     if (!acik) kap.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+  new MutationObserver(uygula).observe(govde, { childList: true });
+  const tablo = kap.matches("table") ? kap : kap.querySelector("table");
+  tablo.addEventListener("suzuldu", function (olay) {
+    suzuluyor = Boolean(olay.detail.aranan);
+    dugme.hidden = suzuluyor;
+    uygula();
   });
   kap.after(dugme);
 });
