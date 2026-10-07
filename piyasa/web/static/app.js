@@ -154,7 +154,27 @@ if (gunSec) {
 // Arama önerileri: data-oneri taşıyan kutulara yazılırken altta liste açılır.
 // Fare ya da klavyeyle (↑ ↓ Enter, Esc) seçilir; seçilen sayfa açılır.
 // Hiçbiri seçilmeden Enter'a basılırsa form normal arama yapar.
+// Kutu boşken odaklanınca son 5 arama listelenir (yalnızca bu tarayıcıda saklanır).
 // ---------------------------------------------------------------------------
+
+const SON_ARAMA_ANAHTARI = "son_aramalar";
+const SON_ARAMA_SAYISI = 5;
+
+function sonAramalar() {
+  try {
+    return JSON.parse(localStorage.getItem(SON_ARAMA_ANAHTARI) || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function sonAramaKaydet(kayit) {
+  try {
+    const liste = sonAramalar().filter((k) => k.adres !== kayit.adres);
+    liste.unshift(kayit);
+    localStorage.setItem(SON_ARAMA_ANAHTARI, JSON.stringify(liste.slice(0, SON_ARAMA_SAYISI)));
+  } catch (e) { /* gizli pencere vb.: saklanamazsa önemli değil */ }
+}
 
 document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
   const form = kutu.form;
@@ -194,7 +214,7 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
   function vurgula(metin, aranan) {
     // Eşleşen kısmı kalın gösterir; metin her zaman textContent olarak eklenir
     const parca = document.createElement("span");
-    const i = sadelestir(metin).indexOf(sadelestir(aranan));
+    const i = aranan ? sadelestir(metin).indexOf(sadelestir(aranan)) : -1;
     if (!aranan || i < 0) {
       parca.textContent = metin;
       return parca;
@@ -224,6 +244,7 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
       li.id = `${liste.id}-${i}`;
       li.setAttribute("role", "option");
       li.dataset.adres = o.adres;
+      li.dataset.kayit = JSON.stringify({ etiket: o.etiket, alt: o.alt || "", tur: o.tur, adres: o.adres });
       const tur = document.createElement("span");
       tur.className = `oneri-tur oneri-${o.tur.toLocaleLowerCase("tr-TR").replace(/[^a-zçğıöşü]/g, "")}`;
       tur.textContent = o.tur;
@@ -238,6 +259,27 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
       liste.appendChild(li);
       secenekler.push(li);
     });
+
+    if (aranan === null) {
+      // Son aramalar: başlık ve temizleme düğmesi
+      const baslik = document.createElement("li");
+      baslik.className = "oneri-baslik";
+      baslik.setAttribute("role", "presentation");
+      baslik.textContent = "Son aramalar";
+      liste.prepend(baslik);
+      const temizle = document.createElement("li");
+      temizle.id = `${liste.id}-temizle`;
+      temizle.setAttribute("role", "option");
+      temizle.className = "oneri-temizle";
+      temizle.dataset.temizle = "1";
+      temizle.textContent = "Geçmişi temizle";
+      liste.appendChild(temizle);
+      secenekler.push(temizle);
+      liste.hidden = false;
+      kutu.setAttribute("aria-expanded", "true");
+      aktifYap(-1);
+      return;
+    }
 
     const hepsi = document.createElement("li");
     hepsi.id = `${liste.id}-hepsi`;
@@ -254,19 +296,40 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
   }
 
   function sec(li) {
+    if (li.dataset.temizle) {
+      try { localStorage.removeItem(SON_ARAMA_ANAHTARI); } catch (e) { /* önemli değil */ }
+      kapat();
+      return;
+    }
     if (li.dataset.hepsi) {
       kapat();
       form.requestSubmit();
     } else {
+      if (li.dataset.kayit) sonAramaKaydet(JSON.parse(li.dataset.kayit));
       window.location.href = li.dataset.adres;
     }
   }
+
+  function sonlariGoster() {
+    const liste_ = sonAramalar();
+    if (!liste_.length) return;
+    goster(liste_, null);
+  }
+
+  // Serbest metinle arama da geçmişe yazılır
+  form.addEventListener("submit", function () {
+    const aranan = kutu.value.trim();
+    if (aranan) {
+      sonAramaKaydet({ etiket: aranan, alt: "bütün işlemlerde arama", tur: "Arama",
+                       adres: `/islemler?q=${encodeURIComponent(aranan)}&donem=365` });
+    }
+  });
 
   kutu.addEventListener("input", function () {
     clearTimeout(zamanlayici);
     const aranan = kutu.value.trim();
     if (!aranan) {
-      kapat();
+      sonlariGoster();
       return;
     }
     zamanlayici = setTimeout(function () {
@@ -313,10 +376,16 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
 
   kutu.addEventListener("blur", () => setTimeout(kapat, 100));
   kutu.addEventListener("focus", function () {
-    if (kutu.value.trim() && secenekler.length) {
+    if (!kutu.value.trim()) {
+      sonlariGoster();
+    } else if (secenekler.length) {
       liste.hidden = false;
       kutu.setAttribute("aria-expanded", "true");
     }
+  });
+  // Odaktayken tekrar tıklanırsa da açılsın
+  kutu.addEventListener("click", function () {
+    if (!kutu.value.trim() && liste.hidden) sonlariGoster();
   });
 });
 

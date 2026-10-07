@@ -488,3 +488,23 @@ def test_piyasa_seridi(tarayici, sunucu):
     brent = serit.find_element(By.XPATH, ".//a[contains(@class,'serit-oge')][.//span[text()='Brent']]")
     tarayici.execute_script("arguments[0].click()", brent)
     bekle(tarayici, EC.url_contains("/emtia/brent"))
+
+
+def test_son_aramalar(tarayici, sunucu):
+    tarayici.get(sunucu + "/fonlar")
+    tarayici.execute_script("localStorage.removeItem('son_aramalar')")
+    kutu = tarayici.find_element(By.ID, "genel-arama")
+    liste = tarayici.find_element(By.CSS_SELECTOR, ".ust-arama .oneri-listesi")
+    kutu.send_keys("nvid")
+    bekle(tarayici, lambda t: liste.is_displayed() and "NVDA" in liste.text)
+    kutu.send_keys(Keys.ARROW_DOWN)
+    kutu.send_keys(Keys.ENTER)
+    bekle(tarayici, EC.url_contains("/hisse/NVDA"))
+    # Kutu boşken tıklanınca son aramalar listelenir
+    tarayici.find_element(By.ID, "genel-arama").click()
+    liste = tarayici.find_element(By.CSS_SELECTOR, ".ust-arama .oneri-listesi")
+    bekle(tarayici, lambda t: liste.is_displayed() and "NVDA" in liste.text)
+    assert "SON ARAMALAR" in liste.text.upper()
+    # Geçmiş temizlenebilir
+    tarayici.find_element(By.CSS_SELECTOR, ".ust-arama .oneri-temizle").click()
+    assert tarayici.execute_script("return localStorage.getItem('son_aramalar')") is None
