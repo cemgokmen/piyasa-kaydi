@@ -16,6 +16,7 @@ from contextlib import closing
 
 from piyasa.bicim import sirket_gorunen_ad, unvan
 from piyasa.emtia.tanimlar import EMTIALAR
+from piyasa.kripto.tanimlar import KRIPTOLAR
 from piyasa.kurallar import GECERLI_KOD, TEMIZ, parti_bilgisi
 from piyasa.onbellek import sureli
 from piyasa.uyeler import YURUTME
@@ -33,7 +34,7 @@ EMTIA_ESANLAMLILARI = {
     "brent": "oil petrol ham petrol akaryakit",
 }
 
-TUR_SIRASI = {"Hisse": 0, "Emtia": 1, "Siyasetçi": 2, "Yönetici": 3, "Fon": 4}
+TUR_SIRASI = {"Hisse": 0, "Emtia": 1, "Kripto": 2, "Siyasetçi": 3, "Yönetici": 4, "Fon": 5}
 
 
 def sade(metin):
@@ -126,6 +127,13 @@ def _dizin_kur():
             "adres": f"/emtia/{e['slug']}", "kod": "",
             "metin": sade(f"{e['ad']} {EMTIA_ESANLAMLILARI.get(e['slug'], '')}"), "agirlik": 10_000,
         })
+
+    for k in KRIPTOLAR:
+        girdiler.append({
+            "tur": "Kripto", "etiket": f"{k['ad']} ({k['sembol']})", "alt": f"Kripto para · {k['tur']}",
+            "adres": f"/kripto/{k['slug']}", "kod": k["sembol"].lower(),
+            "metin": sade(f"{k['ad']} {k['sembol']} kripto"), "agirlik": 10_000,
+        })
     return girdiler
 
 
@@ -154,7 +162,7 @@ def _puan(girdi, aranan):
     else:
         return 0
     # Sitenin kendi emtia sayfaları "altın", "gold", "petrol" aramalarında öne çıksın
-    if girdi["tur"] == "Emtia" or girdi.get("one_cikar"):
+    if girdi["tur"] in ("Emtia", "Kripto") or girdi.get("one_cikar"):
         taban += 200
     # Çok işlem görenler öne; kısa adlar (tam eşleşmeye yakın) biraz önde
     return taban + 25 * math.log10(1 + girdi["agirlik"]) - min(len(metin), 60) * 0.3

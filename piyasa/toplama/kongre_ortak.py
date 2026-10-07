@@ -39,3 +39,20 @@ def tutar_coz(metin):
     if not sayilar:
         return None, None
     return sayilar[0], sayilar[-1]
+
+
+KRIPTO_SUTUNLARI = [
+    "source_id", "source", "person", "person_slug", "chamber", "state", "party", "coin", "varlik", "ticker",
+    "action", "amount_min", "amount_max", "transaction_date", "disclosed_date", "source_url", "sahip", "fetched_at",
+]
+
+
+def kripto_kaydet(conn, kayit):
+    """Kongre bildirimindeki kripto para ya da kripto fonu işlemini kripto_islem tablosuna yazar."""
+    degerler = [kayit.get(s) for s in KRIPTO_SUTUNLARI]
+    imlec = conn.execute(
+        f"INSERT OR IGNORE INTO kripto_islem ({', '.join(KRIPTO_SUTUNLARI)}) "
+        f"VALUES ({', '.join('?' for _ in KRIPTO_SUTUNLARI)})",
+        degerler,
+    )
+    return imlec.rowcount

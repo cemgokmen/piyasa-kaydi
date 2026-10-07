@@ -286,6 +286,46 @@ def init_db():
         )
     """)
 
+    # --- Kripto ---
+    # Kongre üyelerinin kripto para ve kripto fonu (ETF) işlemleri. Hisse analizlerine
+    # karışmasın diye transactions tablosundan ayrı tutulur.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS kripto_islem (
+            source_id        TEXT PRIMARY KEY,
+            source           TEXT NOT NULL,
+            person           TEXT NOT NULL,
+            person_slug      TEXT,
+            chamber          TEXT,
+            state            TEXT,
+            party            TEXT,
+            coin             TEXT NOT NULL,      -- kripto/tanimlar.py'deki slug
+            varlik           TEXT,               -- bildirimde yazan ad ('Bitcoin', 'iShares Bitcoin Trust')
+            ticker           TEXT,               -- fon ise borsa kodu (IBIT)
+            action           TEXT NOT NULL,      -- buy | sell
+            amount_min       INTEGER,
+            amount_max       INTEGER,
+            transaction_date TEXT,
+            disclosed_date   TEXT,
+            source_url       TEXT,
+            sahip            TEXT,
+            fetched_at       TEXT
+        )
+    """)
+    # CFTC haftalık raporu (finansal vadeliler): kurumsal yatırımcılar ve hedge fonları
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS kripto_cot (
+            coin           TEXT NOT NULL,
+            tarih          TEXT NOT NULL,
+            acik_pozisyon  INTEGER,
+            kurum_uzun     INTEGER,
+            kurum_kisa     INTEGER,
+            hedge_uzun     INTEGER,
+            hedge_kisa     INTEGER,
+            PRIMARY KEY (coin, tarih)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_kripto_coin ON kripto_islem(coin, transaction_date)")
+
     sutunlari_tamamla(conn, "yurutme_varlik", [("sirket", "TEXT")])
     sutunlari_tamamla(conn, "yurutme_islem", [("sirket", "TEXT")])
     sutunlari_tamamla(conn, "sirket_profili", [("kurulus", "INTEGER")])

@@ -44,6 +44,7 @@
           ('sinyal', url_for('analiz.sinyaller_sayfasi'), 'Sinyaller'),
           ('fonlar', url_for('site.fonlar'), 'Fonlar'),
           ('emtia', url_for('emtia.liste'), 'Emtialar'),
+          ('kripto', url_for('kripto.liste'), 'Kripto'),
       ] %}
       <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}>{{ etiket }}</a>
       {% endfor %}
@@ -120,6 +121,7 @@
         <li><a href="{{ url_for('site.islemler', kaynak='hepsi', donem='30') }}">Tüm işlemler</a></li>
         <li><a href="{{ url_for('site.siyasetciler') }}">Siyasetçiler</a></li>
         <li><a href="{{ url_for('emtia.liste') }}">Emtialar</a></li>
+        <li><a href="{{ url_for('kripto.liste') }}">Kripto paralar</a></li>
         <li><a href="{{ url_for('analiz.performans_sayfasi') }}">Kim piyasayı yendi?</a></li>
         <li><a href="{{ url_for('analiz.cakisma_sayfasi') }}">Çıkar çatışmaları</a></li>
         <li><a href="{{ url_for('site.hakkinda') }}">Nasıl çalışır? Veriler nasıl derleniyor?</a></li>
@@ -134,6 +136,7 @@
       ('ozet', url_for('analiz.gunluk_ozet'), 'Özet', 'M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7'),
       ('siyasetci', url_for('site.siyasetciler'), 'Siyasetçiler', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0'),
       ('emtia', url_for('emtia.liste'), 'Emtialar', 'M4 18l5-6 4 3 7-9M15 6h5v5'),
+      ('kripto', url_for('kripto.liste'), 'Kripto', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM10 8h3.5a2 2 0 0 1 0 4H10zM10 12h4a2 2 0 0 1 0 4h-4zM10 7v10M12 6v2M12 16v2'),
   ] %}
   <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ ikon }}"/></svg>{{ etiket }}

@@ -13,8 +13,10 @@
   const G = window.PiyasaGrafik;
   const alan = (ad) => panel.querySelector(`[data-alan="${ad}"]`);
   const sayi = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // 1 doların altındaki fiyatlar (Dogecoin 0,0891 gibi) iki basamakla okunmaz
+  const kucukSayi = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
   const birim = panel.dataset.birim ? ` ${panel.dataset.birim}` : " $";
-  const fiyatYaz = (n) => `${sayi.format(n)}${birim}`;
+  const fiyatYaz = (n) => `${(Math.abs(n) < 1 ? kucukSayi : sayi).format(n)}${birim}`;
 
   let veri = null;
   let aralik = "1y";
@@ -52,13 +54,18 @@
         : oran >= 115 ? " · ortalamanın üstünde"
         : oran <= 70 ? " · ortalamanın altında" : " · ortalama civarında";
     }
-    kutu.textContent = `${G.tarih(h.tarih)} hacmi: ${G.kisaSayi(h.son)} ` +
-      `(20 günlük ortalama ${G.kisaSayi(h.ortalama)}${oran !== null ? `, %${oran}` : ""})${yorum}`;
+    const hb = panel.dataset.hacimBirim ? ` ${panel.dataset.hacimBirim}` : "";
+    kutu.textContent = `${G.tarih(h.tarih)} hacmi: ${G.kisaSayi(h.son)}${hb} ` +
+      `(20 günlük ortalama ${G.kisaSayi(h.ortalama)}${hb}${oran !== null ? `, %${oran}` : ""})${yorum}`;
     kutu.hidden = false;
   }
 
   function grafikCiz() {
-    G.cizgi(alan("grafik"), veri.seriler[aralik], { bicim: fiyatYaz });
+    const kucuk = veri.fiyat < 1;
+    G.cizgi(alan("grafik"), veri.seriler[aralik], {
+      bicim: fiyatYaz,
+      eksenBicim: kucuk ? (v) => kucukSayi.format(v) : undefined,
+    });
   }
 
   panel.querySelectorAll("[data-aralik]").forEach(function (dugme) {

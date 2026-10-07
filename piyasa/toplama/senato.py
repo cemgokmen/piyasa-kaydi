@@ -25,10 +25,11 @@ import sys
 import time
 from datetime import UTC, date, datetime, timedelta
 
+from piyasa.kripto.tanimlar import coin_bul
 from piyasa.slug import slugify
 from piyasa.toplama.form4 import kaydet
 from piyasa.toplama.kongre import islenmis_bildirimler
-from piyasa.toplama.kongre_ortak import json_al_uyeler, parti_kodu, sade, tutar_coz
+from piyasa.toplama.kongre_ortak import json_al_uyeler, kripto_kaydet, parti_kodu, sade, tutar_coz
 from piyasa.veritabani import get_connection, init_db
 
 KAYNAK = "senate_ptr"
@@ -39,6 +40,7 @@ VARSAYILAN_GUN = 60
 
 ISLEMLER = {"purchase": "buy", "sale (full)": "sell", "sale (partial)": "sell", "sale": "sell"}
 KABUL_EDILEN_TURLER = {"stock"}
+KRIPTO_TURU = "cryptocurrency"
 
 SATIR = re.compile(r"<tr>(.*?)</tr>", re.S)
 HUCRE = re.compile(r"<td[^>]*>(.*?)</td>", re.S)
@@ -213,6 +215,44 @@ def kayitlara_cevir(rapor, satirlar, senator):
     return kayitlar
 
 
+def kripto_kayitlari(rapor, satirlar, senator):
+    """Kripto para ve kripto fonu (IBIT, ETHA...) satırları; kripto_islem biçiminde."""
+    ad = senator["ad"] if senator else f'{rapor["ad"]} {rapor["soyad"]}'.strip()
+    kayitlar = []
+    for s in satirlar:
+        islem = ISLEMLER.get(s["islem"].lower())
+        kod = s["ticker"].strip()
+        kod = None if kod in ("", "--") else kod.upper()
+        if not islem:
+            continue
+        kripto_mu = s["tur"].lower() == KRIPTO_TURU
+        coin = coin_bul(s["varlik"]) if kripto_mu else coin_bul(None, kod)
+        if not coin:
+            continue
+        alt, ust = tutar_coz(s["tutar"])
+        ay, gun, yil = s["tarih"].split("/")
+        kayitlar.append({
+            "source_id": f"senate-{rapor['kimlik']}-{s['sira']}",
+            "source": KAYNAK,
+            "person": ad,
+            "person_slug": slugify(ad),
+            "chamber": "Senato",
+            "state": senator and senator["eyalet"],
+            "party": senator and senator["parti"],
+            "coin": coin,
+            "varlik": s["varlik"],
+            "ticker": None if kripto_mu else kod,
+            "action": islem,
+            "amount_min": alt,
+            "amount_max": ust,
+            "transaction_date": f"{yil}-{ay}-{gun}",
+            "disclosed_date": rapor["tarih"],
+            "source_url": SITE + rapor["adres"],
+            "sahip": s["sahip"] if s["sahip"] and s["sahip"] != "Self" else None,
+        })
+    return kayitlar
+
+
 # ---------------------------------------------------------------------------
 # ANA AKIŞ
 # ---------------------------------------------------------------------------
@@ -242,8 +282,11 @@ def main():
                 else:
                     try:
                         senator = senator_bul(r, liste)
+                        satirlar = rapor_ayristir(oturum.rapor(r["adres"]))
+                        for k in kripto_kayitlari(r, satirlar, senator):
+                            kripto_kaydet(conn, {**k, "fetched_at": simdi})
                         eklenen = 0
-                        for k in kayitlara_cevir(r, rapor_ayristir(oturum.rapor(r["adres"])), senator):
+                        for k in kayitlara_cevir(r, satirlar, senator):
                             k["fetched_at"] = simdi
                             eklenen += kaydet(conn, k)
                         durum = "tamam"
@@ -262,6 +305,36 @@ def main():
     sayi = conn.execute("SELECT COUNT(*) FROM transactions WHERE source = ?", (KAYNAK,)).fetchone()[0]
     conn.close()
     print(f"\nBu turda eklenen: {toplam}\nVeritabanındaki Senato işlemi: {sayi}")
+
+
+def kripto_tara(yillar):
+    """İşlenmiş Senato raporlarını yeniden okuyup yalnızca kripto işlemlerini ekler (bir kez yeterli)."""
+    init_db()
+    conn = get_connection()
+    tamam = {r["doc"] for r in conn.execute("SELECT doc FROM kongre_bildirimleri WHERE durum = 'tamam'")}
+    liste = senatorler()
+    oturum = Senato()
+    try:
+        for yil in yillar:
+            raporlar = [r for r in oturum.raporlar(date(yil, 1, 1), date(yil, 12, 31))
+                        if f"senate-{r['kimlik']}" in tamam]
+            print(f"{yil}: {len(raporlar)} rapor yeniden taranacak.", flush=True)
+            for n, r in enumerate(raporlar, 1):
+                try:
+                    satirlar = rapor_ayristir(oturum.rapor(r["adres"]))
+                    for k in kripto_kayitlari(r, satirlar, senator_bul(r, liste)):
+                        kripto_kaydet(conn, {**k, "fetched_at": datetime.now(UTC).isoformat()})
+                except Exception as hata:
+                    print(f"  {r['kimlik']}: {hata}", flush=True)
+                conn.commit()
+                if n % 50 == 0:
+                    print(f"  {n}/{len(raporlar)}", flush=True)
+                time.sleep(BEKLEME)
+    finally:
+        oturum.kapat()
+    sayi = conn.execute("SELECT COUNT(*) FROM kripto_islem WHERE source = ?", (KAYNAK,)).fetchone()[0]
+    conn.close()
+    print(f"Senato kripto işlemi: {sayi}")
 
 
 if __name__ == "__main__":

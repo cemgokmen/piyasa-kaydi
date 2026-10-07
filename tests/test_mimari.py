@@ -38,6 +38,7 @@ YASAKLAR = {
     "analiz": ("piyasa.toplama", "piyasa.bakim"),
     "web": ("piyasa.toplama", "piyasa.bakim"),
     "emtia": ("piyasa.toplama", "piyasa.bakim"),
+    "kripto": ("piyasa.toplama", "piyasa.bakim"),
     "toplama": ("piyasa.bakim",),
 }
 

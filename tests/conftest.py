@@ -11,6 +11,7 @@ import pytest
 
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, veritabani
 from piyasa.emtia import haberler, kapalicarsi, serit
+from piyasa.kripto import piyasa as kripto_piyasa
 from piyasa.web import create_app
 
 BUGUN = date.today()
@@ -110,6 +111,35 @@ def ornek_fonlar():
     satirlar.append({**satirlar[0], "source_id": "fon-cikis", "cusip": "000000009",
                      "ticker": "CIKS", "sirket_adi": "CIKIS CORP"})
     return satirlar
+
+
+def ornek_kripto_verisi(conn):
+    """Kripto: CFTC haftalık konumlar, bir kurumun Bitcoin fonu pozisyonları, Kongre kripto işlemleri."""
+    for hafta in range(60):
+        t = gun(7 * (59 - hafta))
+        conn.execute("INSERT INTO kripto_cot VALUES ('bitcoin', ?, 20000, ?, 1500, 5000, 12000)", (t, 4000 + hafta * 10))
+    for donem, adet in (("2026-03-31", 100), ("2026-06-30", 300)):
+        conn.execute(
+            "INSERT INTO holdings (source_id, fon_adi, fon_slug, cik, donem, bildirim_tarihi, sirket_adi, cusip, "
+            "ticker, deger, adet) VALUES (?, 'Kripto Fon', 'kripto-fon', '0000000002', ?, ?, 'ISHARES BITCOIN TR', "
+            "'46438F101', 'IBIT', ?, ?)",
+            (f"kripto-{donem}", donem, donem, adet * 50_000, adet * 1_000),
+        )
+    conn.executemany(
+        "INSERT INTO kripto_islem (source_id, source, person, person_slug, chamber, state, party, coin, varlik, "
+        "ticker, action, amount_min, amount_max, transaction_date, disclosed_date, source_url, sahip) "
+        "VALUES (?, 'house_ptr', 'Jane Senator', 'jane-senator', 'Temsilciler Meclisi', 'CA-11', 'D', ?, ?, ?, ?, ?, ?, ?, ?, "
+        "'https://ornek.gov/belge.pdf', ?)",
+        [("house-k1-0", "bitcoin", "Bitcoin", None, "buy", 1001, 15000, gun(40), gun(30), "SP"),
+         ("house-k1-1", "bitcoin", "iShares Bitcoin Trust", "IBIT", "sell", 15001, 50000, gun(20), gun(10), None),
+         ("house-k1-2", "ethereum", "Ethereum", None, "buy", 1001, 15000, gun(15), gun(5), None)],
+    )
+
+
+def sahte_kripto_bilgisi(yahoo):
+    return {"marketCap": 1_650_000_000_000, "regularMarketPrice": 83_000.0, "circulatingSupply": 20_000_000,
+            "maxSupply": 21_000_000, "fullyDilutedValue": 1_750_000_000_000, "volume24Hr": 35_000_000_000,
+            "allTimeHigh": 126_000.0, "allTimeLow": 171.5, "website": "https://bitcoin.org/"} if yahoo != "YOK-USD" else {}
 
 
 def ornek_emtia_verisi(conn):
@@ -263,6 +293,7 @@ def veritabani_yolu(tmp_path_factory):
                 list(k.values()),
             )
     ornek_emtia_verisi(conn)
+    ornek_kripto_verisi(conn)
     ornek_analiz_verisi(conn)
     # Devlet sözleşmeleri: NVDA'ya Jane'in alımından sonra olağanın çok üstünde sözleşme
     conn.executemany("INSERT INTO ihale VALUES (?,?,?,?,?,?,?,?,?)", [
@@ -294,7 +325,10 @@ def veritabani_yolu(tmp_path_factory):
 @pytest.fixture(scope="session")
 def uygulama(veritabani_yolu):
     eski = (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
-            hisse_haberleri._al, kapalicarsi._veri)
+            hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al)
+    kripto_piyasa._info_al = sahte_kripto_bilgisi
+    kripto_piyasa._bilgi.temizle()
+    kripto_piyasa._vadeli.temizle()
     fiyat._indir = sahte_fiyat
     fiyat._anlik_indir = sahte_anlik
     haberler._indir = sahte_haberler
@@ -315,7 +349,7 @@ def uygulama(veritabani_yolu):
     app.config["TESTING"] = True
     yield app
     (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
-     hisse_haberleri._al, kapalicarsi._veri) = eski
+     hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al) = eski
 
 
 @pytest.fixture()

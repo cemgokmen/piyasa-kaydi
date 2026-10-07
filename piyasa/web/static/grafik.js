@@ -125,7 +125,8 @@ window.PiyasaGrafik = (function () {
       const v = enAz + ((enCok - enAz) * i) / 3;
       svg.appendChild(oge("line", { x1: bosluk.sol, x2: G - bosluk.sag, y1: y(v), y2: y(v), class: "kilavuz" }));
       const yazi = oge("text", { x: G - bosluk.sag + 8, y: y(v) + 4, class: "eksen-yazi" });
-      yazi.textContent = ayar.eksenBicim ? ayar.eksenBicim(v) : sayi2.format(v);
+      // Büyük sayılarda kuruş eksen yazısını taşırır (123.354,08)
+      yazi.textContent = ayar.eksenBicim ? ayar.eksenBicim(v) : (Math.abs(v) >= 1000 ? tamSayi : sayi2).format(v);
       svg.appendChild(yazi);
     }
 

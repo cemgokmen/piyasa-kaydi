@@ -88,10 +88,11 @@ def ondalik(n, basamak=1):
 
 
 def fiyat(n):
-    """123.456 -> '123,46'"""
+    """123.456 -> '123,46'; 1'in altındaki fiyatlar 4 basamak: 0.08912 -> '0,0891'"""
     if n is None:
         return "—"
-    tam, kesir = f"{n:,.2f}".split(".")
+    basamak = 4 if abs(n) < 1 and n != 0 else 2
+    tam, kesir = f"{n:,.{basamak}f}".split(".")
     return f"{tam.replace(',', '.')},{kesir}"
 
 

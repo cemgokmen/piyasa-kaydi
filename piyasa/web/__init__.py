@@ -47,6 +47,7 @@ def create_app(vekil_arkasinda=False):
     from piyasa.web.analiz_rotalari import analiz
     from piyasa.web.bicim import sablonlara_kaydet
     from piyasa.web.emtia_rotalari import emtia
+    from piyasa.web.kripto_rotalari import kripto
     from piyasa.web.rotalar import site
 
     sablonlara_kaydet(app)
@@ -56,4 +57,5 @@ def create_app(vekil_arkasinda=False):
     app.register_blueprint(site)
     app.register_blueprint(emtia)
     app.register_blueprint(analiz)
+    app.register_blueprint(kripto)
     return app

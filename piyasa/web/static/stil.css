@@ -1714,7 +1714,8 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .ust { transition: box-shadow .2s ease; }
 .ust.kaydirildi { box-shadow: 0 4px 16px rgba(11, 18, 32, .07); }
 
-.ana-menu a { position: relative; border-radius: 0; padding: 19px 2px; margin: 0 8px; background: none !important; }
+.ana-menu a { position: relative; border-radius: 0; padding: 19px 2px; margin: 0 7px; background: none !important; }
+@media (max-width: 1380px) { .ana-menu a { margin: 0 5px; font-size: 13.5px; } .ust-arama { flex-basis: 230px; } }
 .ana-menu a:hover { color: var(--yazi); }
 .ana-menu a[aria-current="page"] { color: var(--yazi); }
 .ana-menu a[aria-current="page"]::after {
@@ -2080,3 +2081,35 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .ozet-haber p { margin: 0; line-height: 1.6; color: var(--yazi-2); }
 .ozet-haber .ticker { margin-right: 4px; }
 .emtia-ad small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; }
+
+/* Kripto */
+.coin-logo { flex: none; width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--kart-2); }
+.coin-logo-buyuk { width: 56px; height: 56px; }
+.coin-logo-yedek { display: inline-grid; place-items: center; color: var(--vurgu); font-weight: 700; background: var(--vurgu-yumusak); }
+.coin-logo-buyuk.coin-logo-yedek { font-size: 24px; }
+.coin-hucre { display: flex; align-items: center; gap: 10px; }
+.coin-hucre a { color: inherit; text-decoration: none; }
+.coin-hucre a:hover { color: var(--vurgu); }
+.kripto-baslik { display: flex; align-items: center; gap: 16px; }
+.kripto-baslik h1 { margin: 0; }
+.kripto-sembol { margin-left: 6px; padding: 2px 8px; border-radius: 6px; background: var(--kart-2); color: var(--yazi-2); font-size: 0.55em; font-weight: 600; vertical-align: middle; letter-spacing: .04em; }
+.kripto-profil { padding: 18px 20px; }
+.kripto-profil h2 { margin: 0 0 8px; }
+.kripto-profil h3 { margin: 18px 0 6px; font-size: 15px; }
+.kripto-ozet { margin: 0 0 16px; font-size: 15.5px; line-height: 1.65; }
+.kripto-kunye { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 24px; margin: 0; padding: 14px 0 0; border-top: 1px solid var(--cizgi-2); }
+.kripto-kunye .kunye-genis { grid-column: 1 / -1; }
+.kripto-kunye dt { color: var(--yazi-3); font-size: 12.5px; margin-bottom: 2px; }
+.kripto-kunye dd { margin: 0; line-height: 1.5; }
+.kripto-liste { margin: 0; padding-left: 20px; line-height: 1.6; }
+.kripto-liste li { margin: 3px 0; }
+.arz-cubuk { height: 10px; margin: 14px 0 6px; border-radius: 5px; background: var(--kart-2); border: 1px solid var(--cizgi); overflow: hidden; }
+.arz-cubuk span { display: block; height: 100%; background: var(--vurgu); border-radius: 5px; }
+.mini-cubuk { display: block; height: 5px; margin-top: 5px; border-radius: 3px; background: var(--kart-2); overflow: hidden; }
+.mini-cubuk span { display: block; height: 100%; background: var(--vurgu); }
+.akis li.cubuklu .akis-orta { min-width: 0; }
+.panel-risk h2 { color: var(--uyari); }
+.panel-alt { margin: 0; padding: 10px 16px; border-top: 1px solid var(--cizgi-2); font-size: 13.5px; }
+.panel-alt a { color: var(--vurgu); text-decoration: none; }
+.kripto-tablosu .kucuk-grafik { width: 110px; }
+.kripto-tablosu td.sag { white-space: nowrap; }

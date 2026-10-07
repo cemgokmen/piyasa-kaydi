@@ -23,7 +23,7 @@ KARAR_SORGUSU = (
 # Bilgi taşımayan, her gün tekrarlanan fiyat listesi başlıkları
 FIYAT_LISTESI = re.compile(
     r"ne kadar|kaç tl|canlı|anlık|güncel (rakam|fiyat)|fiyatları bugün|güne nasıl|"
-    r"alış.?satış|'?(da|de|ta|te) altın fiyatları|"
+    r"alış.?satış|'?(da|de|ta|te) altın fiyatları|tarafından haberler|"
     r"\b\d{1,2} (ocak|şubat|mart|nisan|mayıs|haziran|temmuz|ağustos|eylül|ekim|kasım|aralık)\b",
     re.IGNORECASE,
 )

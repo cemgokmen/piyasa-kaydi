@@ -31,9 +31,10 @@ import pdfplumber
 import requests
 
 from piyasa.ayarlar import USER_AGENT
+from piyasa.kripto.tanimlar import coin_bul
 from piyasa.slug import slugify
 from piyasa.toplama.form4 import kaydet
-from piyasa.toplama.kongre_ortak import json_al_uyeler, parti_kodu, sade, tutar_coz
+from piyasa.toplama.kongre_ortak import json_al_uyeler, kripto_kaydet, parti_kodu, sade, tutar_coz
 from piyasa.veritabani import get_connection, init_db
 
 KAYNAK = "house_ptr"
@@ -47,6 +48,7 @@ ISLEM_TURLERI = {"P": "buy", "S": "sell"}   # E (değişim) yatırım kararı de
 # Yalnızca hisse senetleri. Varlık türü kodları:
 # https://fd.house.gov/reference/asset-type-codes.aspx
 KABUL_EDILEN_TURLER = {"ST"}
+KRIPTO_TURU = "CT"      # Cryptocurrency
 
 
 TARIH = re.compile(r"^\d{2}/\d{2}/\d{4}$")
@@ -292,6 +294,63 @@ def kayitlara_cevir(bildirim, satirlar, uyeler):
     return kayitlar
 
 
+def kripto_kayitlari(bildirim, satirlar, uyeler):
+    """Kripto para ([CT]) ve kripto fonu (IBIT, ETHA...) satırları; kripto_islem biçiminde."""
+    uye = uye_bul(bildirim, uyeler)
+    ad = (uye and uye["ad"]) or bildirim["ad"]
+    bolge = bildirim["bolge"]
+    kayitlar = []
+    for sira, s in enumerate(satirlar):
+        tur = VARLIK_TURU.search(s["varlik"])
+        tickerlar = TICKER.findall(s["varlik"])
+        islem = ISLEM_TURLERI.get(s["tur"][:1])
+        if not tur or not islem:
+            continue
+        varlik_adi = VARLIK_TURU.sub("", TICKER.sub("", s["varlik"])).strip(" -")
+        ticker = tickerlar[-1] if tickerlar else None
+        if tur.group(1) == KRIPTO_TURU:
+            coin = coin_bul(s["varlik"])
+        else:
+            coin = coin_bul(None, ticker)      # yalnızca bilinen kripto fonları
+        if not coin:
+            continue
+        alt, ust = tutar_coz(s["tutar"])
+        kayitlar.append({
+            "source_id": f"house-{bildirim['doc']}-{sira}",
+            "source": KAYNAK,
+            "person": ad,
+            "person_slug": slugify(ad),
+            "chamber": "Temsilciler Meclisi",
+            "state": f"{bolge[:2]}-{bolge[2:]}" if len(bolge) > 2 else bolge,
+            "party": uye and uye["parti"],
+            "coin": coin,
+            "varlik": varlik_adi,
+            "ticker": ticker if tur.group(1) != KRIPTO_TURU else None,
+            "action": islem,
+            "amount_min": alt,
+            "amount_max": ust,
+            "transaction_date": iso_tarih(s["islem_tarihi"]),
+            "disclosed_date": bildirim["tarih"],
+            "source_url": PDF_URL.format(yil=bildirim["yil"], doc=bildirim["doc"]),
+            "sahip": s["sahip"] or None,
+        })
+    return kayitlar
+
+
+def bildirimi_isle(conn, bildirim, uyeler, simdi, yalniz_kripto=False):
+    """PDF'i indirip ayrıştırır, hisse ve kripto işlemlerini yazar; eklenen hisse işlemi sayısını döndürür."""
+    satirlar = pdf_ayristir(indir(PDF_URL.format(yil=bildirim["yil"], doc=bildirim["doc"])))
+    for k in kripto_kayitlari(bildirim, satirlar, uyeler):
+        kripto_kaydet(conn, {**k, "fetched_at": simdi})
+    if yalniz_kripto:
+        return 0
+    eklenen = 0
+    for k in kayitlara_cevir(bildirim, satirlar, uyeler):
+        k["fetched_at"] = simdi
+        eklenen += kaydet(conn, k)
+    return eklenen
+
+
 # ---------------------------------------------------------------------------
 # ANA AKIŞ
 # ---------------------------------------------------------------------------
@@ -330,12 +389,7 @@ def main():
                 durum, eklenen = "taranmis", 0
             else:
                 try:
-                    satirlar = pdf_ayristir(indir(PDF_URL.format(yil=yil, doc=b["doc"])))
-                    kayitlar = kayitlara_cevir(b, satirlar, uyeler)
-                    eklenen = 0
-                    for k in kayitlar:
-                        k["fetched_at"] = simdi
-                        eklenen += kaydet(conn, k)
+                    eklenen = bildirimi_isle(conn, b, uyeler, simdi)
                     durum = "tamam"
                 except requests.HTTPError as hata:
                     print(f"  {b['doc']} indirilemedi: {hata}")
@@ -361,6 +415,32 @@ def main():
     conn.close()
     print(f"\nBu turda eklenen: {toplam_eklenen}")
     print(f"Veritabanındaki Meclis işlemi: {toplam}")
+
+
+def kripto_tara(yillar):
+    """
+    Daha önce işlenmiş bildirimleri yeniden okuyup yalnızca kripto işlemlerini ekler
+    (kripto desteği eklenmeden önce işlenen bildirimler için; bir kez çalıştırmak yeterli).
+    """
+    init_db()
+    conn = get_connection()
+    tamam = {r["doc"] for r in conn.execute("SELECT doc FROM kongre_bildirimleri WHERE durum = 'tamam'")}
+    uyeler = uye_bilgileri()
+    for yil in yillar:
+        liste = [b for b in bildirim_listesi(yil) if b["doc"] in tamam]
+        print(f"{yil}: {len(liste)} bildirim yeniden taranacak.", flush=True)
+        for n, b in enumerate(liste, 1):
+            try:
+                bildirimi_isle(conn, b, uyeler, datetime.now(UTC).isoformat(), yalniz_kripto=True)
+            except Exception as hata:
+                print(f"  {b['doc']}: {hata}", flush=True)
+            conn.commit()
+            if n % 100 == 0:
+                print(f"  {n}/{len(liste)}", flush=True)
+            time.sleep(BEKLEME)
+    sayi = conn.execute("SELECT COUNT(*) FROM kripto_islem WHERE source = ?", (KAYNAK,)).fetchone()[0]
+    conn.close()
+    print(f"Meclis kripto işlemi: {sayi}")
 
 
 if __name__ == "__main__":
