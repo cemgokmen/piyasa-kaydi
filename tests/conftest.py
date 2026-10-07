@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, veritabani
-from piyasa.emtia import haberler, serit
+from piyasa.emtia import haberler, kapalicarsi, serit
 from piyasa.web import create_app
 
 BUGUN = date.today()
@@ -294,13 +294,17 @@ def veritabani_yolu(tmp_path_factory):
 @pytest.fixture(scope="session")
 def uygulama(veritabani_yolu):
     eski = (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
-            hisse_haberleri._al)
+            hisse_haberleri._al, kapalicarsi._veri)
     fiyat._indir = sahte_fiyat
     fiyat._anlik_indir = sahte_anlik
     haberler._indir = sahte_haberler
     sirket_profili._getir = sahte_profil
     temel._veri_al = sahte_temel_veri
     hisse_haberleri._al = sahte_hisse_haberleri
+    kapalicarsi._veri = lambda: {"Update_Date": "2026-10-07 14:36:01",
+                                 "GRA": {"Buying": 6515.73, "Selling": 6516.61, "Change": -1.02},
+                                 "CEYREKALTIN": {"Buying": 10461.2, "Selling": 10702.48, "Change": -0.71},
+                                 "GUMUS": {"Buying": 95.17, "Selling": 95.25, "Change": -1.85}}
     hisse_haberleri._haberler.temizle()
     temel._temel.temizle()
     fiyat._bilgi.temizle()
@@ -311,7 +315,7 @@ def uygulama(veritabani_yolu):
     app.config["TESTING"] = True
     yield app
     (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
-     hisse_haberleri._al) = eski
+     hisse_haberleri._al, kapalicarsi._veri) = eski
 
 
 @pytest.fixture()

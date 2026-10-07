@@ -20,6 +20,7 @@
    kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Anlık fiyat dakikada bir yenilenir, vadelilerde 10-15 dakika gecikmelidir. Grafik günlük kapanışlardır; hacim, sözleşme adedidir.') }}
 
 <nav class="bolum-menu" aria-label="Bu sayfada">
+  {% if kapalicarsi %}<a href="#kapalicarsi">Kapalıçarşı fiyatları</a>{% endif %}
   <a href="#etkenler">Fiyatı neler etkiler?</a>
   {% if cot or eia %}<a href="#arz-talep">Arz ve talep</a>{% endif %}
   {% if faiz %}<a href="#faiz">Faiz kararları</a>{% endif %}
@@ -35,6 +36,34 @@
     {% endfor %}
   </div>
   <p class="dipnot">Gram altın, uluslararası ons fiyatından hesaplanmıştır; Kapalıçarşı ve banka fiyatları alış-satış farkı nedeniyle farklı olabilir.</p>
+</section>
+{% endif %}
+
+{% if kapalicarsi %}
+<section class="bolum" id="kapalicarsi">
+  <header class="bolum-ust">
+    <div>
+      <h2>Kapalıçarşı fiyatları</h2>
+      <p class="bolum-not">Serbest piyasada (Kapalıçarşı) Türk lirası alış ve satış fiyatları. <b>Alış</b>: kuyumcunun sizden
+        aldığı, <b>satış</b>: size sattığı fiyat. Güncelleme: {{ kapalicarsi.guncelleme }} · Kaynak: Truncgil Finans</p>
+    </div>
+  </header>
+  <div class="tablo-kap">
+    <table class="tablo tablo-sade kapalicarsi-tablosu">
+      <thead><tr><th scope="col">Tür</th><th scope="col" class="sag">Alış</th><th scope="col" class="sag">Satış</th>
+        <th scope="col" class="sag">Günlük değişim</th></tr></thead>
+      <tbody>
+        {% for k in kapalicarsi.satirlar %}
+        <tr>
+          <td data-etiket="Tür"><b>{{ k.ad }}</b> <span class="soluk kucuk">/ {{ k.birim }}</span></td>
+          <td data-etiket="Alış" class="sag sayi">{{ k.alis|fiyat if k.alis else '—' }} ₺</td>
+          <td data-etiket="Satış" class="sag sayi"><b>{{ k.satis|fiyat if k.satis else '—' }} ₺</b></td>
+          <td data-etiket="Değişim" class="sag sayi {{ 'tutar-buy' if k.degisim and k.degisim > 0 else 'tutar-sell' if k.degisim and k.degisim < 0 else 'soluk' }}">{{ k.degisim|yuzde if k.degisim is not none else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 {% endif %}
 

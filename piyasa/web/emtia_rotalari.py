@@ -6,7 +6,7 @@ Emtia sayfaları: genel bakış (/emtialar) ve her emtianın sayfası (/emtia/<s
 from flask import Blueprint, abort, jsonify, render_template
 
 from piyasa import fiyat
-from piyasa.emtia import haberler, serit, sorgular
+from piyasa.emtia import haberler, kapalicarsi, serit, sorgular
 from piyasa.emtia.tanimlar import EMTIA, EMTIALAR, GOSTERGELER, GRUPLAR, ONS_GRAM
 
 emtia = Blueprint("emtia", __name__)
@@ -108,6 +108,7 @@ def detay(slug):
         eia=sorgular.eia(e["eia"]) if e["eia"] else None,
         faiz=sorgular.faiz_kararlari(),
         gram_altin=gram_altin,
+        kapalicarsi=kapalicarsi.fiyatlar(slug) if slug in ("altin", "gumus") else None,
         haberler=haberler.haberler(e["haber"], 12),
         guncelleme=sorgular.son_guncelleme(),
         diger=[x for x in EMTIALAR if x["slug"] != slug],

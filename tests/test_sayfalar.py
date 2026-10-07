@@ -400,3 +400,10 @@ def test_meclis_ve_senato_filtreleri(istemci):
     uyeler = istemci.get("/siyasetciler?meclis=senato").get_data(as_text=True)
     assert "Sam Senate" in uyeler and ">Senato<" in uyeler.replace("\n", "")
     assert 'data-deger="Bob Rep"' not in istemci.get("/siyasetciler?meclis=senato&parti=R").get_data(as_text=True)
+
+
+def test_kapalicarsi_fiyatlari(istemci):
+    html = istemci.get("/emtia/altin").get_data(as_text=True)
+    assert "Kapalıçarşı fiyatları" in html and "Çeyrek altın" in html and "10.702,48" in html
+    assert "Gram gümüş" in istemci.get("/emtia/gumus").get_data(as_text=True)
+    assert "Kapalıçarşı" not in istemci.get("/emtia/brent").get_data(as_text=True)

@@ -192,11 +192,13 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
 
   let secenekler = [];
   let aktif = -1;
+  let escBasildi = false;
   let zamanlayici = null;
   let istek = null;
 
   function kapat() {
     liste.hidden = true;
+    delete liste.dataset.gecmis;
     aktif = -1;
     kutu.setAttribute("aria-expanded", "false");
     kutu.removeAttribute("aria-activedescendant");
@@ -238,6 +240,7 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
 
   function goster(oneriler, aranan) {
     liste.innerHTML = "";
+    delete liste.dataset.gecmis;
     secenekler = [];
     oneriler.forEach(function (o, i) {
       const li = document.createElement("li");
@@ -275,6 +278,7 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
       temizle.textContent = "Geçmişi temizle";
       liste.appendChild(temizle);
       secenekler.push(temizle);
+      liste.dataset.gecmis = "1";
       liste.hidden = false;
       kutu.setAttribute("aria-expanded", "true");
       aktifYap(-1);
@@ -329,9 +333,13 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
     clearTimeout(zamanlayici);
     const aranan = kutu.value.trim();
     if (!aranan) {
-      sonlariGoster();
+      if (escBasildi) escBasildi = false;
+      else sonlariGoster();
       return;
     }
+    escBasildi = false;
+    // Yazmaya başlanınca son aramalar listesi hemen kapanır; öneriler gelince yenisi açılır
+    if (liste.dataset.gecmis) kapat();
     zamanlayici = setTimeout(function () {
       if (istek) istek.abort();
       istek = new AbortController();
@@ -358,6 +366,10 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
       olay.preventDefault();
       sec(secenekler[aktif]);
     } else if (olay.key === "Escape") {
+      // Yoldaki öneri isteği sonradan gelip listeyi yeniden açmasın
+      clearTimeout(zamanlayici);
+      if (istek) istek.abort();
+      escBasildi = true;      // tarayıcı Esc ile kutuyu da temizler; geçmiş listesi açılmasın
       kapat();
     }
   });
