@@ -87,6 +87,12 @@ def ornek_kayitlar():
             ticker="NVDA", asset_name="NVIDIA Corporation", amount_min=15_001, amount_max=50_000,
             transaction_date=gun(200 + i * 10), disclosed_date=gun(180 + i * 10), **siyaset,
         ))
+    # Bir senatör
+    kayitlar.append(_islem(
+        400, person="Sam Senate", person_slug="sam-senate", party="R", state="TX", chamber="Senato",
+        job_title="Senatör", source="senate_ptr", ticker="AAPL", asset_name="Apple Inc.", action="sell",
+        amount_min=1_001, amount_max=15_000, transaction_date=gun(30), disclosed_date=gun(10), share_price=None,
+    ))
     return kayitlar
 
 

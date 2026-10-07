@@ -39,9 +39,11 @@ from piyasa.web.sorgular.ortak import (  # noqa: F401
     DONEMLER,
     FON_SON_DONEM,
     KAYNAKLAR,
+    MECLISLER,
     OZET_SUTUNLARI,
     SAYFA_BOYUTU,
     SIRALAMALAR,
+    SIYASET_KAYNAKLARI,
     baglanti,
     gun_once,
 )

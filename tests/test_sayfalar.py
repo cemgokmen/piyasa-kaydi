@@ -387,3 +387,13 @@ def test_devlet_sozlesmeleri(istemci):
     assert "Jane Senator" in cakisma and "500,0 mn $" in cakisma
     # Sözleşmesi olmayan hissede bölüm görünmez
     assert 'id="ihaleler"' not in istemci.get("/hisse/ORNK").get_data(as_text=True)
+
+
+def test_meclis_ve_senato_filtreleri(istemci):
+    senato = istemci.get("/islemler?kaynak=senato").get_data(as_text=True)
+    assert "Senatörlerin işlemleri" in senato and "Sam Senate" in senato and "Jane Senator" not in senato
+    meclis = istemci.get("/islemler?kaynak=meclis").get_data(as_text=True)
+    assert "Jane Senator" in meclis and "Sam Senate" not in meclis
+    uyeler = istemci.get("/siyasetciler?meclis=senato").get_data(as_text=True)
+    assert "Sam Senate" in uyeler and ">Senato<" in uyeler.replace("\n", "")
+    assert 'data-deger="Bob Rep"' not in istemci.get("/siyasetciler?meclis=senato&parti=R").get_data(as_text=True)

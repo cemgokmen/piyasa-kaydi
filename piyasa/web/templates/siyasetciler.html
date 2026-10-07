@@ -73,10 +73,16 @@
   </header>
 
   <div class="filtre-satir">
+    <div class="segment" role="group" aria-label="Meclis">
+      <a class="{% if not meclis %}secili{% endif %}" href="{{ url_for('site.siyasetciler', parti=parti or None) }}">Kongre</a>
+      {% for kod, ad in meclisler.items() %}
+      <a class="{% if meclis == kod %}secili{% endif %}" href="{{ url_for('site.siyasetciler', meclis=kod, parti=parti or None) }}">{{ ad }} <span class="soluk">{{ meclis_sayilari[kod] }}</span></a>
+      {% endfor %}
+    </div>
     <div class="segment" role="group" aria-label="Parti">
-      <a class="{% if not parti %}secili{% endif %}" href="{{ url_for('site.siyasetciler') }}">Tüm partiler</a>
+      <a class="{% if not parti %}secili{% endif %}" href="{{ url_for('site.siyasetciler', meclis=meclis or None) }}">Tüm partiler</a>
       {% for kod, bilgi in partiler.items() if parti_sayilari.get(kod) %}
-      <a class="{% if parti == kod %}secili{% endif %}" href="{{ url_for('site.siyasetciler', parti=kod) }}">{{ bilgi[0] }} <span class="soluk">{{ parti_sayilari[kod] }}</span></a>
+      <a class="{% if parti == kod %}secili{% endif %}" href="{{ url_for('site.siyasetciler', parti=kod, meclis=meclis or None) }}">{{ bilgi[0] }} <span class="soluk">{{ parti_sayilari[kod] }}</span></a>
       {% endfor %}
     </div>
     <label class="secim filtre-kutu">
@@ -103,7 +109,8 @@
         {% for k in kisiler %}
         <tr class="tiklanir" data-href="{{ url_for('site.kisi', slug=k.person_slug) }}">
           <td data-etiket="Üye" data-deger="{{ k.person }}"><span class="kisi-hucre">{{ avatar(k.foto, k.person) }}<a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</span></td>
-          <td data-etiket="Eyalet" class="sayi" data-deger="{{ k.state }}">{{ k.state }}</td>
+          <td data-etiket="Eyalet" class="sayi" data-deger="{{ k.state }}">{{ k.state }}
+            <span class="alt-satir">{{ 'Senato' if k.chamber == 'Senato' else 'Meclis' }}</span></td>
           <td data-etiket="İşlem sayısı" class="sag" data-deger="{{ k.adet }}">
             <b>{{ k.adet|sayi }}</b>
             <span class="alt-satir"><span class="tutar-buy">{{ k.alim|sayi }} alım</span> · <span class="tutar-sell">{{ k.satim|sayi }} satım</span></span>

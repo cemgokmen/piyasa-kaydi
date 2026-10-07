@@ -34,7 +34,7 @@ def anasayfa():
 def islemler():
     kaynak = _secenek("kaynak", sorgular.KAYNAKLAR, "hepsi")
     # Kongre bildirimleri seyrek ve geç geldiği için varsayılan dönem daha uzun
-    varsayilan_donem = "365" if kaynak == "siyasetci" else "30"
+    varsayilan_donem = "365" if kaynak in sorgular.SIYASET_KAYNAKLARI else "30"
     donem = _secenek("donem", sorgular.DONEMLER, varsayilan_donem)
     sira = _secenek("sira", sorgular.SIRALAMALAR, "yeni")
     islem = _secenek("islem", ("hepsi", "buy", "sell"), "hepsi")
@@ -49,7 +49,8 @@ def islemler():
 
     return render_template(
         "islemler.html",
-        aktif={"siyasetci": "siyasetci", "yonetici": "yonetici"}.get(kaynak, "islemler"),
+        aktif="siyasetci" if kaynak in sorgular.SIYASET_KAYNAKLARI
+        else {"yonetici": "yonetici"}.get(kaynak, "islemler"),
         satirlar=satirlar,
         ozet=ozet,
         toplam=toplam,
@@ -65,8 +66,10 @@ def islemler():
 @site.route("/siyasetciler")
 def siyasetciler():
     parti = _secenek("parti", PARTILER, "")
+    meclis = _secenek("meclis", sorgular.MECLISLER, "")
     return render_template(
-        "siyasetciler.html", aktif="siyasetci", parti=parti, **sorgular.siyasetciler(parti)
+        "siyasetciler.html", aktif="siyasetci", parti=parti, meclis=meclis,
+        meclisler=sorgular.MECLISLER, **sorgular.siyasetciler(parti, meclis)
     )
 
 

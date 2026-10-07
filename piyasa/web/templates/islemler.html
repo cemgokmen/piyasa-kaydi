@@ -2,6 +2,8 @@
 {% from "_bilesenler.html" import kpi, islem_tablosu %}
 {% set basliklar = {
     'siyasetci': ('Siyasetçilerin işlemleri', 'ABD Kongresi (Temsilciler Meclisi ve Senato) üyelerinin bildirdiği hisse alım ve satımları. Tutarlar bildirim formundaki aralıktır.'),
+    'meclis': ('Temsilciler Meclisi üyelerinin işlemleri', 'ABD Temsilciler Meclisi üyelerinin bildirdiği hisse alım ve satımları. Tutarlar bildirim formundaki aralıktır.'),
+    'senato': ('Senatörlerin işlemleri', 'ABD Senatosu üyelerinin bildirdiği hisse alım ve satımları. Tutarlar bildirim formundaki aralıktır.'),
     'yonetici': ('Şirket yöneticilerinin işlemleri', 'Yöneticilerin ve büyük ortakların kendi şirketlerinin hisselerinde, açık piyasada yaptığı alım ve satımlar.'),
     'hepsi': ('Tüm işlemler', 'Siyasetçilerin ve şirket yöneticilerinin bildirdiği bütün hisse işlemleri.'),
 } %}
@@ -50,7 +52,7 @@
 {% if toplam %}
 <section class="kpi-izgara kpi-3">
   {{ kpi('Bulunan işlem', toplam|sayi, (ozet.kisi or 0)|sayi ~ ' farklı kişi', birim='işlem') }}
-  {% if filtre.kaynak == 'siyasetci' %}
+  {% if filtre.kaynak in ('siyasetci', 'meclis', 'senato') %}
   {{ kpi('Alım · tahmini tutar', aralik(ozet.alim_alt, ozet.alim_tutar), (ozet.alim or 0)|sayi ~ ' alım işlemi', 'alim') }}
   {{ kpi('Satım · tahmini tutar', aralik(ozet.satim_alt, ozet.satim_tutar), (ozet.satim or 0)|sayi ~ ' satım işlemi', 'satim') }}
   {% else %}

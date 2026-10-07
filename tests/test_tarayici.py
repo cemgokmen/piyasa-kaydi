@@ -185,7 +185,7 @@ def test_siyasetci_tablosu(tarayici, sunucu):
     # Parti seçimi
     tarayici.find_element(By.PARTIAL_LINK_TEXT, "Cumhuriyetçi").click()
     bekle(tarayici, lambda t: sorgu(t).get("parti") == "R")
-    assert adlar() == ["Bob Rep"]
+    assert sorted(adlar()) == ["Bob Rep", "Sam Senate"]
 
     # Satırın boş bir yerine tıklamak kişi sayfasını açar
     tarayici.find_element(By.CSS_SELECTOR, "#siyasetci-tablosu tbody tr td:nth-child(2)").click()

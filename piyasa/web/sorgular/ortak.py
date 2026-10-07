@@ -29,7 +29,13 @@ KAYNAKLAR = {
     "hepsi": ("Herkes", None),
     "yonetici": ("Şirket yöneticileri", "chamber IS NULL"),
     "siyasetci": ("Siyasetçiler", "chamber IS NOT NULL"),
+    "meclis": ("Temsilciler Meclisi", "chamber = 'Temsilciler Meclisi'"),
+    "senato": ("Senato", "chamber = 'Senato'"),
 }
+SIYASET_KAYNAKLARI = ("siyasetci", "meclis", "senato")
+
+# Siyasetçiler sayfasındaki meclis seçimi
+MECLISLER = {"meclis": "Temsilciler Meclisi", "senato": "Senato"}
 
 
 OZET_SUTUNLARI = """
