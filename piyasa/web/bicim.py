@@ -11,6 +11,7 @@ from piyasa.bicim import (
     ondalik,
     sayi,
     sirket_gorunen_ad,
+    unvan,
     uzun_tarih,
     yuzde,
 )
@@ -27,6 +28,7 @@ def sablonlara_kaydet(app):
     app.add_template_filter(fiyat, "fiyat")
     app.add_template_filter(ondalik, "ondalik")
     app.add_template_filter(sirket_gorunen_ad, "sirket_adi")
+    app.add_template_filter(unvan, "unvan")
     app.add_template_filter(ne_zaman, "ne_zaman")
     app.add_template_global(kisa_aralik, "aralik")
 

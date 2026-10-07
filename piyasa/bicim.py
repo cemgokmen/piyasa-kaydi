@@ -252,28 +252,57 @@ UNVANLAR = {
     "secretary": "Sekreter", "corporate secretary": "Şirket sekreteri", "treasurer": "Hazine sorumlusu",
     "director": "Yönetim kurulu üyesi", "see remarks": "Yönetici", "other": "Yönetici",
     "chief exec. officer": "CEO", "chief executive": "CEO", "founder": "Kurucu", "co-founder": "Kurucu ortak",
+    "co-ceo": "Eş CEO", "co-chief executive officer": "Eş CEO", "interim ceo": "Geçici CEO", "interim cfo": "Geçici finans direktörü",
+    "executive chair": "İcracı yönetim kurulu başkanı", "executive chairman of board": "İcracı yönetim kurulu başkanı",
+    "executive chairman of the board": "İcracı yönetim kurulu başkanı", "co-chairman": "Yönetim kurulu eş başkanı",
+    "vice chair": "Yönetim kurulu başkan yardımcısı", "cmo": "Pazarlama direktörü", "cro": "Gelir direktörü",
+    "cso": "Strateji direktörü", "cio": "Bilgi işlem direktörü", "pao": "Muhasebe müdürü", "controller": "Muhasebe müdürü",
+    "principal accounting officer": "Muhasebe müdürü", "chief of staff": "Genel koordinatör",
+    "10% owner": "%10 üzeri ortak", "managing director": "Genel müdür", "general manager": "Genel müdür",
+    "executive officer": "Üst düzey yönetici",
+    # Form 4 dışından gelen Türkçe değerler olduğu gibi kalır
+    "yönetim kurulu üyesi": "Yönetim kurulu üyesi", "bildirim yükümlüsü": "Bildirim yükümlüsü",
+    "%10 üzeri ortak": "%10 üzeri ortak", "yönetici": "Yönetici",
 }
+
+# Başı tanıdık, devamı bölüm adı olan unvanlar: 'SVP Information Technology', 'President Generac Home'
+UNVAN_ONEKLERI = (
+    (r"(co-)?chief executive|(co-)?ceo\b", "CEO"),
+    (r"(senior|sr\.?|exec(utive)?\.?|s?evp|svp|senior executive|corp(orate)?)[\s-]*(vice[\s-]president|vp)|s?evp\b|svp\b",
+     "Kıdemli başkan yardımcısı"),
+    (r"(vice[\s-]president|vp)\b", "Başkan yardımcısı"),
+    (r"(group |segment |division )?president|.*\bpresident\b", "Bölüm başkanı"),
+    (r"chief financial|cfo\b", "Finans direktörü (CFO)"),
+    (r".*\bceo\b", "CEO"),
+    (r"chief .*officer|chief .*off\b|chief\b", "Üst düzey yönetici"),
+    (r".*\bdirector\b|md\b|.*\bhead of\b|.*\blead\b", "Üst düzey yönetici"),
+)
 
 
 def unvan(metin):
     """'PRESIDENT AND CEO' -> 'Başkan, CEO'; 'Chairperson & CEO' -> 'Yönetim kurulu başkanı, CEO'.
-    Bilinmeyen parça olduğu gibi kalır."""
+    Tanınmayan parçalar atılır; hiçbiri tanınmazsa 'Üst düzey yönetici' olur."""
     if not metin:
         return metin
     parcalar = [p.strip(" .") for p in re.split(r"\s*(?:&|\band\b|,|/|;)\s*", metin, flags=re.IGNORECASE)]
-    sonuc = []
+    sonuc, bilinmeyen = [], []
     for p in parcalar:
+        p = p.strip(" *-")
         if not p:
             continue
         karsilik = UNVANLAR.get(p.lower()) or UNVANLAR.get(p.lower() + ".")
-        if not karsilik and re.match(r"^(chief|principal) .+ officer$", p, re.IGNORECASE):
-            karsilik = "Üst düzey yönetici"
-        if not karsilik and p.isupper() and len(p) > 4:
-            karsilik = p.capitalize()
-        karsilik = karsilik or p
-        if karsilik not in sonuc:
+        if not karsilik:
+            karsilik = next((k for desen, k in UNVAN_ONEKLERI if re.match(desen, p, re.IGNORECASE)), None)
+        if not karsilik:
+            bilinmeyen.append(p)
+        elif karsilik not in sonuc:
             sonuc.append(karsilik)
-    return ", ".join(sonuc)
+    # 'CEO, Data' gibi: tanınan parça yeterli, bölüm adı İngilizce kalmasın
+    if len(sonuc) > 1 and "Üst düzey yönetici" in sonuc:
+        sonuc.remove("Üst düzey yönetici")
+    if sonuc:
+        return ", ".join(sonuc)
+    return "Üst düzey yönetici" if bilinmeyen else metin
 
 
 # ---------------------------------------------------------------------------

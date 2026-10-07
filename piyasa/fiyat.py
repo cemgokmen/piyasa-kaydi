@@ -208,7 +208,8 @@ def _anlik_indir(kod):
                                    ("postMarketPrice", "Seans sonrası", ("POST", "POSTPOST", "CLOSED"))):
         deger = bilgi.get(alan)
         if deger and durum in durumlar:
-            seans_disi = {"etiket": etiket, "fiyat": round(float(deger), 4), "degisim": _oran(deger, fiyat)}
+            seans_disi = {"etiket": etiket, "fiyat": round(float(deger), 4), "degisim": _oran(deger, fiyat),
+                          "zaman": bilgi.get(alan.replace("Price", "Time"))}
     return {
         "kod": kod,
         "fiyat": round(float(fiyat), 4),

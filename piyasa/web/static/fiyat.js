@@ -142,7 +142,9 @@
     alan("fiyat").textContent = fiyatYaz(disi ? disi.fiyat : a.fiyat);
     const parcalar = [];
     if (a.durum_etiket) parcalar.push(a.durum_etiket);
-    if (a.zaman) parcalar.push(`${zamanYaz(a.zaman)} (TSİ)`);
+    // Seans dışı fiyatta saat, o fiyatın saatidir (kapanışınki değil)
+    const saat = disi ? disi.zaman : a.zaman;
+    if (saat) parcalar.push(`${zamanYaz(saat)} (TSİ)`);
     if (a.gecikme) parcalar.push(`${a.gecikme} dk gecikmeli`);
     const acilis = acilisMetni(a);
     if (acilis) parcalar.push(acilis);

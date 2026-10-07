@@ -102,12 +102,10 @@
 
       {% if t.analist %}
       <div class="temel-kart">
-        <h3>Analist beklentisi <span>{{ t.analist.adet }} analist</span></h3>
-        <p class="analist-hedef">
-          <b>{{ t.analist.hedef }}</b> ortalama hedef fiyat
-          {% if t.analist.potansiyel is not none %}<span class="{{ 'artis' if t.analist.potansiyel > 0 else 'azalis' }}">{{ t.analist.potansiyel|yuzde(True, 1) }}</span>{% endif %}
-        </p>
-        <p class="temel-not">En düşük {{ t.analist.dusuk }} · en yüksek {{ t.analist.yuksek }}{% if t.analist.oneri %} · genel görüş <b class="oneri-{{ t.analist.ton }}">{{ t.analist.oneri }}</b>{% endif %}</p>
+        <h3>Analist hedefi ne demek?</h3>
+        <p class="temel-not">Analistler bankalarda ve aracı kurumlarda hisseyi takip eden uzmanlardır. Hedef fiyat,
+          hissenin 12 ay sonra nerede olacağına dair tahminleridir. Yukarıdaki rakam {{ t.analist.adet }} analistin
+          ortalamasıdır; tahminler sık yanılır ve yatırım tavsiyesi değildir.</p>
       </div>
       {% endif %}
     </aside>

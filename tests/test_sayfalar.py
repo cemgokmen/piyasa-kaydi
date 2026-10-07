@@ -301,7 +301,7 @@ def test_sirket_rakamlari(istemci):
     parca = istemci.get("/hisse/AAPL/rakamlar").get_data(as_text=True)
     for metin in ("Şirketin rakamları", "Piyasa değeri", "4,9 trl $", "F/K", "38,2", "%0,32",
                   "Değerleme", "Karlılık", "Bilanço", "Sahiplik", "Son bilanço", "Nis–Haz 2026",
-                  "Sonraki bilanço", "Analist beklentisi", "52 haftalık aralık"):
+                  "Sonraki bilanço", "analistin", "52 haftalık aralık"):
         assert metin in parca, metin
     # Son çeyrek geçen yılın aynı çeyreğiyle karşılaştırılır: 109 / 94 - 1 = +%16,0
     assert "+%16,0" in parca

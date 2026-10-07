@@ -15,8 +15,8 @@
         <span>{{ kimlik.chamber }} üyesi</span><span class="soluk">·</span><span>{{ kimlik.state }}</span>
         {% if gorev %}<span class="soluk">·</span><span class="etiket">{{ gorev }}</span>{% endif %}
       {% else %}
-        <span>{{ kimlik.job_title or 'Bildirim yükümlüsü' }}</span>
-        {% if kimlik.company %}<span class="soluk">·</span><span>{{ kimlik.company }}</span>{% endif %}
+        <span>{{ (kimlik.job_title|unvan) or 'Bildirim yükümlüsü' }}</span>
+        {% if kimlik.company %}<span class="soluk">·</span><span>{{ kimlik.company|sirket_adi }}</span>{% endif %}
       {% endif %}
     </p>
   </div>

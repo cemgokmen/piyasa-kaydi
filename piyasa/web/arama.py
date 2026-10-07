@@ -14,6 +14,7 @@ import unicodedata
 from collections import Counter, defaultdict
 from contextlib import closing
 
+from piyasa.bicim import sirket_gorunen_ad, unvan
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kurallar import GECERLI_KOD, TEMIZ, parti_bilgisi
 from piyasa.onbellek import sureli
@@ -100,7 +101,7 @@ def _dizin_kur():
                 alt = " · ".join(x for x in ((p or {}).get("ad"), s["meclis"], s["bolge"]) if x)
                 tur = "Siyasetçi"
             else:
-                alt = " · ".join(x for x in (s["unvan"], s["sirket"]) if x)
+                alt = " · ".join(x for x in (unvan(s["unvan"]), sirket_gorunen_ad(s["sirket"]) if s["sirket"] else None) if x)
                 tur = "Yönetici"
             girdiler.append({
                 "tur": tur, "etiket": s["ad"], "alt": alt, "adres": f"/kisi/{s['person_slug']}",
