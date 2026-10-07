@@ -2010,11 +2010,11 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
   color: var(--yazi-2); font-size: 12px; }
 .sektor-lejant li { display: inline-flex; align-items: center; gap: 6px; }
 .ton { width: 22px; height: 12px; border-radius: 3px; background: var(--ton-zemin); border: 1px solid var(--ton-kenar); }
-.ton-satim-2 { --ton-zemin: #9B1C1C; --ton-kenar: #C02626; --ton-yazi: #FFF1F0; --ton-rozet: rgba(255,255,255,.18); }
-.ton-satim-1 { --ton-zemin: #F6B4AB; --ton-kenar: #E8897C; --ton-yazi: #4A1410; --ton-rozet: rgba(255,255,255,.6); }
-.ton-notr-0  { --ton-zemin: #3B6FD8; --ton-kenar: #5A88E6; --ton-yazi: #F2F6FF; --ton-rozet: rgba(255,255,255,.2); }
-.ton-alim-1  { --ton-zemin: #B3E8C8; --ton-kenar: #7FD3A2; --ton-yazi: #0D3A22; --ton-rozet: rgba(255,255,255,.6); }
-.ton-alim-2  { --ton-zemin: #15703F; --ton-kenar: #1E8C52; --ton-yazi: #ECFFF4; --ton-rozet: rgba(255,255,255,.18); }
+.ton-satim-2 { --ton-zemin: #A8322B; --ton-kenar: #BF4038; --ton-yazi: #FFF4F2; --ton-rozet: rgba(255,255,255,.2); }
+.ton-satim-1 { --ton-zemin: #C9554B; --ton-kenar: #D86A60; --ton-yazi: #FFF6F4; --ton-rozet: rgba(255,255,255,.2); }
+.ton-notr-0  { --ton-zemin: #3F6FCF; --ton-kenar: #5584DE; --ton-yazi: #F3F7FF; --ton-rozet: rgba(255,255,255,.2); }
+.ton-alim-1  { --ton-zemin: #33A06A; --ton-kenar: #45B37C; --ton-yazi: #F2FFF7; --ton-rozet: rgba(255,255,255,.2); }
+.ton-alim-2  { --ton-zemin: #1F8050; --ton-kenar: #2C925F; --ton-yazi: #F0FFF6; --ton-rozet: rgba(255,255,255,.2); }
 .sektor-not { margin-top: 14px; }
 
 
@@ -2035,3 +2035,17 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
   .ihale-akis { grid-template-columns: 1fr; gap: 4px; }
   .ihale-ok { transform: rotate(90deg); justify-self: start; }
 }
+
+
+/* Açılır bilgi kutusu (ör. yöneticiler neden çoğunlukla satıyor?) */
+.bilgi-kutu { margin: 0 0 16px; border: 1px solid var(--cizgi); border-radius: var(--yaricap); background: var(--kart); }
+.bilgi-kutu summary { padding: 11px 16px; cursor: pointer; color: var(--yazi); font-size: 14px; font-weight: 600; list-style: none; }
+.bilgi-kutu summary::-webkit-details-marker { display: none; }
+.bilgi-kutu summary::before { content: "ⓘ"; margin-right: 8px; color: var(--vurgu); }
+.bilgi-kutu summary::after { content: "Göster"; float: right; color: var(--yazi-3); font-size: 12.5px; font-weight: 500; }
+.bilgi-kutu[open] summary::after { content: "Gizle"; }
+.bilgi-kutu-icerik { padding: 0 16px 14px; color: var(--yazi-2); font-size: 14px; line-height: 1.6; }
+.bilgi-kutu-icerik p { margin: 0 0 8px; }
+.bilgi-kutu-icerik ul { margin: 0 0 8px; padding-left: 20px; }
+.bilgi-kutu-icerik li { margin: 3px 0; }
+.guncellik .son-kontrol { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--cizgi-2); }

@@ -110,6 +110,8 @@
         {% for ad, tarih in veri_guncelligi %}
         <li><span>{{ ad }}</span> <span class="soluk">{{ tarih|uzun_tarih if tarih else '—' }}</span></li>
         {% endfor %}
+        {% if son_kontrol %}<li class="son-kontrol"><span>Son kontrol</span>
+          <span class="soluk">{{ son_kontrol.isoformat()|kisa_tarih }} {{ son_kontrol.strftime('%H:%M') }}</span></li>{% endif %}
       </ul>
     </div>
     <div>

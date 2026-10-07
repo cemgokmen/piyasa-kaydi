@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, parti_rozeti, siyaset_sekmeleri, fark, karar_rozeti, avatar %}
+{% from "_bilesenler.html" import kpi, parti_rozeti, siyaset_sekmeleri, fark, avatar %}
 {% block baslik %}Kim piyasayı yendi? Siyasetçilerin yatırım performansı · Piyasa Kaydı{% endblock %}
 {% block geri_adres %}{{ url_for('site.siyasetciler') }}{% endblock %}
 
@@ -49,7 +49,6 @@
           <th scope="col" class="sag" data-sirala="sayi">Ölçülen alım</th>
           <th scope="col" class="sag" data-sirala="sayi">Takip eden biri</th>
           <th scope="col" class="sag" data-sirala="sayi">Satış isabeti</th>
-          <th scope="col">Güvenilirlik</th>
         </tr>
       </thead>
       <tbody>
@@ -64,10 +63,9 @@
           <td data-etiket="Ölçülen alım" class="sag sayi" data-deger="{{ k.alim.n }}">{{ k.alim.n }}</td>
           <td data-etiket="Takip eden biri" class="sag" data-deger="{{ k.takipci.ortalama if k.takipci.n else 0 }}">{{ fark(k.takipci.ortalama if k.takipci.n else none) }}</td>
           <td data-etiket="Satış isabeti" class="sag sayi" data-deger="{{ k.satim_isabet or 0 }}">{% if k.satim_isabet is not none %}%{{ (k.satim_isabet * 100)|round|int }} <span class="soluk kucuk">/ {{ k.satim_n }}</span>{% else %}<span class="soluk">—</span>{% endif %}</td>
-          <td data-etiket="Güvenilirlik">{{ karar_rozeti(k.alim.karar) }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="bos">Henüz yeterli veri yok. <code>python -m piyasa fiyatlar</code> ve <code>python -m piyasa analiz</code> çalıştırılmalı.</td></tr>
+        <tr><td colspan="7" class="bos">Henüz yeterli veri yok. <code>python -m piyasa fiyatlar</code> ve <code>python -m piyasa analiz</code> çalıştırılmalı.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -76,7 +74,7 @@
     <dt>Endekse göre</dt><dd>Alımdan {{ ufuk }} gün sonra hissenin getirisi eksi aynı dönemde S&amp;P 500 getirisi; alımların ortalaması. Altındaki aralık %95 güven aralığıdır.</dd>
     <dt>Takip eden biri</dt><dd>Aynı hesap, işlem tarihinden değil bildirimin kamuya açıklandığı günden başlayarak: siyasetçiyi izleyen birinin gerçekte yakalayabileceği getiri.</dd>
     <dt>Satış isabeti</dt><dd>Sattıktan sonraki {{ ufuk }} günde hissenin endeksin gerisinde kaldığı satışların oranı.</dd>
-    <dt>Güvenilirlik</dt><dd>“Şanstan ayırt edilemiyor”: sonuç, rastgele hisse seçen birinin de tutturabileceği bir sonuç. Aynı gün aynı hissedeki bölünmüş bildirimler tek işlem sayılır; her işlem eşit ağırlıklıdır.</dd>
+    <dt>Hesaplama</dt><dd>Aynı gün aynı hissedeki bölünmüş bildirimler tek işlem sayılır; her işlem eşit ağırlıklıdır.</dd>
   </dl>
 </section>
 {% endblock %}

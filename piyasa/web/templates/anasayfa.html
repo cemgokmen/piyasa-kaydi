@@ -51,7 +51,8 @@
     <span class="kaynak-kart-sayi">{{ (yonetici.adet or 0)|sayi }} <small>işlem</small></span>
     <span class="kaynak-kart-metin">Son 30 günde yöneticilerin kendi şirketlerinde yaptığı işlemler:
       <span class="tutar-buy">{{ yonetici.alim_tutar|tutar }} alım</span>,
-      <span class="tutar-sell">{{ yonetici.satim_tutar|tutar }} satım</span></span>
+      <span class="tutar-sell">{{ yonetici.satim_tutar|tutar }} satım</span>.
+      Satışların çoğu hisse ödüllerinin vergisi ve planlı satışlardır; alımlar daha anlamlıdır.</span>
     <span class="kaynak-kart-link">Yönetici işlemlerini gör →</span>
   </a>
   <a class="kaynak-kart" href="{{ url_for('site.fonlar') }}">

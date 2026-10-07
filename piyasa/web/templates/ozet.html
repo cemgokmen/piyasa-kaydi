@@ -8,6 +8,9 @@
     <p class="ust-yol">Günlük özet</p>
     <h1>{{ baslik }}</h1>
     <p class="sayfa-not">O gün kamuya açıklanan bildirimlerden derlenen kısa özet. Her madde resmi kayıtlara dayanır.</p>
+    {% if en_yeni %}<p class="sayfa-not kucuk soluk">En yeni özet budur. ABD'de bir günün bildirimleri o gün bittikten sonra
+      (Türkiye saatiyle sabah 05:00 civarı) yayımlanır; bu yüzden özet bir önceki iş gününe aittir.
+      Her sabah 07:00'de güncellenir, yeni bildirimler gün içinde 12:00 ve 00:00'da da eklenir.</p>{% endif %}
   </div>
   <div class="ozet-gezinti">
     {% if onceki %}<a class="dugme" href="{{ url_for('analiz.gunluk_ozet', gun=onceki) }}" rel="prev">← {{ onceki|kisa_tarih }}</a>

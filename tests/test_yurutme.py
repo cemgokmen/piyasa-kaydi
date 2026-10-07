@@ -214,7 +214,7 @@ def test_gunluk_guncelleme_gerekli_mi():
     basarili_dun = {"zaman": "2026-10-05T08:00:00", "basarili": True, "deneme": 1}
     # Mac 15:00'te açıldı, bugün güncelleme yok: hemen yapılır
     assert gerekli_mi(an("2026-10-06T15:00"), basarili_dun)
-    # Gece 03:00: gün 07:30'da başlar, dünkü güncelleme hâlâ geçerli
+    # Gece 03:00: gün 07:00'da başlar, dünkü güncelleme hâlâ geçerli
     assert not gerekli_mi(an("2026-10-06T03:00"), basarili_dun)
     # Bugün başarıyla yapıldıysa saat başı kontroller bir şey yapmaz
     assert not gerekli_mi(an("2026-10-06T16:00"), {"zaman": "2026-10-06T07:31:00", "basarili": True})
@@ -333,3 +333,18 @@ def test_unvan():
     assert unvan("Chief Transformation Officer") == "Üst düzey yönetici"
     assert unvan("See Remarks") == "Yönetici"
     assert unvan("Yönetim kurulu üyesi") == "Yönetim kurulu üyesi"
+
+
+def test_internet_bekle(monkeypatch):
+    import socket
+
+    from piyasa import zamanlama
+
+    monkeypatch.setattr(socket, "getaddrinfo", lambda *a: [("ok",)])
+    assert zamanlama.internet_bekle(sure=0)
+
+    def yok(*a):
+        raise OSError("dns yok")
+
+    monkeypatch.setattr(socket, "getaddrinfo", yok)
+    assert not zamanlama.internet_bekle(sure=0, aralik=0)

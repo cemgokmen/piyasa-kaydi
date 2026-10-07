@@ -199,3 +199,25 @@
   </ul>
 </section>
 {% endmacro %}
+
+
+{# Yönetici işlemlerinin göründüğü her yerde: satışların neden çok olduğu #}
+{% macro yonetici_satis_notu(acik=False) %}
+<details class="bilgi-kutu"{% if acik %} open{% endif %}>
+  <summary>Yöneticiler neden çoğunlukla satış yapıyor?</summary>
+  <div class="bilgi-kutu-icerik">
+    <p>Şirket yöneticilerinin kazancının büyük kısmı maaş değil, <b>hisse olarak</b> ödenir (hisse ödülü ve opsiyon).
+      Bu hisselerin bir kısmını düzenli olarak satarlar:</p>
+    <ul>
+      <li><b>Vergi:</b> verilen hisse gelir sayılır; vergisini ödemek için hissenin bir kısmı satılır.</li>
+      <li><b>Çeşitlendirme:</b> servetlerinin tamamını tek bir şirkete bağlı tutmamak için.</li>
+      <li><b>Kişisel ihtiyaç:</b> ev, eğitim, bağış gibi harcamalar için nakit.</li>
+      <li><b>Önceden planlı satış (10b5-1):</b> satışların çoğu aylar önce kurulan bir takvime göre otomatik yapılır;
+        yöneticinin o günkü görüşünü yansıtmaz.</li>
+    </ul>
+    <p>Bu yüzden tek tek satışlar çoğu zaman olumsuz bir işaret değildir. Yöneticinin kendi cebinden, açık piyasadan
+      hisse <b>alması</b> ise seyrektir ve daha anlamlıdır: satmak için birçok sebep vardır, almak için genelde tek sebep
+      vardır, hissenin değer kazanacağına inanmak. Sitedeki sinyaller bu yüzden yöneticilerin alımlarına odaklanır.</p>
+  </div>
+</details>
+{% endmacro %}

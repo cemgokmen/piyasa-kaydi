@@ -90,7 +90,7 @@ Bütün işler tek bir komut üzerinden yapılır. Komut listesi:
 python -m piyasa site          # siteyi başlatır → http://127.0.0.1:5001
 python -m piyasa site --ag     # aynı Wi-Fi'daki telefondan açmak için (adresi yazdırır)
 python -m piyasa guncelle      # bütün veriyi günceller (her adım ayrı; biri hata verse de devam eder)
-python -m piyasa zamanla       # 'guncelle'yi her sabah 07:30'da otomatik çalıştırır (macOS)
+python -m piyasa zamanla       # tam güncelleme her sabah 07:00, yeni bildirimler 12:00 ve 00:00 (macOS)
 python -m piyasa zamanla --kaldir
 ```
 

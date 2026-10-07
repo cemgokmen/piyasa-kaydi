@@ -180,4 +180,5 @@ def gunluk_ozet(gun=None):
         "onceki": gunler[i + 1] if i + 1 < len(gunler) else None,
         "sonraki": gunler[i - 1] if i > 0 else None,
         "gunler": gunler[:30],
+        "en_yeni": i == 0,
     }

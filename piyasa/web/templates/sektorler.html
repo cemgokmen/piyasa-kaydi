@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_bilesenler.html" import yonetici_satis_notu %}
 {% block baslik %}Sektör haritası: {{ gruplar[grup] }} hangi sektörde alıcı? · Piyasa Kaydı{% endblock %}
 {% block aciklama %}ABD'de siyasetçilerin ve şirket yöneticilerinin hangi sektörlerde net alıcı, hangilerinde net satıcı olduğu.{% endblock %}
 
@@ -32,9 +33,9 @@
   En az: <b>{{ harita.en_satici|map(attribute='ad')|join(', ') }}</b>.
 </p>
 {% if harita.goreli %}
-<p class="uyari-kutu">Şirket yöneticileri hisse ödüllerini ve opsiyon gelirlerini nakde çevirdikleri için hemen her sektörde
-net satıcıdır. Sektörleri karşılaştırmak için her kutuda <b>alım payı</b> (alımın toplam işlem tutarı içindeki payı) ve
-bütün sektörlerin ortalaması (<b>%{{ (harita.ortalama_pay * 100)|round(1)|string|replace('.', ',') }}</b>) verilmiştir.</p>
+<p class="sektor-ozet">Her kutuda <b>alım payı</b> (alımın toplam işlem tutarı içindeki payı) ve bütün sektörlerin ortalaması
+  (<b>%{{ (harita.ortalama_pay * 100)|round(1)|string|replace('.', ',') }}</b>) ile karşılaştırması verilmiştir.</p>
+{{ yonetici_satis_notu() }}
 {% endif %}
 
 <ul class="sektor-lejant" aria-label="Renk açıklaması">

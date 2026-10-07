@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, islem_tablosu %}
+{% from "_bilesenler.html" import kpi, islem_tablosu, yonetici_satis_notu %}
 {% set basliklar = {
     'siyasetci': ('Siyasetçilerin işlemleri', 'ABD Kongresi (Temsilciler Meclisi ve Senato) üyelerinin bildirdiği hisse alım ve satımları. Tutarlar bildirim formundaki aralıktır.'),
     'meclis': ('Temsilciler Meclisi üyelerinin işlemleri', 'ABD Temsilciler Meclisi üyelerinin bildirdiği hisse alım ve satımları. Tutarlar bildirim formundaki aralıktır.'),
@@ -48,6 +48,8 @@
     {% if filtre.q or filtre.islem != 'hepsi' %}<a class="temizle" href="{{ url_for('site.islemler', kaynak=filtre.kaynak) }}">Filtreleri temizle</a>{% endif %}
   </div>
 </form>
+
+{% if filtre.kaynak in ('yonetici', 'hepsi') %}{{ yonetici_satis_notu() }}{% endif %}
 
 {% if toplam %}
 <section class="kpi-izgara kpi-3">

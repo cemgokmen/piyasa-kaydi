@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, islem_tablosu, fark, karar_rozeti, avatar, pasta_grafigi %}
+{% from "_bilesenler.html" import kpi, islem_tablosu, fark, avatar, pasta_grafigi, yonetici_satis_notu %}
 {% block baslik %}{{ kimlik.person }} · Piyasa Kaydı{% endblock %}
 
 {% block geri_adres %}{% if siyasetci %}{{ url_for('site.siyasetciler') }}{% else %}{{ url_for('site.islemler', kaynak='yonetici') }}{% endif %}{% endblock %}
@@ -34,6 +34,8 @@
 {% if siyasetci %}Kongre üyeleri işlemlerini en geç {{ yasal_gun }} gün içinde bildirmek zorunda.
 {% else %}Şirket yöneticileri işlemlerini {{ form4_gun }} iş günü içinde bildirmek zorunda.{% endif %}</p>
 {% endif %}
+
+{% if not siyasetci and ozet.satim %}{{ yonetici_satis_notu() }}{% endif %}
 
 {% if siyasetci and portfoy and portfoy.pozisyonlar %}
 <section class="bolum" id="portfoy">
@@ -104,7 +106,6 @@
     {{ kpi('Satış isabeti', ('%' ~ (performans.satim_isabet * 100)|round|int) if performans.satim_isabet is not none else '—',
            (performans.satim_n ~ ' satıştan sonra hisse endeksin gerisinde kaldı') if performans.satim_n else 'ölçülen satış yok') }}
   </div>
-  <p class="dipnot">Güvenilirlik: {{ karar_rozeti(performans.alim.karar) }}</p>
 
   {% if performans.en_iyi %}
   <div class="izgara-2">

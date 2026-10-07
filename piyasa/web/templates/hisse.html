@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, islem_tablosu, fiyat_paneli %}
+{% from "_bilesenler.html" import kpi, islem_tablosu, fiyat_paneli, yonetici_satis_notu %}
 {% block baslik %}{{ ticker }} — {{ sirket|sirket_adi }} hisse işlemleri, fiyatı ve rakamları · Piyasa Kaydı{% endblock %}
 
 {% block geri_adres %}{{ url_for('site.islemler', donem='365') }}{% endblock %}
@@ -93,6 +93,7 @@
         <span class="tutar-sell">{{ yonetici.satim }} satım ({{ yonetici.satim_tutar|tutar }})</span></p>
     </div>
   </header>
+  {% if yonetici.satim > yonetici.alim %}{{ yonetici_satis_notu() }}{% endif %}
   <div data-kisalt="10">{{ islem_tablosu(yonetici_islemleri, hisse=False) }}</div>
 </section>
 {% endif %}

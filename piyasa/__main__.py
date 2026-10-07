@@ -5,8 +5,8 @@ Kullanım:
     python -m piyasa site                 siteyi başlatır (http://127.0.0.1:5001)
     python -m piyasa site --ag            aynı Wi-Fi'daki telefondan da açılabilir
     python -m piyasa yayin                sitenin yayın sürümü (gunicorn); --kur ile Mac açılınca başlar
-    python -m piyasa guncelle             tüm veriyi günceller (Form 4 + Kongre + emtia + bakım)
-    python -m piyasa zamanla              güncellemeyi her sabah 07:30'da otomatik çalıştırır
+    python -m piyasa guncelle             tüm veriyi günceller (--hizli: yalnızca yeni bildirimler)
+    python -m piyasa zamanla              tam güncelleme her sabah 07:00, hızlı güncelleme 12:00 ve 00:00
                                           (--saat 6:15 ile saat, --kaldir ile kapatma)
 
     python -m piyasa form4                son 90 günün eksik Form 4 günlerini indirir
@@ -64,6 +64,9 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
+# 'guncelle --hizli' (günde iki kez): yalnızca yeni bildirimler ve bakımları
+HIZLI_GUNCELLEME = ["form4", "kongre", "senato", "fon", "slug", "duzelt", "supheli"]
+
 GUNCELLEME = ["form4", "kongre", "senato", "emtia", "slug", "duzelt", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
 
 
@@ -91,14 +94,16 @@ def guncelle(argumanlar=()):
     geçici olarak ulaşılamazsa) kalan adımlar yine çalışır; sonunda hata
     veren adımlar listelenir ve komut hata koduyla biter.
 
-    --gerekirse [7:30]: günün güncellemesi zaten yapıldıysa hiçbir şey yapmadan
+    --gerekirse [7:00]: günün güncellemesi zaten yapıldıysa hiçbir şey yapmadan
     çıkar (zamanlanmış görev bunu saat başı çalıştırır; bkz. piyasa/zamanlama.py).
+    --hizli: yalnızca yeni bildirimler (HIZLI_GUNCELLEME); günlük durumu değiştirmez.
     """
     from datetime import datetime
 
     from piyasa import zamanlama
 
-    saat, dakika = 7, 30
+    hizli = "--hizli" in argumanlar
+    saat, dakika = 7, 0
     if "--gerekirse" in argumanlar:
         sira = list(argumanlar).index("--gerekirse")
         if sira + 1 < len(argumanlar) and ":" in argumanlar[sira + 1]:
@@ -106,27 +111,34 @@ def guncelle(argumanlar=()):
         if not zamanlama.gerekli_mi(datetime.now(), zamanlama.durum_oku(), saat, dakika):
             return
 
+    if not zamanlama.internet_bekle():
+        print(f"{datetime.now():%Y-%m-%d %H:%M} İnternet yok; güncelleme sonraki denemeye bırakıldı.", flush=True)
+        return
+
     with zamanlama.tek_guncelleme() as kilit:
         if not kilit:
             print("Başka bir güncelleme sürüyor; bu çalıştırma atlandı.", flush=True)
             return
-        hatalar = adimlari_calistir()
-    zamanlama.durum_yaz(datetime.now(), not hatalar, hatalar, saat, dakika)
+        hatalar = adimlari_calistir(HIZLI_GUNCELLEME if hizli else GUNCELLEME, "Hızlı güncelleme" if hizli else "Güncelleme")
+    if hizli:
+        zamanlama.hizli_durum_yaz(datetime.now(), not hatalar)
+    else:
+        zamanlama.durum_yaz(datetime.now(), not hatalar, hatalar, saat, dakika)
     if hatalar:
         print(f"\nHata veren adımlar: {', '.join(hatalar)}", flush=True)
         sys.exit(1)
-    print(f"\n##### Güncelleme bitti: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
+    print(f"\n##### {'Hızlı güncelleme' if hizli else 'Güncelleme'} bitti: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
 
 
-def adimlari_calistir():
-    """GUNCELLEME adımlarını sırayla çalıştırır; hata veren adımların listesini döndürür."""
+def adimlari_calistir(adimlar=None, baslik="Güncelleme"):
+    """Adımları sırayla çalıştırır; hata veren adımların listesini döndürür."""
     import time
     import traceback
     from datetime import datetime
 
-    print(f"\n##### Güncelleme başladı: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
+    print(f"\n##### {baslik} başladı: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
     hatalar = []
-    for adim in GUNCELLEME:
+    for adim in adimlar or GUNCELLEME:
         baslangic = time.time()
         print(f"\n=== {adim} ===", flush=True)
         try:
