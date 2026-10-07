@@ -167,6 +167,26 @@ def toplu_fiyat_bilgisi(kodlar, ham=True):
         return dict(zip(kodlar, havuz.map(lambda k: fiyat_bilgisi(k, ham=ham), kodlar), strict=True))
 
 
+ABD_BORSALARI = {"NMS", "NYQ", "NGM", "NCM", "PCX", "ASE", "BTS", "NYS", "PNK", "OQX"}
+
+
+def abd_acilisi(simdi=None):
+    """ABD borsasının bir sonraki açılışı (09:30 New York), Türkiye saatiyle 'HH:MM' ve gün farkı."""
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    ny, ist = ZoneInfo("America/New_York"), ZoneInfo("Europe/Istanbul")
+    simdi = (simdi or datetime.now(ny)).astimezone(ny)
+    acilis = simdi.replace(hour=9, minute=30, second=0, microsecond=0)
+    if simdi >= acilis:
+        acilis += timedelta(days=1)
+    while acilis.weekday() >= 5:                 # hafta sonu
+        acilis += timedelta(days=1)
+    yerel = acilis.astimezone(ist)
+    gun = (yerel.date() - simdi.astimezone(ist).date()).days
+    gunler = ["pazartesi", "salı", "çarşamba", "perşembe", "cuma", "cumartesi", "pazar"]
+    return {"saat": yerel.strftime("%H:%M"), "gun": gun, "gun_adi": gunler[yerel.weekday()]}
+
+
 def _oran(fiyat, onceki):
     return float(fiyat / onceki - 1) if fiyat and onceki else None
 
@@ -199,6 +219,8 @@ def _anlik_indir(kod):
         "durum_etiket": SEANS.get(durum),
         "gecikme": bilgi.get("exchangeDataDelayedBy"),   # dakika; 0 gerçek zamanlı
         "seans_disi": seans_disi,
+        # Borsa kapalıyken bir sonraki açılış (yalnızca ABD hisseleri)
+        "acilis": abd_acilisi() if durum != "REGULAR" and bilgi.get("exchange") in ABD_BORSALARI else None,
     }
 
 

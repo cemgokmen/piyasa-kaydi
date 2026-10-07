@@ -7,6 +7,7 @@ Ham veriyi alan kısım (_veri_al) ile göstergeleri hazırlayan kısım
 Sonuç 6 saat bellekte tutulur: bu rakamlar gün içinde değişmez.
 """
 
+import time
 from datetime import UTC, date, datetime
 
 import yfinance as yf
@@ -309,9 +310,23 @@ def hazirla(bilgi, gelir=None, bilanco=None, nakit=None, takvim=None):
 # Veri
 # ---------------------------------------------------------------------------
 
-def _veri_al(kod):
+class VeriYok(Exception):
+    """Yahoo boş döndü (çoğunlukla geçici hız sınırı): sonuç önbelleğe alınmaz."""
+
+
+def _veri_al(kod, deneme=2):
     t = yf.Ticker(kod)
-    bilgi = t.info or {}
+    bilgi = {}
+    for i in range(deneme):
+        try:
+            bilgi = t.info or {}
+        except Exception:
+            bilgi = {}
+        if len(bilgi) > 5:
+            break
+        time.sleep(1.5 * (i + 1))
+    if len(bilgi) <= 5:
+        raise VeriYok(kod)
     if bilgi.get("quoteType") == "ETF":
         return bilgi, None, None, None, None
 
@@ -328,8 +343,9 @@ def _veri_al(kod):
 @sureli(ONBELLEK_SURESI)
 def _temel(kod):
     sonuc = hazirla(*_veri_al(kod))
-    if sonuc:
-        sonuc["guncelleme"] = datetime.now(UTC).isoformat()
+    if not sonuc:
+        raise VeriYok(kod)          # boş sonuç 6 saat önbellekte kalmasın
+    sonuc["guncelleme"] = datetime.now(UTC).isoformat()
     return sonuc
 
 

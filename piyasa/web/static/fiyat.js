@@ -123,29 +123,38 @@
     return (bugun ? saat : gunSaat).format(t);
   }
 
+  function acilisMetni(a) {
+    if (!a.acilis) return "";
+    const gun = a.acilis.gun === 0 ? "bugün" : a.acilis.gun === 1 ? "yarın" : a.acilis.gun_adi;
+    return `ABD borsası ${gun} ${a.acilis.saat}'da açılır`;
+  }
+
   function anlikYaz(a) {
     const acik = a.durum === "REGULAR";
+    // Seans dışındayken canlı olan seans öncesi / sonrası fiyatıdır; ana fiyat odur
+    const disi = !acik && a.seans_disi ? a.seans_disi : null;
     alan("etiket").innerHTML = "";
     const nokta = document.createElement("span");
-    nokta.className = "canli-nokta" + (acik ? " acik" : "");
+    nokta.className = "canli-nokta" + (acik || disi ? " acik" : "");
     nokta.setAttribute("aria-hidden", "true");
-    alan("etiket").append(nokta, acik ? "Anlık fiyat" : "Son fiyat");
+    alan("etiket").append(nokta, acik ? "Anlık fiyat" : disi ? `${disi.etiket} fiyatı` : "Son fiyat");
 
-    alan("fiyat").textContent = fiyatYaz(a.fiyat);
+    alan("fiyat").textContent = fiyatYaz(disi ? disi.fiyat : a.fiyat);
     const parcalar = [];
     if (a.durum_etiket) parcalar.push(a.durum_etiket);
     if (a.zaman) parcalar.push(`${zamanYaz(a.zaman)} (TSİ)`);
     if (a.gecikme) parcalar.push(`${a.gecikme} dk gecikmeli`);
+    const acilis = acilisMetni(a);
+    if (acilis) parcalar.push(acilis);
     alan("tarih").textContent = parcalar.join(" · ");
 
-    const disi = alan("seans-disi");
-    if (a.seans_disi) {
-      const s = a.seans_disi;
-      disi.textContent = `${s.etiket}: ${fiyatYaz(s.fiyat)}` + (s.degisim === null ? "" : ` (${G.yuzde(s.degisim)})`);
-      disi.className = "fiyat-seans-disi " + (s.degisim > 0 ? "artis" : s.degisim < 0 ? "azalis" : "");
-      disi.hidden = false;
+    const ek = alan("seans-disi");
+    if (disi) {
+      ek.textContent = `Son kapanış ${fiyatYaz(a.fiyat)}` + (disi.degisim === null ? "" : ` · kapanışa göre ${G.yuzde(disi.degisim)}`);
+      ek.className = "fiyat-seans-disi " + (disi.degisim > 0 ? "artis" : disi.degisim < 0 ? "azalis" : "");
+      ek.hidden = false;
     } else {
-      disi.hidden = true;
+      ek.hidden = true;
     }
 
     // "1 gün" değişimi önceki kapanışa göre anlık fiyattan

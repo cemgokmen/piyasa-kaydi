@@ -515,15 +515,18 @@ document.querySelectorAll("[data-arama-odak]").forEach(function (bag) {
 // istek başarısızsa yer tutucu kaldırılır.
 // ---------------------------------------------------------------------------
 
-document.querySelectorAll("[data-parca-adres]").forEach(function (yer) {
+// Kaynak (Yahoo, Google) anlık olarak boş dönebiliyor: iki kez daha denenir
+function parcaYukle(yer, kalan) {
   fetch(yer.dataset.parcaAdres)
     .then((cevap) => (cevap.status === 200 ? cevap.text() : ""))
     .then(function (html) {
       if (html) yer.outerHTML = html;
+      else if (kalan > 0) setTimeout(() => parcaYukle(yer, kalan - 1), 4000);
       else yer.remove();
     })
-    .catch(() => yer.remove());
-});
+    .catch(() => (kalan > 0 ? setTimeout(() => parcaYukle(yer, kalan - 1), 4000) : yer.remove()));
+}
+document.querySelectorAll("[data-parca-adres]").forEach((yer) => parcaYukle(yer, 2));
 
 
 // ---------------------------------------------------------------------------

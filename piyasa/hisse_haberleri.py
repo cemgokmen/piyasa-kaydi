@@ -132,9 +132,16 @@ def _al(ticker, ad):
     return tekrarlari_ele(turkce + _basliklari_cevir(ingilizce))
 
 
+class HaberYok(Exception):
+    """Hiç haber gelmedi: geçici bir hata olabilir, boş sonuç önbelleğe alınmaz."""
+
+
 @sureli(ONBELLEK_SURESI, hatada_eskisi=True)
 def _haberler(ticker, ad):
-    return _al(ticker, ad)
+    sonuc = _al(ticker, ad)
+    if not sonuc:
+        raise HaberYok(ticker)
+    return sonuc
 
 
 def hisse_haberleri(ticker, sirket):
