@@ -221,3 +221,26 @@
   </div>
 </details>
 {% endmacro %}
+
+
+{# Piyasanın faiz beklentisi (Fed faiz vadelileri) — sade anlatım #}
+{% macro faiz_beklentisi_kutusu(fb) %}
+{% if fb %}
+<div class="panel beklenti-kutu">
+  <h3>Piyasa faizden ne bekliyor?</h3>
+  <p class="beklenti-cumle">
+    {% if fb.yon == 'sabit' %}Piyasa, ABD Merkez Bankası'nın (Fed) faizi önümüzdeki bir yılda <b>değiştirmemesini</b> bekliyor.
+    {% else %}Piyasa, Fed'in önümüzdeki bir yılda faizi yaklaşık <b>{{ fb.adim_sayisi }} kez {{ '0,25 puan artırmasını' if fb.yon == 'artış' else '0,25 puan indirmesini' }}</b> bekliyor:
+      bugün %{{ ('%.2f'|format(fb.guncel_ust - 0.25)).replace('.', ',') }}–{{ ('%.2f'|format(fb.guncel_ust)).replace('.', ',') }} bandında olan faizin {{ fb.son.vade }} itibarıyla %{{ ('%.2f'|format(fb.son.oran)).replace('.', ',') }} civarında olması fiyatlanıyor.{% endif %}
+  </p>
+  <ol class="beklenti-cizgi">
+    <li><span>Bugün</span><b>%{{ ('%.2f'|format(fb.guncel_ust - 0.25)).replace('.', ',') }}–{{ ('%.2f'|format(fb.guncel_ust)).replace('.', ',') }}</b></li>
+    {% for n in fb.noktalar %}
+    <li><span>{{ n.vade }}</span><b>%{{ ('%.2f'|format(n.oran)).replace('.', ',') }}</b></li>
+    {% endfor %}
+  </ol>
+  <p class="temel-not">Kaynak: Fed faiz vadeli işlemleri (Yahoo Finance). Bu bir tahmin değil, piyasada bugün işlem gören sözleşmelerin
+    fiyatından çıkan beklentidir. Faiz artışı genellikle doları güçlendirir; altın ve emtiaları baskılar.</p>
+</div>
+{% endif %}
+{% endmacro %}

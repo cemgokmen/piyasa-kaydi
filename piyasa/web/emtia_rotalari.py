@@ -6,7 +6,7 @@ Emtia sayfaları: genel bakış (/emtialar) ve her emtianın sayfası (/emtia/<s
 from flask import Blueprint, abort, jsonify, render_template
 
 from piyasa import fiyat
-from piyasa.emtia import haberler, kapalicarsi, serit, sorgular
+from piyasa.emtia import beklenti, haberler, kapalicarsi, serit, sorgular
 from piyasa.emtia.tanimlar import EMTIA, EMTIALAR, GOSTERGELER, GRUPLAR, ONS_GRAM
 
 emtia = Blueprint("emtia", __name__)
@@ -54,6 +54,11 @@ def _gram_altin(fiyatlar):
             "degisimler": degisimler}
 
 
+def _faiz_beklentisi():
+    faiz = sorgular.faiz_kararlari()
+    return beklenti.faiz_beklentisi(faiz["fed"]["deger"]) if faiz and faiz.get("fed") else None
+
+
 @emtia.route("/emtialar")
 def liste():
     kodlar = [e["yahoo"] for e in EMTIALAR] + [g["yahoo"] for g in GOSTERGELER.values()]
@@ -85,6 +90,7 @@ def liste():
         gram_altin=_gram_altin(fiyatlar),
         altin_gumus=(altin["fiyat"] / gumus["fiyat"]) if altin and gumus else None,
         fonlar=sorgular.cot_tablosu(EMTIALAR),
+        faiz_beklentisi=_faiz_beklentisi(),
         karar_haberleri=haberler.karar_haberleri(10),
         guncelleme=sorgular.son_guncelleme(),
     )
@@ -109,6 +115,8 @@ def detay(slug):
         faiz=sorgular.faiz_kararlari(),
         gram_altin=gram_altin,
         kapalicarsi=kapalicarsi.fiyatlar(slug) if slug in ("altin", "gumus") else None,
+        vadeli=beklenti.vadeli_fiyat(slug, e["yahoo"]),
+        faiz_beklentisi=_faiz_beklentisi(),
         haberler=haberler.haberler(e["haber"], 12),
         guncelleme=sorgular.son_guncelleme(),
         diger=[x for x in EMTIALAR if x["slug"] != slug],

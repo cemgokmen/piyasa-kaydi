@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, fiyat_paneli, haber_listesi, degisim %}
+{% from "_bilesenler.html" import kpi, fiyat_paneli, haber_listesi, degisim, faiz_beklentisi_kutusu %}
 {% block baslik %}{{ e.ad }} fiyatı, fon konumları ve haberler · Piyasa Kaydı{% endblock %}
 {% block geri_adres %}{{ url_for('emtia.liste') }}{% endblock %}
 
@@ -18,6 +18,19 @@
 
 {{ fiyat_paneli(url_for('emtia.fiyat_api', slug=e.slug), anlik_adres=url_for('emtia.anlik_api', slug=e.slug), birim=e.birim, etiket='Son fiyat',
    kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Anlık fiyat dakikada bir yenilenir, vadelilerde 10-15 dakika gecikmelidir. Grafik günlük kapanışlardır; hacim, sözleşme adedidir.') }}
+
+{% if vadeli %}
+<div class="panel beklenti-kutu">
+  <h3>Piyasa {{ e.ad|lower }} fiyatından ne bekliyor?</h3>
+  <p class="beklenti-cumle">Vadeli işlem piyasasında <b>{{ vadeli.vade }}</b> teslimi için bugün anlaşılan fiyat
+    <b>{{ vadeli.fiyat|fiyat }} {{ e.birim.split('/')[0] }}</b>; bu, bugünkü fiyatın
+    <b class="{{ 'tutar-buy' if vadeli.fark > 0 else 'tutar-sell' }}">%{{ ((vadeli.fark|abs) * 100)|round(1)|string|replace('.', ',') }} {{ 'üstünde' if vadeli.fark > 0 else 'altında' }}</b>.</p>
+  <p class="temel-not">Bu bir tahmin değildir: bir yıl sonrası için bugün yapılan anlaşmaların fiyatıdır ve depolama, faiz gibi maliyetleri de içerir.
+    {% if vadeli.fark < -0.05 %}İleri vadenin belirgin şekilde ucuz olması, piyasanın bugünkü fiyatı geçici olarak yüksek gördüğüne işaret eder.
+    {% elif vadeli.fark > 0.05 %}İleri vadenin pahalı olması büyük ölçüde faiz ve saklama maliyetinden kaynaklanır.{% endif %}
+    Kaynak: Yahoo Finance.</p>
+</div>
+{% endif %}
 
 <nav class="bolum-menu" aria-label="Bu sayfada">
   {% if kapalicarsi %}<a href="#kapalicarsi">Kapalıçarşı fiyatları</a>{% endif %}
@@ -143,6 +156,7 @@
       {% if e.grup == 'Değerli metaller' %}Değerli metaller için en önemli gösterge reel faizdir: reel faiz düştükçe getirisi olmayan altın ve gümüş daha cazip hale gelir.{% endif %}</p>
     </div>
   </header>
+  {{ faiz_beklentisi_kutusu(faiz_beklentisi) }}
   <div class="izgara-2">
     <div class="panel">
       <div class="panel-ic">
