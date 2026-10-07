@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import parti_rozeti, fark, karar_rozeti %}
+{% from "_bilesenler.html" import parti_rozeti, fark %}
 {% block baslik %}Sinyaller: üçlü onay ve geçmiş başarı · Piyasa Kaydı{% endblock %}
 
 {% block icerik %}
@@ -93,7 +93,6 @@
             {% if o.n %}
               {{ fark(o.ortalama) }}
               <span class="alt-satir">%{{ (o.yenme * 100)|round|int }} endeksi yendi · {{ o.n|sayi }} olay</span>
-              <span class="alt-satir">{{ karar_rozeti(o.karar) }}</span>
             {% else %}<span class="soluk">henüz yok</span>{% endif %}
           </td>
           {% endfor %}
@@ -103,10 +102,9 @@
     </table>
   </div>
   <div class="yorum-kutu">
-    <p><b>Nasıl okunmalı?</b> “Şanstan ayırt edilemiyor”, ortalama farkın rastgele hisse seçen birinin de
-    tutturabileceği aralıkta kaldığı anlamına gelir. Aynı anda {{ basari|length * ufuklar|length }} test yapıldığı için
-    kararlar çoklu karşılaştırma düzeltmesiyle (Holm) verilir; tek başına “anlamlı” görünen bir sonuç bu düzeltmeden
-    sonra şans olabilir.</p>
+    <p><b>Nasıl okunmalı?</b> Rakam, sinyalden sonra hissenin S&amp;P 500'e göre ortalama ne kadar daha iyi
+    (ya da kötü) gittiğini gösterir. Yeşil daha iyi, kırmızı daha kötü demektir. Olay sayısı azsa sonuç tesadüf olabilir;
+    çok sayıda olaya dayanan sonuçlar daha güvenilirdir.</p>
     <p>Sınırlamalar: Aynı dönemdeki olaylar birbirinden bağımsız değildir; borsadan çıkmış şirketlerin fiyatı
     bulunamadığından bazı olaylar ölçülemez; yönetici verisi yalnızca son birkaç ayı kapsar. <b>Yatırım tavsiyesi değildir.</b></p>
   </div>

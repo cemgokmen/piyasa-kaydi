@@ -1515,7 +1515,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .karar-sans { background: var(--cizgi-2); color: var(--yazi-2); }
 .karar-yetersiz { background: var(--cizgi-2); color: var(--yazi-3); }
 
-.rozet-cakisma { margin-left: 4px; background: var(--vurgu-yumusak); color: var(--vurgu); cursor: help; }
+.rozet-cakisma { margin-left: 4px; background: var(--vurgu-yumusak); color: var(--vurgu); cursor: default; }
 
 .sozluk { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 16px 0 0; font-size: 13.5px; }
 .sozluk dt { font-weight: 600; color: var(--yazi); }
