@@ -348,3 +348,15 @@ def test_internet_bekle(monkeypatch):
 
     monkeypatch.setattr(socket, "getaddrinfo", yok)
     assert not zamanlama.internet_bekle(sure=0, aralik=0)
+
+
+def test_kisi_adi_dogal_sira():
+    from piyasa.bicim import kisi_adi
+
+    assert kisi_adi("KURTZ GEORGE") == "George Kurtz"
+    assert kisi_adi("LIGHTFOOT ROBERT M JR") == "Robert M Lightfoot Jr"
+    assert kisi_adi("Mcbee Brannin") == "Brannin McBee"
+    assert kisi_adi("SMITH JOHN III") == "John Smith III"
+    # Kurumların sırası değişmez
+    assert kisi_adi("DST GLOBAL ADVISORS LTD") == "Dst Global Advisors Ltd"
+    assert kisi_adi("Saba Capital Management, L.p.") == "Saba Capital Management L.P."

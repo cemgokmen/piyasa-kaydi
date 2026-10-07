@@ -274,3 +274,48 @@ def unvan(metin):
         if karsilik not in sonuc:
             sonuc.append(karsilik)
     return ", ".join(sonuc)
+
+
+# ---------------------------------------------------------------------------
+# KİŞİ ADLARI (Form 4)
+# ---------------------------------------------------------------------------
+
+KURUM_KELIMELERI = {
+    "LLC", "LP", "L.P.", "LLP", "LLLP", "INC", "INC.", "LTD", "LTD.", "LIMITED", "FUND", "FUNDS", "TRUST",
+    "CAPITAL", "PARTNERS", "MANAGEMENT", "HOLDINGS", "HOLDING", "GROUP", "ADVISORS", "ADVISERS", "CORP",
+    "CORP.", "CORPORATION", "CO", "CO.", "COMPANY", "BANK", "FOUNDATION", "INVESTMENT", "INVESTMENTS",
+    "VENTURES", "ASSOCIATES", "PLC", "N.V.", "S.A.", "AG", "GMBH", "PARTNERSHIP", "ESTATE", "SECURITIES",
+    "FINANCIAL", "OPPORTUNITY", "OPPORTUNITIES", "MASTER", "OFFSHORE", "ENTERPRISES", "AB", "SA", "NV",
+}
+KISI_EKLERI = {"JR", "JR.", "SR", "SR.", "II", "III", "IV", "V", "MD", "PHD", "CPA"}
+KISALTMA_KURUM = {"Llc": "LLC", "Lp": "LP", "L.p.": "L.P.", "Llp": "LLP", "Lllp": "LLLP", "Plc": "PLC", "Ag": "AG"}
+
+
+def _buyuk_harf(kelime):
+    """'mcbee' -> 'McBee', 'le-quoc' -> 'Le-Quoc', "o'neil" -> "O'Neil" """
+    parcalar = []
+    for p in re.split(r"([-'])", kelime.lower()):
+        p = p[:1].upper() + p[1:]
+        if p.startswith("Mc") and len(p) > 2:
+            p = "Mc" + p[2].upper() + p[3:]
+        parcalar.append(p)
+    return "".join(parcalar)
+
+
+def kisi_adi(ham):
+    """
+    SEC'in 'SOYAD AD ORTAAD' biçimini doğal sıraya çevirir:
+    'KURTZ GEORGE' -> 'George Kurtz', 'LIGHTFOOT ROBERT M JR' -> 'Robert M Lightfoot Jr'.
+    Şirket ve fon adları ('DST GLOBAL ADVISORS LTD') sırası değiştirilmeden yazılır.
+    """
+    kelimeler = (ham or "").replace(",", " ").split()
+    if not kelimeler:
+        return ""
+    if any(k.upper() in KURUM_KELIMELERI for k in kelimeler) or len(kelimeler) == 1:
+        return " ".join(KISALTMA_KURUM.get(_buyuk_harf(k), _buyuk_harf(k)) for k in kelimeler)
+    ekler = []
+    while len(kelimeler) > 2 and kelimeler[-1].upper() in KISI_EKLERI:
+        ekler.insert(0, kelimeler.pop())
+    soyad, adlar = kelimeler[0], kelimeler[1:]
+    sira = [*adlar, soyad, *ekler]
+    return " ".join(k if k.upper() in ("II", "III", "IV") else _buyuk_harf(k) for k in sira)

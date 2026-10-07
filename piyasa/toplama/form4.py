@@ -10,6 +10,7 @@ from datetime import UTC, date, datetime, timedelta
 import requests
 
 from piyasa.ayarlar import USER_AGENT
+from piyasa.bicim import kisi_adi
 from piyasa.kurallar import fiyat_imkansiz_mi, kod_duzelt
 from piyasa.slug import slugify
 from piyasa.veritabani import get_connection, init_db
@@ -124,10 +125,8 @@ def index_satirini_coz(satir):
 
 
 def isim_duzelt(ham):
-    """'GRAVES JEFFREY A' -> 'Graves Jeffrey A'"""
-    if not ham:
-        return ""
-    return " ".join(kelime.capitalize() for kelime in ham.split())
+    """'GRAVES JEFFREY A' -> 'Jeffrey A Graves' (SEC soyadı önce yazar; bkz. bicim.kisi_adi)"""
+    return kisi_adi(ham)
 
 def tarih_temizle(ham):
     """

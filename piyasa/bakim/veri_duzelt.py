@@ -8,7 +8,10 @@ Toplanan verideki bilinen sorunları düzeltir. Her güncellemede çalışır, t
      işlem ve tutar farklı raporlarda tekrar ediyorsa yalnızca ilk bildirilen
      kalır (geç bildirim hesabı da ilk bildirim tarihine göre yapılmalı).
      Aynı rapordaki tekrarlar ayrı hesaplardaki ayrı işlemler olabilir; silinmez.
-  3. Görevden ayrılmış Kongre üyelerinin boş kalan partisi ve eyaleti, üyelerin
+  3. (bir kez) Yönetici adları SEC'in 'Soyad Ad' sırasından doğal sıraya
+     çevrilir ('Kurtz George' -> 'George Kurtz'); yapıldığı bakim_kayit
+     tablosuna yazılır, ikinci kez çevrilmez.
+  4. Görevden ayrılmış Kongre üyelerinin boş kalan partisi ve eyaleti, üyelerin
      geçmiş kaydından tamamlanır (congress-legislators, legislators-historical).
 
 Tarih hataları (bildirimden sonraki ya da yıllar önceki işlem tarihleri) burada
@@ -19,6 +22,7 @@ değil, her seferinde işaretleri baştan hesaplayan supheli adımında işaretl
 
 from contextlib import closing
 
+from piyasa.bicim import kisi_adi
 from piyasa.kurallar import kod_duzelt
 from piyasa.slug import slugify
 from piyasa.toplama.kongre_ortak import json_al_uyeler, parti_kodu
@@ -48,6 +52,27 @@ def tekrarlari_sil(conn):
                WHERE t.source IN ('house_ptr', 'senate_ptr') AND t.disclosed_date > g.ilk)"""
     ).rowcount
     print(f"  Düzeltilmiş rapor kopyası silinen işlem: {silinen}")
+
+
+def bir_kez(conn, ad):
+    """Tek seferlik düzeltme daha önce yapılmadıysa True döner ve yapıldı olarak işaretler."""
+    conn.execute("CREATE TABLE IF NOT EXISTS bakim_kayit (ad TEXT PRIMARY KEY, zaman TEXT)")
+    if conn.execute("SELECT 1 FROM bakim_kayit WHERE ad = ?", (ad,)).fetchone():
+        return False
+    conn.execute("INSERT INTO bakim_kayit VALUES (?, datetime('now'))", (ad,))
+    return True
+
+
+def yonetici_adlarini_cevir(conn):
+    if not bir_kez(conn, "yonetici_ad_sirasi"):
+        return
+    sayi = 0
+    for (eski,) in conn.execute("SELECT DISTINCT person FROM transactions WHERE source = 'edgar_form4'").fetchall():
+        yeni = kisi_adi(eski)
+        if yeni != eski:
+            sayi += conn.execute("UPDATE transactions SET person = ?, person_slug = ? WHERE source = 'edgar_form4' AND person = ?",
+                                 (yeni, slugify(yeni), eski)).rowcount
+    print(f"  Adı doğal sıraya çevrilen yönetici işlemi: {sayi}")
 
 
 def partileri_tamamla(conn):
@@ -86,6 +111,7 @@ def main():
     with closing(get_connection()) as conn:
         kodlari_duzelt(conn)
         tekrarlari_sil(conn)
+        yonetici_adlarini_cevir(conn)
         partileri_tamamla(conn)
         conn.commit()
 
