@@ -1044,7 +1044,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 
 .kaynak-kartlari {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 36px;
 }
@@ -1161,6 +1161,9 @@ a.kisi-ad:hover { color: var(--vurgu); }
 
 .secim select { min-width: 0; cursor: pointer; }
 
+@media (max-width: 1180px) and (min-width: 861px) {
+  .kaynak-kartlari { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @media (max-width: 860px) {
   .kaynak-kartlari { grid-template-columns: minmax(0, 1fr); }
   .giris { text-align: left; padding-top: 12px; }
@@ -2174,4 +2177,11 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
   .ana-menu .menu-acilir a { display: flex; padding: 11px 16px; border-radius: 0; }
   .menu-acilir a span { display: none; }
   .menu-acilir b { font-weight: 500; color: inherit; }
+}
+
+/* Dar masaüstü: logo zaten ana sayfaya götürür; arama kutusuna yer kalsın */
+@media (max-width: 1100px) and (min-width: 861px) {
+  .ust-ic { gap: 16px; }
+  .ana-menu a.menu-ana { display: none; }
+  .ust-arama { flex: 1 1 170px; min-width: 150px; }
 }

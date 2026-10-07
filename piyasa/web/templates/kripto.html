@@ -99,7 +99,8 @@
       <b>Sonraki yarılanma: yaklaşık {{ yarilanma.kalan_gun|sayi }} gün sonra ({{ yarilanma.tarih|uzun_tarih }} civarı)</b>
       <p>Blok {{ yarilanma.sonraki_blok|sayi }}'de madencilerin her blok için aldığı yeni bitcoin
         {{ ('%g'|format(yarilanma.odul_simdi)).replace('.', ',') }}'ten {{ ('%g'|format(yarilanma.odul_sonra)).replace('.', ',') }}'e inecek.
-        Şu an blok {{ yarilanma.yukseklik|sayi }}; {{ yarilanma.kalan_blok|sayi }} blok kaldı (her blok yaklaşık 10 dakika). Kaynak: mempool.space.</p>
+        Şu an blok {{ yarilanma.yukseklik|sayi }}{% if not yarilanma.kesin %} (tahmini){% endif %}; {{ yarilanma.kalan_blok|sayi }} blok kaldı (her blok yaklaşık 10 dakika).
+        {% if yarilanma.kesin %}Kaynak: Bitcoin ağı (blockchain.info).{% endif %}</p>
     </div>
     {% endif %}
     {% if b.azami_arz %}

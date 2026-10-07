@@ -234,16 +234,32 @@ YARILANMA_ARALIGI = 210_000      # blok
 BLOK_SURESI = 10                 # dakika
 
 
+# Blok yüksekliği kaynakları; biri yavaşsa ötekine geçilir. Hiçbiri yoksa son
+# yarılanmadan (840.000. blok, 20 Nisan 2024) bu yana geçen süreden tahmin edilir.
+YUKSEKLIK_KAYNAKLARI = ("https://blockchain.info/q/getblockcount", "https://mempool.space/api/blocks/tip/height")
+SON_YARILANMA = (840_000, datetime(2024, 4, 20, 0, 9, tzinfo=UTC))
+
+
+def _blok_yuksekligi():
+    for adres in YUKSEKLIK_KAYNAKLARI:
+        try:
+            cevap = requests.get(adres, headers=BASLIK, timeout=(3, 4))
+            cevap.raise_for_status()
+            return int(cevap.text.strip()), True
+        except (requests.RequestException, ValueError):
+            continue
+    blok, zaman = SON_YARILANMA
+    return blok + int((datetime.now(UTC) - zaman).total_seconds() // (BLOK_SURESI * 60)), False
+
+
 @sureli(30 * 60, hatada_eskisi=True)
 def _yarilanma():
-    cevap = requests.get("https://mempool.space/api/blocks/tip/height", headers=BASLIK, timeout=15)
-    cevap.raise_for_status()
-    yukseklik = int(cevap.text)
+    yukseklik, kesin = _blok_yuksekligi()
     sonraki = (yukseklik // YARILANMA_ARALIGI + 1) * YARILANMA_ARALIGI
     kalan = sonraki - yukseklik
     tarih = (datetime.now(UTC) + timedelta(minutes=kalan * BLOK_SURESI)).date()
     donem = sonraki // YARILANMA_ARALIGI
-    return {"yukseklik": yukseklik, "sonraki_blok": sonraki, "kalan_blok": kalan, "tarih": tarih.isoformat(),
+    return {"yukseklik": yukseklik, "kesin": kesin, "sonraki_blok": sonraki, "kalan_blok": kalan, "tarih": tarih.isoformat(),
             "kalan_gun": (tarih - date.today()).days,
             "odul_simdi": 50 / 2 ** (donem - 1), "odul_sonra": 50 / 2 ** donem}
 
@@ -267,9 +283,11 @@ def _vadeli(kok, spot_kodu):
     spot = fiyat.anlik_fiyat(spot_kodu, ham=True)
     if not spot or not spot.get("fiyat"):
         return None
-    for ay_sonra in (12, 9, 6, 3, 1):
-        kod, yil, ay = vade_kodu(kok, "CME", (3, 6, 9, 12), ay_sonra=ay_sonra)
-        v = fiyat.anlik_fiyat(kod, ham=True)
+    # Aday vadeler paralel denenir (Yahoo'da olmayan vadeye sorgu birkaç saniye sürüyor)
+    adaylar = list(dict.fromkeys(vade_kodu(kok, "CME", (3, 6, 9, 12), ay_sonra=a) for a in (12, 9, 6, 3, 1)))
+    with ThreadPoolExecutor(max_workers=len(adaylar)) as havuz:
+        fiyatlar = list(havuz.map(lambda aday: fiyat.anlik_fiyat(aday[0], ham=True), adaylar))
+    for (_kod, yil, ay), v in zip(adaylar, fiyatlar, strict=True):
         if v and v.get("fiyat"):
             gun = (date(yil, ay, 28) - date.today()).days
             fark = v["fiyat"] / spot["fiyat"] - 1

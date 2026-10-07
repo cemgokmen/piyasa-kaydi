@@ -53,6 +53,7 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 | **Fonlar** | Vanguard, BlackRock, Berkshire, Norveç Varlık Fonu gibi büyük kurumların 13F portföyleri ve çeyrekten çeyreğe değişimler |
 | **Hisse sayfaları** | Şirketin ne iş yaptığı, anlık fiyat, temel rakamlar (piyasa değeri, F/K, son bilanço), analist hedef fiyatları, devlet sözleşmeleri, güncel Türkçe haberler ve o hissedeki bütün bildirimler |
 | **Emtialar** | Altın, gümüş, platin, bakır ve Brent petrol: fiyat ve hacim, büyük fonların konumu, petrol stokları, Fed faiz kararları, vadeli piyasanın ve faiz piyasasının beklentisi, Kapalıçarşı altın ve gümüş fiyatları |
+| **Kripto paralar** | 27 kripto paranın Türkçe profili, gerçek 24 saatlik fiyat değişimi, piyasa değeri ve arz; siyasetçilerin kripto işlemleri, kripto şirketlerinde yönetici işlemleri, Bitcoin/Ethereum fonu tutan bankalar, CME vadelilerinde kurumların konumu, korku ve açgözlülük endeksi, Bitcoin yarılanma sayacı |
 
 ### Analizler
 
@@ -87,6 +88,7 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 | Yahoo Finance | Hisse ve emtia fiyatları, şirket rakamları, analist beklentileri | Canlı (önbellekli) |
 | Google Haberler | Türkçe ve İngilizce haber başlıkları | Canlı (önbellekli) |
 | Truncgil Finans | Kapalıçarşı altın ve gümüş fiyatları | Canlı (önbellekli) |
+| [CoinGecko](https://www.coingecko.com) · alternative.me · mempool.space | Kripto fiyatları, korku endeksi, Bitcoin blok yüksekliği | Canlı (önbellekli) |
 
 Yahoo Finance ve haber verileri ücretsiz kaynaklardan, kişisel ve deneysel kullanım için alınır.
 
@@ -146,6 +148,7 @@ Bütün işler tek giriş noktasından yapılır: `python -m piyasa <komut>`
 | `kongre [yıl …]` · `senato [yıl …]` | Meclis ve Senato bildirimleri |
 | `fon` · `cusip` | 13F portföyleri ve CUSIP → hisse kodu eşlemesi |
 | `emtia` · `fiyatlar` | Emtia verileri ve hisse fiyat geçmişi |
+| `kripto [--tara]` | Bitcoin/Ether vadelilerinde fon konumları; `--tara` eski Kongre bildirimlerinde kripto işlemlerini arar |
 | `sirketler` · `profiller` · `ihaleler` | Sektörler ve komiteler, şirket tanımları, devlet sözleşmeleri |
 | `yurutme` · `yurutme-portfoy` | Başkan ve Başkan Yardımcısının bildirimleri |
 | `analiz` | İşlem sonrası getiriler |
@@ -198,6 +201,7 @@ piyasa/
 ├── bakim/               Veri düzeltme, şüpheli kayıtlar
 ├── analiz/              Getiri, performans, çıkar çatışması, sinyaller, sektör haritası, ihaleler, özet
 ├── emtia/               Emtia tanımları, sorgular, haberler, Kapalıçarşı, piyasa beklentileri
+├── kripto/              Coin profilleri, CoinGecko verisi, kripto şirketleri, CFTC ve 13F sorguları
 ├── veri/                Elle hazırlanmış şirket ve endüstri tanımları
 └── web/                 Flask uygulaması, sorgular, şablonlar, CSS ve JavaScript
 tests/                   pytest ve Selenium testleri

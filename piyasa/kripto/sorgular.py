@@ -174,9 +174,16 @@ SAHIPLER = {"SP": "eşi adına", "JT": "ortak hesap", "DC": "çocuğu adına",
             "Spouse": "eşi adına", "Joint": "ortak hesap", "Child": "çocuğu adına"}
 
 
-def siyasetci_islemleri(slug=None, limit=200):
-    """Kripto para ve kripto fonu işlemleri, yeniden eskiye."""
-    kosul, parametre = ("WHERE coin = ?", [slug]) if slug else ("", [])
+def siyasetci_islemleri(slug=None, limit=200, kisi=None):
+    """Kripto para ve kripto fonu işlemleri, yeniden eskiye; slug ile coine, kisi ile kişiye göre."""
+    kosullar, parametre = [], []
+    if slug:
+        kosullar.append("coin = ?")
+        parametre.append(slug)
+    if kisi:
+        kosullar.append("person_slug = ?")
+        parametre.append(kisi)
+    kosul = ("WHERE " + " AND ".join(kosullar)) if kosullar else ""
     with baglanti() as conn:
         satirlar = [dict(s) for s in conn.execute(
             # Görevden ayrılan üyelerin partisi hisse kayıtlarından tamamlanır

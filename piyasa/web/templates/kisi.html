@@ -22,12 +22,27 @@
   </div>
 </header>
 
+{% if ozet.adet %}
 <section class="kpi-izgara">
   {{ kpi('Toplam işlem', ozet.adet|sayi, ozet.hisse_adet ~ ' farklı hisse', birim='işlem') }}
   {{ kpi('Alım' ~ (' · tahmini tutar' if siyasetci else ' tutarı'), alim_tutar, ozet.alim|sayi ~ ' alım işlemi', 'alim') }}
   {{ kpi('Satım' ~ (' · tahmini tutar' if siyasetci else ' tutarı'), satim_tutar, ozet.satim|sayi ~ ' satım işlemi', 'satim') }}
   {{ kpi('Ortalama bildirim süresi', ort_gecikme, 'en uzunu ' ~ max_gecikme ~ ' gün', 'uyari' if gec_sayisi else '', birim='gün') }}
 </section>
+{% endif %}
+
+{% if kripto_islemleri %}
+<section class="bolum" id="kripto">
+  <header class="bolum-ust"><div>
+    <h2>Kripto işlemleri</h2>
+    <p class="bolum-not">Doğrudan kripto para ve kripto fonu (ETF) işlemleri. Tutarlar bildirim formundaki aralıktır.
+      <a href="{{ url_for('kripto.liste') }}#siyasetciler">Bütün siyasetçilerin kripto işlemleri →</a></p>
+  </div></header>
+  {% set islemler_yedek = islemler %}{% set islemler = kripto_islemleri %}{% set coin_goster = True %}
+  {% include "_kripto_islemleri.html" %}
+  {% set islemler = islemler_yedek %}
+</section>
+{% endif %}
 
 {% if gec_sayisi %}
 <p class="uyari-kutu"><strong>{{ gec_sayisi }} işlem yasal süreden sonra bildirilmiş.</strong>
@@ -134,9 +149,10 @@
 </section>
 {% endif %}
 
+{% if ozet.adet %}
 <div class="izgara-yan">
   <section>
-    <h2 class="bolum-baslik">İşlemleri</h2>
+    <h2 class="bolum-baslik">Hisse işlemleri</h2>
     {{ islem_tablosu(islemler, kisi=False) }}
   </section>
   <aside>
@@ -170,4 +186,5 @@
     {% endif %}
   </aside>
 </div>
+{% endif %}
 {% endblock %}

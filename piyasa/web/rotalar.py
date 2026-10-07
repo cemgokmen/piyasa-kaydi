@@ -9,6 +9,7 @@ from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, uyeler
 from piyasa.analiz import cakisma, ihale, performans, portfoy, sinyaller
 from piyasa.analiz import yurutme as yurutme_analizi
 from piyasa.emtia.tanimlar import EMTIALAR
+from piyasa.kripto.tanimlar import KRIPTOLAR
 from piyasa.kurallar import PARTILER, parti_bilgisi
 from piyasa.web import arama, sorgular
 
@@ -26,7 +27,7 @@ def anasayfa():
     # Eski sürümde liste ana sayfadaydı; filtreli eski bağlantılar listeye gitsin
     if request.args:
         return redirect(url_for("site.islemler", **request.args))
-    return render_template("anasayfa.html", aktif="anasayfa", emtia_sayisi=len(EMTIALAR),
+    return render_template("anasayfa.html", aktif="anasayfa", emtia_sayisi=len(EMTIALAR), kripto_sayisi=len(KRIPTOLAR),
                            **sorgular.genel_bakis())
 
 

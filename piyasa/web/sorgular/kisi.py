@@ -4,6 +4,7 @@ from piyasa import uyeler
 from piyasa.analiz import cakisma
 from piyasa.bicim import kisa_aralik, kisa_tutar
 from piyasa.kayitlar import islem_hazirla
+from piyasa.kripto import sorgular as kripto_sorgulari
 from piyasa.kurallar import TEMIZ, parti_bilgisi
 from piyasa.web.sorgular.ortak import OZET_SUTUNLARI, baglanti
 
@@ -19,14 +20,22 @@ def kisi(slug):
                FROM transactions WHERE person_slug = ? AND {TEMIZ}""",
             (slug,),
         ).fetchone())
-        if not ozet["adet"]:
+        # Yalnızca kripto işlemi bildiren siyasetçilerin de sayfası olur
+        kripto_islemleri = kripto_sorgulari.siyasetci_islemleri(kisi=slug)
+        if not ozet["adet"] and not kripto_islemleri:
             return None
 
-        kimlik = dict(conn.execute(
+        satir = conn.execute(
             "SELECT person, job_title, company, chamber, state, party "
             "FROM transactions WHERE person_slug = ? ORDER BY disclosed_date DESC LIMIT 1",
             (slug,),
-        ).fetchone())
+        ).fetchone()
+        if satir:
+            kimlik = dict(satir)
+        else:
+            k = kripto_islemleri[0]
+            kimlik = {"person": k["person"], "job_title": None, "company": None, "chamber": k["chamber"],
+                      "state": k["state"], "party": k["parti_kodu"]}
 
         hisseler = [
             dict(s, hacim=kisa_aralik(s["alt"], s["ust"]))
@@ -64,4 +73,5 @@ def kisi(slug):
                         else kisa_tutar(ozet["satim_tutar"])),
         "hisseler": hisseler,
         "islemler": islemler,
+        "kripto_islemleri": kripto_islemleri,
     }

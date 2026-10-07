@@ -12,6 +12,8 @@ from piyasa.analiz import cakisma
 from piyasa.bicim import kisa_aralik, kisa_tutar, sayi, sirket_gorunen_ad, tr_kucuk, unvan, uzun_tarih, yuzde
 from piyasa.emtia import sorgular as emtia_sorgulari
 from piyasa.emtia.tanimlar import EMTIALAR
+from piyasa.kripto import piyasa as kripto_piyasa
+from piyasa.kripto.tanimlar import KRIPTO, KRIPTOLAR
 from piyasa.kurallar import GECERLI_KOD as GECERLI
 from piyasa.kurallar import TEMIZ, YUKLU_ALIM_ALT_SINIR, parti_bilgisi
 from piyasa.veritabani import get_connection
@@ -184,6 +186,50 @@ def _emtialar():
     return _bolum("Emtialar", giris, maddeler)
 
 
+def _kripto(conn, gun, canli):
+    """Kripto piyasası (yalnızca en yeni özette, canlı) ve o gün bildirilen Kongre kripto işlemleri."""
+    giris, maddeler = None, []
+    if canli:
+        bilgiler = kripto_piyasa.toplu_bilgi()
+        btc, eth = bilgiler.get("bitcoin"), bilgiler.get("ethereum")
+        if btc and btc.get("degisim_24s") is not None:
+            giris = f"Bitcoin son 24 saatte {yuzde(btc['degisim_24s'])} değişimle {sayi(round(btc['fiyat']))} dolar"
+            if eth and eth.get("degisim_24s") is not None:
+                giris += f", Ethereum {yuzde(eth['degisim_24s'])} değişimle {sayi(round(eth['fiyat']))} dolar"
+            giris += "."
+            # Sabit paralar hareket etmez; onlar dışındaki en sert yükselen ve düşen
+            hareket = sorted(((k, bilgiler[k["slug"]]["degisim_24s"]) for k in KRIPTOLAR
+                              if k["tur"] != "Sabit para" and bilgiler.get(k["slug"])
+                              and bilgiler[k["slug"]].get("degisim_24s") is not None), key=lambda x: x[1])
+            if len(hareket) > 2:
+                (dk, d), (yk, y) = hareket[0], hareket[-1]
+                if y > 0 and d < 0:
+                    giris += (f" Takip ettiğimiz kriptolar arasında en çok yükselen {yk['ad']} ({yuzde(y)}), "
+                              f"en çok düşen {dk['ad']} ({yuzde(d)}) oldu.")
+                elif y <= 0:
+                    giris += (f" Takip ettiğimiz kriptoların hepsi geriledi; en sert düşüş {dk['ad']} ({yuzde(d)}), "
+                              f"en hafif düşüş {yk['ad']} ({yuzde(y)}).")
+                else:
+                    giris += (f" Takip ettiğimiz kriptoların hepsi yükseldi; en çok {yk['ad']} ({yuzde(y)}), "
+                              f"en az {dk['ad']} ({yuzde(d)}).")
+    for s in conn.execute(
+        """SELECT person, person_slug, party, coin, varlik, ticker, action, amount_min, amount_max, transaction_date
+           FROM kripto_islem WHERE disclosed_date = ? ORDER BY amount_max DESC LIMIT 3""", (gun,),
+    ):
+        k = KRIPTO.get(s["coin"])
+        p = parti_bilgisi(s["party"])
+        ne = f"{s['ticker']} ({k['ad']} fonu)" if s["ticker"] else k["ad"]
+        maddeler.append(_madde(
+            f"{s['person']} {k['ad']} {'aldı' if s['action'] == 'buy' else 'sattı'}",
+            f"{p['ad'] + ' ' if p else ''}{s['person']}, {uzun_tarih(s['transaction_date'])} tarihinde "
+            f"{kisa_aralik(s['amount_min'], s['amount_max'])} arasında {ne} {'alımı' if s['action'] == 'buy' else 'satışı'} bildirdi.",
+            f"/kripto/{s['coin']}",
+        ))
+    if not giris and not maddeler:
+        return None
+    return _bolum("Kripto paralar", giris or "Kongre üyeleri kripto işlemi bildirdi.", maddeler)
+
+
 def _emtia_adi(e):
     return e["ad"] if e["ad"].startswith("Brent") else tr_kucuk(e["ad"])
 
@@ -209,10 +255,11 @@ def gunluk_ozet(gun=None):
         i = gunler.index(gun)
         siyaset = _siyasetciler(conn, gun)
         yonetici = _yoneticiler(conn, gun)
+        kripto = _kripto(conn, gun, canli=i == 0)
 
     manset, spot = _manset(siyaset, yonetici)
     # Emtia fiyatları canlıdır; yalnızca en güncel günün özetinde gösterilir
-    bolumler = [b for b in (siyaset, yonetici, _emtialar() if i == 0 else None) if b]
+    bolumler = [b for b in (siyaset, yonetici, _emtialar() if i == 0 else None, kripto) if b]
 
     d = date.fromisoformat(gun)
     baslik = f"{uzun_tarih(gun)} {GUNLER[d.weekday()]}"
