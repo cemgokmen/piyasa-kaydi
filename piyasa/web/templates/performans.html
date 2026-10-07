@@ -21,12 +21,15 @@
     {{ kpi('Endeksi yenen alımların oranı', '%' ~ (genel.islem.yenme * 100)|round|int, 'yarısından azı endeksi yendi' if genel.islem.yenme < 0.5 else 'yarısından fazlası endeksi yendi') }}
     {{ kpi('Bildirimden sonra alan biri', genel.bildirim.ortalama|yuzde, 'işlem kamuya açıklandıktan sonra aynı hisseyi alsaydı') }}
   </div>
+  {% set k = genel.islem.karar.kod %}
   <p class="yorum-kutu">
-    <b>Sonuç: {{ genel.islem.karar.metin|lower }}.</b>
-    Siyasetçilerin aldığı hisseler {{ ufuk }} gün içinde endekse göre ortalama {{ genel.islem.ortalama|yuzde }}
-    ({% if genel.islem.alt is defined %}%95 güven aralığı {{ genel.islem.alt|yuzde }} ile {{ genel.islem.ust|yuzde }}{% endif %}) getiri sağladı.
-    Bu fark sıfırdan istatistiksel olarak ayırt edilemiyorsa, siyasetçileri izlemenin endeks fonu almaktan
-    daha iyi sonuç verdiğine dair kanıt yok demektir.
+    <b>Sonuç:
+    {% if k == 'iyi' %}siyasetçilerin aldığı hisseler borsanın genelinden belirgin şekilde daha iyi gitti.
+    {% elif k == 'kotu' %}siyasetçilerin aldığı hisseler borsanın genelinden belirgin şekilde daha kötü gitti.
+    {% elif k == 'yetersiz' %}sonuç çıkarmak için yeterli alım yok.
+    {% else %}siyasetçilerin aldığı hisseler, borsanın genelinden ne daha iyi ne daha kötü gitti.{% endif %}</b>
+    Alımdan sonraki {{ ufuk }} günde bu hisseler, S&amp;P 500 endeksine göre ortalama {{ genel.islem.ortalama|yuzde }} fark yarattı.
+    {% if k not in ('iyi', 'kotu') %}Yani siyasetçileri taklit etmek, bütün borsayı izleyen bir endeks fonu almaktan daha iyi sonuç vermedi.{% endif %}
   </p>
 </section>
 
@@ -35,7 +38,7 @@
     <div>
       <h2>Üyelerin sıralaması</h2>
       <p class="bolum-not">En az {{ asgari }} ölçülebilir alımı olan üyeler, alımlarının endekse göre ortalama farkına göre.
-      Çok sayıda üye aynı anda karşılaştırıldığı için “anlamlı” kararı çoklu karşılaştırma düzeltmesiyle verilir.</p>
+      Yeşil: endeksten iyi, kırmızı: endeksten kötü. Az sayıda alımı olan üyelerde sonuç tesadüf olabilir.</p>
     </div>
   </header>
   <div class="tablo-kap">

@@ -189,9 +189,11 @@ def sirket_gorunen_ad(ad):
     """SEC'in büyük harfli adını okunur yapar: 'LOCKHEED MARTIN CORP' -> 'Lockheed Martin'.
     Kısaltmalar (3 harf ve altı, ör. 'IBM', 'AT&T') büyük kalır."""
     kisa = sirket_kisa_ad(ad or "")
-    # Yalnızca adın tamamı büyük harfle yazılmışsa (SEC biçimi) düzeltilir;
-    # 'NVIDIA Corporation' gibi markanın kendi yazımı korunur
-    if not (ad or "").isupper() or len(kisa) <= 4:
+    # Adın tamamı büyük harfle yazılmışsa (SEC biçimi) düzeltilir; 'NVIDIA Corporation',
+    # 'SI-BONE, Inc.' gibi tek kelimelik marka yazımı korunur
+    # ya da 'UNITED THERAPEUTICS Corp' gibi yalnızca ek küçük yazılmışsa (birden çok kelimeli büyük harfli ad)
+    tamami_buyuk = (ad or "").isupper() or (kisa.isupper() and " " in kisa)
+    if not tamami_buyuk or len(kisa) <= 4:
         return kisa
     kelimeler = [AD_KISALTMALARI.get(k.strip(".,"), k) for k in kisa.split()]
     def duzelt(k):
