@@ -1364,7 +1364,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .kpi-izgara.kpi-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .kpi-izgara:has(> :nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
-.emtia-izgara { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.emtia-izgara { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 
 .emtia-kart {
   display: flex;
@@ -2079,3 +2079,4 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .ozet-haber h4 a:hover { color: var(--vurgu); }
 .ozet-haber p { margin: 0; line-height: 1.6; color: var(--yazi-2); }
 .ozet-haber .ticker { margin-right: 4px; }
+.emtia-ad small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; }

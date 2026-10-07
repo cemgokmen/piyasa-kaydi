@@ -12,6 +12,32 @@
 </header>
 
 <section class="bolum">
+  <header class="bolum-ust"><div><h2>Güncel fiyatlar</h2>
+    <p class="bolum-not">Ayrıntı, grafik ve haberler için bir emtiaya tıklayın.</p></div></header>
+  <div class="kart-izgara emtia-izgara">
+    {% for grup, kartlar in gruplar %}{% for k in kartlar %}
+    <a class="emtia-kart" href="{{ url_for('emtia.detay', slug=k.emtia.slug) }}">
+      <span class="emtia-kart-ust">
+        <span class="emtia-ad">{{ k.emtia.ad }} <small class="soluk">{{ grup }}</small></span>
+        {% if k.g1 is not none %}<span class="rozet {{ 'rozet-buy' if k.g1 >= 0 else 'rozet-sell' }}">{{ k.g1|yuzde }}</span>{% endif %}
+      </span>
+      <span class="emtia-fiyat">{% if k.fiyat %}{{ k.fiyat|fiyat }} <small>{{ k.emtia.birim }}</small>{% else %}<span class="soluk">fiyat alınamadı</span>{% endif %}</span>
+      {% if k.grafik %}
+      <svg class="kucuk-grafik" viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="{{ k.grafik.noktalar }}" class="{{ 'cizgi-artis' if k.grafik.artis else 'cizgi-azalis' }}"/>
+      </svg>
+      {% endif %}
+      <span class="emtia-alt">
+        <span>1 ay {{ degisim(k.a1) }}</span>
+        <span>1 yıl {{ degisim(k.y1) }}</span>
+        {% if k.hacim and k.hacim.oran and k.hacim.oran >= 1.3 %}<span class="etiket etiket-uyari" title="Son işlem gününün hacmi 20 günlük ortalamanın %{{ (k.hacim.oran * 100)|round|int }}'i">Hacim yüksek</span>{% endif %}
+      </span>
+    </a>
+    {% endfor %}{% endfor %}
+  </div>
+</section>
+
+<section class="bolum">
   <header class="bolum-ust">
     <div>
       <h2>Fiyatları etkileyen göstergeler</h2>
@@ -34,32 +60,6 @@
   {{ faiz_beklentisi_kutusu(faiz_beklentisi) }}
 </section>
 
-{% for grup, kartlar in gruplar %}
-<section class="bolum">
-  <header class="bolum-ust"><div><h2>{{ grup }}</h2></div></header>
-  <div class="kart-izgara emtia-izgara">
-    {% for k in kartlar %}
-    <a class="emtia-kart" href="{{ url_for('emtia.detay', slug=k.emtia.slug) }}">
-      <span class="emtia-kart-ust">
-        <span class="emtia-ad">{{ k.emtia.ad }}</span>
-        {% if k.g1 is not none %}<span class="rozet {{ 'rozet-buy' if k.g1 >= 0 else 'rozet-sell' }}">{{ k.g1|yuzde }}</span>{% endif %}
-      </span>
-      <span class="emtia-fiyat">{% if k.fiyat %}{{ k.fiyat|fiyat }} <small>{{ k.emtia.birim }}</small>{% else %}<span class="soluk">fiyat alınamadı</span>{% endif %}</span>
-      {% if k.grafik %}
-      <svg class="kucuk-grafik" viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true">
-        <polyline points="{{ k.grafik.noktalar }}" class="{{ 'cizgi-artis' if k.grafik.artis else 'cizgi-azalis' }}"/>
-      </svg>
-      {% endif %}
-      <span class="emtia-alt">
-        <span>1 ay {{ degisim(k.a1) }}</span>
-        <span>1 yıl {{ degisim(k.y1) }}</span>
-        {% if k.hacim and k.hacim.oran and k.hacim.oran >= 1.3 %}<span class="etiket etiket-uyari" title="Son işlem gününün hacmi 20 günlük ortalamanın %{{ (k.hacim.oran * 100)|round|int }}'i">Hacim yüksek</span>{% endif %}
-      </span>
-    </a>
-    {% endfor %}
-  </div>
-</section>
-{% endfor %}
 
 {% if fonlar %}
 <section class="bolum">
@@ -134,7 +134,7 @@
   {% endif %}
 </div>
 
-<p class="dipnot">Fiyatlar: Yahoo Finance, vadeli işlem sözleşmeleri (günlük kapanış, 15 dakikada bir yenilenir).
+<p class="dipnot">Fiyatlar: Yahoo Finance, vadeli işlem sözleşmeleri (anlık fiyat dakikada bir yenilenir, 10-15 dakika gecikmeli olabilir).
 Fon konumları, stoklar ve faizler: CFTC, EIA ve FRED{% if guncelleme %}, son güncelleme {{ guncelleme|uzun_tarih }}{% endif %}.
 Haberler: Google Haberler. <b>Yatırım tavsiyesi değildir.</b></p>
 {% endblock %}

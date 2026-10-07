@@ -29,6 +29,9 @@ def ayristir(xml_metni):
         # Google başlığın sonuna " - Kaynak" ekliyor
         if kaynak and baslik.endswith(f" - {kaynak}"):
             baslik = baslik[: -len(kaynak) - 3]
+        # Bazı kaynakların adı yerine adresi geliyor: 'https://www.ensondakika.com.tr/' -> 'ensondakika.com.tr'
+        if kaynak.startswith(("http://", "https://")):
+            kaynak = kaynak.split("//", 1)[1].split("/", 1)[0].removeprefix("www.")
         try:
             zaman = parsedate_to_datetime(oge.findtext("pubDate"))
         except (TypeError, ValueError):

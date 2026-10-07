@@ -5,7 +5,8 @@
 {% block icerik %}
 <section class="giris">
   <h1>Piyasa Kaydı: kim aldı, kim sattı?</h1>
-  <p class="giris-metin">Kongre, Beyaz Saray ve SEC bildirimlerinden derlenen alım satım kayıtları.</p>
+  <p class="giris-metin">ABD'de siyasetçiler ve şirket yöneticileri hisse alıp sattığında bunu kanunen açıklamak zorunda.
+  Bu açıklamaları resmi kaynaklardan toplayıp Türkçe ve sade biçimde gösteriyoruz.</p>
   <form class="giris-arama" method="get" action="{{ url_for('site.islemler') }}" role="search">
     <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
     <input type="search" name="q" placeholder="Hisse kodu (AAPL), şirket ya da kişi adı" aria-label="Ara" autocomplete="off" data-oneri>
@@ -16,55 +17,32 @@
     <a href="{{ url_for('analiz.gunluk_ozet') }}">Günün özetini oku →</a></p>{% endif %}
 </section>
 
-<section class="one-cikan" aria-label="Analizler">
-  <a class="one-cikan-kart" href="{{ url_for('analiz.performans_sayfasi') }}">
-    <span class="etiket">Analiz</span>
-    <b>Kim piyasayı yendi?</b>
-    <span>Siyasetçilerin aldığı hisseler sonrasında S&amp;P 500'ü yendi mi? Üye üye sıralama.</span>
-  </a>
-  <a class="one-cikan-kart" href="{{ url_for('analiz.cakisma_sayfasi') }}">
-    <span class="etiket etiket-uyari">Şeffaflık</span>
-    <b>Olası çıkar çatışmaları</b>
-    <span>Üyelerin, komitelerinin denetlediği sektörlerden yaptığı hisse işlemleri.</span>
-  </a>
-  <a class="one-cikan-kart" href="{{ url_for('analiz.sinyaller_sayfasi') }}">
-    <span class="etiket">Sinyal</span>
-    <b>Üçlü onay</b>
-    <span>Yöneticilerin, siyasetçilerin ve fonların birlikte aldığı hisseler — ve bu sinyaller işe yarıyor mu?</span>
-  </a>
-  <a class="one-cikan-kart" href="{{ url_for('analiz.sektorler_sayfasi') }}">
-    <span class="etiket">Harita</span>
-    <b>Hangi sektörde alıcılar?</b>
-    <span>Siyasetçilerin ve yöneticilerin net alıcı ve net satıcı olduğu sektörler, renkli harita üzerinde.</span>
-  </a>
-</section>
 
 <section class="kaynak-kartlari" aria-label="Veri kaynakları">
   <a class="kaynak-kart" href="{{ url_for('site.siyasetciler') }}">
     <span class="kaynak-kart-baslik">Siyasetçiler</span>
     <span class="kaynak-kart-sayi">{{ (siyaset.adet or 0)|sayi }} <small>işlem</small></span>
-    <span class="kaynak-kart-metin">{{ siyaset.kisi or 0 }} Kongre üyesinin son 1 yılda bildirdiği hisse alım ve satımları</span>
+    <span class="kaynak-kart-metin">{{ siyaset.kisi or 0 }} ABD Kongre üyesinin son 1 yılda aldığı ve sattığı hisseler</span>
     <span class="kaynak-kart-link">Siyasetçileri gör →</span>
   </a>
   <a class="kaynak-kart" href="{{ url_for('site.islemler', kaynak='yonetici') }}">
     <span class="kaynak-kart-baslik">Şirket yöneticileri</span>
     <span class="kaynak-kart-sayi">{{ (yonetici.adet or 0)|sayi }} <small>işlem</small></span>
-    <span class="kaynak-kart-metin">Son 30 günde yöneticilerin kendi şirketlerinde yaptığı işlemler:
+    <span class="kaynak-kart-metin">CEO'ların ve yöneticilerin son 30 günde kendi şirketlerinin hisselerinde yaptığı işlemler:
       <span class="tutar-buy">{{ yonetici.alim_tutar|tutar }} alım</span>,
-      <span class="tutar-sell">{{ yonetici.satim_tutar|tutar }} satım</span>.
-      Satışların çoğu hisse ödüllerinin vergisi ve planlı satışlardır; alımlar daha anlamlıdır.</span>
+      <span class="tutar-sell">{{ yonetici.satim_tutar|tutar }} satım</span>.</span>
     <span class="kaynak-kart-link">Yönetici işlemlerini gör →</span>
   </a>
   <a class="kaynak-kart" href="{{ url_for('site.fonlar') }}">
     <span class="kaynak-kart-baslik">Fonlar ve bankalar</span>
     <span class="kaynak-kart-sayi">{{ fon_sayisi }} <small>kurum</small></span>
-    <span class="kaynak-kart-metin">Büyük yatırım kurumlarının {{ fon_donemi }} sonundaki portföyleri ve değişimleri</span>
+    <span class="kaynak-kart-metin">Vanguard, BlackRock, Berkshire gibi dev yatırımcıların hangi hisseleri tuttuğu ({{ fon_donemi }} sonu)</span>
     <span class="kaynak-kart-link">Fonları gör →</span>
   </a>
   <a class="kaynak-kart" href="{{ url_for('emtia.liste') }}">
     <span class="kaynak-kart-baslik">Emtialar</span>
     <span class="kaynak-kart-sayi">{{ emtia_sayisi }} <small>emtia</small></span>
-    <span class="kaynak-kart-metin">Altın, gümüş, Brent petrol ve diğerleri: fiyat, hacim, fon konumları, stoklar ve haberler</span>
+    <span class="kaynak-kart-metin">Altın, gümüş, petrol ve bakır: güncel fiyat, Kapalıçarşı fiyatları ve haberler</span>
     <span class="kaynak-kart-link">Emtiaları gör →</span>
   </a>
 </section>
@@ -74,7 +52,8 @@
     <div>
       <h2>Siyasetçilerin en çok para yatırdığı hisseler</h2>
       <p class="bolum-not">Son 1 yılda Kongre üyelerinin bildirdiği alımlar, toplam tutara göre.
-      <b>Yüklü</b>: tek seferde 50.000 dolardan fazla alım.</p>
+      <b>Yüklü</b>: tek seferde 50.000 dolardan fazla alım. <span class="parti parti-dem">D</span> Demokrat,
+      <span class="parti parti-rep">R</span> Cumhuriyetçi.</p>
     </div>
     <a class="bolum-link" href="{{ url_for('site.siyasetciler') }}">Tümü →</a>
   </header>
@@ -130,4 +109,26 @@
     </ul>
   </section>
 </div>
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Daha derine inin</h2>
+    <p class="bolum-not">Kayıtlardan çıkardığımız analizler.</p></div></header>
+<div class="one-cikan" aria-label="Analizler">
+  <a class="one-cikan-kart" href="{{ url_for('analiz.performans_sayfasi') }}">
+    <b>Kim piyasayı yendi?</b>
+    <span>Siyasetçilerin aldığı hisseler, borsanın genelinden daha çok kazandırdı mı?</span>
+  </a>
+  <a class="one-cikan-kart" href="{{ url_for('analiz.cakisma_sayfasi') }}">
+    <b>Olası çıkar çatışmaları</b>
+    <span>Bir sektörü denetleyen komitedeki üyelerin, o sektörden hisse alıp satması.</span>
+  </a>
+  <a class="one-cikan-kart" href="{{ url_for('analiz.sinyaller_sayfasi') }}">
+    <b>Herkesin aldığı hisseler</b>
+    <span>Yöneticilerin, siyasetçilerin ve büyük fonların aynı anda aldığı hisseler.</span>
+  </a>
+  <a class="one-cikan-kart" href="{{ url_for('analiz.sektorler_sayfasi') }}">
+    <b>Hangi sektörde alıcılar?</b>
+    <span>Hangi sektörlerde alım, hangilerinde satış ağır basıyor? Renkli harita.</span>
+  </a>
+</div>
+</section>
 {% endblock %}

@@ -298,7 +298,7 @@ def test_geri_dugmesi_dogrudan_acilan_sayfada_ust_sayfaya_gider(tarayici, sunucu
 
 def test_emtia_sayfalari(tarayici, sunucu):
     tarayici.get(sunucu + "/emtialar")
-    tarayici.find_element(By.XPATH, "//a[contains(@class,'emtia-kart')][.//span[text()='Brent petrol']]").click()
+    tarayici.find_element(By.XPATH, "//a[contains(@class,'emtia-kart')][.//span[normalize-space(text())='Brent petrol']]").click()
     bekle(tarayici, EC.url_contains("/emtia/brent"))
 
     # Fiyat paneli, hacim ve grafik
