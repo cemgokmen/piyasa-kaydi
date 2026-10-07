@@ -720,3 +720,46 @@ document.querySelectorAll("[data-kisalt]").forEach(function (kap) {
   // Sonradan yüklenen parçalar (rakamlar, haberler) yerine geçince yeniden izle
   new MutationObserver(izle).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
 })();
+
+
+// ---------------------------------------------------------------------------
+// Kripto listesi: türe göre süzgeç (Tümü, Sabit paralar, Meme coinler...)
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll("[data-kripto-grup]").forEach(function (dugme) {
+  dugme.addEventListener("click", function () {
+    const grup = dugme.dataset.kriptoGrup;
+    document.querySelectorAll("[data-kripto-grup]").forEach(function (d) {
+      const secili = d === dugme;
+      d.classList.toggle("secili", secili);
+      d.setAttribute("aria-pressed", secili ? "true" : "false");
+    });
+    document.querySelectorAll("#kripto-tablosu tbody tr").forEach(function (satir) {
+      satir.hidden = Boolean(grup) && satir.dataset.grup !== grup;
+    });
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// Üst menüdeki açılır grup ("Piyasalar"): tıklayınca açılır, dışarı
+// tıklayınca ya da Escape ile kapanır. Fareyle üzerine gelince CSS açar.
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll("[data-menu-grup]").forEach(function (grup) {
+  const dugme = grup.querySelector(".menu-grup-dugme");
+  const ayarla = (acik) => {
+    grup.classList.toggle("acik", acik);
+    dugme.setAttribute("aria-expanded", acik ? "true" : "false");
+  };
+  dugme.addEventListener("click", function (olay) {
+    olay.stopPropagation();
+    ayarla(!grup.classList.contains("acik"));
+  });
+  document.addEventListener("click", function (olay) {
+    if (!grup.contains(olay.target)) ayarla(false);
+  });
+  document.addEventListener("keydown", function (olay) {
+    if (olay.key === "Escape" && grup.classList.contains("acik")) { ayarla(false); dugme.focus(); }
+  });
+});

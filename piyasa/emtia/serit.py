@@ -18,7 +18,8 @@ GOSTERGELER = [
     ("Euro/TL", "EURTRY=X", "₺", None, 2),
     ("Ons altın", "GC=F", "$", "/emtia/altin", 0),
     ("Brent", "BZ=F", "$", "/emtia/brent", 2),
-    ("Bitcoin", "BTC-USD", "$", None, 0),
+    ("Bitcoin", "BTC-USD", "$", "/kripto/bitcoin", 0),
+    ("Ethereum", "ETH-USD", "$", "/kripto/ethereum", 0),
 ]
 
 

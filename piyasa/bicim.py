@@ -3,6 +3,7 @@ Sayı, tutar ve tarihleri Türkçe gösterime çeviren saf yardımcılar.
 Web'e bağımlı değildir; analiz ve özet metinleri de bunları kullanır.
 """
 
+import math
 import re
 from datetime import UTC, date, datetime
 
@@ -88,10 +89,11 @@ def ondalik(n, basamak=1):
 
 
 def fiyat(n):
-    """123.456 -> '123,46'; 1'in altındaki fiyatlar 4 basamak: 0.08912 -> '0,0891'"""
+    """123.456 -> '123,46'; 1'in altındaki fiyatlar daha çok basamakla: 0.08912 -> '0,0891'"""
     if n is None:
         return "—"
-    basamak = 4 if abs(n) < 1 and n != 0 else 2
+    # 1'in altında 4 anlamlı basamak: 0,0891 · 0,000005460 (Shiba Inu gibi)
+    basamak = 2 if abs(n) >= 1 or n == 0 else max(4, 3 - math.floor(math.log10(abs(n))))
     tam, kesir = f"{n:,.{basamak}f}".split(".")
     return f"{tam.replace(',', '.')},{kesir}"
 

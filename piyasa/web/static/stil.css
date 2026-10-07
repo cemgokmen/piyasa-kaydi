@@ -1715,7 +1715,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .ust.kaydirildi { box-shadow: 0 4px 16px rgba(11, 18, 32, .07); }
 
 .ana-menu a { position: relative; border-radius: 0; padding: 19px 2px; margin: 0 7px; background: none !important; }
-@media (max-width: 1380px) { .ana-menu a { margin: 0 5px; font-size: 13.5px; } .ust-arama { flex-basis: 230px; } }
+@media (max-width: 1180px) { .ana-menu a, .menu-grup-dugme { margin: 0 5px; font-size: 13.5px; } .ust-arama { flex-basis: 220px; } }
 .ana-menu a:hover { color: var(--yazi); }
 .ana-menu a[aria-current="page"] { color: var(--yazi); }
 .ana-menu a[aria-current="page"]::after {
@@ -2113,3 +2113,65 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .panel-alt a { color: var(--vurgu); text-decoration: none; }
 .kripto-tablosu .kucuk-grafik { width: 110px; }
 .kripto-tablosu td.sag { white-space: nowrap; }
+.kripto-tablosu .coin-sutunu { min-width: 230px; }
+.coin-adi { min-width: 0; line-height: 1.35; }
+.coin-adi b { white-space: nowrap; }
+.kripto-suzgec { margin-bottom: 12px; flex-wrap: wrap; }
+.sirket-tablosu td:first-child { min-width: 240px; }
+.sirket-tablosu td:first-child .ticker { margin-right: 6px; }
+.sekmeli-panel { margin-top: 16px; padding: 14px 16px 6px; }
+.sekmeli-panel > .segment { margin-bottom: 12px; }
+.aralik-24s { margin: 16px 0; padding: 14px 18px; }
+.aralik-24s-ust { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 18px; margin-bottom: 10px; }
+.aralik-degisimler { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.aralik-cubuk, .korku-cubuk { position: relative; display: block; height: 8px; border-radius: 4px; border: 1px solid var(--cizgi);
+  background: linear-gradient(90deg, var(--satim-yumusak), var(--cizgi-2) 50%, var(--alim-yumusak)); }
+.aralik-isaret, .korku-cubuk > span { position: absolute; top: -4px; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px; background: var(--yazi); }
+.aralik-alt { display: flex; justify-content: space-between; margin-top: 6px; color: var(--yazi-3); font-size: 12.5px; }
+.kpi-korku .korku-cubuk { margin: 8px 0 6px; }
+.kpi-korku .kpi-deger small { font-size: 13px; font-weight: 600; }
+.korku-panel { margin-bottom: 16px; }
+.korku-ust { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 6px 16px; margin-bottom: 10px; }
+.korku-ust .kpi-etiket { display: block; color: var(--yazi-3); font-size: 12.5px; }
+.korku-ust .kpi-deger { font-size: 24px; font-weight: 700; }
+.korku-ust .kpi-deger small { font-size: 14px; }
+.korku-panel .temel-not { margin: 10px 0 0; }
+.yarilanma { margin: 0 0 14px; padding: 12px 14px; border-radius: 10px; background: var(--vurgu-yumusak); }
+.yarilanma p { margin: 4px 0 0; color: var(--yazi-2); font-size: 13.5px; line-height: 1.55; }
+
+/* Üst menü: "Piyasalar" açılır grubu (Emtialar, Kripto) */
+@media (min-width: 861px) { .ana-menu { overflow: visible; } }
+.menu-grup { position: relative; display: flex; }
+.menu-grup-dugme {
+  position: relative; display: inline-flex; align-items: center; gap: 4px; margin: 0 7px; padding: 19px 2px;
+  border: 0; background: none; color: var(--yazi-2); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.menu-grup-dugme svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; transition: transform .15s; }
+.menu-grup-dugme:hover, .menu-grup.acik .menu-grup-dugme { color: var(--yazi); }
+.menu-grup.acik .menu-grup-dugme svg { transform: rotate(180deg); }
+.menu-grup-aktif .menu-grup-dugme { color: var(--yazi); }
+.menu-grup-aktif .menu-grup-dugme::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--vurgu);
+}
+.menu-acilir {
+  position: absolute; top: calc(100% - 4px); left: -12px; z-index: 30; display: none; min-width: 290px; padding: 6px;
+  border: 1px solid var(--cizgi); border-radius: 12px; background: var(--kart); box-shadow: 0 14px 34px rgba(11, 18, 32, .18);
+}
+.menu-grup.acik .menu-acilir { display: grid; }
+@media (hover: hover) and (min-width: 861px) { .menu-grup:hover .menu-acilir { display: grid; } }
+.ana-menu .menu-acilir a {
+  display: grid; gap: 2px; margin: 0; padding: 10px 12px; border-radius: 8px; white-space: normal;
+}
+.ana-menu .menu-acilir a::after { display: none; }
+.ana-menu .menu-acilir a:hover { background: var(--cizgi-2) !important; }
+.ana-menu .menu-acilir a[aria-current="page"] { background: var(--vurgu-yumusak) !important; }
+.menu-acilir b { color: var(--yazi); font-size: 14px; }
+.menu-acilir span { color: var(--yazi-3); font-size: 12.5px; font-weight: 400; }
+@media (max-width: 860px) {
+  .menu-grup { display: contents; }
+  .menu-grup-dugme { display: none; }
+  .menu-acilir { position: static; display: contents; }
+  .ana-menu .menu-acilir a { display: flex; padding: 11px 16px; border-radius: 0; }
+  .menu-acilir a span { display: none; }
+  .menu-acilir b { font-weight: 500; color: inherit; }
+}

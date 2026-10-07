@@ -142,6 +142,25 @@ def sahte_kripto_bilgisi(yahoo):
             "allTimeHigh": 126_000.0, "allTimeLow": 171.5, "website": "https://bitcoin.org/"} if yahoo != "YOK-USD" else {}
 
 
+def sahte_coingecko():
+    from piyasa.kripto.tanimlar import KRIPTOLAR
+    satirlar = {}
+    for i, k in enumerate(KRIPTOLAR):
+        if k["slug"] == "polkadot":            # CoinGecko'da bulunamayan coin: Yahoo'ya düşer
+            continue
+        satirlar[k["coingecko"]] = kripto_piyasa._cg_satiri({
+            "current_price": 83_000.0 / (i + 1), "price_change_percentage_24h_in_currency": -3.1,
+            "price_change_percentage_7d_in_currency": 1.2, "price_change_percentage_1y_in_currency": -30.0,
+            "price_change_percentage_1h_in_currency": 0.1, "price_change_percentage_30d_in_currency": 5.0,
+            "high_24h": 86_000.0 / (i + 1), "low_24h": 82_000.0 / (i + 1), "market_cap": 1.6e12 / (i + 1),
+            "market_cap_rank": i + 1, "circulating_supply": 20_000_000, "max_supply": 21_000_000,
+            "total_volume": 3.5e10 / (i + 1), "ath": 126_000.0 / (i + 1), "ath_date": "2025-10-06T10:57:42.000Z",
+            "ath_change_percentage": -34.0, "image": None, "last_updated": "2026-10-07T12:40:30.000Z",
+            "sparkline_in_7d": {"price": [1, 2, 3, 2, 4]},
+        })
+    return satirlar
+
+
 def ornek_emtia_verisi(conn):
     """CFTC, EIA ve FRED tablolarına iki yıllık sahte haftalık veri."""
     for hafta in range(104):
@@ -329,6 +348,15 @@ def uygulama(veritabani_yolu):
     kripto_piyasa._info_al = sahte_kripto_bilgisi
     kripto_piyasa._bilgi.temizle()
     kripto_piyasa._vadeli.temizle()
+    # CoinGecko, korku endeksi ve mempool.space yerine sabit veri (testler internete çıkmaz)
+    kripto_eski = (kripto_piyasa._coingecko, kripto_piyasa._genel, kripto_piyasa._korku, kripto_piyasa._yarilanma)
+    kripto_piyasa._coingecko = sahte_coingecko
+    kripto_piyasa._genel = lambda: {"toplam_deger": 2.8e12, "hacim_24s": 1e11, "degisim_24s": -0.02,
+                                    "btc_payi": 0.58, "eth_payi": 0.11, "coin_sayisi": 22000}
+    kripto_piyasa._korku = lambda: {"deger": 71, "etiket": "Açgözlülük", "ton": "alim", "tarih": "2026-10-07",
+                                    "dun": {"deger": 73}, "hafta_once": {"deger": 60}, "ay_once": {"deger": 40}, "seri": []}
+    kripto_piyasa._yarilanma = lambda: {"yukseklik": 970_000, "sonraki_blok": 1_050_000, "kalan_blok": 80_000,
+                                        "tarih": "2028-04-12", "kalan_gun": 553, "odul_simdi": 3.125, "odul_sonra": 1.5625}
     fiyat._indir = sahte_fiyat
     fiyat._anlik_indir = sahte_anlik
     haberler._indir = sahte_haberler
@@ -350,6 +378,7 @@ def uygulama(veritabani_yolu):
     yield app
     (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
      hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al) = eski
+    (kripto_piyasa._coingecko, kripto_piyasa._genel, kripto_piyasa._korku, kripto_piyasa._yarilanma) = kripto_eski
 
 
 @pytest.fixture()

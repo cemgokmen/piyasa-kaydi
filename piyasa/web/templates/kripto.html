@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, fiyat_paneli, haber_listesi, parti_rozeti %}
+{% from "_bilesenler.html" import kpi, fiyat_paneli, haber_listesi, parti_rozeti, yonetici_satis_notu %}
 {% block baslik %}{{ k.ad }} ({{ k.sembol }}) fiyatı, nedir, kim aldı? · Piyasa Kaydı{% endblock %}
 {% block aciklama %}{{ k.ad }} nedir, fiyatı, piyasa değeri, büyük fonların konumu, Bitcoin fonlarını alan kurumlar ve siyasetçilerin işlemleri.{% endblock %}
 {% block geri_adres %}{{ url_for('kripto.liste') }}{% endblock %}
@@ -15,29 +15,46 @@
     {% else %}<span class="coin-logo coin-logo-buyuk coin-logo-yedek" aria-hidden="true">{{ k.sembol[:1] }}</span>{% endif %}
     <div>
       <h1>{{ k.ad }} <span class="kripto-sembol">{{ k.sembol }}</span></h1>
-      <p class="sayfa-not">{{ k.tur }}{% if sira %} · piyasa değerine göre takip ettiğimiz kriptolar arasında {{ sira }}.{% endif %}</p>
+      <p class="sayfa-not">{{ k.tur }}{% if b and b.sira %} · piyasa değerine göre dünyada <b>{{ b.sira }}.</b> sırada{% endif %}</p>
     </div>
   </div>
 </header>
 
 {{ fiyat_paneli(url_for('kripto.fiyat_api', slug=k.slug), anlik_adres=url_for('kripto.anlik_api', slug=k.slug), birim='$',
    etiket='Anlık fiyat', hacim_birim='$',
-   kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Kripto paralar 7 gün 24 saat işlem görür; anlık fiyat dakikada bir yenilenir. Grafik günlük kapanışlardır (Türkiye saatiyle 03:00); hacim, 24 saatte el değiştiren dolar tutarıdır.') }}
+   kaynak_notu='Kaynak: CoinGecko ve Yahoo Finance (ücretsiz) · Kripto paralar 7 gün 24 saat işlem görür; anlık fiyat dakikada bir yenilenir ve "24 saat" gerçek son 24 saatlik değişimdir. Grafik günlük kapanışlardır (Türkiye saatiyle 03:00).') }}
 
 <section class="kpi-izgara">
-  {{ kpi('Piyasa değeri', b.piyasa_degeri|tutar if b else '—', 'dolaşımdaki bütün ' ~ k.sembol ~ ' × fiyat') }}
+  {{ kpi('Piyasa değeri', b.piyasa_degeri|tutar if b and b.piyasa_degeri else '—', ('dünyada ' ~ b.sira ~ '. sırada') if b and b.sira else 'dolaşımdaki bütün ' ~ k.sembol ~ ' × fiyat') }}
   {{ kpi('Türk lirası fiyatı', tl_fiyat|fiyat if tl_fiyat else '—', ('1 ' ~ k.sembol ~ ' · dolar/TL ' ~ kur|fiyat) if kur else '', birim='₺') }}
   {{ kpi('24 saatlik işlem hacmi', b.hacim_24s|tutar if b and b.hacim_24s else '—', 'son 24 saatte el değiştiren tutar') }}
   {{ kpi('Tüm zamanların zirvesi', (b.zirve|fiyat ~ ' $') if b and b.zirve else '—',
-         ('bugünkü fiyat zirvenin ' ~ ('%' ~ ((b.zirveden_uzaklik|abs) * 100)|round|int ~ ' altında')) if b and b.zirveden_uzaklik is not none and b.zirveden_uzaklik < -0.005 else 'zirvede ya da çok yakınında',
+         ((b.zirve_tarihi|uzun_tarih ~ ' · ') if b and b.zirve_tarihi else '') ~ (('bugün %' ~ ((b.zirveden_uzaklik|abs) * 100)|round|int ~ ' aşağıda') if b and b.zirveden_uzaklik is not none and b.zirveden_uzaklik < -0.005 else 'zirvede ya da çok yakınında'),
          'satim' if b and b.zirveden_uzaklik and b.zirveden_uzaklik < -0.3 else '') }}
 </section>
+
+{% if b and b.dusuk_24s and b.yuksek_24s and b.yuksek_24s > b.dusuk_24s %}
+{% set konum = ((b.fiyat - b.dusuk_24s) / (b.yuksek_24s - b.dusuk_24s) * 100)|round|int %}
+<div class="panel aralik-24s">
+  <div class="aralik-24s-ust">
+    <span><b>Son 24 saat</b> <span class="soluk kucuk">en düşük ve en yüksek fiyat</span></span>
+    <span class="aralik-degisimler">
+      {% for etiket, oran in [('1 saat', b.degisim_1s), ('24 saat', b.degisim_24s), ('7 gün', b.degisim_7g), ('30 gün', b.degisim_30g)] if oran is not none %}
+      <span><span class="soluk kucuk">{{ etiket }}</span> <b class="{{ 'tutar-buy' if oran > 0 else 'tutar-sell' }}">{{ oran|yuzde }}</b></span>
+      {% endfor %}
+    </span>
+  </div>
+  <div class="aralik-cubuk"><span class="aralik-isaret" style="left: {{ [[konum, 0]|max, 100]|min }}%"></span></div>
+  <div class="aralik-alt sayi"><span>{{ b.dusuk_24s|fiyat }} $</span><span>{{ b.yuksek_24s|fiyat }} $</span></div>
+</div>
+{% endif %}
 
 <nav class="bolum-menu" aria-label="Bu sayfada" data-bolum-menu>
   <a href="#nedir">{{ k.ad }} nedir?</a>
   {% if b and b.dolasim %}<a href="#arz">Arz</a>{% endif %}
-  {% if vadeli or cot %}<a href="#beklenti">Piyasa beklentisi</a>{% endif %}
+  {% if vadeli or cot or korku %}<a href="#beklenti">Piyasa beklentisi</a>{% endif %}
   {% if etf %}<a href="#kurumlar">Kurumlar <span class="sayac">{{ etf.kurumlar|length }}</span></a>{% endif %}
+  {% if sirketler %}<a href="#sirketler">{{ k.ad }} şirketleri</a>{% endif %}
   <a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ islemler|length }}</span></a>
   <a href="#etkenler">Fiyatı neler etkiler?</a>
   <a href="#haberler">Haberler <span class="sayac">{{ haberler|length }}</span></a>
@@ -77,6 +94,14 @@
       {{ kpi('Azami arz', (b.azami_arz|tutar|replace(' $', '') ~ ' ' ~ k.sembol) if b.azami_arz else 'Sınırsız', 'hiçbir zaman aşılamayacak üst sınır' if b.azami_arz else 'üst sınırı yok') }}
       {{ kpi('Tamamı piyasada olsaydı değeri', b.tam_deger|tutar if b.tam_deger else '—', 'tam seyreltilmiş değer') }}
     </div>
+    {% if yarilanma %}
+    <div class="yarilanma">
+      <b>Sonraki yarılanma: yaklaşık {{ yarilanma.kalan_gun|sayi }} gün sonra ({{ yarilanma.tarih|uzun_tarih }} civarı)</b>
+      <p>Blok {{ yarilanma.sonraki_blok|sayi }}'de madencilerin her blok için aldığı yeni bitcoin
+        {{ ('%g'|format(yarilanma.odul_simdi)).replace('.', ',') }}'ten {{ ('%g'|format(yarilanma.odul_sonra)).replace('.', ',') }}'e inecek.
+        Şu an blok {{ yarilanma.yukseklik|sayi }}; {{ yarilanma.kalan_blok|sayi }} blok kaldı (her blok yaklaşık 10 dakika). Kaynak: mempool.space.</p>
+    </div>
+    {% endif %}
     {% if b.azami_arz %}
     {% set oran = b.dolasim / b.azami_arz %}
     <div class="arz-cubuk" role="img" aria-label="Azami arzın yüzde {{ (oran * 100)|round|int }}'i dolaşımda">
@@ -88,7 +113,7 @@
 </section>
 {% endif %}
 
-{% if vadeli or cot %}
+{% if vadeli or cot or korku %}
 <section class="bolum" id="beklenti">
   <header class="bolum-ust"><div><h2>Büyük yatırımcılar ne bekliyor?</h2>
     <p class="bolum-not">ABD'deki Chicago borsasında (CME) işlem gören {{ k.ad }} vadeli sözleşmelerinden.</p></div></header>
@@ -101,6 +126,18 @@
       {% if vadeli.yillik is not none %}Yıllığa çevrildiğinde fark <b>%{{ (vadeli.yillik * 100)|round(1)|string|replace('.', ',') }}</b>.{% endif %}</p>
     <p class="temel-not">Bu bir fiyat tahmini değildir. Vadeli fiyat genellikle faiz kadar yukarıdadır; fark faizden çok yüksekse
       piyasada iyimserlik ve kaldıraçlı alım fazla, düşükse ya da eksideyse ilgi zayıf demektir. Kaynak: Yahoo Finance (CME).</p>
+  </div>
+  {% endif %}
+
+  {% if korku %}
+  <div class="panel panel-ic korku-panel">
+    <div class="korku-ust">
+      <div><span class="kpi-etiket">Kripto piyasasında korku ve açgözlülük endeksi</span>
+        <span class="kpi-deger">{{ korku.deger }}<span class="soluk">/100</span> <small class="{{ 'tutar-buy' if korku.ton == 'alim' else 'tutar-sell' if korku.ton == 'satim' else '' }}">{{ korku.etiket }}</small></span></div>
+      <span class="kucuk soluk">{% if korku.dun %}dün {{ korku.dun.deger }}{% endif %}{% if korku.hafta_once %} · geçen hafta {{ korku.hafta_once.deger }}{% endif %}{% if korku.ay_once %} · geçen ay {{ korku.ay_once.deger }}{% endif %}</span>
+    </div>
+    <span class="korku-cubuk" aria-hidden="true"><span style="left: {{ korku.deger }}%"></span></span>
+    <p class="temel-not">0 aşırı korku, 100 aşırı açgözlülük. Fiyat oynaklığı, hacim ve sosyal medyadan hesaplanır (alternative.me); tek başına yön göstermez.</p>
   </div>
   {% endif %}
 
@@ -191,6 +228,19 @@
 </section>
 {% endif %}
 
+{% if sirketler %}
+<section class="bolum" id="sirketler">
+  <header class="bolum-ust"><div>
+    <h2>{{ k.ad }} şirketlerinde kim aldı, kim sattı?</h2>
+    <p class="bolum-not">İşi doğrudan {{ k.ad }}'e bağlı, ABD borsasında işlem gören şirketler ve yöneticileriyle siyasetçilerin bu hisselerdeki
+    son işlemleri. Tablo son 90 günü özetler; her gün güncellenir.</p>
+  </div></header>
+  {{ yonetici_satis_notu() }}
+  {% set yonetici_islem = sirket_islemleri|rejectattr('siyasetci')|list %}{% set siyaset_islem = sirket_islemleri|selectattr('siyasetci')|list %}
+  {% include "_kripto_sirketleri.html" %}
+</section>
+{% endif %}
+
 <section class="bolum" id="siyasetciler">
   <header class="bolum-ust"><div>
     <h2>Siyasetçilerin {{ k.ad }} işlemleri</h2>
@@ -206,8 +256,9 @@
   {% include "_kripto_islemleri.html" %}
   {% else %}
   <div class="bos-durum">
-    <p><strong>Kayıtlarımızda Kongre üyelerinin {{ k.ad }} işlemi yok.</strong></p>
-    <p>2025'ten bu yana bildirilen işlemler taranıyor; yeni bildirimler her gün eklenir.</p>
+    <p><strong>2025'ten bu yana hiçbir Kongre üyesi doğrudan {{ k.ad }} işlemi bildirmedi.</strong></p>
+    <p>Kongre üyelerinin kripto işlemleri çok seyrektir; bildirim gelirse her gün kendiliğinden eklenir.
+      <a href="{{ url_for('kripto.liste') }}#siyasetciler">Bütün kripto işlemleri →</a></p>
   </div>
   {% endif %}
 </section>

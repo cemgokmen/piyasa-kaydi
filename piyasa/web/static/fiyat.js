@@ -16,7 +16,9 @@
   // 1 doların altındaki fiyatlar (Dogecoin 0,0891 gibi) iki basamakla okunmaz
   const kucukSayi = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
   const birim = panel.dataset.birim ? ` ${panel.dataset.birim}` : " $";
-  const fiyatYaz = (n) => `${(Math.abs(n) < 1 ? kucukSayi : sayi).format(n)}${birim}`;
+  // Çok küçük fiyatlar (Shiba Inu 0,00000546) 4 anlamlı basamakla
+  const anlamli = (n) => n.toLocaleString("tr-TR", { maximumSignificantDigits: 4, minimumSignificantDigits: 4 });
+  const fiyatYaz = (n) => `${Math.abs(n) >= 1 ? sayi.format(n) : Math.abs(n) >= 0.01 ? kucukSayi.format(n) : anlamli(n)}${birim}`;
 
   let veri = null;
   let aralik = "1y";
@@ -64,7 +66,7 @@
     const kucuk = veri.fiyat < 1;
     G.cizgi(alan("grafik"), veri.seriler[aralik], {
       bicim: fiyatYaz,
-      eksenBicim: kucuk ? (v) => kucukSayi.format(v) : undefined,
+      eksenBicim: kucuk ? (v) => (veri.fiyat >= 0.01 ? kucukSayi.format(v) : anlamli(v)) : undefined,
     });
   }
 

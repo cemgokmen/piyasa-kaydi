@@ -4,12 +4,16 @@ Kripto sayfalarının veritabanı sorguları:
   cot(slug)               büyük fonların vadeli işlemlerdeki konumu (CFTC, haftalık)
   etf_kurumlari(slug)     takip edilen büyük kurumların kripto fonu (ETF) pozisyonları (13F)
   siyasetci_islemleri()   Kongre üyelerinin kripto para ve kripto fonu işlemleri
+  sirket_ozetleri()       kripto şirketlerinde son 90 günün yönetici ve siyasetçi işlemleri
+  sirket_islemleri()      kripto şirketi hisselerindeki son işlemler (Form 4 ve Kongre)
 """
 
 from contextlib import closing
+from datetime import date, timedelta
 
-from piyasa.kripto.tanimlar import KRIPTO, KRIPTOLAR
-from piyasa.kurallar import parti_bilgisi
+from piyasa.kayitlar import islem_hazirla
+from piyasa.kripto.tanimlar import KRIPTO, KRIPTO_SIRKETLERI, KRIPTOLAR
+from piyasa.kurallar import TEMIZ, parti_bilgisi
 from piyasa.veritabani import get_connection
 
 
@@ -217,3 +221,65 @@ def siyasetci_ozeti(slug=None):
     o["kisiler"] = kisiler
     o["coinler"] = {k["slug"]: coinler.get(k["slug"], 0) for k in KRIPTOLAR}
     return o
+
+
+# ---------------------------------------------------------------------------
+# Kripto şirketleri: yöneticilerin ve siyasetçilerin hisse işlemleri
+# ---------------------------------------------------------------------------
+
+def _sirketler(coin=None):
+    if coin is None:
+        return KRIPTO_SIRKETLERI
+    return [s for s in KRIPTO_SIRKETLERI if s["coin"] == coin]
+
+
+def sirket_ozetleri(coin=None, gun=90):
+    """Her şirket için son 'gun' gündeki yönetici alım/satım ve siyasetçi işlemleri."""
+    sirketler = _sirketler(coin)
+    if not sirketler:
+        return []
+    kodlar = [s["ticker"] for s in sirketler]
+    yer = ", ".join("?" for _ in kodlar)
+    baslangic = (date.today() - timedelta(days=gun)).isoformat()
+    with baglanti() as conn:
+        satirlar = {r["ticker"]: dict(r) for r in conn.execute(
+            f"""SELECT ticker,
+                       SUM(chamber IS NULL AND action = 'buy') AS y_alim,
+                       SUM(chamber IS NULL AND action = 'sell') AS y_satim,
+                       SUM(CASE WHEN chamber IS NULL AND action = 'buy' THEN amount_max END) AS y_alim_tutar,
+                       SUM(CASE WHEN chamber IS NULL AND action = 'sell' THEN amount_max END) AS y_satim_tutar,
+                       SUM(chamber IS NOT NULL) AS s_adet,
+                       SUM(chamber IS NOT NULL AND action = 'buy') AS s_alim,
+                       MAX(transaction_date) AS son
+                FROM transactions
+                WHERE ticker IN ({yer}) AND {TEMIZ} AND transaction_date >= ?
+                GROUP BY ticker""",
+            [*kodlar, baslangic],
+        )}
+        # Sitede sayfası olan hisseler (en az bir işlemi ya da fon kaydı var)
+        kayitli = {r[0] for r in conn.execute(
+            f"""SELECT ticker FROM transactions WHERE ticker IN ({yer}) AND {TEMIZ}
+                UNION SELECT ticker FROM holdings WHERE ticker IN ({yer})""", [*kodlar, *kodlar])}
+    sonuc = []
+    for s in sirketler:
+        r = satirlar.get(s["ticker"], {})
+        sonuc.append({**s, **{k: r.get(k) or 0 for k in ("y_alim", "y_satim", "y_alim_tutar", "y_satim_tutar",
+                                                         "s_adet", "s_alim")}, "son": r.get("son"),
+                      "sayfa": s["ticker"] in kayitli})
+    return sonuc
+
+
+def sirket_islemleri(coin=None, siyasetci=None, limit=60):
+    """Kripto şirketi hisselerindeki son işlemler; siyasetci=True/False ile süzülür."""
+    sirketler = _sirketler(coin)
+    if not sirketler:
+        return []
+    kodlar = [s["ticker"] for s in sirketler]
+    yer = ", ".join("?" for _ in kodlar)
+    kosul = "" if siyasetci is None else ("AND chamber IS NOT NULL" if siyasetci else "AND chamber IS NULL")
+    with baglanti() as conn:
+        return [islem_hazirla(r) for r in conn.execute(
+            f"""SELECT * FROM transactions WHERE ticker IN ({yer}) AND {TEMIZ} {kosul}
+                ORDER BY disclosed_date DESC, id DESC LIMIT ?""",
+            [*kodlar, limit],
+        )]

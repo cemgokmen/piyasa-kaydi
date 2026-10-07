@@ -78,7 +78,6 @@ def test_ana_menu_baglantilari(tarayici, sunucu):
         "Siyasetçiler": "Siyasetçilerin hisse işlemleri",
         "Yöneticiler": "Şirket yöneticilerinin işlemleri",
         "Fonlar": "Fonlar ve bankalar",
-        "Emtialar": "Emtialar",
         "Günlük özet": "",
         "Sinyaller": "Sinyaller",
         "Ana sayfa": "Piyasa Kaydı: kim aldı, kim sattı?",
@@ -89,6 +88,19 @@ def test_ana_menu_baglantilari(tarayici, sunucu):
         bekle(tarayici, EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), baslik))
         aktif = tarayici.find_element(By.CSS_SELECTOR, '.ana-menu [aria-current="page"]')
         assert aktif.text == etiket
+
+    # "Piyasalar" açılır menüsü: tıklayınca açılır, Escape ile kapanır
+    for ad, baslik in (("Emtialar", "Emtialar"), ("Kripto paralar", "Kripto paralar")):
+        dugme = tarayici.find_element(By.CSS_SELECTOR, ".menu-grup-dugme")
+        tikla(tarayici, dugme)
+        bekle(tarayici, lambda t, d=dugme: d.get_attribute("aria-expanded") == "true")
+        tarayici.find_element(By.CSS_SELECTOR, ".menu-acilir").find_element(By.PARTIAL_LINK_TEXT, ad).click()
+        bekle(tarayici, EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), baslik))
+        assert "menu-grup-aktif" in tarayici.find_element(By.CSS_SELECTOR, ".menu-grup").get_attribute("class")
+    dugme = tarayici.find_element(By.CSS_SELECTOR, ".menu-grup-dugme")
+    tikla(tarayici, dugme)
+    dugme.send_keys(Keys.ESCAPE)
+    bekle(tarayici, lambda t: dugme.get_attribute("aria-expanded") == "false")
 
 
 def test_ana_sayfa_kartlari_ve_arama(tarayici, sunucu):

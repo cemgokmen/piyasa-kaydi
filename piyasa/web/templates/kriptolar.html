@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, haber_listesi, degisim, parti_rozeti %}
+{% from "_bilesenler.html" import kpi, haber_listesi, degisim, yonetici_satis_notu %}
 {% block baslik %}Kripto paralar: Bitcoin, Ethereum fiyatları ve kim aldı · Piyasa Kaydı{% endblock %}
-{% block aciklama %}Bitcoin, Ethereum ve diğer kripto paraların fiyatları; büyük fonların ve bankaların Bitcoin fonu pozisyonları ve ABD'li siyasetçilerin kripto işlemleri.{% endblock %}
+{% block aciklama %}Bitcoin, Ethereum ve 25 kripto paranın fiyatları; kripto şirketlerinde yönetici ve siyasetçi işlemleri, Bitcoin fonu alan bankalar ve ABD'li siyasetçilerin kripto işlemleri.{% endblock %}
 
 {% macro isaretli(n) -%}
   {{- '+' if n > 0 else '−' if n < 0 else '' -}}{{- n|abs|sayi -}}
@@ -11,57 +11,88 @@
 <header class="sayfa-ust">
   <div>
     <h1>Kripto paralar</h1>
-    <p class="sayfa-not">Kripto paralar, hiçbir devletin ya da bankanın çıkarmadığı, internet üzerinde kişiden kişiye
-    gönderilebilen dijital paralardır. Burada fiyatlarının yanında, büyük bankaların ve fonların hangi kripto
-    fonlarını aldığını ve ABD'li siyasetçilerin kripto işlemlerini görebilirsiniz. Bir kripto paraya tıklayınca profiline gidersiniz.</p>
+    <p class="sayfa-not">Hiçbir devletin ya da bankanın çıkarmadığı, internet üzerinden kişiden kişiye gönderilebilen dijital paralar.
+    Fiyatların yanında, kripto şirketlerinin yöneticilerinin ve ABD'li siyasetçilerin işlemlerini, büyük bankaların hangi
+    kripto fonlarını aldığını görebilirsiniz.</p>
   </div>
 </header>
 
-<section class="kpi-izgara kpi-3">
-  {{ kpi('Toplam piyasa değeri', toplam_deger|tutar if toplam_deger else '—', 'listedeki ' ~ kartlar|length ~ ' kripto paranın toplamı') }}
-  {{ kpi('Bitcoin\'in payı', ('%' ~ (btc_payi * 100)|round|int) if btc_payi else '—', 'piyasa değerinin ne kadarı Bitcoin') }}
-  {{ kpi('Dolar/TL', kur|fiyat if kur else '—', 'Türk lirası fiyatları bu kurla hesaplanır', birim='₺') }}
+<section class="kpi-izgara">
+  {% if genel %}
+  {{ kpi('Bütün kripto piyasası', genel.toplam_deger|tutar, ('24 saatte ' ~ genel.degisim_24s|yuzde) if genel.degisim_24s is not none else '',
+         'alim' if genel.degisim_24s and genel.degisim_24s > 0 else 'satim' if genel.degisim_24s else '') }}
+  {{ kpi('24 saatlik işlem hacmi', genel.hacim_24s|tutar, (genel.coin_sayisi|sayi) ~ ' kripto paranın toplamı') }}
+  {{ kpi('Bitcoin\'in payı', '%' ~ (genel.btc_payi * 100)|round(1)|string|replace('.', ','), 'Ethereum %' ~ (genel.eth_payi * 100)|round(1)|string|replace('.', ',')) }}
+  {% endif %}
+  {% if korku %}
+  <div class="kpi kpi-korku">
+    <span class="kpi-etiket">Korku ve açgözlülük endeksi</span>
+    <span class="kpi-deger">{{ korku.deger }} <small class="{{ 'tutar-buy' if korku.ton == 'alim' else 'tutar-sell' if korku.ton == 'satim' else '' }}">{{ korku.etiket }}</small></span>
+    <span class="korku-cubuk" aria-hidden="true"><span style="left: {{ korku.deger }}%"></span></span>
+    <span class="kpi-alt">{% if korku.dun %}dün {{ korku.dun.deger }}{% endif %}{% if korku.hafta_once %} · geçen hafta {{ korku.hafta_once.deger }}{% endif %}{% if korku.ay_once %} · geçen ay {{ korku.ay_once.deger }}{% endif %}</span>
+  </div>
+  {% endif %}
 </section>
+{% if korku %}
+<details class="bilgi-kutu">
+  <summary>Korku ve açgözlülük endeksi nedir?</summary>
+  <div class="bilgi-kutu-icerik"><p>Kripto piyasasındaki havayı 0 ile 100 arasında özetleyen bir gösterge (alternative.me). Fiyat oynaklığı,
+  işlem hacmi, sosyal medya ve Bitcoin'in payı gibi verilerden hesaplanır. 0'a yakın değerler yatırımcıların korktuğunu,
+  100'e yakın değerler aşırı iyimser olduğunu gösterir. Pek çok yatırımcı aşırı uçları ters sinyal olarak yorumlar; bu da kesinlik taşımaz.</p></div>
+</details>
+{% endif %}
 
-<section class="bolum">
+<nav class="bolum-menu" aria-label="Bu sayfada" data-bolum-menu>
+  <a href="#fiyatlar">Fiyatlar</a>
+  <a href="#sirketler">Kripto şirketleri</a>
+  {% if etf %}<a href="#kurumlar">Bankalar ve fonlar</a>{% endif %}
+  {% if cotlar %}<a href="#vadeli">Vadeli işlemler</a>{% endif %}
+  <a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ siyaset_ozet.adet }}</span></a>
+  <a href="#haberler">Haberler</a>
+</nav>
+
+<section class="bolum" id="fiyatlar">
   <header class="bolum-ust"><div><h2>Fiyatlar</h2>
-    <p class="bolum-not">Piyasa değerine göre sıralı. Kripto paralar 7 gün 24 saat işlem görür; "24 saat" değişimi bir önceki günün kapanışına göredir.</p></div></header>
+    <p class="bolum-not">Piyasa değerine göre sıralı; # dünya sıralamasıdır. Değişimler gerçek zamanlı son 24 saate, 7 güne ve 1 yıla göredir.
+    Bir kripto paraya tıklayınca profiline gidersiniz.</p></div></header>
+  <div class="segment segment-kucuk kripto-suzgec" role="group" aria-label="Kripto türü">
+    <button type="button" class="secili" aria-pressed="true" data-kripto-grup="">Tümü <span class="soluk">{{ kartlar|length }}</span></button>
+    {% for g in gruplar %}<button type="button" aria-pressed="false" data-kripto-grup="{{ g }}">{{ g }}</button>{% endfor %}
+  </div>
   <div class="tablo-kap">
-    <table class="tablo kripto-tablosu" data-siralanabilir>
+    <table class="tablo kripto-tablosu" id="kripto-tablosu" data-siralanabilir>
       <thead>
         <tr>
           <th scope="col" class="sag" data-sirala="sayi">#</th>
           <th scope="col" data-sirala="metin">Kripto para</th>
           <th scope="col" class="sag" data-sirala="sayi">Fiyat</th>
           <th scope="col" class="sag" data-sirala="sayi">24 saat</th>
-          <th scope="col" class="sag" data-sirala="sayi">1 hafta</th>
+          <th scope="col" class="sag" data-sirala="sayi">7 gün</th>
           <th scope="col" class="sag" data-sirala="sayi">1 yıl</th>
           <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Piyasa değeri</th>
-          <th scope="col" class="sag" data-sirala="sayi">Zirveden uzaklık</th>
-          <th scope="col" class="genis">Son 1 yıl</th>
+          <th scope="col" class="genis">Son 7 gün</th>
         </tr>
       </thead>
       <tbody>
-        {% for x in kartlar %}
-        <tr class="tiklanir" data-href="{{ url_for('kripto.detay', slug=x.k.slug) }}">
-          <td data-etiket="#" class="sag soluk" data-deger="{{ loop.index }}">{{ loop.index }}</td>
-          <td data-etiket="Kripto para" data-deger="{{ x.k.ad }}">
+        {% for x in kartlar %}{% set b = x.b %}
+        <tr class="tiklanir" data-href="{{ url_for('kripto.detay', slug=x.k.slug) }}" data-grup="{{ x.grup }}">
+          <td data-etiket="#" class="sag soluk" data-deger="{{ b.sira or 9999 }}">{{ b.sira or '—' }}</td>
+          <td data-etiket="Kripto para" data-deger="{{ x.k.ad }}" class="coin-sutunu">
             <span class="coin-hucre">
-              {% if x.logo %}<img class="coin-logo" src="{{ x.logo }}" alt="" width="28" height="28" loading="lazy">
+              {% if b.logo %}<img class="coin-logo" src="{{ b.logo }}" alt="" width="28" height="28" loading="lazy">
               {% else %}<span class="coin-logo coin-logo-yedek" aria-hidden="true">{{ x.k.sembol[:1] }}</span>{% endif %}
-              <span><a href="{{ url_for('kripto.detay', slug=x.k.slug) }}"><b>{{ x.k.ad }}</b></a>
-                <span class="alt-satir">{{ x.k.sembol }}</span></span>
+              <span class="coin-adi"><a href="{{ url_for('kripto.detay', slug=x.k.slug) }}"><b>{{ x.k.ad }}</b></a>
+                <span class="alt-satir">{{ x.k.sembol }} · {{ x.k.tur }}</span></span>
             </span>
           </td>
-          <td data-etiket="Fiyat" class="sag sayi" data-deger="{{ x.fiyat or 0 }}"><b>{{ x.fiyat|fiyat if x.fiyat else '—' }} $</b>
-            {% if kur and x.fiyat %}<span class="alt-satir">{{ (x.fiyat * kur)|fiyat }} ₺</span>{% endif %}</td>
-          <td data-etiket="24 saat" class="sag" data-deger="{{ x.g1 or 0 }}">{{ degisim(x.g1) }}</td>
-          <td data-etiket="1 hafta" class="sag" data-deger="{{ x.h1 or 0 }}">{{ degisim(x.h1) }}</td>
-          <td data-etiket="1 yıl" class="sag" data-deger="{{ x.y1 or 0 }}">{{ degisim(x.y1) }}</td>
-          <td data-etiket="Piyasa değeri" class="sag sayi" data-deger="{{ x.piyasa_degeri or 0 }}">{{ x.piyasa_degeri|tutar if x.piyasa_degeri else '—' }}
-            {% if x.hacim %}<span class="alt-satir">24 saatlik hacim {{ x.hacim|tutar }}</span>{% endif %}</td>
-          <td data-etiket="Zirveden" class="sag sayi" data-deger="{{ x.zirveden or 0 }}">{% if x.zirveden is not none %}<span class="{{ 'tutar-sell' if x.zirveden < -0.05 else 'tutar-buy' }}">{{ x.zirveden|yuzde }}</span>{% else %}—{% endif %}</td>
-          <td data-etiket="Son 1 yıl" class="genis">
+          <td data-etiket="Fiyat" class="sag sayi" data-deger="{{ b.fiyat or 0 }}"><b>{{ b.fiyat|fiyat if b.fiyat else '—' }} $</b>
+            {% if kur and b.fiyat %}<span class="alt-satir">{{ (b.fiyat * kur)|fiyat }} ₺</span>{% endif %}</td>
+          <td data-etiket="24 saat" class="sag" data-deger="{{ b.degisim_24s or 0 }}">{{ degisim(b.degisim_24s) }}</td>
+          <td data-etiket="7 gün" class="sag" data-deger="{{ b.degisim_7g or 0 }}">{{ degisim(b.degisim_7g) }}</td>
+          <td data-etiket="1 yıl" class="sag" data-deger="{{ b.degisim_1y or 0 }}">{{ degisim(b.degisim_1y) }}</td>
+          <td data-etiket="Piyasa değeri" class="sag sayi" data-deger="{{ b.piyasa_degeri or 0 }}">{{ b.piyasa_degeri|tutar if b.piyasa_degeri else '—' }}
+            {% if b.hacim_24s %}<span class="alt-satir">hacim {{ b.hacim_24s|tutar }}</span>{% endif %}</td>
+          <td data-etiket="Son 7 gün" class="genis">
             {% if x.grafik %}<svg class="kucuk-grafik" viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true">
               <polyline points="{{ x.grafik.noktalar }}" class="{{ 'cizgi-artis' if x.grafik.artis else 'cizgi-azalis' }}"/></svg>{% endif %}
           </td>
@@ -70,11 +101,22 @@
       </tbody>
     </table>
   </div>
-  <p class="dipnot">Kaynak: Yahoo Finance (ücretsiz). Zirveden uzaklık: bugünkü fiyatın tüm zamanların en yüksek fiyatına göre farkı.</p>
+  <p class="dipnot">Kaynak: CoinGecko (ücretsiz, birkaç dakikada bir yenilenir). Sabit paraların fiyatı hep 1 dolar civarındadır.</p>
+</section>
+
+<section class="bolum" id="sirketler">
+  <header class="bolum-ust"><div>
+    <h2>Kripto şirketlerinde kim aldı, kim sattı?</h2>
+    <p class="bolum-not">Kripto borsaları, Bitcoin madencileri ve kasasında kripto tutan şirketler ABD borsasında işlem görüyor. Yöneticilerinin
+    (Form 4) ve siyasetçilerin bu hisselerdeki işlemleri her gün güncellenir. Tablo son 90 günü özetler.</p>
+  </div></header>
+  {{ yonetici_satis_notu() }}
+  {% set yonetici_islem = sirket_yonetici %}{% set siyaset_islem = sirket_siyaset %}
+  {% include "_kripto_sirketleri.html" %}
 </section>
 
 {% if etf %}
-<section class="bolum">
+<section class="bolum" id="kurumlar">
   <header class="bolum-ust"><div>
     <h2>Büyük bankalar ve fonlar kripto fonu alıyor mu?</h2>
     <p class="bolum-not">ABD'de borsada işlem gören Bitcoin ve Ethereum fonları (ETF), kripto parayı doğrudan almadan yatırım yapmayı sağlar.
@@ -107,7 +149,7 @@
 {% endif %}
 
 {% if cotlar %}
-<section class="bolum">
+<section class="bolum" id="vadeli">
   <header class="bolum-ust"><div>
     <h2>Vadeli işlemlerde büyük yatırımcılar</h2>
     <p class="bolum-not">Chicago borsasındaki (CME) vadeli sözleşmelerde kurumsal yatırımcıların (emeklilik ve yatırım fonları) alım eksi satım
@@ -136,11 +178,11 @@
 </section>
 {% endif %}
 
-<section class="bolum">
+<section class="bolum" id="siyasetciler">
   <header class="bolum-ust"><div>
-    <h2>Siyasetçilerin kripto işlemleri</h2>
+    <h2>Siyasetçilerin doğrudan kripto işlemleri</h2>
     <p class="bolum-not">ABD Kongre üyeleri 1.000 doları aşan kripto para işlemlerini de bildirmek zorunda. Doğrudan kripto alımları ve kripto
-    fonu (ETF) işlemleri birlikte. Tutarlar bildirim formundaki aralıktır.</p>
+    fonu (ETF) işlemleri birlikte; 2025 başından beri. Bu işlemler hisse işlemlerinden çok daha seyrek bildirilir. Tutarlar bildirim formundaki aralıktır.</p>
   </div></header>
   {% if siyaset %}
   <div class="kpi-izgara kpi-3">
@@ -151,12 +193,11 @@
   {% set islemler = siyaset %}{% set coin_goster = True %}
   {% include "_kripto_islemleri.html" %}
   {% else %}
-  <div class="bos-durum"><p><strong>Henüz kripto işlemi kaydı yok.</strong></p>
-    <p>2025'ten bu yana bildirilen işlemler taranıyor; yeni bildirimler her gün eklenir.</p></div>
+  <div class="bos-durum"><p><strong>Henüz kripto işlemi kaydı yok.</strong></p></div>
   {% endif %}
 </section>
 
-<section class="bolum">
+<section class="bolum" id="haberler">
   <header class="bolum-ust"><div><h2>Kripto haberleri</h2>
     <p class="bolum-not">Son iki haftanın Türkçe haberleri. Başlığa tıklayınca haber kaynağında açılır.</p></div></header>
   <div class="panel">{{ haber_listesi(haberler) }}</div>

@@ -61,7 +61,8 @@ def test_sorgular(uygulama):
 
 def test_kripto_sayfalari(istemci):
     html = istemci.get("/kripto").get_data(as_text=True)
-    for metin in ("Kripto paralar", "Bitcoin", "Siyasetçilerin kripto işlemleri", "Kripto Fon", "Jane Senator"):
+    for metin in ("Kripto paralar", "Bitcoin", "Siyasetçilerin doğrudan kripto işlemleri", "Kripto Fon", "Jane Senator",
+                  "Kripto şirketlerinde kim aldı"):
         assert metin in html
     html = istemci.get("/kripto/bitcoin").get_data(as_text=True)
     for metin in ("Bitcoin nedir?", "Satoshi Nakamoto", "Arz: piyasada ne kadar Bitcoin var?", "Kurumsal yatırımcılar",
@@ -69,10 +70,14 @@ def test_kripto_sayfalari(istemci):
         assert metin in html, metin
     # Fon verisi olmayan coin de açılır; boş durum mesajı görünür
     html = istemci.get("/kripto/dogecoin").get_data(as_text=True)
-    assert "Kayıtlarımızda Kongre üyelerinin Dogecoin işlemi yok" in html
+    assert "hiçbir Kongre üyesi doğrudan Dogecoin işlemi bildirmedi" in html
     assert istemci.get("/kripto/yok").status_code == 404
     assert istemci.get("/api/kripto/bitcoin/fiyat").status_code == 200
-    assert istemci.get("/api/kripto/bitcoin/anlik").get_json()["fiyat"] == 123.45
+    anlik = istemci.get("/api/kripto/bitcoin/anlik").get_json()
+    assert anlik["fiyat"] == 83_000 and round(anlik["degisim"], 3) == -0.031      # gerçek 24 saat (CoinGecko)
+    assert istemci.get("/api/kripto/polkadot/anlik").get_json()["fiyat"] == 123.45  # Yahoo yedeği
+    birinci = istemci.get("/api/kripto/bitcoin/fiyat").get_json()["degisimler"][0]
+    assert birinci["etiket"] == "24 saat" and round(birinci["oran"], 3) == -0.031
 
 
 def test_kripto_arama(istemci):

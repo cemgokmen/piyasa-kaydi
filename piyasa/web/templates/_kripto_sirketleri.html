@@ -1,0 +1,47 @@
+{# Kripto şirketleri: 'sirketler' (özet) ve işlem listeleri ('yonetici_islem', 'siyaset_islem' ya da 'tum_islem') #}
+{% from "_bilesenler.html" import islem_tablosu, degisim %}
+<div class="tablo-kap">
+  <table class="tablo sirket-tablosu" data-siralanabilir>
+    <thead>
+      <tr>
+        <th scope="col" data-sirala="metin">Şirket</th>
+        <th scope="col" class="sag" data-sirala="sayi">Hisse fiyatı</th>
+        <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Yönetici satışı · 90 gün</th>
+        <th scope="col" class="sag" data-sirala="sayi">Yönetici alımı · 90 gün</th>
+        <th scope="col" class="sag" data-sirala="sayi">Siyasetçi işlemi</th>
+        <th scope="col" data-sirala="metin">Son işlem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sirketler %}
+      <tr{% if s.sayfa %} class="tiklanir" data-href="{{ url_for('site.hisse', ticker=s.ticker) }}"{% endif %}>
+        <td data-etiket="Şirket" data-deger="{{ s.ad }}">{% if s.sayfa %}<a class="ticker" href="{{ url_for('site.hisse', ticker=s.ticker) }}">{{ s.ticker }}</a>{% else %}<span class="ticker">{{ s.ticker }}</span>{% endif %}
+          <b>{{ s.ad }}</b><span class="alt-satir">{{ s.ne }}</span></td>
+        <td data-etiket="Fiyat" class="sag sayi" data-deger="{{ s.fiyat or 0 }}">{{ (s.fiyat|fiyat ~ ' $') if s.fiyat else '—' }}
+          {% if s.g1 is not none %}<span class="alt-satir">{{ degisim(s.g1) }}</span>{% endif %}</td>
+        <td data-etiket="Yönetici satışı" class="sag sayi" data-deger="{{ s.y_satim_tutar }}">
+          {% if s.y_satim %}<span class="tutar-sell">{{ s.y_satim_tutar|tutar }}</span><span class="alt-satir">{{ s.y_satim }} işlem</span>{% else %}<span class="soluk">—</span>{% endif %}</td>
+        <td data-etiket="Yönetici alımı" class="sag sayi" data-deger="{{ s.y_alim_tutar }}">
+          {% if s.y_alim %}<span class="tutar-buy">{{ s.y_alim_tutar|tutar }}</span><span class="alt-satir">{{ s.y_alim }} işlem</span>{% else %}<span class="soluk">—</span>{% endif %}</td>
+        <td data-etiket="Siyasetçi" class="sag" data-deger="{{ s.s_adet }}">{% if s.s_adet %}{{ s.s_adet }} <span class="soluk kucuk">({{ s.s_alim }} alım)</span>{% else %}<span class="soluk">—</span>{% endif %}</td>
+        <td data-etiket="Son işlem" class="tarih" data-deger="{{ s.son or '' }}">{{ s.son|uzun_tarih if s.son else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if yonetici_islem or siyaset_islem %}
+<div class="panel sekmeli-panel" data-sekmeler>
+  <div class="segment segment-kucuk" role="tablist" aria-label="Son işlemler">
+    <button type="button" role="tab" id="ks-1" aria-controls="ks-panel-1" data-sekme="1" aria-selected="true" class="secili">Yöneticilerin son işlemleri</button>
+    <button type="button" role="tab" id="ks-2" aria-controls="ks-panel-2" data-sekme="2" aria-selected="false" tabindex="-1">Siyasetçilerin son işlemleri <span class="sayac">{{ siyaset_islem|length }}</span></button>
+  </div>
+  <div role="tabpanel" id="ks-panel-1" aria-labelledby="ks-1" data-sekme-panel="1">
+    {% if yonetici_islem %}<div data-kisalt="10">{{ islem_tablosu(yonetici_islem) }}</div>{% else %}<p class="bos">Yönetici işlemi yok.</p>{% endif %}
+  </div>
+  <div role="tabpanel" id="ks-panel-2" aria-labelledby="ks-2" data-sekme-panel="2" hidden>
+    {% if siyaset_islem %}<div data-kisalt="10">{{ islem_tablosu(siyaset_islem) }}</div>{% else %}<p class="bos">Siyasetçi işlemi yok.</p>{% endif %}
+  </div>
+</div>
+{% endif %}
