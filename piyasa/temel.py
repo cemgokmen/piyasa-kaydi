@@ -208,9 +208,9 @@ def _hisse(bilgi, gelir, bilanco, nakit, takvim):
         {"ad": "Karlılık", "satirlar": [
             _satir("Gelir (son 12 ay)", para(_sayi(bilgi.get("totalRevenue")), birim) if _sayi(bilgi.get("totalRevenue")) else None,
                    "Satışlardan elde edilen toplam gelir"),
-            _satir("Gelir büyümesi", yuzde(_sayi(bilgi.get("revenueGrowth"))) if _sayi(bilgi.get("revenueGrowth")) is not None else None,
+            _satir("Gelir büyümesi", yuzde(_sayi(bilgi.get("revenueGrowth")), basamak=1) if _sayi(bilgi.get("revenueGrowth")) is not None else None,
                    "Son çeyrek, geçen yılın aynı çeyreğine göre"),
-            _satir("Kar büyümesi", yuzde(_sayi(bilgi.get("earningsGrowth"))) if _sayi(bilgi.get("earningsGrowth")) is not None else None,
+            _satir("Kar büyümesi", yuzde(_sayi(bilgi.get("earningsGrowth")), basamak=1) if _sayi(bilgi.get("earningsGrowth")) is not None else None,
                    "Son çeyrek, geçen yılın aynı çeyreğine göre"),
             _satir("Brüt kar marjı", _oran(bilgi.get("grossMargins")), "Üretim maliyetleri düşüldükten sonra kalan pay"),
             _satir("Faaliyet kar marjı", _oran(bilgi.get("operatingMargins")), "Ana faaliyetlerden kalan pay"),
@@ -276,10 +276,10 @@ def _fon(bilgi):
         _satir("Yıllık gider oranı", f"%{ondalik(gider, 2)}" if gider is not None else None,
                "Fonun her yıl kestiği yönetim ücreti"),
         _satir("Temettü verimi", f"%{ondalik(verim * 100, 2)}" if verim else None, "Son 12 ayda dağıtılan"),
-        _satir("Yılbaşından beri", yuzde(ytd / 100) if ytd is not None else None, "Fonun bu yılki getirisi"),
-        _satir("3 yıllık ortalama getiri", yuzde(_sayi(bilgi.get("threeYearAverageReturn")))
+        _satir("Yılbaşından beri", yuzde(ytd / 100, basamak=1) if ytd is not None else None, "Fonun bu yılki getirisi"),
+        _satir("3 yıllık ortalama getiri", yuzde(_sayi(bilgi.get("threeYearAverageReturn")), basamak=1)
                if _sayi(bilgi.get("threeYearAverageReturn")) is not None else None, "Yıllık ortalama"),
-        _satir("5 yıllık ortalama getiri", yuzde(_sayi(bilgi.get("fiveYearAverageReturn")))
+        _satir("5 yıllık ortalama getiri", yuzde(_sayi(bilgi.get("fiveYearAverageReturn")), basamak=1)
                if _sayi(bilgi.get("fiveYearAverageReturn")) is not None else None, "Yıllık ortalama"),
         _satir("F/K", ondalik(_sayi(bilgi.get("trailingPE")), 1) if _sayi(bilgi.get("trailingPE")) else None,
                "İçindeki şirketlerin ortalama F/K'sı"),

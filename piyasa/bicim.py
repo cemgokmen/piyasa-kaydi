@@ -70,12 +70,12 @@ def kisa_aralik(alt, ust):
     return f"{kisa_tutar(alt)[:-2]} – {kisa_tutar(ust)}"
 
 
-def yuzde(oran, isaretli=True):
-    """0.0532 -> '+%5,32'"""
+def yuzde(oran, isaretli=True, basamak=2):
+    """0.0532 -> '+%5,32'; basamak=1 -> '+%5,3'"""
     if oran is None:
         return "—"
     isaret = ("+" if oran > 0 else "−" if oran < 0 else "") if isaretli else ""
-    return f"{isaret}%{abs(oran) * 100:.2f}".replace(".", ",")
+    return f"{isaret}%{abs(oran) * 100:.{basamak}f}".replace(".", ",")
 
 
 def ondalik(n, basamak=1):

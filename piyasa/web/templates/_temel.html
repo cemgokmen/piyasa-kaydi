@@ -50,7 +50,7 @@
           <li>
             <span class="ceyrek-etiket">{{ k.etiket }}</span>
             <b>{{ k.deger }}</b>
-            {% if k.degisim is not none %}<span class="{{ 'artis' if k.degisim > 0 else 'azalis' if k.degisim < 0 else '' }}">{{ k.degisim|yuzde }}</span>{% endif %}
+            {% if k.degisim is not none %}<span class="{{ 'artis' if k.degisim > 0 else 'azalis' if k.degisim < 0 else '' }}">{{ k.degisim|yuzde(True, 1) }}</span>{% endif %}
           </li>
           {% endfor %}
         </ul>
@@ -96,7 +96,7 @@
         <h3>Analist beklentisi <span>{{ t.analist.adet }} analist</span></h3>
         <p class="analist-hedef">
           <b>{{ t.analist.hedef }}</b> ortalama hedef fiyat
-          {% if t.analist.potansiyel is not none %}<span class="{{ 'artis' if t.analist.potansiyel > 0 else 'azalis' }}">{{ t.analist.potansiyel|yuzde }}</span>{% endif %}
+          {% if t.analist.potansiyel is not none %}<span class="{{ 'artis' if t.analist.potansiyel > 0 else 'azalis' }}">{{ t.analist.potansiyel|yuzde(True, 1) }}</span>{% endif %}
         </p>
         <p class="temel-not">En düşük {{ t.analist.dusuk }} · en yüksek {{ t.analist.yuksek }}{% if t.analist.oneri %} · genel görüş <b class="oneri-{{ t.analist.ton }}">{{ t.analist.oneri }}</b>{% endif %}</p>
       </div>

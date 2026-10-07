@@ -200,7 +200,7 @@ def test_temel_fon():
     t = hazirla({"quoteType": "ETF", "totalAssets": 8e11, "netExpenseRatio": 0.0945, "yield": 0.0099,
                  "ytdReturn": 12.7, "fundFamily": "State Street"})
     assert t["tur"] == "fon"
-    assert [k["deger"] for k in t["ozet"]] == ["800,0 mr $", "%0,09", "%0,99", "+%12,70"]
+    assert [k["deger"] for k in t["ozet"]] == ["800,0 mr $", "%0,09", "%0,99", "+%12,7"]
 
 
 def test_gunluk_guncelleme_gerekli_mi():

@@ -303,8 +303,8 @@ def test_sirket_rakamlari(istemci):
                   "Değerleme", "Karlılık", "Bilanço", "Sahiplik", "Son bilanço", "Nis–Haz 2026",
                   "Sonraki bilanço", "Analist beklentisi", "52 haftalık aralık"):
         assert metin in parca, metin
-    # Son çeyrek geçen yılın aynı çeyreğiyle karşılaştırılır: 109 / 94 - 1 = +%15,96
-    assert "+%15,96" in parca
+    # Son çeyrek geçen yılın aynı çeyreğiyle karşılaştırılır: 109 / 94 - 1 = +%16,0
+    assert "+%16,0" in parca
     assert istemci.get("/hisse/ORNK/rakamlar").status_code == 204
 
 
