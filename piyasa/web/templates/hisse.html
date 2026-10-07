@@ -1,24 +1,28 @@
 {% extends "base.html" %}
 {% from "_bilesenler.html" import kpi, islem_tablosu, fiyat_paneli %}
-{% block baslik %}{{ ticker }} — {{ sirket }} · Piyasa Kaydı{% endblock %}
+{% block baslik %}{{ ticker }} — {{ sirket|sirket_adi }} hisse işlemleri, fiyatı ve rakamları · Piyasa Kaydı{% endblock %}
 
 {% block geri_adres %}{{ url_for('site.islemler', donem='365') }}{% endblock %}
 
 {% block icerik %}
 <header class="sayfa-ust hisse-ust">
   <div>
-    <h1><span class="ticker ticker-buyuk">{{ ticker }}</span> <span class="h1-alt">{{ sirket }}</span></h1>
+    <h1><span class="ticker ticker-buyuk">{{ ticker }}</span> <span class="h1-alt">{{ sirket|sirket_adi }}</span></h1>
+    {% if profil and (profil.sektor or profil.endustri) %}
+    <p class="hisse-alt">{{ profil.sektor or '' }}{% if profil.sektor and profil.endustri %} · {% endif %}{{ profil.endustri or '' }}</p>
+    {% endif %}
   </div>
 </header>
 
-{% if profil %}{% include "_sirket_hakkinda.html" %}
-{% else %}<div data-parca-adres="{{ url_for('site.hisse_hakkinda', ticker=ticker) }}"></div>{% endif %}
-
-{{ fiyat_paneli(url_for('site.fiyat_api', ticker=ticker), anlik_adres=url_for('site.anlik_api', ticker=ticker)) }}
-
-<section class="panel temel temel-iskelet" data-parca-adres="{{ url_for('site.hisse_rakamlari', ticker=ticker) }}" aria-busy="true">
-  <p class="soluk kucuk">Şirketin rakamları yükleniyor…</p>
-</section>
+<nav class="bolum-menu hisse-menu" aria-label="Bu sayfada" data-bolum-menu>
+  <a href="#hakkinda">Şirket</a>
+  <a href="#fiyat">Fiyat</a>
+  <a href="#rakamlar">Rakamlar</a>
+  {% if siyaset_islemleri %}<a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ siyaset.adet }}</span></a>{% endif %}
+  {% if yonetici_islemleri %}<a href="#yoneticiler">Yöneticiler <span class="sayac">{{ yonetici.adet }}</span></a>{% endif %}
+  {% if fonlar %}<a href="#fonlar">Fonlar <span class="sayac">{{ fon_sayisi }}</span></a>{% endif %}
+  <a href="#haberler">Haberler</a>
+</nav>
 
 {% for y in yurutme if y.kisi_bilgi %}
 <a class="onay-serit onay-yurutme" href="{{ url_for('site.yurutme', slug=y.kisi) }}#portfoy">
@@ -37,11 +41,14 @@
 </a>
 {% endif %}
 
-<nav class="bolum-menu" aria-label="Bu sayfada">
-  {% if siyaset_islemleri %}<a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ siyaset.adet }}</span></a>{% endif %}
-  {% if yonetici_islemleri %}<a href="#yoneticiler">Şirket yöneticileri <span class="sayac">{{ yonetici.adet }}</span></a>{% endif %}
-  {% if fonlar %}<a href="#fonlar">Fonlar <span class="sayac">{{ fon_sayisi }}</span></a>{% endif %}
-</nav>
+{% if profil %}{% include "_sirket_hakkinda.html" %}
+{% else %}<div id="hakkinda" data-parca-adres="{{ url_for('site.hisse_hakkinda', ticker=ticker) }}"></div>{% endif %}
+
+{{ fiyat_paneli(url_for('site.fiyat_api', ticker=ticker), anlik_adres=url_for('site.anlik_api', ticker=ticker)) }}
+
+<section class="panel temel temel-iskelet" id="rakamlar" data-parca-adres="{{ url_for('site.hisse_rakamlari', ticker=ticker) }}" aria-busy="true">
+  <p class="soluk kucuk">Şirketin rakamları yükleniyor…</p>
+</section>
 
 {% if cubuklar %}
 <section class="panel bolum">
@@ -71,7 +78,7 @@
         <span class="tutar-sell">{{ siyaset.satim }} satım ({{ aralik(siyaset.satim_alt, siyaset.satim_tutar) }})</span></p>
     </div>
   </header>
-  {{ islem_tablosu(siyaset_islemleri, hisse=False) }}
+  <div data-kisalt="10">{{ islem_tablosu(siyaset_islemleri, hisse=False) }}</div>
 </section>
 {% endif %}
 
@@ -85,7 +92,7 @@
         <span class="tutar-sell">{{ yonetici.satim }} satım ({{ yonetici.satim_tutar|tutar }})</span></p>
     </div>
   </header>
-  {{ islem_tablosu(yonetici_islemleri, hisse=False) }}
+  <div data-kisalt="10">{{ islem_tablosu(yonetici_islemleri, hisse=False) }}</div>
 </section>
 {% endif %}
 
@@ -97,7 +104,7 @@
       <p class="bolum-not">{{ fon_donemi }} sonu · takip edilen {{ fon_sayisi }} kurum, toplam {{ fon_toplam }}</p>
     </div>
   </header>
-  <div class="tablo-kap">
+  <div class="tablo-kap" data-kisalt="10">
     <table class="tablo tablo-sade">
       <thead><tr><th>Kurum</th><th class="sag">Adet</th><th class="sag">Değer</th></tr></thead>
       <tbody>
@@ -113,6 +120,11 @@
   </div>
 </section>
 {% endif %}
+
+<div id="haberler" class="haber-iskelet" data-parca-adres="{{ url_for('site.hisse_haberleri_parcasi', ticker=ticker) }}">
+  <h2>Güncel haberler</h2>
+  <p class="soluk kucuk">Haberler yükleniyor…</p>
+</div>
 {% endblock %}
 
 {% block betik %}

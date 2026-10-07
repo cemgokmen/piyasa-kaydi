@@ -1,0 +1,25 @@
+{# Hisse sayfasının en altı: şirketle ilgili son 30 günün haberleri #}
+<section class="bolum hisse-haberleri" id="haberler" aria-labelledby="haberler-baslik">
+  <header class="bolum-ust">
+    <div>
+      <h2 id="haberler-baslik">Güncel haberler</h2>
+      <p class="bolum-not">{{ sirket|sirket_adi }} hakkında son 30 günün haberleri. Başlığa tıklayınca haber kaynağında açılır.</p>
+    </div>
+  </header>
+  {% if haberler %}
+  <ol class="panel haber-akisi">
+    {% for h in haberler %}
+    <li>
+      <a href="{{ h.adres }}" target="_blank" rel="noopener"{% if h.orijinal %} title="{{ h.orijinal }}"{% endif %}>{{ h.baslik }}</a>
+      <span class="haber-bilgi">
+        <span class="haber-kaynak">{{ h.kaynak }}</span>
+        <time datetime="{{ h.tarih }}">{{ h.zaman|ne_zaman }}</time>
+        {% if h.dil == 'en' %}<span class="haber-dil" title="Haber İngilizce; başlık Türkçeye çevrildi">İngilizce haber</span>{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="panel bos-not">Son 30 günde bu şirketle ilgili haber bulunamadı.</p>
+  {% endif %}
+</section>

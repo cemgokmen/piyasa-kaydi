@@ -5,7 +5,7 @@ ve şablonu çizer; SQL burada yazılmaz.
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
-from piyasa import fiyat, sirket_profili, temel, uyeler
+from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, uyeler
 from piyasa.analiz import cakisma, performans, portfoy, sinyaller
 from piyasa.analiz import yurutme as yurutme_analizi
 from piyasa.emtia.tanimlar import EMTIALAR
@@ -105,6 +105,15 @@ def hisse_rakamlari(ticker):
     if not bilgiler:
         return "", 204
     return render_template("_temel.html", t=bilgiler)
+
+
+@site.route("/hisse/<ticker>/haberler")
+def hisse_haberleri_parcasi(ticker):
+    """Hisse sayfasının en altındaki güncel haberler (sayfa açıldıktan sonra yüklenir)."""
+    veri = sorgular.hisse(ticker.upper())
+    liste = hisse_haberleri.hisse_haberleri(ticker, veri["sirket"]) if veri else []
+    return render_template("_hisse_haberleri.html", haberler=liste,
+                           sirket=veri["sirket"] if veri else ticker.upper())
 
 
 @site.route("/api/anlik/<ticker>")

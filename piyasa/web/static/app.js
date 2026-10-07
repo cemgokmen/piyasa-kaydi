@@ -560,3 +560,66 @@ document.addEventListener("keydown", function (olay) {
   hepsi[sira].focus();
   olay.preventDefault();
 });
+
+
+// ---------------------------------------------------------------------------
+// Uzun tablolar: [data-kisalt="10"] içindeki tablonun ilk 10 satırı görünür,
+// altına "Tümünü göster" düğmesi eklenir.
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll("[data-kisalt]").forEach(function (kap) {
+  const sinir = parseInt(kap.dataset.kisalt, 10);
+  const satirlar = Array.from(kap.querySelectorAll("tbody > tr"));
+  if (satirlar.length <= sinir + 2) return;            // 1-2 fazla satır için düğme gereksiz
+  const fazla = satirlar.slice(sinir);
+  fazla.forEach((s) => { s.hidden = true; });
+  const dugme = document.createElement("button");
+  dugme.type = "button";
+  dugme.className = "dugme tumunu-goster";
+  const yaz = (acik) => {
+    dugme.textContent = acik ? "Daha az göster" : `Tümünü göster (${satirlar.length})`;
+    dugme.setAttribute("aria-expanded", acik ? "true" : "false");
+  };
+  yaz(false);
+  dugme.addEventListener("click", function () {
+    const acik = dugme.getAttribute("aria-expanded") !== "true";
+    fazla.forEach((s) => { s.hidden = !acik; });
+    yaz(acik);
+    if (!acik) kap.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+  kap.after(dugme);
+});
+
+
+// ---------------------------------------------------------------------------
+// Sayfa içi bölüm menüsü: üst çubuğun hemen altına yapışır, kaydırırken
+// görünen bölüm vurgulanır.
+// ---------------------------------------------------------------------------
+
+(function () {
+  const ust = document.querySelector(".ust");
+  const ayarla = () => ust && document.documentElement.style.setProperty("--ust-yukseklik", `${ust.offsetHeight}px`);
+  ayarla();
+  window.addEventListener("resize", ayarla);
+
+  const menu = document.querySelector("[data-bolum-menu]");
+  if (!menu || !("IntersectionObserver" in window)) return;
+  const baglar = new Map(Array.from(menu.querySelectorAll("a[href^='#']")).map((a) => [a.hash.slice(1), a]));
+  const gorunen = new Set();
+  const isaretle = function () {
+    // Sayfadaki sıraya göre görünen ilk bölüm
+    const ilk = Array.from(baglar.keys()).find((id) => gorunen.has(id));
+    baglar.forEach((a, id) => a.classList.toggle("secili", id === ilk));
+  };
+  const gozcu = new IntersectionObserver(function (girdiler) {
+    girdiler.forEach((g) => (g.isIntersecting ? gorunen.add(g.target.id) : gorunen.delete(g.target.id)));
+    isaretle();
+  }, { rootMargin: "-140px 0px -55% 0px" });
+  const izle = () => baglar.forEach((_, id) => {
+    const bolum = document.getElementById(id);
+    if (bolum) gozcu.observe(bolum);
+  });
+  izle();
+  // Sonradan yüklenen parçalar (rakamlar, haberler) yerine geçince yeniden izle
+  new MutationObserver(izle).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
+})();

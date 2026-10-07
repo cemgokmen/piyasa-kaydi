@@ -39,6 +39,11 @@ def islem_hazirla(satir):
     k["gec"] = gec_mi(k)
     k["tutar_tam"] = tam_tutar(k["amount_min"], k["amount_max"])
     k["tutar_kisa"] = kisa_aralik(k["amount_min"], k["amount_max"])
+    # Tutarı sıfır bildirilen yönetici işlemleri: hisse ödülü, vergi için alıkoyma, hediye
+    k["bedelsiz"] = k["amount_max"] == 0 and not k["siyasetci"]
+    if k["bedelsiz"]:
+        k["tutar_kisa"] = "Bedelsiz"
+        k["tutar_tam"] = "Bildirimde tutar yok: hisse ödülü, vergi için alıkoyma ya da hediye olabilir"
     k["islem_metni"] = "Alım" if k["action"] == "buy" else "Satım"
     k["rol"] = rol_metni(k)
     k["parti"] = parti_bilgisi(k.get("party"))

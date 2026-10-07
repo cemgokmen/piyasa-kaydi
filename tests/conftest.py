@@ -9,7 +9,7 @@ from datetime import UTC, date, timedelta
 import pandas as pd
 import pytest
 
-from piyasa import fiyat, sirket_profili, temel, veritabani
+from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, veritabani
 from piyasa.emtia import haberler, serit
 from piyasa.web import create_app
 
@@ -221,6 +221,19 @@ def sahte_temel_veri(kod):
     return bilgi, gelir, bilanco, None, {"Earnings Date": [BUGUN + timedelta(days=20)], "Earnings Average": 1.98}
 
 
+def sahte_hisse_haberleri(ticker, ad):
+    from datetime import datetime
+    if ticker != "NVDA":
+        return []
+    an = datetime.now(UTC)
+    return [
+        {"baslik": "NVIDIA yeni yapay zeka çipini tanıttı", "kaynak": "Anadolu Ajansı", "adres": "https://example.com/1",
+         "zaman": an, "tarih": an.strftime("%Y-%m-%d"), "dil": "tr"},
+        {"baslik": "NVIDIA hisseleri rekor kırdı", "orijinal": "Nvidia shares hit a record", "kaynak": "Reuters",
+         "adres": "https://example.com/2", "zaman": an - timedelta(days=3), "tarih": an.strftime("%Y-%m-%d"), "dil": "en"},
+    ]
+
+
 def sahte_profil(ticker):
     if ticker != "AAPL":
         return None
@@ -267,12 +280,15 @@ def veritabani_yolu(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def uygulama(veritabani_yolu):
-    eski = fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al
+    eski = (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
+            hisse_haberleri._al)
     fiyat._indir = sahte_fiyat
     fiyat._anlik_indir = sahte_anlik
     haberler._indir = sahte_haberler
     sirket_profili._getir = sahte_profil
     temel._veri_al = sahte_temel_veri
+    hisse_haberleri._al = sahte_hisse_haberleri
+    hisse_haberleri._haberler.temizle()
     temel._temel.temizle()
     fiyat._bilgi.temizle()
     fiyat._anlik.temizle()
@@ -281,7 +297,8 @@ def uygulama(veritabani_yolu):
     app = create_app()
     app.config["TESTING"] = True
     yield app
-    fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al = eski
+    (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
+     hisse_haberleri._al) = eski
 
 
 @pytest.fixture()

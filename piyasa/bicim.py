@@ -4,7 +4,7 @@ Web'e bağımlı değildir; analiz ve özet metinleri de bunları kullanır.
 """
 
 import re
-from datetime import date
+from datetime import UTC, date, datetime
 
 AYLAR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz",
          "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]
@@ -151,3 +151,27 @@ def sirket_kisa_ad(ad):
             break
         onceki, ad = ad, yeni
     return re.sub(r"^The\s+(?=\S)", "", ad)                # 'The Hershey Company' -> 'Hershey'
+
+
+def sirket_gorunen_ad(ad):
+    """SEC'in büyük harfli adını okunur yapar: 'LOCKHEED MARTIN CORP' -> 'Lockheed Martin'.
+    Kısaltmalar (3 harf ve altı, ör. 'IBM', 'AT&T') büyük kalır."""
+    kisa = sirket_kisa_ad(ad or "")
+    if not kisa.isupper() or len(kisa) <= 4:
+        return kisa
+    return " ".join(k if len(k) <= 3 or not k.isalpha() else k.capitalize() for k in kisa.split())
+
+
+def ne_zaman(an, simdi=None):
+    """Haber zamanı: 'bugün', 'dün', '3 gün önce'; bir haftadan eskiyse '18 Eyl'."""
+    if an is None:
+        return ""
+    simdi = simdi or datetime.now(UTC)
+    gun = (simdi.date() - an.astimezone(simdi.tzinfo).date()).days if an.tzinfo else (simdi.date() - an.date()).days
+    if gun <= 0:
+        return "bugün"
+    if gun == 1:
+        return "dün"
+    if gun < 7:
+        return f"{gun} gün önce"
+    return kisa_tarih(an.date().isoformat())

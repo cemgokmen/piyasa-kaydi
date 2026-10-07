@@ -279,7 +279,7 @@ def test_sirket_hakkinda_kayitli_profil_sayfada(istemci):
     html = istemci.get("/hisse/NVDA").get_data(as_text=True)
     assert "Şirket ne iş yapıyor?" in html
     # Elle yazılmış tanım, veritabanındaki çeviriden önce gelir
-    assert "yapay zeka çağının en önemli çip üreticisidir" in html
+    assert "yapay zeka çiplerinde dünya lideri" in html
     assert "yapay zeka ve grafik işlemcileri tasarlar" not in html
     assert "36.000" in html and "nvidia.com" in html
     assert "/hisse/NVDA/hakkinda" not in html
@@ -324,3 +324,28 @@ def test_sayfa_onbellegi_ve_yayin_basliklari(uygulama):
     # Statik dosya adresi sürümlüdür ve uzun süre önbellekte tutulur
     assert "/static/stil.css?v=" in istemci.get("/siyasetciler").get_data(as_text=True)
     assert istemci.get("/robots.txt").get_data(as_text=True).startswith("User-agent: *")
+
+
+def test_hisse_haberleri(istemci):
+    html = istemci.get("/hisse/NVDA").get_data(as_text=True)
+    assert 'data-parca-adres="/hisse/NVDA/haberler"' in html and 'href="#haberler"' in html
+    parca = istemci.get("/hisse/NVDA/haberler").get_data(as_text=True)
+    assert "Güncel haberler" in parca and "NVIDIA yeni yapay zeka çipini tanıttı" in parca
+    assert "bugün" in parca and "3 gün önce" in parca
+    assert "İngilizce haber" in parca and 'title="Nvidia shares hit a record"' in parca
+    assert "haber bulunamadı" in istemci.get("/hisse/ORNK/haberler").get_data(as_text=True)
+
+
+def test_bedelsiz_islem_ve_okunur_sirket_adi():
+    from piyasa.bicim import ne_zaman, sirket_gorunen_ad
+    from piyasa.kayitlar import islem_hazirla
+
+    k = islem_hazirla({"transaction_date": "2026-08-13", "disclosed_date": "2026-08-17", "chamber": None,
+                       "amount_min": 0, "amount_max": 0, "action": "sell", "person": "Donovan John",
+                       "person_slug": "donovan-john", "job_title": "Director", "party": None, "source": "edgar_form4"})
+    assert k["tutar_kisa"] == "Bedelsiz"
+    assert sirket_gorunen_ad("LOCKHEED MARTIN CORP") == "Lockheed Martin"
+    assert sirket_gorunen_ad("INTERNATIONAL BUSINESS MACHINES CORP") == "International Business Machines"
+    assert sirket_gorunen_ad("AT&T INC.") == "AT&T"
+    assert sirket_gorunen_ad("Apple Inc.") == "Apple"
+    assert ne_zaman(None) == ""
