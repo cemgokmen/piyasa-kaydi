@@ -9,7 +9,7 @@ from datetime import date, timedelta
 
 from piyasa import fiyat
 from piyasa.analiz import cakisma
-from piyasa.bicim import kisa_aralik, kisa_tutar, sayi, sirket_kisa_ad, uzun_tarih, yuzde
+from piyasa.bicim import kisa_aralik, kisa_tutar, sayi, sirket_gorunen_ad, tr_kucuk, unvan, uzun_tarih, yuzde
 from piyasa.emtia import sorgular as emtia_sorgulari
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kurallar import GECERLI_KOD as GECERLI
@@ -28,8 +28,22 @@ def ozet_gunleri(conn, adet=60):
     )]
 
 
-def _madde(metin, adres=None, vurgu=None):
-    return {"metin": metin, "adres": adres, "vurgu": vurgu}
+def _madde(baslik, metin, adres=None, vurgu=None):
+    return {"baslik": baslik, "metin": metin, "adres": adres, "vurgu": vurgu}
+
+
+def _bolum(ad, giris, maddeler):
+    return {"ad": ad, "giris": giris, "maddeler": maddeler}
+
+
+def _rol(ham_unvan):
+    """Haber cümlesinde kişinin önüne gelecek sıfat ('CEO', 'Yönetim kurulu üyesi'...)."""
+    u = unvan(ham_unvan) if ham_unvan else ""
+    if not u or u == "Bildirim yükümlüsü":
+        return ""
+    if u.startswith("%10"):
+        return "Şirketin büyük ortaklarından"
+    return u[0].upper() + u[1:]
 
 
 def _yoneticiler(conn, gun):
@@ -42,13 +56,15 @@ def _yoneticiler(conn, gun):
         (gun,),
     ).fetchone()
     if not (o["alim"] or o["satim"]):
-        return []
+        return None
 
-    maddeler = [_madde(
-        f"{sayi(o['kisi'])} yönetici {sayi(o['alim'] or 0)} alım ({kisa_tutar(o['alim_tutar'])}) ve "
-        f"{sayi(o['satim'] or 0)} satım ({kisa_tutar(o['satim_tutar'])}) bildirdi."
-    )]
+    alim, satim = o["alim"] or 0, o["satim"] or 0
+    giris = (f"{sayi(o['kisi'])} şirket yöneticisi ve büyük ortak, toplam {kisa_tutar(o['alim_tutar'])} "
+             f"değerinde {sayi(alim)} alım ve {kisa_tutar(o['satim_tutar'])} değerinde {sayi(satim)} satım bildirdi.")
+    if satim > alim * 3:
+        giris += " Satışların ağır basması olağandır: yöneticiler maaş olarak aldıkları hisseleri düzenli olarak nakde çevirir."
 
+    maddeler = []
     for s in conn.execute(
         f"""SELECT ticker, MAX(asset_name) AS sirket, MAX(person) AS kisi, MAX(job_title) AS unvan,
                   SUM(amount_max) AS tutar
@@ -57,9 +73,12 @@ def _yoneticiler(conn, gun):
            GROUP BY ticker, person_slug ORDER BY tutar DESC LIMIT 3""",
         (gun,),
     ):
+        sirket = sirket_gorunen_ad(s["sirket"]) or s["ticker"]
+        rol = _rol(s["unvan"])
         maddeler.append(_madde(
-            f"En büyük alımlardan: {s['kisi']} ({s['unvan'] or 'yönetici'}), {sirket_kisa_ad(s['sirket']) or s['ticker']} "
-            f"hissesinden {kisa_tutar(s['tutar'])} aldı.",
+            f"{sirket} hissesine {kisa_tutar(s['tutar'])} değerinde içeriden alım",
+            f"{rol + ' ' if rol else ''}{s['kisi']}, {sirket} hissesinden {kisa_tutar(s['tutar'])} "
+            f"değerinde alım yaptığını bildirdi.",
             f"/hisse/{s['ticker']}", s["ticker"],
         ))
 
@@ -70,14 +89,17 @@ def _yoneticiler(conn, gun):
              AND disclosed_date BETWEEN ? AND ?
              AND ticker IN (SELECT ticker FROM transactions WHERE chamber IS NULL AND action = 'buy'
                             AND disclosed_date = ?)
-           GROUP BY ticker HAVING kisi >= 2 ORDER BY kisi DESC LIMIT 3""",
+           GROUP BY ticker HAVING kisi >= 2 ORDER BY kisi DESC LIMIT 2""",
         ((date.fromisoformat(gun) - timedelta(days=30)).isoformat(), gun, gun),
     ):
+        sirket = sirket_gorunen_ad(s["sirket"]) or s["ticker"]
         maddeler.append(_madde(
-            f"Küme alımı: {sirket_kisa_ad(s['sirket']) or s['ticker']} hissesini son 30 günde {s['kisi']} farklı yönetici aldı.",
+            f"{sirket} hissesinde toplu yönetici alımı",
+            f"Son 30 günde {s['kisi']} farklı yönetici {sirket} hissesi aldı; aynı dönemde birden çok "
+            f"yöneticinin alması dikkat çeken bir işarettir.",
             f"/hisse/{s['ticker']}", s["ticker"],
         ))
-    return maddeler
+    return _bolum("Şirket yöneticileri", giris, maddeler)
 
 
 def _siyasetciler(conn, gun):
@@ -89,62 +111,93 @@ def _siyasetciler(conn, gun):
         (gun,),
     )]
     if not satirlar:
-        return []
+        return None
 
     kisiler = {s["person_slug"] for s in satirlar}
     alim = [s for s in satirlar if s["action"] == "buy"]
-    maddeler = [_madde(
-        f"{len(kisiler)} Kongre üyesi {len(satirlar)} hisse işlemi bildirdi "
-        f"({len(alim)} alım, {len(satirlar) - len(alim)} satım)."
-    )]
+    satim = len(satirlar) - len(alim)
+    dagilim = ("hepsi alım" if not satim else "hepsi satım" if not alim
+               else f"{len(alim)} alım, {satim} satım")
+    uye = "Bir Kongre üyesi" if len(kisiler) == 1 else f"{len(kisiler)} Kongre üyesi"
+    giris = f"{uye} {len(satirlar)} hisse işlemi bildirdi ({dagilim})."
 
+    maddeler = []
     for s in [s for s in alim if (s["amount_min"] or 0) >= YUKLU_ALIM_ALT_SINIR][:3]:
         p = parti_bilgisi(s["party"])
-        parti = f" ({p['ad']})" if p else ""
+        sirket = sirket_gorunen_ad(s["asset_name"]) or s["ticker"]
         maddeler.append(_madde(
-            f"Yüklü alım: {s['person']}{parti}, {sirket_kisa_ad(s['asset_name']) or s['ticker']} "
-            f"hissesinden {kisa_aralik(s['amount_min'], s['amount_max'])} aldı "
-            f"(işlem {uzun_tarih(s['transaction_date'])}).",
+            f"{s['person']} {sirket} hissesi aldı",
+            f"{p['ad'] + ' ' if p else ''}{s['person']}, {uzun_tarih(s['transaction_date'])} tarihinde "
+            f"{sirket} hissesinden {kisa_aralik(s['amount_min'], s['amount_max'])} arasında alım yaptı.",
             f"/kisi/{s['person_slug']}", s["ticker"],
         ))
 
     cakisanlar = cakisma.cakisan_islemler()
-    for s in [s for s in satirlar if s["id"] in cakisanlar][:3]:
+    for s in [s for s in satirlar if s["id"] in cakisanlar][:2]:
         c = cakisanlar[s["id"]]
+        sirket = sirket_gorunen_ad(s["asset_name"]) or s["ticker"]
         maddeler.append(_madde(
-            f"Olası çıkar çatışması: {s['person']} ({', '.join(c['komiteler'])}), "
-            f"{c['sektor'].lower()} sektöründen {sirket_kisa_ad(s['asset_name']) or s['ticker']} hissesinde "
-            f"{'alım' if s['action'] == 'buy' else 'satım'} yaptı.",
+            f"{s['person']}, komitesinin denetlediği sektörde hisse {'aldı' if s['action'] == 'buy' else 'sattı'}",
+            f"{s['person']}, üyesi olduğu {', '.join(k.removesuffix(' Komitesi') for k in c['komiteler'])} komitesinin denetlediği "
+            f"{c['sektor'].lower()} sektöründen {sirket} hissesinde {'alım' if s['action'] == 'buy' else 'satım'} yaptı.",
             f"/kisi/{s['person_slug']}", s["ticker"],
         ))
-    return maddeler
+    return _bolum("Siyasetçiler", giris, maddeler)
 
 
 def _emtialar():
-    maddeler = []
-    parcalar = []
     bilgiler = fiyat.toplu_fiyat_bilgisi([e["yahoo"] for e in EMTIALAR])
+    hareket = []
     for e in EMTIALAR:
         bilgi = bilgiler.get(e["yahoo"])
-        if not bilgi:
-            continue
-        g1 = next((d["oran"] for d in bilgi["degisimler"] if d["anahtar"] == "1g"), None)
-        parcalar.append(f"{e['ad']} {yuzde(g1)}")
-    if parcalar:
-        maddeler.append(_madde("Son kapanışta: " + ", ".join(parcalar) + ".", "/emtialar"))
+        g1 = bilgi and next((d["oran"] for d in bilgi["degisimler"] if d["anahtar"] == "1g"), None)
+        if g1 is not None:
+            hareket.append((e, g1))
+    if not hareket:
+        return None
 
+    hareket.sort(key=lambda x: x[1])
+    yukselen = [h for h in hareket if h[1] > 0]
+    if len(yukselen) == len(hareket):
+        genel = "Emtialar günü yükselişle kapattı"
+    elif not yukselen:
+        genel = "Emtialar günü düşüşle kapattı"
+    else:
+        genel = "Emtialarda karışık bir gün"
+    (en_dusuk, d), (en_yuksek, y) = hareket[0], hareket[-1]
+    giris = (f"{genel}. En çok {'yükselen' if y > 0 else 'az düşen'} {_emtia_adi(en_yuksek)} ({yuzde(y)}), "
+             f"en çok {'düşen' if d < 0 else 'az yükselen'} {_emtia_adi(en_dusuk)} ({yuzde(d)}) oldu.")
+
+    maddeler = []
     for e in EMTIALAR:
         if not e["cot"] or e.get("cot_notu"):
             continue
         c = emtia_sorgulari.cot(e["slug"], hafta=53)
         if c and c["konum"] is not None and (c["konum"] >= 90 or c["konum"] <= 10):
-            yon = "en iyimser" if c["konum"] >= 90 else "en kötümser"
+            iyimser = c["konum"] >= 90
             maddeler.append(_madde(
-                f"{e['ad']}: büyük fonlar son bir yılın {yon} konumuna yakın ({c['konum']}/100, "
-                f"{uzun_tarih(c['tarih'])} raporu).",
+                f"Büyük fonlar {_emtia_adi(e)} için {'bir yılın en iyimser' if iyimser else 'bir yılın en kötümser'} noktasında",
+                f"Spekülatif fonların {_emtia_adi(e)} vadelilerindeki konumu son bir yılın "
+                f"{'en yükseğine' if iyimser else 'en düşüğüne'} yakın ({c['konum']}/100, {uzun_tarih(c['tarih'])} raporu).",
                 f"/emtia/{e['slug']}#arz-talep",
             ))
-    return maddeler
+    return _bolum("Emtialar", giris, maddeler)
+
+
+def _emtia_adi(e):
+    return e["ad"] if e["ad"].startswith("Brent") else tr_kucuk(e["ad"])
+
+
+def _manset(siyaset, yonetici):
+    """
+    Günün başlığı ve giriş cümlesi: en dikkat çekici haber öne çıkar ve
+    bölümünden alınır ki aşağıda tekrar etmesin.
+    """
+    for b in (siyaset, yonetici):
+        if b and b["maddeler"]:
+            ilk = b["maddeler"].pop(0)
+            return ilk["baslik"], ilk["metin"]
+    return None, None
 
 
 def gunluk_ozet(gun=None):
@@ -154,27 +207,26 @@ def gunluk_ozet(gun=None):
             return None
         gun = gun if gun in gunler else gunler[0]
         i = gunler.index(gun)
-        bolumler = [
-            ("Siyasetçiler", _siyasetciler(conn, gun)),
-            ("Şirket yöneticileri", _yoneticiler(conn, gun)),
-        ]
+        siyaset = _siyasetciler(conn, gun)
+        yonetici = _yoneticiler(conn, gun)
 
+    manset, spot = _manset(siyaset, yonetici)
     # Emtia fiyatları canlıdır; yalnızca en güncel günün özetinde gösterilir
-    if i == 0:
-        bolumler.append(("Emtialar", _emtialar()))
-    bolumler = [(b, m) for b, m in bolumler if m]
+    bolumler = [b for b in (siyaset, yonetici, _emtialar() if i == 0 else None) if b]
 
     d = date.fromisoformat(gun)
     baslik = f"{uzun_tarih(gun)} {GUNLER[d.weekday()]}"
     # Paylaşım için düz metin: sitede gösterilmez, istendiğinde dışarıya verilir
     duz_metin = "\n".join(
-        [f"Piyasa Kaydı · {baslik} özeti", ""]
-        + [satir for b, m in bolumler for satir in [b.upper(), *[f"• {x['metin']}" for x in m], ""]]
+        [f"Piyasa Kaydı · {baslik}", ""] + ([manset, spot, ""] if manset else [])
+        + [satir for b in bolumler for satir in [b["ad"].upper(), *[f"• {x['metin']}" for x in b["maddeler"]], ""]]
         + ["Kaynak: resmi bildirimler (SEC, ABD Kongresi). Yatırım tavsiyesi değildir."]
     )
     return {
         "gun": gun,
         "baslik": baslik,
+        "manset": manset,
+        "spot": spot,
         "bolumler": bolumler,
         "duz_metin": duz_metin,
         "onceki": gunler[i + 1] if i + 1 < len(gunler) else None,

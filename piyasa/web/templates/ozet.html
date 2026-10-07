@@ -7,7 +7,7 @@
   <div>
     <p class="ust-yol">Günlük özet</p>
     <h1>{{ baslik }}</h1>
-    <p class="sayfa-not">O gün kamuya açıklanan bildirimlerden derlenen kısa özet. Her madde resmi kayıtlara dayanır.</p>
+    <p class="sayfa-not">Günün öne çıkan bildirimleri, kısa haberler halinde. Her bilgi resmi kayıtlara dayanır.</p>
     {% if en_yeni %}<p class="sayfa-not kucuk soluk">En yeni özet budur. ABD'de bir günün bildirimleri o gün bittikten sonra
       (Türkiye saatiyle sabah 05:00 civarı) yayımlanır; bu yüzden özet bir önceki iş gününe aittir.
       Her sabah 07:00'de güncellenir, yeni bildirimler gün içinde 12:00 ve 00:00'da da eklenir.</p>{% endif %}
@@ -26,25 +26,28 @@
   </div>
 </header>
 
-<div class="ozet-govde">
-  <div>
-    {% for bolum, maddeler in bolumler %}
-    <section class="panel ozet-bolum">
-      <header class="panel-ust"><div><h2>{{ bolum }}</h2></div></header>
-      <ul class="ozet-maddeler">
-        {% for m in maddeler %}
-        <li>
-          {% if m.vurgu %}<a class="ticker" href="{{ url_for('site.hisse', ticker=m.vurgu) }}" title="{{ m.vurgu }} hisse sayfası">{{ m.vurgu }}</a>{% endif %}
-          <span>{{ m.metin }}</span>
-          {% if m.adres %}<a class="ozet-link" href="{{ m.adres }}" aria-label="Ayrıntı">Ayrıntı →</a>{% endif %}
-        </li>
-        {% endfor %}
-      </ul>
-    </section>
-    {% else %}
-    <p class="bos">Bu gün için özetlenecek bildirim yok.</p>
+<article class="ozet-govde">
+  {% if bolumler %}
+  {% if manset %}
+  <header class="ozet-manset">
+    <h2>{{ manset }}</h2>
+    <p>{{ spot }}</p>
+  </header>
+  {% endif %}
+  {% for b in bolumler %}
+  <section class="ozet-bolum">
+    <h3 class="ozet-bolum-ad">{{ b.ad }}</h3>
+    <p class="ozet-giris">{{ b.giris }}</p>
+    {% for m in b.maddeler %}
+    <div class="ozet-haber">
+      <h4>{% if m.adres %}<a href="{{ m.adres }}">{{ m.baslik }}</a>{% else %}{{ m.baslik }}{% endif %}</h4>
+      <p>{% if m.vurgu %}<a class="ticker" href="{{ url_for('site.hisse', ticker=m.vurgu) }}" title="{{ m.vurgu }} hisse sayfası">{{ m.vurgu }}</a> {% endif %}{{ m.metin }}</p>
+    </div>
     {% endfor %}
-  </div>
-
-</div>
+  </section>
+  {% endfor %}
+  {% else %}
+  <p class="bos">Bu gün için özetlenecek bildirim yok.</p>
+  {% endif %}
+</article>
 {% endblock %}
