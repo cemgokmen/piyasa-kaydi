@@ -1962,3 +1962,22 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .haber-kaynak { color: var(--yazi-2); font-weight: 500; }
 .haber-dil { padding: 1px 7px; border: 1px solid var(--cizgi); border-radius: 999px; font-size: 11px; }
 .bos-not { padding: 16px 20px; color: var(--yazi-3); }
+
+
+/* ---------------------------------------------------------------------------
+   Fonlar: fon konsensüsü
+   --------------------------------------------------------------------------- */
+.konsensus-izgara { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.konsensus-kart { padding: 16px 18px; }
+.konsensus-kart header h3 { margin: 0; font-size: 15px; }
+.konsensus-kart header p { margin: 2px 0 10px; color: var(--yazi-3); font-size: 12px; }
+.konsensus-kart ol { list-style: none; margin: 0; padding: 0; counter-reset: sira; }
+.konsensus-kart li { display: grid; grid-template-columns: 58px minmax(0, 1fr); column-gap: 8px; padding: 8px 0;
+  border-top: 1px solid var(--cizgi-2); font-size: 13px; }
+.konsensus-kart .ticker { grid-row: span 2; align-self: center; }
+.konsensus-ad { overflow: hidden; color: var(--yazi); text-overflow: ellipsis; white-space: nowrap; }
+.konsensus-sayi { color: var(--yazi-3); font-size: 12px; }
+.konsensus-halka-arz { margin: 14px 0 0; color: var(--yazi-2); font-size: 13px; line-height: 1.7; }
+.konsensus-halka-arz a { color: var(--yazi); }
+.fon-liste-baslik { margin: 8px 0 12px; font-size: 20px; }
+@media (max-width: 860px) { .konsensus-izgara { grid-template-columns: 1fr; } }

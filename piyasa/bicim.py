@@ -153,13 +153,39 @@ def sirket_kisa_ad(ad):
     return re.sub(r"^The\s+(?=\S)", "", ad)                # 'The Hershey Company' -> 'Hershey'
 
 
+# SEC ve 13F bildirimlerindeki kısaltmalar
+AD_KISALTMALARI = {
+    "FINL": "Financial", "INDS": "Industries", "HLDGS": "Holdings", "HLDG": "Holding", "HLDS": "Holdings",
+    "INTL": "International", "TECHN": "Technologies", "TECHNOLOGIE": "Technologies", "TECH": "Technology",
+    "FGHT": "Freight", "MTRS": "Motors", "PETE": "Petroleum", "SVCS": "Services", "SYS": "Systems",
+    "PHARMACEUTICALS": "Pharmaceuticals", "PHARMA": "Pharma", "MGMT": "Management", "LABS": "Laboratories",
+    "NATL": "National", "AMER": "America", "BK": "Bank", "HLTH": "Health", "ENTMT": "Entertainment",
+    "RES": "Resources", "PPTYS": "Properties", "MFG": "Manufacturing", "PRODS": "Products",
+    "SOLUTNS": "Solutions", "COMMUN": "Communications", "ELEC": "Electric", "ENGR": "Engineering",
+    "INVT": "Investment", "RLTY": "Realty", "RTY": "Royalty", "AIRLS": "Airlines", "CTRY": "Country",
+    "ENTMNT": "Entertainment", "GRP": "Group", "BANCSHARES": "Bancshares", "SCIENCES": "Sciences",
+}
+
+
+# Kısaltma sanılmaması gereken kısa kelimeler
+KISA_KELIMELER = {"SUN", "NEW", "ONE", "AIR", "BIG", "RED", "SEA", "OIL", "GAS", "CAR", "BIO", "BOX", "TWO",
+                  "SKY", "LIFE", "BAY", "OAK", "ICE", "ARC", "AND", "OF", "THE", "FOR"}
+
+
 def sirket_gorunen_ad(ad):
     """SEC'in büyük harfli adını okunur yapar: 'LOCKHEED MARTIN CORP' -> 'Lockheed Martin'.
     Kısaltmalar (3 harf ve altı, ör. 'IBM', 'AT&T') büyük kalır."""
     kisa = sirket_kisa_ad(ad or "")
     if not kisa.isupper() or len(kisa) <= 4:
         return kisa
-    return " ".join(k if len(k) <= 3 or not k.isalpha() else k.capitalize() for k in kisa.split())
+    kelimeler = [AD_KISALTMALARI.get(k.strip(".,"), k) for k in kisa.split()]
+    def duzelt(k):
+        if not k.isupper() or not k.isalpha():
+            return k
+        if k in ("AND", "OF", "FOR", "THE"):
+            return k.lower()
+        return k.capitalize() if len(k) > 3 or k in KISA_KELIMELER else k
+    return " ".join(duzelt(k) for k in kelimeler)
 
 
 def ne_zaman(an, simdi=None):

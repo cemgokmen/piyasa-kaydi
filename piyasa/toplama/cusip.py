@@ -91,8 +91,34 @@ def sonuclari_kaydet(conn, grup, sonuc):
     return bulunan, bulunamayan, hatali
 
 
+def ihracci_ile_tamamla(conn):
+    """
+    Eski (kullanımdan kalkmış) CUSIP'ler OpenFIGI'de bulunamıyor: şirket bölünme
+    ya da yeniden yapılanmadan sonra yeni CUSIP alınca eski çeyreklerdeki
+    pozisyonlar kodsuz kalıyordu (ör. Honeywell 438516106 -> 438516205).
+    CUSIP'in ilk 6 hanesi ihraççıyı (şirketi) gösterir; ihraççının bilinen tek
+    bir borsa kodu varsa kodsuz CUSIP'lerine o kod yazılır. Birden çok kodu olan
+    ihraççılara (GOOG/GOOGL gibi) dokunulmaz.
+    """
+    kodlar = {}
+    for s in conn.execute("SELECT cusip, ticker FROM cusip_ticker WHERE ticker IS NOT NULL"):
+        kodlar.setdefault(s["cusip"][:6], set()).add(s["ticker"])
+    tek = {ihracci: next(iter(k)) for ihracci, k in kodlar.items() if len(k) == 1}
+    kodsuz = [s["cusip"] for s in conn.execute(
+        "SELECT DISTINCT cusip FROM holdings WHERE ticker IS NULL AND length(cusip) >= 6")]
+    eslesen = [(tek[c[:6]], c) for c in kodsuz if c[:6] in tek]
+    conn.executemany(
+        "INSERT OR REPLACE INTO cusip_ticker (cusip, ticker, kaynak, guncelleme) "
+        "VALUES (?, ?, 'ihracci', datetime('now'))",
+        [(c, t) for t, c in eslesen],
+    )
+    conn.commit()
+    print(f"İhraççısından kodu bulunan eski CUSIP: {len(eslesen)}")
+
+
 def hisse_kodlarini_yaz(conn):
     """Bulunan eşlemeleri fon pozisyonlarına işler."""
+    ihracci_ile_tamamla(conn)
     guncellenen = conn.execute(
         """UPDATE holdings
            SET ticker = (SELECT c.ticker FROM cusip_ticker c WHERE c.cusip = holdings.cusip)

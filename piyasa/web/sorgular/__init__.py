@@ -16,6 +16,7 @@ buradan alır. Her fonksiyon kendi bağlantısını açıp kapatır.
 from piyasa.web.sorgular.fonlar import (  # noqa: F401
     DILIM_RENKLERI,
     fon,
+    fon_konsensusu,
     fonlar,
     pasta_dilimleri,
 )

@@ -165,7 +165,8 @@ def yurutme(slug):
 
 @site.route("/fonlar")
 def fonlar():
-    return render_template("fonlar.html", aktif="fonlar", **sorgular.fonlar())
+    return render_template("fonlar.html", aktif="fonlar", konsensus=sorgular.fon_konsensusu(),
+                           **sorgular.fonlar())
 
 
 @site.route("/fon/<slug>")

@@ -348,4 +348,16 @@ def test_bedelsiz_islem_ve_okunur_sirket_adi():
     assert sirket_gorunen_ad("INTERNATIONAL BUSINESS MACHINES CORP") == "International Business Machines"
     assert sirket_gorunen_ad("AT&T INC.") == "AT&T"
     assert sirket_gorunen_ad("Apple Inc.") == "Apple"
+    assert sirket_gorunen_ad("SUN CTRY AIRLS HLDGS INC") == "Sun Country Airlines Holdings"
+    assert sirket_gorunen_ad("FEDEX FGHT HLDG CO INC") == "Fedex Freight Holding"
     assert ne_zaman(None) == ""
+
+
+def test_fon_konsensusu(istemci):
+    from piyasa.web.sorgular.fonlar import fon_konsensusu
+
+    fon_konsensusu.temizle()
+    k = fon_konsensusu()
+    assert set(k) >= {"en_cok_alinan", "en_cok_satilan", "yeni_girilen", "yeni_listelenen", "fon_sayisi"}
+    html = istemci.get("/fonlar").get_data(as_text=True)
+    assert "Takip edilen kurumlar" in html

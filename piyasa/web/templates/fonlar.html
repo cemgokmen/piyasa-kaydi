@@ -19,6 +19,51 @@
   {{ kpi('Toplam bildirilen portföy', genel_toplam) }}
 </section>
 
+{% macro konsensus_listesi(baslik, aciklama, liste, tur) %}
+<article class="panel konsensus-kart">
+  <header><h3>{{ baslik }}</h3><p>{{ aciklama }}</p></header>
+  {% if liste %}
+  <ol>
+    {% for k in liste %}
+    <li>
+      <a class="ticker" href="{{ url_for('site.hisse', ticker=k.ticker) }}">{{ k.ticker }}</a>
+      <span class="konsensus-ad">{{ k.sirket|sirket_adi }}</span>
+      <span class="konsensus-sayi">
+        {% if tur == 'yeni' %}<b class="tutar-buy">{{ k.yeni }} fon</b> yeni girdi
+        {% elif tur == 'alim' %}<b class="tutar-buy">{{ k.alan }} fon aldı</b>{% if k.satan %} · {{ k.satan }} sattı{% endif %}
+        {% else %}<b class="tutar-sell">{{ k.satan }} fon sattı</b>{% if k.alan %} · {{ k.alan }} aldı{% endif %}{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}<p class="bos-not">Bu dönem için veri yok.</p>{% endif %}
+</article>
+{% endmacro %}
+
+{% if konsensus and konsensus.fon_sayisi %}
+<section class="bolum" id="konsensus">
+  <header class="bolum-ust">
+    <div>
+      <h2>Fonlar ne alıp sattı?</h2>
+      <p class="bolum-not">{{ konsensus.fon_sayisi }} kurumun son çeyrek bildirimi bir önceki çeyrekle karşılaştırıldı ({{ konsensus.donem_adi }}).
+        Pozisyonunu en az %5 artıran "aldı", azaltan ya da kapatan "sattı" sayılır. Hisse bölünmeleri, birleşmeler,
+        satın almalar ve yan şirket ayrılmaları alım-satım sayılmaz.</p>
+    </div>
+  </header>
+  <div class="konsensus-izgara">
+    {{ konsensus_listesi('En çok alınanlar', 'Alan fon sayısı satanlardan en fazla olanlar', konsensus.en_cok_alinan, 'alim') }}
+    {{ konsensus_listesi('En çok satılanlar', 'Satan fon sayısı alanlardan en fazla olanlar', konsensus.en_cok_satilan, 'satim') }}
+    {{ konsensus_listesi('Yeni girilenler', 'Bu çeyrek en çok fonun ilk kez aldığı hisseler', konsensus.yeni_girilen, 'yeni') }}
+  </div>
+  {% if konsensus.yeni_listelenen %}
+  <p class="konsensus-halka-arz"><b>Yeni halka arzlar ve ayrılan şirketler:</b>
+    {% for k in konsensus.yeni_listelenen %}<a href="{{ url_for('site.hisse', ticker=k.ticker) }}">{{ k.sirket|sirket_adi }} ({{ k.ticker }})</a>
+    <span class="soluk">{{ k.tutan }} fon</span>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<h2 class="fon-liste-baslik">Takip edilen kurumlar</h2>
 <div class="tablo-kap">
   <table class="tablo fon-tablosu">
     <thead>
