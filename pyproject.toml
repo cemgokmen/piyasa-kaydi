@@ -28,6 +28,7 @@ include = ["piyasa*"]
 
 [tool.setuptools.package-data]
 "piyasa.web" = ["templates/*.html", "static/*"]
+"piyasa" = ["veri/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

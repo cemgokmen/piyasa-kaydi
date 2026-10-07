@@ -225,3 +225,19 @@ def test_gunluk_guncelleme_gerekli_mi():
     # Hiç kayıt yoksa yapılır; farklı saat ayarı da çalışır
     assert gerekli_mi(an("2026-10-06T10:00"), {})
     assert not gerekli_mi(an("2026-10-06T06:00"), {"zaman": "2026-10-05T06:30:00", "basarili": True}, 6, 15)
+
+
+def test_elle_yazilmis_tanimlar_ve_endustri_sozlugu():
+    import re
+
+    from piyasa.sirket_profili import elle_yazilmis_tanimlar, endustri_adi, endustriler
+
+    tanimlar = elle_yazilmis_tanimlar()
+    assert len(tanimlar) >= 250
+    for kod, metin in tanimlar.items():
+        assert kod == kod.upper() and 60 <= len(metin) <= 400, kod
+        assert not re.search("[âîûÂÎÛ]", metin), kod            # şapkalı harf kullanılmaz
+        assert metin.endswith((".", ")")), kod
+    assert endustri_adi("Semiconductors") == "Yarı iletkenler (çip)"
+    assert endustri_adi(None) is None
+    assert all(not re.search("[âîûÂÎÛ]", v) for v in endustriler().values())

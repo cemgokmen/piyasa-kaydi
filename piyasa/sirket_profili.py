@@ -2,7 +2,12 @@
 Şirketin kısaca ne iş yaptığı: hisse sayfasındaki "Şirket hakkında" kutusu.
 
 İş tanımı, sektör, çalışan sayısı ve merkez Yahoo Finance'ten alınır.
-İngilizce tanım önce sadeleştirilir (uzun ülke listeleri, "bağlı
+
+Tanımın kaynağı, öncelik sırasıyla:
+  1. piyasa/veri/sirket_tanimlari.json: en çok işlem gören şirketler için
+     Yahoo'nun resmi tanımına dayanarak elle yazılmış Türkçe metin. Dosyada
+     yapılan düzeltme sayfaya hemen yansır (veritabanını beklemez).
+  2. Otomatik çeviri: İngilizce tanım önce sadeleştirilir (uzun ülke listeleri, "bağlı
 ortaklıklarıyla birlikte" gibi kalıplar, segment ayrıntıları ve resmi unvan
 çıkarılır), sonra ücretsiz çeviri servisiyle Türkçeye çevrilir ve fiil
 kipleri tek tipe getirilir. Sonuç veritabanında saklanır; profil 120 günde
@@ -11,9 +16,12 @@ bir yenilenir.
 Toplu doldurmak için:  python -m piyasa profiller  (piyasa/toplama/profiller.py)
 """
 
+import json
 import re
 from contextlib import closing
 from datetime import UTC, datetime, timedelta
+from functools import cache
+from pathlib import Path
 
 import requests
 import yfinance as yf
@@ -28,6 +36,28 @@ GOOGLE_CEVIRI = "https://clients5.google.com/translate_a/t"
 MYMEMORY = "https://api.mymemory.translated.net/get"
 YENILEME = timedelta(days=120)
 OZET_UZUNLUGU = 300          # karakter: uzun tanımın ilk bir-iki cümlesi
+
+VERI = Path(__file__).parent / "veri"
+
+
+@cache
+def elle_yazilmis_tanimlar():
+    """{KOD: Türkçe tanım}; en çok işlem gören şirketler için elle yazılmış metinler."""
+    return json.loads((VERI / "sirket_tanimlari.json").read_text(encoding="utf-8"))
+
+
+@cache
+def endustriler():
+    """Yahoo'nun faaliyet alanı adları -> Türkçe karşılıkları."""
+    return json.loads((VERI / "endustriler.json").read_text(encoding="utf-8"))
+
+
+def endustri_adi(ingilizce):
+    """Sözlükte varsa elle yazılmış karşılık, yoksa çeviri."""
+    if not ingilizce:
+        return None
+    return endustriler().get(ingilizce) or baslik_duzelt(turkcelestir(cevir(ingilizce)))
+
 
 # Yahoo'nun 11 sektörü
 SEKTORLER = {
@@ -255,16 +285,18 @@ def _getir(ticker):
         ozet = fon_tanimi(bilgi.get("longName") or ticker, bilgi.get("fundFamily"))
     else:
         ozet_en = sadelestir(tanim, bilgi.get("longName"))
-        ozet = adi_koruyarak_cevir(ozet_en, sirket_kisa_ad(bilgi.get("longName") or ""))
-    sektor = bilgi.get("sectorDisp") or bilgi.get("sector")
-    endustri = bilgi.get("industryDisp") or bilgi.get("industry")
+        # Elle yazılmış tanımı olan şirket için çeviri servisine gidilmez
+        ozet = elle_yazilmis_tanimlar().get(ticker.upper()) or \
+            adi_koruyarak_cevir(ozet_en, sirket_kisa_ad(bilgi.get("longName") or ""))
+    sektor = bilgi.get("sector") or bilgi.get("sectorDisp")
+    endustri = bilgi.get("industry") or bilgi.get("industryDisp")
     merkez = ", ".join(x for x in (bilgi.get("city"), bilgi.get("state") or bilgi.get("country")) if x)
     return {
         "ticker": ticker,
         "ozet": turkcelestir(ozet) if ozet and ozet_en else ozet,
         "ozet_en": ozet_en,
         "sektor": SEKTORLER.get(sektor, sektor),
-        "endustri": baslik_duzelt(turkcelestir(cevir(endustri))) if endustri else None,
+        "endustri": endustri_adi(endustri),
         "kurulus": kurulus_yili(tanim),
         "calisan": bilgi.get("fullTimeEmployees"),
         "merkez": merkez or None,
@@ -289,12 +321,33 @@ def _eski_mi(kayit):
     return datetime.fromisoformat(kayit["guncelleme"]) < datetime.now(UTC) - YENILEME
 
 
+def _elle_yazilani_uygula(profil):
+    if profil:
+        elle = elle_yazilmis_tanimlar().get(profil["ticker"].upper())
+        if elle:
+            profil = dict(profil, ozet=elle)
+    return profil
+
+
 def kayitli(ticker):
     """Yalnızca veritabanındaki profil (ağa çıkmaz); yoksa None."""
     with closing(get_connection()) as conn:
         kayit = conn.execute("SELECT * FROM sirket_profili WHERE ticker = ? AND ozet IS NOT NULL",
                              (ticker.upper(),)).fetchone()
-    return dict(kayit) if kayit else None
+    return _elle_yazilani_uygula(dict(kayit)) if kayit else None
+
+
+def yeniden_al(ticker):
+    """Kayıtlı olsa da Yahoo'dan yeniden alıp kaydeder; alınamazsa False."""
+    try:
+        yeni = _getir(ticker.upper())
+    except Exception:
+        return False
+    if not yeni:
+        return False
+    with closing(get_connection()) as conn:
+        _kaydet(conn, yeni)
+    return True
 
 
 def profil(ticker):
@@ -303,13 +356,13 @@ def profil(ticker):
     with closing(get_connection()) as conn:
         kayit = conn.execute("SELECT * FROM sirket_profili WHERE ticker = ?", (ticker,)).fetchone()
         if kayit and not _eski_mi(kayit):
-            return dict(kayit)
+            return _elle_yazilani_uygula(dict(kayit))
         try:
             yeni = _getir(ticker)
         except Exception:
             yeni = None
         if yeni:
             _kaydet(conn, yeni)
-            return yeni
-    return dict(kayit) if kayit else None
+            return _elle_yazilani_uygula(yeni)
+    return _elle_yazilani_uygula(dict(kayit)) if kayit else None
 

@@ -278,7 +278,9 @@ def test_hisse_sayfasi_anlik_fiyat_adresi(istemci):
 def test_sirket_hakkinda_kayitli_profil_sayfada(istemci):
     html = istemci.get("/hisse/NVDA").get_data(as_text=True)
     assert "Şirket ne iş yapıyor?" in html
-    assert "yapay zeka ve grafik işlemcileri" in html
+    # Elle yazılmış tanım, veritabanındaki çeviriden önce gelir
+    assert "yapay zeka çağının en önemli çip üreticisidir" in html
+    assert "yapay zeka ve grafik işlemcileri tasarlar" not in html
     assert "36.000" in html and "nvidia.com" in html
     assert "/hisse/NVDA/hakkinda" not in html
 
@@ -287,7 +289,7 @@ def test_sirket_hakkinda_sonradan_yuklenir(istemci):
     html = istemci.get("/hisse/AAPL").get_data(as_text=True)
     assert 'data-parca-adres="/hisse/AAPL/hakkinda"' in html
     parca = istemci.get("/hisse/AAPL/hakkinda")
-    assert parca.status_code == 200 and "akıllı telefon" in parca.get_data(as_text=True)
+    assert parca.status_code == 200 and "iPhone, Mac, iPad" in parca.get_data(as_text=True)
     assert istemci.get("/hisse/ORNK/hakkinda").status_code == 204
 
 
