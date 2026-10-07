@@ -132,8 +132,8 @@
     </div>
   </header>
   <div class="kpi-izgara kpi-3 ihale-kpi">
-    <div class="kpi"><span class="kpi-etiket">Toplam (1 milyon $ üstü işlemler)</span><span class="kpi-deger">{{ ihaleler.toplam }}</span>
-      <span class="kpi-alt">{{ ihaleler.adet }} işlem</span></div>
+    <div class="kpi"><span class="kpi-etiket">En büyük işlemlerin toplamı</span><span class="kpi-deger">{{ ihaleler.toplam }}</span>
+      <span class="kpi-alt">1 milyon $ üstü en büyük {{ ihaleler.adet }} işlem</span></div>
     <div class="kpi"><span class="kpi-etiket">Son 12 ay</span><span class="kpi-deger">{{ ihaleler.son_yil }}</span></div>
     <div class="kpi"><span class="kpi-etiket">En büyük müşteriler</span>
       <span class="kpi-alt ihale-kurumlar">{% for k in ihaleler.kurumlar %}{{ k.ad }} <b>{{ k.toplam }}</b>{% if not loop.last %}<br>{% endif %}{% endfor %}</span></div>
