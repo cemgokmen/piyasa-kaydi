@@ -17,6 +17,41 @@
 bir varlık yöneticisi yapmış olabilir. Komite üyelikleri günceldir: eski bir işlemin yapıldığı gün üye başka bir
 komitede olabilir. Sektörler SEC'in resmi sanayi kodlarından (SIC) belirlenir.</p>
 
+{% if ihale_sonrasi %}
+<section class="bolum" id="ihale-sonrasi">
+  <header class="bolum-ust">
+    <div>
+      <h2>Alımdan sonra gelen devlet sözleşmeleri</h2>
+      <p class="bolum-not">Bir Kongre üyesinin hisseyi aldıktan sonraki {{ ihale_penceresi }} gün içinde şirkete, olağan hızının en az
+        {{ ihale_kat|int }} katı federal sözleşme parası bağlanan durumlar. Olağan hız: şirketin 2024'ten bu yana {{ ihale_penceresi }} günlük ortalaması.
+        Sözleşmeler çoğu zaman aylar önce planlanır; bu liste yalnızca zamanlamaya dikkat çeker.</p>
+    </div>
+  </header>
+  <div class="ihale-kartlari">
+    {% for o in ihale_sonrasi[:12] %}
+    <article class="panel ihale-kart">
+      <p class="ihale-kart-ust">
+        <a class="kisi-ad" href="{{ url_for('site.kisi', slug=o.slug) }}">{{ o.kisi }}</a> {{ parti_rozeti(o.parti) }}
+        <span class="soluk kucuk">{{ o.meclis }}{% if o.bolge %} · {{ o.bolge }}{% endif %}</span>
+        {% if o.komite %}<span class="rozet rozet-cakisma" title="{{ o.komite.komiteler|join(', ') }}">Komite ↔ sektör</span>{% endif %}
+      </p>
+      <p class="ihale-akis">
+        <span><b>{{ o.ilk_alim|uzun_tarih }}</b> tarihinde
+          <a class="ticker" href="{{ url_for('site.hisse', ticker=o.ticker) }}">{{ o.ticker }}</a> {{ o.sirket|sirket_adi }} aldı
+          <span class="soluk">({{ o.alim_tutari }}{% if o.alim_sayisi > 1 %}, {{ o.alim_sayisi }} alım{% endif %})</span></span>
+        <span class="ihale-ok" aria-hidden="true">→</span>
+        <span>Sonraki {{ ihale_penceresi }} günde şirkete <b class="tutar-buy">{{ o.ihale_toplam_kisa }}</b> federal sözleşme
+          <span class="soluk">({{ o.ihale_sayisi }} işlem, olağanın {{ o.kat|round(1)|string|replace('.', ',') }} katı)</span></span>
+      </p>
+      <p class="ihale-en-buyuk kucuk">En büyüğü: {{ o.gun_sonra }} gün sonra, {{ o.en_buyuk.kurum_adi }}, <b>{{ o.en_buyuk.tutar_kisa }}</b>
+        {% if o.en_buyuk.aciklama %}<span class="soluk">— {{ o.en_buyuk.aciklama[:110] }}{% if o.en_buyuk.aciklama|length > 110 %}…{% endif %}</span>{% endif %}
+        <a class="kaynak" href="{{ o.en_buyuk.adres }}" target="_blank" rel="noopener">Kayıt ↗</a></p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 {% if uyeler %}
 <section class="bolum">
   <header class="bolum-ust">

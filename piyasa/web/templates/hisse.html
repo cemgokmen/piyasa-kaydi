@@ -21,6 +21,7 @@
   {% if siyaset_islemleri %}<a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ siyaset.adet }}</span></a>{% endif %}
   {% if yonetici_islemleri %}<a href="#yoneticiler">Yöneticiler <span class="sayac">{{ yonetici.adet }}</span></a>{% endif %}
   {% if fonlar %}<a href="#fonlar">Fonlar <span class="sayac">{{ fon_sayisi }}</span></a>{% endif %}
+  {% if ihaleler %}<a href="#ihaleler">Devlet sözleşmeleri</a>{% endif %}
   <a href="#haberler">Haberler</a>
 </nav>
 
@@ -113,6 +114,41 @@
           <td><a class="kisi-ad" href="{{ url_for('site.fon', slug=f.fon_slug) }}">{{ f.fon_adi }}</a></td>
           <td class="sag sayi">{{ (f.adet or 0)|int|sayi }}</td>
           <td class="sag sayi"><b>{{ f.deger_kisa }}</b></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if ihaleler %}
+<section class="bolum" id="ihaleler">
+  <header class="bolum-ust">
+    <div>
+      <h2>Devlet sözleşmeleri</h2>
+      <p class="bolum-not">ABD federal kurumlarının {{ ihaleler.baslangic[:4] }}'ten bu yana şirkete bağladığı en büyük paralar
+        (yeni sözleşme ya da mevcut sözleşmeye ek). Kaynak: USAspending.gov</p>
+    </div>
+  </header>
+  <div class="kpi-izgara kpi-3 ihale-kpi">
+    <div class="kpi"><span class="kpi-etiket">Toplam (1 milyon $ üstü işlemler)</span><span class="kpi-deger">{{ ihaleler.toplam }}</span>
+      <span class="kpi-alt">{{ ihaleler.adet }} işlem</span></div>
+    <div class="kpi"><span class="kpi-etiket">Son 12 ay</span><span class="kpi-deger">{{ ihaleler.son_yil }}</span></div>
+    <div class="kpi"><span class="kpi-etiket">En büyük müşteriler</span>
+      <span class="kpi-alt ihale-kurumlar">{% for k in ihaleler.kurumlar %}{{ k.ad }} <b>{{ k.toplam }}</b>{% if not loop.last %}<br>{% endif %}{% endfor %}</span></div>
+  </div>
+  <div class="tablo-kap" data-kisalt="6">
+    <table class="tablo tablo-sade ihale-tablosu">
+      <thead><tr><th scope="col">Tarih</th><th scope="col">Kurum</th><th scope="col">Konu</th><th scope="col" class="sag">Tutar</th><th></th></tr></thead>
+      <tbody>
+        {% for i in ihaleler.liste %}
+        <tr>
+          <td data-etiket="Tarih" class="tarih">{{ i.tarih|uzun_tarih }}</td>
+          <td data-etiket="Kurum">{{ i.kurum_adi }}</td>
+          <td data-etiket="Konu" class="kucuk ihale-konu" title="{{ i.aciklama or '' }}">{{ i.aciklama or '—' }}</td>
+          <td data-etiket="Tutar" class="sag sayi"><b>{{ i.tutar_kisa }}</b></td>
+          <td class="sag"><a class="kaynak" href="{{ i.adres }}" target="_blank" rel="noopener">Kayıt ↗</a></td>
         </tr>
         {% endfor %}
       </tbody>

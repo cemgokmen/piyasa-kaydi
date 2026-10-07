@@ -6,7 +6,7 @@ ve şablonu çizer; SQL burada yazılmaz.
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, uyeler
-from piyasa.analiz import cakisma, performans, portfoy, sinyaller
+from piyasa.analiz import cakisma, ihale, performans, portfoy, sinyaller
 from piyasa.analiz import yurutme as yurutme_analizi
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kurallar import PARTILER, parti_bilgisi
@@ -77,7 +77,8 @@ def hisse(ticker):
         abort(404)
     onay = next((h for h in sinyaller.uclu_onay()["liste"] if h["ticker"] == veri["ticker"]), None)
     profil = sirket_profili.kayitli(veri["ticker"])
-    return render_template("hisse.html", aktif=None, onay=onay, profil=profil, **veri)
+    return render_template("hisse.html", aktif=None, onay=onay, profil=profil,
+                           ihaleler=ihale.hisse_ihaleleri(veri["ticker"]), **veri)
 
 
 @site.route("/hisse/<ticker>/hakkinda")

@@ -7,7 +7,7 @@ import re
 
 from flask import Blueprint, abort, render_template, request
 
-from piyasa.analiz import cakisma, ozet, performans, sektor_haritasi, sinyaller
+from piyasa.analiz import cakisma, ihale, ozet, performans, sektor_haritasi, sinyaller
 from piyasa.analiz.getiri import UFUKLAR
 
 analiz = Blueprint("analiz", __name__)
@@ -24,7 +24,9 @@ def performans_sayfasi():
 
 @analiz.route("/siyasetciler/cikar-catismasi")
 def cakisma_sayfasi():
-    return render_template("cakisma.html", aktif="siyasetci", sekme="cakisma", **cakisma.rapor())
+    return render_template("cakisma.html", aktif="siyasetci", sekme="cakisma",
+                           ihale_sonrasi=ihale.islem_sonrasi(), ihale_penceresi=ihale.PENCERE,
+                           ihale_kat=ihale.OLAGANDISI_KAT, **cakisma.rapor())
 
 
 @analiz.route("/sinyaller")

@@ -11,6 +11,9 @@ STOCK_ACT_GUN = 45
 # Kongre bildiriminde alt sınırı bu tutar ve üzerindeki alımlar "yüklü" sayılır
 YUKLU_ALIM_ALT_SINIR = 50_001
 
+# Devlet sözleşmeleri (USAspending.gov) bu tarihten itibaren toplanır
+IHALE_BASLANGIC = "2024-01-01"
+
 # Borsa kodu olmayan ihraççılar Form 4'te bu yer tutucularla gelir
 GECERSIZ_KODLAR = ("NONE", "N/A", "NA", "")
 

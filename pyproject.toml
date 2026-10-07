@@ -15,6 +15,7 @@ dependencies = [
     "xlrd",
     "gunicorn",
     "flask-compress",
+    "selenium",
 ]
 
 [project.optional-dependencies]

@@ -258,6 +258,13 @@ def veritabani_yolu(tmp_path_factory):
             )
     ornek_emtia_verisi(conn)
     ornek_analiz_verisi(conn)
+    # Devlet sözleşmeleri: NVDA'ya Jane'in alımından sonra olağanın çok üstünde sözleşme
+    conn.executemany("INSERT INTO ihale VALUES (?,?,?,?,?,?,?,?,?)", [
+        ("a1|0|x", "NVDA", "NVIDIA CORP", "Department of Defense", "Department of the Army", 500_000_000.0,
+         gun(1), "AI COMPUTE CLUSTER", "https://www.usaspending.gov/award/a1"),
+        ("a2|0|x", "NVDA", "NVIDIA CORP", "Department of Energy", "Department of Energy", 2_000_000.0,
+         "2024-06-01", "GPU SERVERS", "https://www.usaspending.gov/award/a2"),
+    ])
     conn.execute(
         "INSERT INTO sirket_profili (ticker, ozet, ozet_en, sektor, endustri, calisan, merkez, site, guncelleme) "
         "VALUES ('NVDA', 'NVIDIA yapay zeka ve grafik işlemcileri tasarlar.', 'NVIDIA designs GPUs.', 'Teknoloji', "

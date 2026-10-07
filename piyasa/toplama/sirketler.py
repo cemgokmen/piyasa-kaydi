@@ -2,7 +2,7 @@
 İki küçük başvuru tablosunu doldurur:
 
   sirket            hisse kodu → SEC sanayi kodu (SIC) ve sektör
-  uye, komite_uyeligi   Temsilciler Meclisi üyeleri ve komite üyelikleri
+  uye, komite_uyeligi   Kongre üyeleri (Meclis ve Senato) ve komite üyelikleri
                     (congress-legislators açık veri seti)
 
 Çıkar çatışması analizi ikisini birleştirir: bir üye, komitesinin
@@ -84,7 +84,7 @@ def sektorleri_doldur(conn):
 
 
 def komiteleri_doldur(conn):
-    uyeler = [u for u in json_al(UYELER) if u["terms"][-1]["type"] == "rep"]
+    uyeler = [u for u in json_al(UYELER) if u["terms"][-1]["type"] in ("rep", "sen")]
     conn.execute("DELETE FROM uye")
     conn.execute("DELETE FROM komite_uyeligi")
     for u in uyeler:
@@ -94,7 +94,9 @@ def komiteleri_doldur(conn):
         conn.execute(
             "INSERT INTO uye (bioguide, ad, slug, parti, bolge, gorev) VALUES (?, ?, ?, ?, ?, ?)",
             (u["id"]["bioguide"], ad, slugify(ad), (t.get("party") or "")[:1],
-             f"{t['state']}-{int(t.get('district') or 0):02d}", gorevler[0] if gorevler else None),
+             # Senatörün seçim bölgesi yoktur, eyaletin tamamını temsil eder
+             t["state"] if t["type"] == "sen" else f"{t['state']}-{int(t.get('district') or 0):02d}",
+             gorevler[0] if gorevler else None),
         )
 
     sayi = 0

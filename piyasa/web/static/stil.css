@@ -2002,3 +2002,22 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .sektor-hisseler { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; color: var(--yazi-2); font-size: 12px; }
 .sektor-hisseler .ticker { font-size: 12.5px; }
 .sektor-not { margin-top: 14px; }
+
+
+/* ---------------------------------------------------------------------------
+   Devlet sözleşmeleri
+   --------------------------------------------------------------------------- */
+.ihale-kpi { margin-bottom: 14px; }
+.ihale-kurumlar { line-height: 1.7; }
+.ihale-konu { max-width: 460px; color: var(--yazi-2); }
+.ihale-kartlari { display: grid; gap: 12px; }
+.ihale-kart { padding: 14px 18px; }
+.ihale-kart p { margin: 0; }
+.ihale-kart-ust { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px !important; }
+.ihale-akis { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; font-size: 14px; line-height: 1.5; }
+.ihale-ok { color: var(--yazi-3); font-size: 18px; }
+.ihale-en-buyuk { margin-top: 8px !important; padding-top: 8px; border-top: 1px solid var(--cizgi-2); color: var(--yazi-2); }
+@media (max-width: 860px) {
+  .ihale-akis { grid-template-columns: 1fr; gap: 4px; }
+  .ihale-ok { transform: rotate(90deg); justify-self: start; }
+}

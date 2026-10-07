@@ -11,6 +11,8 @@ Kullanım:
 
     python -m piyasa form4                son 90 günün eksik Form 4 günlerini indirir
     python -m piyasa kongre [yıl ...]     Temsilciler Meclisi işlemlerini indirir
+    python -m piyasa senato [yıl ...]     Senato işlemlerini indirir (yıl yoksa son 60 gün)
+    python -m piyasa ihaleler [--hepsi]   şirketlere verilen devlet sözleşmeleri (USAspending.gov)
     python -m piyasa fon                  fonların 13F bildirimlerini indirir
     python -m piyasa emtia                emtia verilerini indirir (CFTC, EIA, FRED)
     python -m piyasa fiyatlar             işlem yapılan hisselerin günlük fiyatlarını indirir
@@ -37,6 +39,8 @@ KOMUTLAR = {
     "form4": "piyasa.toplama.form4_gecmis",
     "form4-bugun": "piyasa.toplama.form4",
     "kongre": "piyasa.toplama.kongre",
+    "senato": "piyasa.toplama.senato",
+    "ihaleler": "piyasa.toplama.ihaleler",
     "fon": "piyasa.toplama.fon13f",
     "emtia": "piyasa.toplama.emtia",
     "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
@@ -58,7 +62,7 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
-GUNCELLEME = ["form4", "kongre", "emtia", "slug", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "analiz"]
+GUNCELLEME = ["form4", "kongre", "senato", "emtia", "slug", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
 
 
 def yerel_ip():

@@ -187,6 +187,28 @@ def init_db():
             guncelleme  TEXT
         )
     """)
+    # --- Devlet sözleşmeleri (USAspending.gov): şirkete yeni para bağlanan işlemler ---
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS ihale (
+            kimlik     TEXT PRIMARY KEY,
+            ticker     TEXT NOT NULL,
+            alici      TEXT,
+            kurum      TEXT,
+            alt_kurum  TEXT,
+            tutar      REAL,
+            tarih      TEXT,
+            aciklama   TEXT,
+            adres      TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS ihale_tarama (
+            ticker      TEXT PRIMARY KEY,
+            arama_adi   TEXT,
+            bulunan     INTEGER,
+            guncelleme  TEXT
+        )
+    """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS uye (
             bioguide  TEXT PRIMARY KEY,
@@ -281,6 +303,7 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_h_ticker ON holdings(ticker)")
     # Fon başına son çeyrek sorgusu (fon listesi, hisse sayfası) bu dizinle hızlanır
     conn.execute("CREATE INDEX IF NOT EXISTS idx_h_fon_donem ON holdings(fon_slug, donem)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ihale_ticker ON ihale(ticker, tarih)")
 
     conn.commit()
     conn.close()

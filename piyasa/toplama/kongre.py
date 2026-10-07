@@ -92,13 +92,18 @@ def bildirim_listesi(yil):
     return liste
 
 
+def json_al_uyeler():
+    """Kongre'nin güncel üyeleri (Meclis ve Senato), congress-legislators veri seti."""
+    return requests.get(UYELER_URL, timeout=60).json()
+
+
 def uye_bilgileri():
     """
     'IL01' -> {'parti': 'D', 'ad': 'Jonathan L. Jackson', 'soyad': 'Jackson'}
     (Temsilciler Meclisi'nin güncel üyeleri)
     """
     try:
-        uyeler = requests.get(UYELER_URL, timeout=60).json()
+        uyeler = json_al_uyeler()
     except Exception as hata:
         print(f"Parti bilgisi alınamadı ({hata}); parti boş kalacak.")
         return {}

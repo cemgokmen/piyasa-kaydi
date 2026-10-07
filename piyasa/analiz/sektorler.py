@@ -34,7 +34,8 @@ def sic_sektoru(sic):
     return "Diğer"
 
 
-# Temsilciler Meclisi komitesi → yasama ve denetim alanına giren sektörler.
+# Kongre komitesi (Temsilciler Meclisi: H..., Senato: S...) → yasama ve
+# denetim alanına giren sektörler.
 # Bütçe, Kurallar, Etik gibi her sektöre dokunan komiteler bilerek dışarıda.
 KOMITE_SEKTORLERI = {
     "HSAS": ["Savunma ve havacılık"],                                   # Silahlı Kuvvetler
@@ -50,6 +51,18 @@ KOMITE_SEKTORLERI = {
     "HSWM": ["Sağlık"],                                                 # Vergi ve Bütçe (sağlık alt komitesi)
     "HSED": ["Eğitim"],                                                 # Eğitim
     "HSZS": ["Teknoloji"],                                              # Çin ile Stratejik Rekabet
+    # Senato
+    "SSAS": ["Savunma ve havacılık"],                                   # Silahlı Kuvvetler
+    "SSAF": ["Tarım ve gıda"],                                          # Tarım, Beslenme ve Ormancılık
+    "SSBK": ["Finans", "Gayrimenkul"],                                  # Bankacılık, Konut ve Kentsel İşler
+    "SSCM": ["Ulaştırma", "Teknoloji", "İletişim ve medya"],            # Ticaret, Bilim ve Ulaştırma
+    "SSEG": ["Enerji", "Madencilik ve malzeme", "Kamu hizmetleri"],     # Enerji ve Doğal Kaynaklar
+    "SSEV": ["İnşaat", "Ulaştırma"],                                    # Çevre ve Bayındırlık
+    "SSFI": ["Sağlık"],                                                 # Maliye (Medicare, ilaç fiyatları)
+    "SSHR": ["Sağlık", "Eğitim"],                                       # Sağlık, Eğitim, Çalışma ve Emeklilik
+    "SSGA": ["Savunma ve havacılık", "Teknoloji"],                      # İç Güvenlik ve Hükümet İşleri
+    "SLIN": ["Savunma ve havacılık", "Teknoloji"],                      # İstihbarat
+    "SSVA": ["Sağlık"],                                                 # Gaziler
 }
 
 KOMITE_ADLARI = {
@@ -75,4 +88,24 @@ KOMITE_ADLARI = {
     "HSRU": "Kurallar Komitesi",
     "HSSM": "Küçük İşletmeler Komitesi",
     "HSSO": "Etik Komitesi",
+    "SSAS": "Senato Silahlı Kuvvetler Komitesi",
+    "SSAF": "Senato Tarım Komitesi",
+    "SSBK": "Senato Bankacılık Komitesi",
+    "SSCM": "Senato Ticaret, Bilim ve Ulaştırma Komitesi",
+    "SSEG": "Senato Enerji ve Doğal Kaynaklar Komitesi",
+    "SSEV": "Senato Çevre ve Bayındırlık Komitesi",
+    "SSFI": "Senato Maliye Komitesi",
+    "SSHR": "Senato Sağlık, Eğitim ve Çalışma Komitesi",
+    "SSGA": "Senato İç Güvenlik Komitesi",
+    "SLIN": "Senato İstihbarat Komitesi",
+    "SSVA": "Senato Gaziler Komitesi",
+    "SSAP": "Senato Ödenekler Komitesi",
+    "SSBU": "Senato Bütçe Komitesi",
+    "SSFR": "Senato Dış İlişkiler Komitesi",
+    "SSJU": "Senato Yargı Komitesi",
+    "SSRA": "Senato Kurallar Komitesi",
+    "SSSB": "Senato Küçük İşletmeler Komitesi",
+    "SLET": "Senato Etik Komitesi",
+    "SLIA": "Senato Kızılderili İşleri Komitesi",
+    "SPAG": "Senato Yaşlanma Komitesi",
 }

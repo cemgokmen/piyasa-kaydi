@@ -241,3 +241,50 @@ def test_elle_yazilmis_tanimlar_ve_endustri_sozlugu():
     assert endustri_adi("Semiconductors") == "Yarı iletkenler (çip)"
     assert endustri_adi(None) is None
     assert all(not re.search("[âîûÂÎÛ]", v) for v in endustriler().values())
+
+
+SENATO_RAPORU = """<table class="table table-striped"><thead><tr class="header"><th>#</th></tr></thead><tbody>
+<tr> <td>1</td> <td> 09/04/2026 </td> <td>Spouse</td> <td> <a href="https://finance.yahoo.com/quote/JPM">JPM</a> </td>
+<td> JP Morgan Chase &amp; Co. Common Stock </td> <td>Stock</td> <td>Sale (Partial)</td> <td>$15,001 - $50,000</td> <td>--</td> </tr>
+<tr> <td>2</td> <td> 09/05/2026 </td> <td>Self</td> <td> -- </td>
+<td> US Treasury Bill </td> <td>Other Securities</td> <td>Purchase</td> <td>$1,001 - $15,000</td> <td>--</td> </tr>
+<tr> <td>3</td> <td> 09/06/2026 </td> <td>Self</td> <td> <a href="#">BRK.B</a> </td>
+<td> Berkshire Hathaway Inc. </td> <td>Stock</td> <td>Purchase</td> <td>Over $50,000,000</td> <td>--</td> </tr>
+<tr> <td>4</td> <td> 09/07/2026 </td> <td>Self</td> <td> <a href="#">AAPL</a> </td>
+<td> Apple Inc. </td> <td>Stock</td> <td>Exchange</td> <td>$1,001 - $15,000</td> <td>--</td> </tr>
+</tbody></table>"""
+
+
+def test_senato_raporu_ayristirma():
+    from piyasa.toplama.senato import kayitlara_cevir, rapor_ayristir, senator_bul
+
+    rapor = {"kimlik": "abc", "adres": "/search/view/ptr/abc/", "ad": "A. Mitchell", "soyad": "McConnell, Jr.",
+             "tarih": "2026-09-21", "tur": "ptr"}
+    senatorler = {"mcconnell": [{"ad": "Mitch McConnell", "ilk": "mitch", "eyalet": "KY", "parti": "R"}],
+                  "smith": [{"ad": "Tina Smith", "ilk": "tina", "eyalet": "MN", "parti": "D"},
+                            {"ad": "Jason Smith", "ilk": "jason", "eyalet": "MO", "parti": "R"}]}
+    senator = senator_bul(rapor, senatorler)
+    assert senator["ad"] == "Mitch McConnell"
+    assert senator_bul({"ad": "Tina", "soyad": "Smith"}, senatorler)["eyalet"] == "MN"
+
+    kayitlar = kayitlara_cevir(rapor, rapor_ayristir(SENATO_RAPORU), senator)
+    # Hazine bonosu (hisse değil) ve değişim (exchange) alınmaz
+    assert [k["ticker"] for k in kayitlar] == ["JPM", "BRK-B"]
+    jpm, brk = kayitlar
+    assert jpm["action"] == "sell" and (jpm["amount_min"], jpm["amount_max"]) == (15001, 50000)
+    assert jpm["transaction_date"] == "2026-09-04" and jpm["disclosed_date"] == "2026-09-21"
+    assert jpm["chamber"] == "Senato" and jpm["party"] == "R" and jpm["state"] == "KY"
+    assert jpm["person_slug"] == "mitch-mcconnell" and jpm["asset_name"] == "JP Morgan Chase & Co. Common Stock"
+    assert "(Spouse)" in jpm["security_name"]
+    assert brk["action"] == "buy" and brk["amount_min"] == 50000000
+    assert brk["source_url"] == "https://efdsearch.senate.gov/search/view/ptr/abc/"
+
+
+def test_ihale_alici_adi_eslesmesi():
+    from piyasa.toplama.ihaleler import ad_uyuyor_mu
+
+    assert ad_uyuyor_mu("PALANTIR USG INC", "Palantir Technologies")
+    assert ad_uyuyor_mu("APPLE INC.", "Apple")
+    assert not ad_uyuyor_mu("APPLE HOSPITALITY REIT", "Apple")
+    assert ad_uyuyor_mu("GENERAL DYNAMICS LAND SYSTEMS INC", "General Dynamics")
+    assert not ad_uyuyor_mu("GENERAL ELECTRIC CO", "General Dynamics")

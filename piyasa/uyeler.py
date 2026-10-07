@@ -27,6 +27,15 @@ GOREVLER = {
     "House Republican Policy Committee Chair": "Cumhuriyetçi politika komitesi başkanı",
     "House Democratic Caucus Chair": "Demokrat grup başkanı",
     "House Democratic Caucus Vice Chair": "Demokrat grup başkan yardımcısı",
+    "Majority Leader": "Senato çoğunluk lideri",
+    "Minority Leader": "Senato azınlık lideri",
+    "Majority Whip": "Senato çoğunluk grup başkanvekili",
+    "Minority Whip": "Senato azınlık grup başkanvekili",
+    "President Pro Tempore": "Senato geçici başkanı",
+    "Senate Majority Leader": "Senato çoğunluk lideri",
+    "Senate Minority Leader": "Senato azınlık lideri",
+    "Senate Majority Whip": "Senato çoğunluk grup başkanvekili",
+    "Senate Minority Whip": "Senato azınlık grup başkanvekili",
 }
 
 # Liderlik görevi olmasa da kamuoyunda işlemleri çok takip edilen üyeler

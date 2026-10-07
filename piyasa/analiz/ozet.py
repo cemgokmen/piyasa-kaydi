@@ -169,7 +169,7 @@ def gunluk_ozet(gun=None):
     duz_metin = "\n".join(
         [f"Piyasa Kaydı · {baslik} özeti", ""]
         + [satir for b, m in bolumler for satir in [b.upper(), *[f"• {x['metin']}" for x in m], ""]]
-        + ["Kaynak: resmi bildirimler (SEC, ABD Temsilciler Meclisi). Yatırım tavsiyesi değildir."]
+        + ["Kaynak: resmi bildirimler (SEC, ABD Kongresi). Yatırım tavsiyesi değildir."]
     )
     return {
         "gun": gun,

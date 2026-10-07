@@ -15,7 +15,7 @@
 {{ siyaset_sekmeleri('genel') }}
 
 <section class="kpi-izgara">
-  {{ kpi('İşlem bildiren üye', (ozet.kisi or 0)|sayi, 'ABD Temsilciler Meclisi', birim='kişi') }}
+  {{ kpi('İşlem bildiren üye', (ozet.kisi or 0)|sayi, 'Meclis ve Senato', birim='kişi') }}
   {{ kpi('Toplam işlem', (ozet.adet or 0)|sayi, (ozet.ilk|uzun_tarih) ~ ' sonrası' if ozet.ilk else '', birim='işlem') }}
   {{ kpi('Alım · tahmini tutar', aralik(ozet.alim_alt, ozet.alim_tutar), (ozet.alim or 0)|sayi ~ ' alım işlemi', 'alim') }}
   {{ kpi('Satım · tahmini tutar', aralik(ozet.satim_alt, ozet.satim_tutar), (ozet.satim or 0)|sayi ~ ' satım işlemi', 'satim') }}
@@ -117,11 +117,11 @@
       </tbody>
     </table>
   </div>
-  <p class="dipnot">Taranmış (elle doldurulmuş) bildirimler okunamadığı için listede yoktur. Senato bildirimleri henüz eklenmedi.</p>
+  <p class="dipnot">Taranmış (elle doldurulmuş) bildirimler okunamadığı için listede yoktur.</p>
   {% else %}
   <div class="bos-durum">
     <p><strong>Henüz siyasetçi kaydı yok.</strong></p>
-    <p><code>python -m piyasa kongre</code> komutuyla Temsilciler Meclisi bildirimleri indirilir.</p>
+    <p><code>python -m piyasa kongre</code> ve <code>python -m piyasa senato</code> komutlarıyla Kongre bildirimleri indirilir.</p>
   </div>
   {% endif %}
 </section>

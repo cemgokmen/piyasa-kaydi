@@ -373,3 +373,17 @@ def test_sektor_haritasi(istemci):
     assert istemci.get("/sektorler?gun=7&grup=xyz").status_code == 200
     yonetici = istemci.get("/sektorler?grup=yonetici&gun=365").get_data(as_text=True)
     assert "ortalamaya göre" in yonetici
+
+
+def test_devlet_sozlesmeleri(istemci):
+    from piyasa.analiz import ihale
+
+    ihale.islem_sonrasi.temizle()
+    html = istemci.get("/hisse/NVDA").get_data(as_text=True)
+    assert "Devlet sözleşmeleri" in html and 'href="#ihaleler"' in html
+    assert "Savunma Bakanlığı · Kara Kuvvetleri" in html and "Ai compute cluster" in html
+    cakisma = istemci.get("/siyasetciler/cikar-catismasi").get_data(as_text=True)
+    assert "Alımdan sonra gelen devlet sözleşmeleri" in cakisma
+    assert "Jane Senator" in cakisma and "500,0 mn $" in cakisma
+    # Sözleşmesi olmayan hissede bölüm görünmez
+    assert 'id="ihaleler"' not in istemci.get("/hisse/ORNK").get_data(as_text=True)

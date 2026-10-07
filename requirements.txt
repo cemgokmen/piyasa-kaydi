@@ -8,3 +8,4 @@ pdfplumber
 xlrd
 gunicorn
 flask-compress
+selenium            # Senato bildirim sitesi yalnızca tarayıcıyla açılıyor (Chrome gerekir)
