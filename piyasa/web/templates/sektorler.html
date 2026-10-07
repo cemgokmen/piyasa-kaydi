@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block baslik %}Sektör haritası: {{ gruplar[grup] }} hangi sektörde alıcı? · Piyasa Kaydı{% endblock %}
+{% block aciklama %}ABD'de siyasetçilerin ve şirket yöneticilerinin hangi sektörlerde net alıcı, hangilerinde net satıcı olduğu.{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('analiz.sinyaller_sayfasi') }}">Sinyaller</a></p>
+    <h1>Sektör haritası</h1>
+    <p class="sayfa-not">{{ gruplar[grup] }} {{ donemler[gun]|lower }} hangi sektörlerde alıcı, hangilerinde satıcı?
+      Yeşil kutular alımın, kırmızılar satımın ağır bastığı sektörleri gösterir; renk koyulaştıkça eğilim güçlenir.</p>
+  </div>
+</header>
+
+<div class="sektor-secim">
+  <div class="segment" role="group" aria-label="Kimin işlemleri">
+    {% for anahtar, ad in gruplar.items() %}
+    <a href="{{ url_for('analiz.sektorler_sayfasi', grup=anahtar, gun=gun) }}"{% if anahtar == grup %} class="secili" aria-current="page"{% endif %}>{{ ad }}</a>
+    {% endfor %}
+  </div>
+  <div class="segment" role="group" aria-label="Dönem">
+    {% for anahtar, ad in donemler.items() %}
+    <a href="{{ url_for('analiz.sektorler_sayfasi', grup=grup, gun=anahtar) }}"{% if anahtar == gun %} class="secili" aria-current="page"{% endif %}>{{ ad }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+{% if harita.sektorler %}
+<p class="sektor-ozet">
+  Toplam <span class="tutar-buy">{{ harita.alim_kisa }} alım</span> ve <span class="tutar-sell">{{ harita.satim_kisa }} satım</span>.
+  {% if harita.en_alici %}En alıcı: <b>{{ harita.en_alici|map(attribute='ad')|join(', ') }}</b>.{% endif %}
+  {% if harita.en_satici %}En satıcı: <b>{{ harita.en_satici|map(attribute='ad')|join(', ') }}</b>.{% endif %}
+</p>
+{% if harita.goreli %}
+<p class="uyari-kutu">Şirket yöneticileri hisse ödüllerini ve opsiyon gelirlerini nakde çevirdikleri için hemen her sektörde
+net satıcıdır (bu dönem bütün sektörlerde satış, alımın {{ ((harita.sektorler|sum(attribute='satim')) / ((harita.sektorler|sum(attribute='alim')) or 1))|round|int }} katı).
+Bu yüzden renkler, sektörün <b>ortalamaya göre</b> ne kadar alıcı ya da satıcı olduğunu gösterir.</p>
+{% endif %}
+
+<div class="sektor-harita">
+  {% for s in harita.sektorler %}
+  {% set guc = (s.renk|abs * 62)|round|int %}
+  <article class="sektor-kutu sektor-{{ s.yon }}" style="--guc: {{ [guc, 8]|max }}%">
+    <header>
+      <h2>{{ s.ad }}</h2>
+      <span class="sektor-yon">{% if s.yon == 'alim' %}Alıcı{% elif s.yon == 'satim' %}Satıcı{% else %}Dengeli{% endif %}</span>
+    </header>
+    <p class="sektor-tutar"><span class="tutar-buy">{{ s.alim_adet }} alım · {{ s.alim_kisa }}</span><br>
+      <span class="tutar-sell">{{ s.satim_adet }} satım · {{ s.satim_kisa }}</span></p>
+    {% if s.one_cikan %}
+    <p class="sektor-hisseler">{{ s.one_cikan_baslik }}:
+      {% for h in s.one_cikan %}<a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>{% endfor %}</p>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+<p class="kucuk soluk sektor-not">Sektörler SEC'in resmi sanayi kodlarından (SIC) belirlenir; sektörü bilinmeyen hisseler dahil değildir.
+  {% if grup == 'siyaset' %}Kongre bildirimleri tutarı aralık olarak verdiği için aralığın ortası alınmıştır.{% endif %}</p>
+{% else %}
+<div class="bos-durum"><p><strong>Bu dönem için veri yok.</strong></p></div>
+{% endif %}
+{% endblock %}

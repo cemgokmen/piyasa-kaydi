@@ -5,9 +5,9 @@ Analiz sayfaları: siyasetçi performansı, çıkar çatışmaları, sinyaller
 
 import re
 
-from flask import Blueprint, abort, render_template
+from flask import Blueprint, abort, render_template, request
 
-from piyasa.analiz import cakisma, ozet, performans, sinyaller
+from piyasa.analiz import cakisma, ozet, performans, sektor_haritasi, sinyaller
 from piyasa.analiz.getiri import UFUKLAR
 
 analiz = Blueprint("analiz", __name__)
@@ -32,6 +32,19 @@ def sinyaller_sayfasi():
     return render_template(
         "sinyaller.html", aktif="sinyal",
         onay=sinyaller.uclu_onay(), basari=sinyaller.basari(), ufuklar=list(UFUKLAR),
+    )
+
+
+@analiz.route("/sektorler")
+def sektorler_sayfasi():
+    gun = request.args.get("gun", 90, type=int)
+    gun = gun if gun in sektor_haritasi.DONEMLER else 90
+    grup = request.args.get("grup", "siyaset")
+    grup = grup if grup in sektor_haritasi.GRUPLAR else "siyaset"
+    return render_template(
+        "sektorler.html", aktif="sinyal", gun=gun, grup=grup,
+        donemler=sektor_haritasi.DONEMLER, gruplar=sektor_haritasi.GRUPLAR,
+        harita=sektor_haritasi.sektor_haritasi(gun, grup),
     )
 
 

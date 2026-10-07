@@ -1565,7 +1565,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
   .ozet-maddeler li { flex-wrap: wrap; }
 }
 
-.one-cikan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 32px; }
+.one-cikan { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 32px; }
 .one-cikan-kart {
   display: flex; flex-direction: column; gap: 6px; padding: 16px 18px;
   background: var(--kart); border: 1px solid var(--cizgi); border-radius: var(--yaricap);
@@ -1981,3 +1981,24 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .konsensus-halka-arz a { color: var(--yazi); }
 .fon-liste-baslik { margin: 8px 0 12px; font-size: 20px; }
 @media (max-width: 860px) { .konsensus-izgara { grid-template-columns: 1fr; } }
+
+
+/* ---------------------------------------------------------------------------
+   Sektör haritası
+   --------------------------------------------------------------------------- */
+.sektor-secim { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.sektor-ozet { margin: 0 0 14px; color: var(--yazi-2); font-size: 14px; }
+.sektor-harita { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.sektor-kutu { padding: 14px 16px; border: 1px solid var(--cizgi); border-radius: var(--yaricap); background: var(--kart); }
+.sektor-alim { background: color-mix(in srgb, var(--alim-cubuk) var(--guc), var(--kart));
+  border-color: color-mix(in srgb, var(--alim-cubuk) calc(var(--guc) + 10%), var(--cizgi)); }
+.sektor-satim { background: color-mix(in srgb, var(--satim-cubuk) var(--guc), var(--kart));
+  border-color: color-mix(in srgb, var(--satim-cubuk) calc(var(--guc) + 10%), var(--cizgi)); }
+.sektor-kutu header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sektor-kutu h2 { margin: 0; font-size: 15px; }
+.sektor-yon { flex: none; font-size: 12px; font-weight: 600; color: var(--yazi-2); white-space: nowrap; }
+.sektor-tutar { margin: 8px 0 6px; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; }
+.sektor-kutu .tutar-buy, .sektor-kutu .tutar-sell { color: var(--yazi); }
+.sektor-hisseler { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; color: var(--yazi-2); font-size: 12px; }
+.sektor-hisseler .ticker { font-size: 12.5px; }
+.sektor-not { margin-top: 14px; }

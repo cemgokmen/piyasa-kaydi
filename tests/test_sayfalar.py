@@ -30,6 +30,8 @@ SAYFALAR = [
     "/emtia/bakir",
     "/siyasetciler/performans",
     "/siyasetciler/cikar-catismasi",
+    "/sektorler",
+    "/sektorler?grup=yonetici&gun=365",
     "/sinyaller",
     "/gunluk-ozet",
     "/yurutme/donald-j-trump",
@@ -361,3 +363,13 @@ def test_fon_konsensusu(istemci):
     assert set(k) >= {"en_cok_alinan", "en_cok_satilan", "yeni_girilen", "yeni_listelenen", "fon_sayisi"}
     html = istemci.get("/fonlar").get_data(as_text=True)
     assert "Takip edilen kurumlar" in html
+
+
+def test_sektor_haritasi(istemci):
+    html = istemci.get("/sektorler?gun=365").get_data(as_text=True)
+    assert "Sektör haritası" in html and "Teknoloji" in html
+    assert "sektor-kutu" in html and 'href="/hisse/NVDA"' in html
+    # Geçersiz parametreler varsayılana döner
+    assert istemci.get("/sektorler?gun=7&grup=xyz").status_code == 200
+    yonetici = istemci.get("/sektorler?grup=yonetici&gun=365").get_data(as_text=True)
+    assert "ortalamaya göre" in yonetici
