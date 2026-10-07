@@ -25,7 +25,7 @@
       <span class="ticker">{{ h.ticker }}</span>
       <span class="partiler">{% for p in h.partiler %}{{ parti_rozeti(p) }}{% endfor %}</span>
     </span>
-    <span class="hisse-kart-ad">{{ h.sirket or '' }}</span>
+    <span class="hisse-kart-ad">{{ (h.sirket or '')|sirket_adi }}</span>
     <span class="hisse-kart-tutar">{{ h.tutar }}</span>
     <span class="hisse-kart-alt">
       {{ h.kisi }} üye · {{ h.adet }} alım{% if h.yuklu %} · <b>{{ h.yuklu }} yüklü</b>{% endif %}
@@ -63,7 +63,7 @@
         {% if hisse %}
         <td data-etiket="Hisse" class="hucre-hisse h-hisse">
           <a class="ticker" href="{{ url_for('site.hisse', ticker=k.ticker) }}">{{ k.ticker }}</a>
-          <span class="alt-satir kirp" title="{{ k.asset_name }}">{{ k.asset_name or '' }}</span>
+          <span class="alt-satir kirp" title="{{ k.asset_name }}">{{ (k.asset_name or '')|sirket_adi }}</span>
         </td>
         {% endif %}
         {% if kisi %}

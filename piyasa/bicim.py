@@ -130,7 +130,7 @@ def donem_metni(donem):
 
 _HISSE_TURU = re.compile(
     r"\s*[-–,]?\s*\b(common stock|ordinary shares?|class [a-c]( common stock)?|"
-    r"american depositary shares?|ads|sponsored adr|shares?|common)\b.*$",
+    r"american depositary shares?|ads|sponsored adr|adr|shares?|common)\b.*$",
     re.IGNORECASE,
 )
 _SIRKET_EKI = re.compile(
@@ -180,11 +180,18 @@ KISA_KELIMELER = {"SUN", "NEW", "ONE", "AIR", "BIG", "RED", "SEA", "OIL", "GAS",
                   "SKY", "LIFE", "BAY", "OAK", "ICE", "ARC", "AND", "OF", "THE", "FOR"}
 
 
+# Markası büyük harfle yazılan şirketler (SEC adı düzeltilirken korunur)
+BUYUK_HARFLI_MARKALAR = {"NVIDIA", "AECOM", "CACI", "ASML", "SAP", "USAA", "NXP", "ADT", "AGCO", "ANSYS", "EPAM",
+                         "HEICO", "HNI", "IDEXX", "KLA", "MSCI", "NETGEAR", "PACCAR", "RTX", "SLM", "TEGNA", "TTM"}
+
+
 def sirket_gorunen_ad(ad):
     """SEC'in büyük harfli adını okunur yapar: 'LOCKHEED MARTIN CORP' -> 'Lockheed Martin'.
     Kısaltmalar (3 harf ve altı, ör. 'IBM', 'AT&T') büyük kalır."""
     kisa = sirket_kisa_ad(ad or "")
-    if not kisa.isupper() or len(kisa) <= 4:
+    # Yalnızca adın tamamı büyük harfle yazılmışsa (SEC biçimi) düzeltilir;
+    # 'NVIDIA Corporation' gibi markanın kendi yazımı korunur
+    if not (ad or "").isupper() or len(kisa) <= 4:
         return kisa
     kelimeler = [AD_KISALTMALARI.get(k.strip(".,"), k) for k in kisa.split()]
     def duzelt(k):
@@ -192,6 +199,8 @@ def sirket_gorunen_ad(ad):
             return k
         if k in ("AND", "OF", "FOR", "THE"):
             return k.lower()
+        if k in BUYUK_HARFLI_MARKALAR:
+            return k
         return k.capitalize() if len(k) > 3 or k in KISA_KELIMELER else k
     return " ".join(duzelt(k) for k in kelimeler)
 
@@ -209,3 +218,57 @@ def ne_zaman(an, simdi=None):
     if gun < 7:
         return f"{gun} gün önce"
     return kisa_tarih(an.date().isoformat())
+
+
+# ---------------------------------------------------------------------------
+# YÖNETİCİ UNVANLARI (Form 4)
+# ---------------------------------------------------------------------------
+
+UNVANLAR = {
+    "ceo": "CEO", "chief executive officer": "CEO",
+    "cfo": "Finans direktörü (CFO)", "chief financial officer": "Finans direktörü (CFO)",
+    "coo": "Operasyon direktörü (COO)", "chief operating officer": "Operasyon direktörü (COO)",
+    "co-chief operating officer": "Eş operasyon direktörü",
+    "cto": "Teknoloji direktörü (CTO)", "chief technology officer": "Teknoloji direktörü (CTO)",
+    "clo": "Hukuk direktörü", "chief legal officer": "Hukuk direktörü", "general counsel": "Hukuk müşaviri",
+    "chief accounting officer": "Muhasebe direktörü", "cao": "Muhasebe direktörü",
+    "chief medical officer": "Tıp direktörü", "chief strategy officer": "Strateji direktörü",
+    "chief commercial officer": "Ticari direktör", "chief revenue officer": "Gelir direktörü",
+    "chief development officer": "Geliştirme direktörü", "chief business officer": "İş geliştirme direktörü",
+    "chief scientific officer": "Bilim direktörü", "chief marketing officer": "Pazarlama direktörü",
+    "chief people officer": "İnsan kaynakları direktörü", "chief human resources officer": "İnsan kaynakları direktörü",
+    "chief information officer": "Bilgi işlem direktörü", "chief product officer": "Ürün direktörü",
+    "chief investment officer": "Yatırım direktörü", "chief risk officer": "Risk direktörü",
+    "chief credit officer": "Kredi direktörü", "chief administrative officer": "İdari işler direktörü",
+    "chairman": "Yönetim kurulu başkanı", "chairperson": "Yönetim kurulu başkanı", "chair": "Yönetim kurulu başkanı",
+    "board chair": "Yönetim kurulu başkanı", "chairman of the board": "Yönetim kurulu başkanı",
+    "co-chair": "Yönetim kurulu eş başkanı", "board co-chair": "Yönetim kurulu eş başkanı",
+    "executive chairman": "İcracı yönetim kurulu başkanı", "exec. chairman": "İcracı yönetim kurulu başkanı",
+    "vice chairman": "Yönetim kurulu başkan yardımcısı", "lead independent director": "Bağımsız baş üye",
+    "president": "Başkan", "pres.": "Başkan", "pres": "Başkan",
+    "evp": "Kıdemli başkan yardımcısı", "executive vice president": "Kıdemli başkan yardımcısı",
+    "svp": "Kıdemli başkan yardımcısı", "senior vice president": "Kıdemli başkan yardımcısı",
+    "vp": "Başkan yardımcısı", "vice president": "Başkan yardımcısı",
+    "secretary": "Sekreter", "corporate secretary": "Şirket sekreteri", "treasurer": "Hazine sorumlusu",
+    "director": "Yönetim kurulu üyesi", "see remarks": "Yönetici", "other": "Yönetici",
+    "chief exec. officer": "CEO", "chief executive": "CEO", "founder": "Kurucu", "co-founder": "Kurucu ortak",
+}
+
+
+def unvan(metin):
+    """'PRESIDENT AND CEO' -> 'Başkan, CEO'; 'Chairperson & CEO' -> 'Yönetim kurulu başkanı, CEO'.
+    Bilinmeyen parça olduğu gibi kalır."""
+    if not metin:
+        return metin
+    parcalar = [p.strip(" .") for p in re.split(r"\s*(?:&|\band\b|,|/|;)\s*", metin, flags=re.IGNORECASE)]
+    sonuc = []
+    for p in parcalar:
+        if not p:
+            continue
+        karsilik = UNVANLAR.get(p.lower()) or UNVANLAR.get(p.lower() + ".")
+        if not karsilik and p.isupper() and len(p) > 4:
+            karsilik = p.capitalize()
+        karsilik = karsilik or p
+        if karsilik not in sonuc:
+            sonuc.append(karsilik)
+    return ", ".join(sonuc)

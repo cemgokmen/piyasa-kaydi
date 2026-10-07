@@ -69,7 +69,7 @@
         {% for p in portfoy.pozisyonlar %}
         <tr class="tiklanir" data-href="{{ url_for('site.hisse', ticker=p.ticker) }}">
           <td data-etiket="Hisse" data-deger="{{ p.ticker }}"><a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
-            <span class="alt-satir kirp">{{ p.sirket }}</span></td>
+            <span class="alt-satir kirp">{{ (p.sirket or '')|sirket_adi }}</span></td>
           <td data-etiket="Alım" class="sag sayi" data-deger="{{ p.alim }}">{{ p.alim }}</td>
           <td data-etiket="Son alım" class="tarih" data-deger="{{ p.son }}">{{ p.son|uzun_tarih }}</td>
           <td data-etiket="Bildirilen tutar" class="sag sayi" data-deger="{{ p.ust }}">{{ aralik(p.alt, p.ust) }}</td>

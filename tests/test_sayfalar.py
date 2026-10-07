@@ -251,9 +251,9 @@ def test_serit_api(istemci):
 def test_baskan_portfoyu(istemci):
     html = istemci.get("/yurutme/donald-j-trump").get_data(as_text=True)
     assert "Hisse ve fon portföyü" in html and 'class="pasta"' in html
-    assert "NVIDIA CORP" in html and "/hisse/NVDA" in html
+    assert "NVIDIA" in html and "NVIDIA CORP" not in html and "/hisse/NVDA" in html
     assert "Elenen kalem" in html
-    assert "En çok alınanlar" in html and "Apple Inc." in html
+    assert "En çok alınanlar" in html and "Apple" in html and "Apple Inc." not in html
     hisse = istemci.get("/hisse/NVDA").get_data(as_text=True)
     assert "portföyünde bildirdi" in hisse
 

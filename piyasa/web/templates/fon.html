@@ -9,7 +9,7 @@
     <li>
       {% if p.ticker %}<a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
       {% else %}<span class="ticker soluk">—</span>{% endif %}
-      <span class="akis-orta soluk kirp" title="{{ p.sirket_adi }}">{{ p.sirket_adi }}</span>
+      <span class="akis-orta soluk kirp" title="{{ p.sirket_adi }}">{{ p.sirket_adi|sirket_adi }}</span>
       <span class="sayi">
         {% if tur == 'artis' and p.yuzde %}<span class="tutar-buy">+%{{ p.yuzde }}</span> · {% endif %}
         {% if tur == 'azalis' and p.yuzde %}<span class="tutar-sell">%{{ p.yuzde }}</span> · {% endif %}
@@ -65,7 +65,7 @@
       <tr>
         <td class="soluk sayi">{{ loop.index }}</td>
         <td data-etiket="Hisse">{% if p.ticker %}<a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>{% else %}<span class="soluk">—</span>{% endif %}</td>
-        <td data-etiket="Şirket" class="kirp-hucre">{{ p.sirket_adi }}</td>
+        <td data-etiket="Şirket" class="kirp-hucre">{{ p.sirket_adi|sirket_adi }}</td>
         <td data-etiket="Adet" class="sag sayi">{{ (p.adet or 0)|int|sayi }}</td>
         <td data-etiket="Değer" class="sag sayi"><b>{{ p.deger_kisa }}</b></td>
         <td data-etiket="Pay" class="sag sayi">%{{ p.pay|ondalik(2) }}</td>

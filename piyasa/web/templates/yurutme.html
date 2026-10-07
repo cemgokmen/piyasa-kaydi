@@ -51,7 +51,7 @@
         {% for p in portfoy.pozisyonlar[:60] %}
         <tr>
           <td data-etiket="Hisse / fon" data-deger="{{ p.ticker }}"><a class="ticker" href="{{ url_for('site.hisse', ticker=p.ticker) }}">{{ p.ticker }}</a>
-            <span class="alt-satir kirp">{{ p.ad }}</span></td>
+            <span class="alt-satir kirp">{{ (p.ad or '')|sirket_adi }}</span></td>
           <td data-etiket="Bildirilen değer" class="sag sayi" data-deger="{{ p.deger }}">{{ aralik(p.alt, p.ust) }}</td>
           <td data-etiket="Pay" class="sag sayi" data-deger="{{ p.pay }}">%{{ (p.pay * 100)|ondalik }}</td>
           <td data-etiket="Hesap" class="sag sayi" data-deger="{{ p.hesap }}">{{ p.hesap }}</td>
@@ -89,7 +89,7 @@
       <ul class="akis akis-sik">
         {% for h in liste %}
         <li><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
-          <span class="akis-orta soluk kucuk kirp">{{ h.ad }}</span>
+          <span class="akis-orta soluk kucuk kirp">{{ (h.ad or '')|sirket_adi }}</span>
           <span class="sayi {{ sinif }}">{{ aralik(h.alt, h.ust) }}</span>
           <span class="soluk kucuk">{{ h.adet }}×</span></li>
         {% else %}<li class="bos">Yok.</li>{% endfor %}
@@ -103,7 +103,7 @@
       <tbody>
         {% for i in islemler.son %}
         <tr>
-          <td data-etiket="Hisse / fon"><a class="ticker" href="{{ url_for('site.hisse', ticker=i.ticker) }}">{{ i.ticker }}</a> <span class="alt-satir kirp">{{ i.ad }}</span></td>
+          <td data-etiket="Hisse / fon"><a class="ticker" href="{{ url_for('site.hisse', ticker=i.ticker) }}">{{ i.ticker }}</a> <span class="alt-satir kirp">{{ (i.ad or '')|sirket_adi }}</span></td>
           <td data-etiket="İşlem"><span class="rozet rozet-{{ i.islem }}">{{ 'Alım' if i.islem == 'buy' else 'Satım' }}</span></td>
           <td data-etiket="Tarih" class="tarih">{{ i.tarih|uzun_tarih }}</td>
           <td data-etiket="Tutar" class="sag sayi tutar-{{ i.islem }}">{{ aralik(i.alt, i.ust) }}</td>

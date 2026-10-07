@@ -97,7 +97,7 @@
         {% for h in yonetici_toplu %}
         <tr class="tiklanir" data-href="{{ url_for('site.hisse', ticker=h.ticker) }}">
           <td><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
-              <span class="alt-satir kirp">{{ h.sirket or '' }}</span></td>
+              <span class="alt-satir kirp">{{ (h.sirket or '')|sirket_adi }}</span></td>
           <td class="sag"><b>{{ h.kisi }}</b> <span class="soluk">kişi</span></td>
           <td class="sag sayi tutar-buy">{{ h.tutar }}</td>
         </tr>

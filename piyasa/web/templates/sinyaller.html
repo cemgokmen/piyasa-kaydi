@@ -39,7 +39,7 @@
         {% for h in liste %}
         <tr class="tiklanir" data-href="{{ url_for('site.hisse', ticker=h.ticker) }}">
           <td data-etiket="Hisse"><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
-            <span class="alt-satir kirp">{{ h.sirket }}</span></td>
+            <span class="alt-satir kirp">{{ (h.sirket or '')|sirket_adi }}</span></td>
           <td data-etiket="Yöneticiler">{% if h.yonetici %}<span class="onay onay-var">✓</span> {{ h.yonetici.kisi }} kişi aldı
             <span class="alt-satir">{{ h.yonetici.tutar }} · son {{ h.yonetici.son|kisa_tarih }}</span>{% else %}<span class="onay onay-yok">—</span>{% endif %}</td>
           <td data-etiket="Siyasetçiler">{% if h.siyaset %}<span class="onay onay-var">✓</span> {{ h.siyaset.kisi }} üye aldı

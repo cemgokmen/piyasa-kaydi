@@ -7,7 +7,7 @@ from datetime import date
 
 import numpy as np
 
-from piyasa.bicim import kisa_aralik, tam_tutar, tarih_temizle
+from piyasa.bicim import kisa_aralik, tam_tutar, tarih_temizle, unvan
 from piyasa.kurallar import FORM4_IS_GUNU, STOCK_ACT_GUN, YUKLU_ALIM_ALT_SINIR, parti_bilgisi
 from piyasa.slug import slugify
 
@@ -16,7 +16,7 @@ def rol_metni(kayit):
     if kayit.get("chamber"):
         parcalar = [kayit["chamber"], kayit.get("state")]
         return " · ".join(p for p in parcalar if p)
-    return kayit.get("job_title") or "Bildirim yükümlüsü"
+    return unvan(kayit.get("job_title")) or "Bildirim yükümlüsü"
 
 
 def gec_mi(kayit):
