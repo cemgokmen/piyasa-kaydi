@@ -123,8 +123,9 @@ def _siyasetciler(conn, gun):
 def _emtialar():
     maddeler = []
     parcalar = []
+    bilgiler = fiyat.toplu_fiyat_bilgisi([e["yahoo"] for e in EMTIALAR])
     for e in EMTIALAR:
-        bilgi = fiyat.fiyat_bilgisi(e["yahoo"], ham=True)
+        bilgi = bilgiler.get(e["yahoo"])
         if not bilgi:
             continue
         g1 = next((d["oran"] for d in bilgi["degisimler"] if d["anahtar"] == "1g"), None)

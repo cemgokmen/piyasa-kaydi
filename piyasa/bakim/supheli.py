@@ -4,6 +4,10 @@ Anormal fiyatlı kayıtları bulup işaretler.
 Mantık: aynı hissedeki işlemlerin fiyatları birbirine yakın olmalı.
 Ortancadan 10 kat sapan bir fiyat, bildirimdeki yazım hatasına işaret eder.
 
+Tarih hataları da işaretlenir: bildirim tarihinden sonraki ya da bildirimden
+TARIH_SINIRI_GUN günden daha önceki işlem tarihi, formdaki yazım hatasıdır
+(ör. 2026 yerine 2016, ya da gelecekteki bir tarih).
+
 Bir kez veya veri her güncellendiğinde çalıştırılır.
 """
 
@@ -25,6 +29,9 @@ def fiyat_imkansiz_mi(ticker, fiyat):
     return bool(fiyat) and fiyat > MUTLAK_FIYAT_TAVANI and ticker not in TAVAN_ISTISNALARI
 
 
+# Bildirimden bu kadar gün önceki işlem tarihi yazım hatası sayılır
+TARIH_SINIRI_GUN = 5 * 365
+
 # Bir hisse için en az kaç kayıt olsun ki ortanca anlamlı olsun
 ASGARI_KAYIT = 3
 
@@ -34,6 +41,14 @@ def main():
 
     # Önce hepsini temiz kabul et
     conn.execute("UPDATE transactions SET suspect = 0")
+
+    tarih_hatasi = conn.execute(
+        """UPDATE transactions SET suspect = 1
+           WHERE transaction_date > disclosed_date
+              OR julianday(disclosed_date) - julianday(transaction_date) > ?""",
+        (TARIH_SINIRI_GUN,),
+    ).rowcount
+    print(f"Tarihi hatalı (bildirimden sonra ya da yıllar önce) kayıt: {tarih_hatasi}")
 
     tickerlar = [
         r["ticker"] for r in conn.execute(

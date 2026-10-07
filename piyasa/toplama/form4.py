@@ -11,6 +11,7 @@ import requests
 
 from piyasa.ayarlar import USER_AGENT
 from piyasa.bakim.supheli import fiyat_imkansiz_mi
+from piyasa.kurallar import kod_duzelt
 from piyasa.slug import slugify
 from piyasa.veritabani import get_connection, init_db
 
@@ -267,6 +268,8 @@ COLUMNS = [
 
 
 def kaydet(conn, kayit):
+    """Bütün toplayıcıların (Form 4, Meclis, Senato) ortak kayıt noktası."""
+    kayit = {**kayit, "ticker": kod_duzelt(kayit.get("ticker"))}
     if not kayit.get("person_slug"):
         kayit = {**kayit, "person_slug": slugify(kayit.get("person"))}
     # Hiçbir hissenin ulaşamayacağı fiyatlar yazım hatasıdır; şüpheli kontrolü

@@ -9,6 +9,7 @@ Hisse ve emtia fiyatları, dönemsel değişimler ve hacim (Yahoo Finance, yfina
 """
 
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import yfinance as yf
@@ -155,6 +156,15 @@ def fiyat_bilgisi(ticker, ham=False):
     """
     kod = ticker if ham else yahoo_kodu(ticker)
     return _bilgi(kod) if kod else None
+
+
+def toplu_fiyat_bilgisi(kodlar, ham=True):
+    """Birden çok kodun fiyat bilgisini paralel alır: {kod: bilgi ya da None}."""
+    kodlar = list(dict.fromkeys(kodlar))
+    if not kodlar:
+        return {}
+    with ThreadPoolExecutor(max_workers=min(8, len(kodlar))) as havuz:
+        return dict(zip(kodlar, havuz.map(lambda k: fiyat_bilgisi(k, ham=ham), kodlar), strict=True))
 
 
 def _oran(fiyat, onceki):

@@ -15,7 +15,19 @@ YUKLU_ALIM_ALT_SINIR = 50_001
 IHALE_BASLANGIC = "2024-01-01"
 
 # Borsa kodu olmayan ihraççılar Form 4'te bu yer tutucularla gelir
-GECERSIZ_KODLAR = ("NONE", "N/A", "NA", "")
+GECERSIZ_KODLAR = ("NONE", "N/A", "NA", "", "[NONE]")
+
+
+def kod_duzelt(kod):
+    """
+    Bildirimlerdeki borsa kodunu tek biçime getirir:
+    'vicr' -> 'VICR', 'LEN, LEN.B' -> 'LEN', 'CRDA CRDB' -> 'CRDA', 'ASX:LNW' -> 'LNW'.
+    """
+    kod = (kod or "").strip().upper()
+    if ":" in kod:                       # borsa öneki
+        kod = kod.split(":")[-1]
+    parca = [p for p in kod.replace(",", " ").replace(";", " ").split() if p]
+    return parca[0] if parca else kod
 
 PARTILER = {
     "D": ("Demokrat", "dem"),

@@ -288,3 +288,37 @@ def test_ihale_alici_adi_eslesmesi():
     assert not ad_uyuyor_mu("APPLE HOSPITALITY REIT", "Apple")
     assert ad_uyuyor_mu("GENERAL DYNAMICS LAND SYSTEMS INC", "General Dynamics")
     assert not ad_uyuyor_mu("GENERAL ELECTRIC CO", "General Dynamics")
+
+
+def test_kod_duzelt():
+    from piyasa.kurallar import kod_duzelt
+
+    assert kod_duzelt("vicr") == "VICR"
+    assert kod_duzelt("LEN, LEN.B") == "LEN"
+    assert kod_duzelt("CRDA CRDB") == "CRDA"
+    assert kod_duzelt("ASX:LNW") == "LNW"
+    assert kod_duzelt(" brk-b ") == "BRK-B"
+    assert kod_duzelt(None) == ""
+
+
+def test_rapor_kopyalari_silinir_ayni_rapordakiler_kalir(tmp_path, monkeypatch):
+    import sqlite3
+
+    from piyasa.bakim import veri_duzelt
+
+    conn = sqlite3.connect(tmp_path / "t.db")
+    conn.row_factory = sqlite3.Row
+    conn.execute("""CREATE TABLE transactions (id INTEGER PRIMARY KEY, source TEXT, person_slug TEXT, ticker TEXT,
+                    transaction_date TEXT, disclosed_date TEXT, action TEXT, amount_min INT, amount_max INT,
+                    source_url TEXT)""")
+    satirlar = [
+        ("senate_ptr", "a", "ADBE", "2025-09-04", "2025-10-10", "buy", 1001, 15000, "rapor1"),
+        ("senate_ptr", "a", "ADBE", "2025-09-04", "2026-05-11", "buy", 1001, 15000, "rapor2"),   # düzeltme kopyası
+        ("house_ptr", "b", "AAPL", "2026-01-16", "2026-02-02", "sell", 1001, 15000, "r3"),
+        ("house_ptr", "b", "AAPL", "2026-01-16", "2026-02-02", "sell", 1001, 15000, "r3"),        # aynı rapor: kalır
+    ]
+    conn.executemany("INSERT INTO transactions (source, person_slug, ticker, transaction_date, disclosed_date, "
+                     "action, amount_min, amount_max, source_url) VALUES (?,?,?,?,?,?,?,?,?)", satirlar)
+    veri_duzelt.tekrarlari_sil(conn)
+    kalan = [tuple(s) for s in conn.execute("SELECT source_url, disclosed_date FROM transactions ORDER BY id")]
+    assert kalan == [("rapor1", "2025-10-10"), ("r3", "2026-02-02"), ("r3", "2026-02-02")]

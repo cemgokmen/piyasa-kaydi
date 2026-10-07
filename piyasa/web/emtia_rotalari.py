@@ -2,7 +2,6 @@
 Emtia sayfaları: genel bakış (/emtialar) ve her emtianın sayfası (/emtia/<slug>).
 """
 
-from concurrent.futures import ThreadPoolExecutor
 
 from flask import Blueprint, abort, jsonify, render_template
 
@@ -14,9 +13,8 @@ emtia = Blueprint("emtia", __name__)
 
 
 def _fiyatlar(kodlar):
-    """Birden çok Yahoo kodunun fiyat bilgisini paralel alır (önbellekten ya da Yahoo'dan)."""
-    with ThreadPoolExecutor(max_workers=len(kodlar)) as havuz:
-        return dict(zip(kodlar, havuz.map(lambda k: fiyat.fiyat_bilgisi(k, ham=True), kodlar), strict=True))
+    """Birden çok Yahoo kodunun fiyat bilgisi (paralel; önbellekten ya da Yahoo'dan)."""
+    return fiyat.toplu_fiyat_bilgisi(kodlar)
 
 
 def _degisim(bilgi, anahtar):
