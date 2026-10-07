@@ -31,7 +31,6 @@
     <li>Elle doldurulup taranarak gönderilen bildirimler okunamadığı için listede yer almaz.</li>
     <li>Parti bilgisi açık <a href="https://github.com/unitedstates/congress-legislators" target="_blank" rel="noopener">congress-legislators</a>
     veri setinden eşleştirilir.</li>
-    <li>Senato bildirimleri henüz eklenmedi.</li>
   </ul>
 
   <h2>Fonlar — 13F</h2>
@@ -68,13 +67,24 @@
     fonların artırması aynı hissede buluşuyorsa.</li>
     <li><strong>Sinyal başarısı:</strong> Ortalama fark, endeksi yenme oranı, %95 güven aralığı (bootstrap) ve t testi.
     Çok sayıda test aynı anda yapıldığından sonuçlar Holm yöntemiyle düzeltilir.</li>
-    <li><strong>Günlük özet:</strong> O gün açıklanan bildirimlerden kural tabanlı olarak üretilir; her cümle doğrudan kayıtlara dayanır.</li>
+    <li><strong>Günlük özet:</strong> O gün açıklanan bildirimlerden kural tabanlı olarak, haber diliyle üretilir; her cümle doğrudan kayıtlara dayanır.</li>
   </ul>
 
   <h2>Hisse fiyatları</h2>
-  <p>Hisse sayfalarındaki son kapanış fiyatı, 1 gün – 10 yıl arası değişimler ve fiyat grafiği
-  Yahoo Finance'ten alınır. Fiyatlar temettü ve hisse bölünmelerine göre düzeltilmiş günlük
-  kapanışlardır; gün içi anlık fiyat değildir ve 15 dakikada bir yenilenir.</p>
+  <p>Hisse sayfalarındaki anlık fiyat, 1 gün – 10 yıl arası değişimler, fiyat grafiği, şirket rakamları ve
+  analist hedef fiyatları Yahoo Finance'ten alınır. Anlık fiyat dakikada bir yenilenir ve borsaya göre
+  birkaç dakika gecikmeli olabilir; ABD borsası kapalıyken seans öncesi ve sonrası fiyat gösterilir.
+  Grafik ve değişimler, temettü ve hisse bölünmelerine göre düzeltilmiş günlük kapanışlardır.</p>
+
+  <h2>Piyasa beklentileri</h2>
+  <ul>
+    <li><strong>Analist hedefi:</strong> hisseyi takip eden analistlerin 12 aylık hedef fiyatlarının ortalaması.
+    Analistler sık yanılır; bu bir kesinlik değil, görüş ortalamasıdır.</li>
+    <li><strong>Emtia beklentisi:</strong> yaklaşık bir yıl sonrası teslim edilecek vadeli sözleşmenin bugünkü fiyatı.
+    Tahmin değil, bugün yapılan anlaşmanın fiyatıdır; faiz ve depolama maliyetini de içerir.</li>
+    <li><strong>Faiz beklentisi:</strong> Fed faiz vadeli sözleşmelerinden (100 − fiyat) çıkan, ilerideki aylar için
+    piyasanın fiyatladığı ortalama faiz.</li>
+  </ul>
 
   <h2>“Yüklü” alım</h2>
   <p>Kongre bildirimlerinde tutar aralık olarak yazılır. Aralığın alt sınırı 50.000 doları aşan
