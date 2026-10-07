@@ -240,7 +240,8 @@ def kripto_kayitlari(rapor, satirlar, senator):
             "state": senator and senator["eyalet"],
             "party": senator and senator["parti"],
             "coin": coin,
-            "varlik": s["varlik"],
+            # 'Bitcoin   Exchange/Platform: eToro' gibi çok satırlı hücreler tek satıra
+            "varlik": " ".join(s["varlik"].split()),
             "ticker": None if kripto_mu else kod,
             "action": islem,
             "amount_min": alt,
