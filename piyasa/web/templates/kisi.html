@@ -49,7 +49,7 @@
     {{ kpi('Tahmini maliyet', portfoy.maliyet|tutar, 'aralık ortaları toplamı') }}
     {{ kpi('Tahmini güncel değer', portfoy.deger|tutar, 'bugünkü fiyatlarla',
            'alim' if portfoy.getiri and portfoy.getiri > 0 else 'satim' if portfoy.getiri else '') }}
-    {{ kpi('Alımdan bu yana', portfoy.getiri|yuzde if portfoy.getiri is not none else '—', 'tahmini getiri') }}
+    {{ kpi('Alımdan bu yana', portfoy.getiri|yuzde if portfoy.getiri is not none else '—', 'tahmini getiri' ~ (' · ' ~ portfoy.fiyatsiz ~ ' hissenin fiyatı yok' if portfoy.fiyatsiz else '')) }}
   </div>
   {% if portfoy_dilimleri %}{{ pasta_grafigi(portfoy_dilimleri, 'Tahmini portföy dağılımı') }}{% endif %}
   <div class="tablo-kap">

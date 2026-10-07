@@ -28,25 +28,39 @@
 {% if harita.sektorler %}
 <p class="sektor-ozet">
   Toplam <span class="tutar-buy">{{ harita.alim_kisa }} alım</span> ve <span class="tutar-sell">{{ harita.satim_kisa }} satım</span>.
-  {% if harita.en_alici %}En alıcı: <b>{{ harita.en_alici|map(attribute='ad')|join(', ') }}</b>.{% endif %}
-  {% if harita.en_satici %}En satıcı: <b>{{ harita.en_satici|map(attribute='ad')|join(', ') }}</b>.{% endif %}
+  En çok alım payı: <b>{{ harita.en_alici|map(attribute='ad')|join(', ') }}</b>.
+  En az: <b>{{ harita.en_satici|map(attribute='ad')|join(', ') }}</b>.
 </p>
 {% if harita.goreli %}
 <p class="uyari-kutu">Şirket yöneticileri hisse ödüllerini ve opsiyon gelirlerini nakde çevirdikleri için hemen her sektörde
-net satıcıdır (bu dönem bütün sektörlerde satış, alımın {{ ((harita.sektorler|sum(attribute='satim')) / ((harita.sektorler|sum(attribute='alim')) or 1))|round|int }} katı).
-Bu yüzden renkler, sektörün <b>ortalamaya göre</b> ne kadar alıcı ya da satıcı olduğunu gösterir.</p>
+net satıcıdır. Sektörleri karşılaştırmak için her kutuda <b>alım payı</b> (alımın toplam işlem tutarı içindeki payı) ve
+bütün sektörlerin ortalaması (<b>%{{ (harita.ortalama_pay * 100)|round(1)|string|replace('.', ',') }}</b>) verilmiştir.</p>
 {% endif %}
+
+<ul class="sektor-lejant" aria-label="Renk açıklaması">
+  <li><span class="ton ton-satim-2"></span>Güçlü satıcı</li>
+  <li><span class="ton ton-satim-1"></span>Satıcı</li>
+  <li><span class="ton ton-notr-0"></span>Dengeli</li>
+  <li><span class="ton ton-alim-1"></span>Alıcı</li>
+  <li><span class="ton ton-alim-2"></span>Güçlü alıcı</li>
+</ul>
 
 <div class="sektor-harita">
   {% for s in harita.sektorler %}
-  {% set guc = (s.renk|abs * 62)|round|int %}
-  <article class="sektor-kutu sektor-{{ s.yon }}" style="--guc: {{ [guc, 8]|max }}%">
+  <article class="sektor-kutu ton-{{ s.yon }}-{{ s.ton }}">
     <header>
       <h2>{{ s.ad }}</h2>
-      <span class="sektor-yon">{% if s.yon == 'alim' %}Alıcı{% elif s.yon == 'satim' %}Satıcı{% else %}Dengeli{% endif %}</span>
+      <span class="sektor-yon">{% if s.yon == 'alim' %}Net alıcı{% elif s.yon == 'satim' %}Net satıcı{% else %}Dengeli{% endif %}</span>
     </header>
-    <p class="sektor-tutar"><span class="tutar-buy">{{ s.alim_adet }} alım · {{ s.alim_kisa }}</span><br>
-      <span class="tutar-sell">{{ s.satim_adet }} satım · {{ s.satim_kisa }}</span></p>
+    <dl class="sektor-tutar">
+      <div><dt>Alım</dt><dd>{{ s.alim_adet|sayi }} işlem · {{ s.alim_kisa }}</dd></div>
+      <div><dt>Satım</dt><dd>{{ s.satim_adet|sayi }} işlem · {{ s.satim_kisa }}</dd></div>
+    </dl>
+    <div class="alim-payi" title="Alımın toplam işlem tutarı içindeki payı">
+      <span class="alim-payi-cubuk"><span style="width: {{ (s.alim_payi * 100)|round(1) }}%"></span></span>
+      <span>Alım payı <b>{% if s.alim_payi > 0 and s.alim_payi < 0.01 %}%1'den az{% else %}%{{ (s.alim_payi * 100)|round|int }}{% endif %}</b>{% if harita.goreli %}
+        · {% if s.goreli == 'ust' %}ortalamanın üstünde{% elif s.goreli == 'alt' %}ortalamanın altında{% else %}ortalama düzeyde{% endif %}{% endif %}</span>
+    </div>
     {% if s.one_cikan %}
     <p class="sektor-hisseler">{{ s.one_cikan_baslik }}:
       {% for h in s.one_cikan %}<a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>{% endfor %}</p>

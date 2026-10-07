@@ -82,11 +82,16 @@ def hesapla(slug):
     for p in pozisyonlar:
         p["pay"] = p["deger"] / toplam_deger if toplam_deger else 0
 
+    # Toplam getiri yalnızca fiyatı bilinen pozisyonlardan: fiyatı bilinmeyenin değeri
+    # maliyetine eşit sayıldığı için katılırsa getiriyi sıfıra doğru çeker
+    fiyatlilar = [p for p in pozisyonlar if p["getiri"] is not None]
+    fiyatli_maliyet = sum(p["maliyet"] for p in fiyatlilar)
     return {
         "pozisyonlar": pozisyonlar,
         "sayi": len(pozisyonlar),
         "maliyet": toplam_maliyet,
         "deger": toplam_deger,
-        "getiri": (toplam_deger / toplam_maliyet - 1) if toplam_maliyet else None,
+        "getiri": (sum(p["deger"] for p in fiyatlilar) / fiyatli_maliyet - 1) if fiyatli_maliyet else None,
+        "fiyatsiz": len(pozisyonlar) - len(fiyatlilar),
         "kapanan": len({s["ticker"] for s in islemler}) - len(pozisyonlar),
     }

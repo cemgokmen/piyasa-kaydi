@@ -6,11 +6,17 @@ Tutarlar: Kongre bildirimleri aralık verir, aralığın ortası alınır; yöne
 bildirimlerinde tutar kesindir. Sektörler SEC sanayi kodlarından (SIC) gelir
 (bkz. piyasa/analiz/sektorler.py). Sektörü bilinmeyen hisseler sayılmaz.
 
-Net oran = (alım − satım) / (alım + satım), −1 ile +1 arasında. Siyasetçi
-haritası bu oranla renklendirilir. Yöneticiler ise hisse ödülü ve opsiyon
-gelirlerini nakde çevirdikleri için hemen her sektörde net satıcıdır; onların
-haritası sektörün oranının bütün sektörlerin ortalamasından farkıyla (göreli)
-renklendirilir.
+Net oran = (alım − satım) / (alım + satım), −1 ile +1 arasında. Etiket ve renk
+her zaman bu gerçek yönü gösterir (satış fazlaysa "net satıcı", kırmızı).
+
+Yöneticiler hisse ödülü ve opsiyon gelirlerini nakde çevirdikleri için hemen
+her sektörde net satıcıdır. Bu yüzden sektörler arasındaki farkı göstermek
+için ayrıca alım payı (alımın toplam içindeki payı) ve bunun bütün sektörlerin
+ortalamasıyla karşılaştırması verilir.
+
+Beş renk: koyu kırmızı (güçlü satıcı), açık kırmızı (satıcı), mavi (dengeli),
+açık yeşil (alıcı), koyu yeşil (güçlü alıcı). |net oran| < 0,1 dengeli;
+0,1–0,6 alıcı/satıcı; 0,6 üstü güçlü.
 """
 
 from contextlib import closing
@@ -24,6 +30,15 @@ from piyasa.veritabani import get_connection
 DONEMLER = {30: "Son 30 gün", 90: "Son 3 ay", 365: "Son 1 yıl"}
 GRUPLAR = {"siyaset": "Siyasetçiler", "yonetici": "Şirket yöneticileri"}
 ONE_CIKAN = 3          # her sektörde gösterilen hisse sayısı
+
+
+def renk_tonu(net_oran):
+    """(yön, kademe): yön 'alim'/'satim'/'notr'; kademe 0 dengeli, 1 normal, 2 güçlü."""
+    buyukluk = abs(net_oran)
+    if buyukluk < 0.1:
+        return "notr", 0
+    kademe = 1 if buyukluk < 0.6 else 2
+    return ("alim" if net_oran > 0 else "satim"), kademe
 
 
 @sureli(15 * 60)
@@ -66,23 +81,24 @@ def sektor_haritasi(gun=90, grup="siyaset"):
 
     alim = sum(s["alim"] for s in liste)
     satim = sum(s["satim"] for s in liste)
-    ortalama = (alim - satim) / (alim + satim) if alim + satim else 0
-    goreli = grup == "yonetici"
+    ortalama_pay = alim / (alim + satim) if alim + satim else 0
     for s in liste:
-        renk = s["net_oran"] - ortalama if goreli else s["net_oran"]
-        s["renk"] = max(-1.0, min(1.0, renk))
-        s["yon"] = "alim" if s["renk"] > 0.05 else "satim" if s["renk"] < -0.05 else "notr"
+        s["yon"], s["ton"] = renk_tonu(s["net_oran"])
+        s["alim_payi"] = s["alim"] / s["toplam"]
+        fark = s["alim_payi"] - ortalama_pay
+        s["goreli"] = "ust" if fark > 0.03 else "alt" if fark < -0.03 else "ayni"
         # Kutudaki hisseler kutunun yönüne göre: alıcı sektörde en çok alınanlar
-        anahtar = "alim" if s["yon"] == "alim" else "satim"
+        anahtar = "alim" if s["yon"] == "alim" or (s["yon"] == "notr" and s["net_oran"] >= 0) else "satim"
         s["one_cikan_baslik"] = "En çok alınan" if anahtar == "alim" else "En çok satılan"
         s["one_cikan"] = sorted((h for h in s.pop("hisseler").values() if h[anahtar] > 0),
                                 key=lambda h: h[anahtar], reverse=True)[:ONE_CIKAN]
     return {
-        "goreli": goreli,
-        "ortalama": ortalama,
+        "goreli": grup == "yonetici",
+        "ortalama_pay": ortalama_pay,
         "sektorler": liste,
         "alim_kisa": kisa_tutar(alim),
         "satim_kisa": kisa_tutar(satim),
-        "en_alici": sorted([s for s in liste if s["renk"] > 0.05], key=lambda s: -s["renk"])[:3],
-        "en_satici": sorted([s for s in liste if s["renk"] < -0.05], key=lambda s: s["renk"])[:3],
+        # Yöneticilerde hemen hepsi net satıcı: en alıcı / en satıcı alım payına göre sıralanır
+        "en_alici": sorted(liste, key=lambda s: -s["alim_payi"])[:3],
+        "en_satici": sorted(liste, key=lambda s: s["alim_payi"])[:3],
     }

@@ -372,7 +372,10 @@ def test_sektor_haritasi(istemci):
     # Geçersiz parametreler varsayılana döner
     assert istemci.get("/sektorler?gun=7&grup=xyz").status_code == 200
     yonetici = istemci.get("/sektorler?grup=yonetici&gun=365").get_data(as_text=True)
-    assert "ortalamaya göre" in yonetici
+    assert "Alım payı" in yonetici and "ortalaması" in yonetici
+    # Etiket gerçek yönü gösterir: satışı fazla olan sektör "Net satıcı" olarak yazılır
+    from piyasa.analiz.sektor_haritasi import renk_tonu
+    assert renk_tonu(-0.68) == ("satim", 2) and renk_tonu(0.05) == ("notr", 0) and renk_tonu(0.3) == ("alim", 1)
 
 
 def test_devlet_sozlesmeleri(istemci):
