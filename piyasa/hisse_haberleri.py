@@ -16,9 +16,9 @@ Sonuçlar 30 dakika bellekte tutulur.
 import re
 
 from piyasa import haber
-from piyasa.bicim import sirket_gorunen_ad
+from piyasa.bicim import sirket_gorunen_ad, tr_kucuk
+from piyasa.ceviri import cevir
 from piyasa.onbellek import sureli
-from piyasa.sirket_profili import cevir
 
 ONBELLEK_SURESI = 30 * 60
 GUN = 30
@@ -53,11 +53,8 @@ KOD_IZI = re.compile(r"\((?:[A-Z]+:\s?)?([A-Z]{1,5}(?:\.[A-Z])?)\)")
 
 BENZERLIK_SINIRI = 0.7
 
-_TR_KUCUK = str.maketrans("Iİ", "ıi")
-
-
 def _kucuk(metin):
-    return metin.translate(_TR_KUCUK).lower()
+    return tr_kucuk(metin)
 
 
 def arama_adi(sirket):

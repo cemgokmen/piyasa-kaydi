@@ -31,6 +31,26 @@ def test_web_disindaki_katmanlar_webe_bagimli_degil(dosya):
     assert not web, f"{dosya.name} web katmanını içe aktarıyor: {web}"
 
 
+# Katmanlar: toplama -> veritabanı -> analiz / web. Okuma katmanları (analiz, web)
+# veri toplama ve bakım kodunu içe aktarmaz; veri toplama da bakım kodunu.
+# Ortak sabitler ve kurallar piyasa.kurallar'dadır.
+YASAKLAR = {
+    "analiz": ("piyasa.toplama", "piyasa.bakim"),
+    "web": ("piyasa.toplama", "piyasa.bakim"),
+    "emtia": ("piyasa.toplama", "piyasa.bakim"),
+    "toplama": ("piyasa.bakim",),
+}
+
+
+@pytest.mark.parametrize("dosya", sorted(
+    p for p in KOK.rglob("*.py") if p.relative_to(KOK).parts[0] in YASAKLAR
+), ids=lambda p: str(p.relative_to(KOK)))
+def test_katman_yonu(dosya):
+    katman = dosya.relative_to(KOK).parts[0]
+    ihlal = [m for m in _ice_aktarilanlar(dosya) if m.startswith(YASAKLAR[katman])]
+    assert not ihlal, f"{dosya.relative_to(KOK)} ({katman}) şunları içe aktarmamalı: {ihlal}"
+
+
 def test_sureli_onbellek(monkeypatch):
     saat = [1000.0]
     monkeypatch.setattr(onbellek.time, "monotonic", lambda: saat[0])

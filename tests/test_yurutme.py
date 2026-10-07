@@ -118,16 +118,16 @@ def test_tanim_kisaltma_tam_cumlelerle():
 
 
 def test_ceviri_yedek_servise_gecer(monkeypatch):
-    from piyasa import sirket_profili
+    from piyasa import ceviri
 
     def bozuk(_):
         raise ConnectionError
 
-    monkeypatch.setattr(sirket_profili, "_google", bozuk)
-    monkeypatch.setattr(sirket_profili, "_mymemory", lambda m: "Merhaba")
-    assert sirket_profili.cevir("Hello") == "Merhaba"
-    monkeypatch.setattr(sirket_profili, "_mymemory", bozuk)
-    assert sirket_profili.cevir("Hello") is None
+    monkeypatch.setattr(ceviri, "_google", bozuk)
+    monkeypatch.setattr(ceviri, "_mymemory", lambda m: "Merhaba")
+    assert ceviri.cevir("Hello") == "Merhaba"
+    monkeypatch.setattr(ceviri, "_mymemory", bozuk)
+    assert ceviri.cevir("Hello") is None
 
 
 def test_tanim_sadelestirme():
@@ -147,7 +147,7 @@ def test_tanim_sadelestirme():
 
 
 def test_turkce_duzeltme():
-    from piyasa.sirket_profili import baslik_duzelt, turkcelestir
+    from piyasa.ceviri import baslik_duzelt, turkcelestir
 
     assert turkcelestir("Şirket telefon tasarlıyor ve satıyor; iki segmentte faaliyet gösteriyor.") == \
         "Şirket telefon tasarlar ve satar; iki bölümde faaliyet gösterir."
@@ -157,13 +157,13 @@ def test_turkce_duzeltme():
 
 
 def test_ceviri_sirket_adini_korur(monkeypatch):
-    from piyasa import sirket_profili
+    from piyasa import ceviri
 
     def sahte(metin):
         return metin.replace("Applied Materials", "Uygulamalı Malzemeler").replace("provides", "sağlar")
 
-    monkeypatch.setattr(sirket_profili, "cevir", sahte)
-    assert sirket_profili.adi_koruyarak_cevir("Applied Materials provides tools.", "Applied Materials") == \
+    monkeypatch.setattr(ceviri, "cevir", sahte)
+    assert ceviri.adi_koruyarak_cevir("Applied Materials provides tools.", "Applied Materials") == \
         "Applied Materials sağlar tools."
 
 

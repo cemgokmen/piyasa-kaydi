@@ -23,7 +23,6 @@ import io
 import re
 import sys
 import time
-import unicodedata
 import xml.etree.ElementTree as ET
 import zipfile
 from datetime import UTC, date, datetime
@@ -34,12 +33,12 @@ import requests
 from piyasa.ayarlar import USER_AGENT
 from piyasa.slug import slugify
 from piyasa.toplama.form4 import kaydet
+from piyasa.toplama.kongre_ortak import json_al_uyeler, parti_kodu, sade, tutar_coz
 from piyasa.veritabani import get_connection, init_db
 
 KAYNAK = "house_ptr"
 LISTE_URL = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/{yil}FD.zip"
 PDF_URL = "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/{yil}/{doc}.pdf"
-UYELER_URL = "https://unitedstates.github.io/congress-legislators/legislators-current.json"
 
 BEKLEME = 0.3
 
@@ -49,12 +48,10 @@ ISLEM_TURLERI = {"P": "buy", "S": "sell"}   # E (değişim) yatırım kararı de
 # https://fd.house.gov/reference/asset-type-codes.aspx
 KABUL_EDILEN_TURLER = {"ST"}
 
-PARTI_KISA = {"Democrat": "D", "Republican": "R", "Independent": "I"}
 
 TARIH = re.compile(r"^\d{2}/\d{2}/\d{4}$")
 TICKER = re.compile(r"\(([A-Z][A-Z0-9.\-]{0,7})\)")
 VARLIK_TURU = re.compile(r"\[([A-Z]{2})\]")
-TUTAR = re.compile(r"\$([\d,]+)")
 
 
 def indir(url):
@@ -92,11 +89,6 @@ def bildirim_listesi(yil):
     return liste
 
 
-def json_al_uyeler():
-    """Kongre'nin güncel üyeleri (Meclis ve Senato), congress-legislators veri seti."""
-    return requests.get(UYELER_URL, timeout=60).json()
-
-
 def uye_bilgileri():
     """
     'IL01' -> {'parti': 'D', 'ad': 'Jonathan L. Jackson', 'soyad': 'Jackson'}
@@ -115,17 +107,11 @@ def uye_bilgileri():
             continue
         bolge = f"{t['state']}{int(t.get('district') or 0):02d}"
         eslesme[bolge] = {
-            "parti": PARTI_KISA.get(t.get("party"), (t.get("party") or "")[:1]),
+            "parti": parti_kodu(t.get("party")),
             "ad": u["name"].get("official_full"),
             "soyad": u["name"].get("last", ""),
         }
     return eslesme
-
-
-def sade(metin):
-    """'Sánchez' -> 'sanchez': aksanlı ve aksansız yazımlar eşleşsin."""
-    ayrik = unicodedata.normalize("NFKD", metin or "")
-    return "".join(c for c in ayrik if not unicodedata.combining(c)).lower()
 
 
 def uye_bul(bildirim, uyeler):
@@ -203,14 +189,6 @@ def etiket_satiri_mi(satir, sutun):
     """'Filing Status: New' gibi alt satırlar PDF'te bozuk karakterlerle gelir."""
     ilk = [k for k in satir["kelimeler"] if k["x0"] >= sutun["asset"] - 4]
     return bool(ilk) and "\x00" in ilk[0]["text"]
-
-
-def tutar_coz(metin):
-    """'$1,001 - $15,000' -> (1001, 15000); 'Over $50,000,000' -> (50000000, 50000000)"""
-    sayilar = [int(s.replace(",", "")) for s in TUTAR.findall(metin)]
-    if not sayilar:
-        return None, None
-    return sayilar[0], sayilar[-1]
 
 
 def pdf_ayristir(icerik):

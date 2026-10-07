@@ -10,8 +10,7 @@ from datetime import UTC, date, datetime, timedelta
 import requests
 
 from piyasa.ayarlar import USER_AGENT
-from piyasa.bakim.supheli import fiyat_imkansiz_mi
-from piyasa.kurallar import kod_duzelt
+from piyasa.kurallar import fiyat_imkansiz_mi, kod_duzelt
 from piyasa.slug import slugify
 from piyasa.veritabani import get_connection, init_db
 

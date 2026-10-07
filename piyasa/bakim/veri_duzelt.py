@@ -19,14 +19,10 @@ değil, her seferinde işaretleri baştan hesaplayan supheli adımında işaretl
 
 from contextlib import closing
 
-import requests
-
 from piyasa.kurallar import kod_duzelt
 from piyasa.slug import slugify
+from piyasa.toplama.kongre_ortak import json_al_uyeler, parti_kodu
 from piyasa.veritabani import get_connection
-
-GECMIS_UYELER = "https://unitedstates.github.io/congress-legislators/legislators-historical.json"
-PARTI_KISA = {"Democrat": "D", "Republican": "R", "Independent": "I"}
 
 
 def kodlari_duzelt(conn):
@@ -61,7 +57,7 @@ def partileri_tamamla(conn):
     if not eksik:
         return
     try:
-        gecmis = requests.get(GECMIS_UYELER, timeout=120).json()
+        gecmis = json_al_uyeler(gecmis=True)
     except Exception as hata:
         print(f"  Geçmiş üye kaydı alınamadı ({hata})")
         return
@@ -70,7 +66,7 @@ def partileri_tamamla(conn):
         t = u["terms"][-1]
         if t.get("end", "") < "2023-01-01":
             continue
-        bilgi = {"parti": PARTI_KISA.get(t.get("party"), (t.get("party") or "")[:1]),
+        bilgi = {"parti": parti_kodu(t.get("party")),
                  "bolge": t["state"] if t["type"] == "sen" else f"{t['state']}-{int(t.get('district') or 0):02d}"}
         for ad in (u["name"].get("official_full"), f'{u["name"].get("first", "")} {u["name"].get("last", "")}'):
             if ad:

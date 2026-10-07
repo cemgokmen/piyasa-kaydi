@@ -17,10 +17,9 @@ import pandas as pd
 import yfinance as yf
 
 from piyasa.fiyat import yahoo_kodu
-from piyasa.kurallar import GECERLI_KOD, TEMIZ
+from piyasa.kurallar import ENDEKS, GECERLI_KOD, TEMIZ
 from piyasa.veritabani import get_connection, init_db
 
-ENDEKS = "SPY"
 PARCA = 150            # tek istekte indirilen hisse sayısı
 PARALEL = 8            # aynı anda açık bağlantı: fazlası arka planda dosya sınırına takılıyor
 YENILEME_GUN = 10      # son kaç günün fiyatı her seferinde yeniden yazılsın

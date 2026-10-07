@@ -27,7 +27,8 @@ from datetime import UTC, date, datetime, timedelta
 
 from piyasa.slug import slugify
 from piyasa.toplama.form4 import kaydet
-from piyasa.toplama.kongre import PARTI_KISA, islenmis_bildirimler, json_al_uyeler, sade, tutar_coz
+from piyasa.toplama.kongre import islenmis_bildirimler
+from piyasa.toplama.kongre_ortak import json_al_uyeler, parti_kodu, sade, tutar_coz
 from piyasa.veritabani import get_connection, init_db
 
 KAYNAK = "senate_ptr"
@@ -159,7 +160,7 @@ def senatorler():
             "ad": u["name"].get("official_full") or f'{u["name"]["first"]} {u["name"]["last"]}',
             "ilk": sade(u["name"].get("first", "")),
             "eyalet": t["state"],
-            "parti": PARTI_KISA.get(t.get("party"), (t.get("party") or "")[:1]),
+            "parti": parti_kodu(t.get("party")),
         })
     return sonuc
 

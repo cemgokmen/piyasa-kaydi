@@ -170,21 +170,23 @@ veritabanı kurulur, fiyat servisi sahte veriyle değiştirilir.
 
 ```mermaid
 flowchart LR
-    K["Resmi kaynaklar<br/>SEC · House Clerk · OGE<br/>CFTC · EIA · FRED · Yahoo"] --> T["piyasa/toplama<br/>indirme ve ayrıştırma"]
+    K["Resmi kaynaklar<br/>SEC · House Clerk · Senato eFD · OGE<br/>USAspending · CFTC · EIA · FRED · Yahoo"] --> T["piyasa/toplama<br/>indirme ve ayrıştırma"]
     T --> V[("SQLite<br/>data/kayitlar.db")]
-    V --> A["piyasa/analiz<br/>getiri · performans · çıkar çatışması<br/>sinyaller · portföy · özet"]
+    B["piyasa/bakim<br/>veri düzeltme · şüpheli kayıt"] --> V
+    V --> A["piyasa/analiz<br/>getiri · performans · çıkar çatışması<br/>sinyaller · sektör haritası · ihaleler · özet"]
     V --> S["piyasa/web/sorgular<br/>sayfa sorguları"]
     A --> W["piyasa/web<br/>Flask Blueprint'leri + şablonlar"]
     S --> W
-    C["piyasa/kurallar · bicim · kayitlar<br/>onbellek · fiyat · eslestirme"] -.-> T & A & W
+    C["piyasa/kurallar · bicim · kayitlar · onbellek<br/>fiyat · temel · ceviri · haber · eslestirme"] -.-> T & A & W
 ```
 
 Katman kuralları:
 
-- `toplama` yalnızca veri indirir ve veritabanına yazar; `analiz` ve `web`
-  yalnızca okur.
-- `web` dışındaki hiçbir katman `web`'i içe aktarmaz (`tests/test_mimari.py`
-  denetler).
+- `toplama` yalnızca veri indirir ve veritabanına yazar; `bakim` yazılan veriyi
+  düzeltir; `analiz` ve `web` yalnızca okur.
+- Bağımlılık tek yönlüdür ve `tests/test_mimari.py` denetler: `web` dışındaki
+  hiçbir katman `web`'i, `analiz`/`web`/`emtia` ise `toplama` ve `bakim`'ı içe
+  aktarmaz; `toplama` da `bakim`'ı içe aktarmaz. Ortak sabitler `kurallar.py`'dedir.
 - Alan kuralları (yasal süreler, eşikler, SQL koşulları) `kurallar.py`'de,
   Türkçe biçimlendirme `bicim.py`'de tek yerde durur.
 - Canlı veriler (fiyat, haber, öneri dizini) `@sureli` önbelleğiyle tutulur.
@@ -203,7 +205,13 @@ piyasa/
   bicim.py                 Tutar, yüzde ve tarihlerin Türkçe gösterimi
   kayitlar.py              İşlem kayıtlarını gösterime hazırlama
   fiyat.py                 Yahoo Finance: anlık fiyat (1 dk) ve günlük geçmiş, değişimler, hacim
-  sirket_profili.py        şirket tanımı (Yahoo) + ücretsiz Türkçe çeviri, veritabanında saklanır
+  sirket_profili.py        Şirket tanımı: elle yazılmış metin (veri/sirket_tanimlari.json) ya da çeviri
+  temel.py                 Şirketin rakamları: değerleme, karlılık, bilanço, son çeyrek, analistler
+  ceviri.py                Ücretsiz İngilizce → Türkçe çeviri ve çeviri sonrası düzeltmeler
+  haber.py                 Google Haberler RSS (emtia ve hisse haberlerinin ortak kısmı)
+  hisse_haberleri.py       Hisse sayfasındaki güncel haberler (Türkçe, gerekirse çevrilmiş İngilizce)
+  yayin.py                 Yayın sürümü (gunicorn) ve Mac açılınca başlatma
+  veri/                    sirket_tanimlari.json (298 şirket), endustriler.json (145 faaliyet alanı)
   onbellek.py              Süreli bellek önbelleği (@sureli)
   uyeler.py                Siyasetçi fotoğrafları, görevleri, önemli siyasetçiler
   eslestirme.py            Şirket adı → borsa kodu (SEC listesiyle, tutucu)
@@ -214,6 +222,9 @@ piyasa/
     form4.py               Form 4 ayrıştırma; son iş gününü indirir
     form4_gecmis.py        Eksik günleri paralel indirir
     kongre.py              House Clerk işlem bildirimleri (PDF)
+    senato.py              Senato eFD işlem raporları (görünmez Chrome ile)
+    kongre_ortak.py        Meclis ve Senato toplayıcılarının ortak parçaları
+    ihaleler.py            USAspending.gov devlet sözleşmeleri
     fon13f.py              Fonların 13F bildirimleri
     cusip.py               CUSIP → hisse kodu eşlemesi
     profiller.py           şirket tanımlarını önceden doldurur
@@ -221,11 +232,12 @@ piyasa/
     oge_yillik.py          OGE yıllık bildiriminden hisse portföyü ve işlemler
     emtia.py               CFTC fon konumları, EIA stokları, FRED faizleri
     fiyat_gecmisi.py       İşlem yapılan hisselerin ve SPY'nin günlük kapanışları
-    sirketler.py           SEC sektörleri, Meclis üyeleri ve komite üyelikleri
+    sirketler.py           SEC sektörleri, Kongre üyeleri (Meclis ve Senato) ve komite üyelikleri
     fon_listesi.py, fon_cik.py, fon_ara.py   Fon listesi ve CIK bulma
 
   bakim/                   Veritabanı bakımı
-    supheli.py             Anormal fiyatlı kayıtları işaretler
+    veri_duzelt.py         Borsa kodları, düzeltilmiş rapor kopyaları, eksik partiler
+    supheli.py             Anormal fiyatlı ve tarihli kayıtları işaretler
     slug_ekle.py           Eski kayıtlara kişi adresi ekler
     sutun_ekle.py          Tabloları oluşturur, eksik sütunları ekler
 
@@ -244,6 +256,8 @@ piyasa/
     sektorler.py           SIC → sektör ve komite → sektör eşlemeleri
     sinyaller.py           Üçlü onay ve sinyallerin geçmiş başarısı
     istatistik.py          Güven aralığı, t testi, Holm düzeltmesi
+    sektor_haritasi.py     Siyasetçi ve yönetici alımlarının sektörlere göre dağılımı
+    ihale.py               Devlet sözleşmeleri; alımdan sonra gelen olağandışı sözleşmeler
     ozet.py                Günlük özet
     destek_direnc.py       Destek/direnç modeli (deneysel, siteye bağlı değil)
     sr_dene.py, sr_tarama.py
@@ -255,6 +269,7 @@ piyasa/
     analiz_rotalari.py     Performans, çıkar çatışması, sinyaller, günlük özet
     bicim.py               Şablon süzgeçleri
     arama.py               Arama önerileri: hisse, kişi, fon, emtia dizini
+    sayfa_onbellegi.py     2 dakikalık hazır sayfa önbelleği (aynı sayfayı tek istek hazırlar)
     sorgular/              Sayfa sorguları: islemler, genel, siyaset, hisse, kisi, fonlar
     templates/, static/    Şablonlar; stil.css (ortak), mobil.css (telefon), app.js,
                            grafik.js (SVG grafik çizici), fiyat.js

@@ -153,6 +153,14 @@ def sirket_kisa_ad(ad):
     return re.sub(r"^The\s+(?=\S)", "", ad)                # 'The Hershey Company' -> 'Hershey'
 
 
+_TR_KUCUK = str.maketrans("Iİ", "ıi")
+
+
+def tr_kucuk(metin):
+    """Türkçe küçük harf: 'IĞDIR' -> 'ığdır' (str.lower 'I'yı 'i' yapar)."""
+    return (metin or "").translate(_TR_KUCUK).lower()
+
+
 # SEC ve 13F bildirimlerindeki kısaltmalar
 AD_KISALTMALARI = {
     "FINL": "Financial", "INDS": "Industries", "HLDGS": "Holdings", "HLDG": "Holding", "HLDS": "Holdings",

@@ -19,7 +19,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 
-from piyasa.toplama.fiyat_gecmisi import ENDEKS
+from piyasa.kurallar import ENDEKS
 from piyasa.veritabani import get_connection, init_db
 
 UFUKLAR = {"30": 30, "90": 90, "180": 180}

@@ -11,6 +11,20 @@ STOCK_ACT_GUN = 45
 # Kongre bildiriminde alt sınırı bu tutar ve üzerindeki alımlar "yüklü" sayılır
 YUKLU_ALIM_ALT_SINIR = 50_001
 
+# Getiri karşılaştırmasında piyasa ölçüsü (S&P 500 fonu)
+ENDEKS = "SPY"
+
+# Hiçbir adi hisse bu fiyatın üzerinde işlem görmez; daha yüksek bildirilen fiyat
+# yazım hatasıdır. İstisna: Berkshire Hathaway A sınıfı gerçekten bu seviyede.
+MUTLAK_FIYAT_TAVANI = 50_000
+TAVAN_ISTISNALARI = {"BRK-A", "BRK.A", "BRKA"}
+
+
+def fiyat_imkansiz_mi(ticker, fiyat):
+    """Tek başına bakıldığında bile hatalı olduğu belli olan hisse fiyatı."""
+    return bool(fiyat) and fiyat > MUTLAK_FIYAT_TAVANI and ticker not in TAVAN_ISTISNALARI
+
+
 # Devlet sözleşmeleri (USAspending.gov) bu tarihten itibaren toplanır
 IHALE_BASLANGIC = "2024-01-01"
 

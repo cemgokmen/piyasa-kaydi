@@ -13,20 +13,12 @@ Bir kez veya veri her güncellendiğinde çalıştırılır.
 
 from statistics import median
 
+from piyasa.kurallar import MUTLAK_FIYAT_TAVANI, TAVAN_ISTISNALARI
 from piyasa.veritabani import get_connection
 
 # Ortancanın kaç katı sapma şüpheli sayılsın
 KAT_SINIRI = 10
 
-# Hiçbir adi hisse bu fiyatın üzerinde işlem görmez.
-# İstisna: Berkshire Hathaway A sınıfı gerçekten bu seviyede.
-MUTLAK_FIYAT_TAVANI = 50_000
-
-TAVAN_ISTISNALARI = {"BRK-A", "BRK.A", "BRKA"}
-
-def fiyat_imkansiz_mi(ticker, fiyat):
-    """Tek başına bakıldığında bile hatalı olduğu belli olan hisse fiyatı."""
-    return bool(fiyat) and fiyat > MUTLAK_FIYAT_TAVANI and ticker not in TAVAN_ISTISNALARI
 
 
 # Bildirimden bu kadar gün önceki işlem tarihi yazım hatası sayılır
