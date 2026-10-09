@@ -9,7 +9,20 @@ from datetime import date, timedelta
 
 from piyasa import fiyat
 from piyasa.analiz import cakisma
-from piyasa.bicim import kisa_aralik, kisa_tutar, sayi, sirket_gorunen_ad, tr_kucuk, unvan, uzun_tarih, yuzde
+from piyasa.bicim import (
+    kisa_aralik,
+    kisa_tutar,
+    para,
+    sayi,
+    sirket_gorunen_ad,
+    tr_baslik,
+    tr_cumle,
+    tr_kucuk,
+    unvan,
+    uzun_tarih,
+    yuzde,
+)
+from piyasa.bist.sorgular import kisa_unvan as _kisa_unvan
 from piyasa.emtia import sorgular as emtia_sorgulari
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kripto import piyasa as kripto_piyasa
@@ -186,6 +199,43 @@ def _emtialar():
     return _bolum("Emtialar", giris, maddeler)
 
 
+def sirket_kisa(unvan_):
+    return _kisa_unvan(tr_baslik(unvan_)) if unvan_ else None
+
+
+def _bist(conn, gun):
+    """O gün KAP'a bildirilen yönetici ve ortak işlemleri (fonlar hariç) ile geri alımlar."""
+    islemler = [dict(r) for r in conn.execute(
+        """SELECT p.kod, p.kisi, p.gorev, p.islem, p.nominal, p.fiyat, p.tutar, p.oran_sonra, s.unvan
+           FROM kap_pay_islem p JOIN kap_bildirim b USING (indeks) LEFT JOIN bist_sirket s ON s.kod = p.kod
+           WHERE substr(b.yayin, 1, 10) = ? AND p.kisi_turu != 'fon' AND p.islem IS NOT NULL""", (gun,))]
+    geri = conn.execute(
+        """SELECT COUNT(DISTINCT kod) AS sirket, SUM(nominal * fiyat) AS tutar FROM kap_geri_alim
+           WHERE islem_tarihi = ?""", (gun,)).fetchone()
+    if not islemler and not (geri and geri["sirket"]):
+        return None
+    alim = [i for i in islemler if i["islem"] == "buy"]
+    parcalar = []
+    if islemler:
+        parcalar.append(f"KAP'a {len(islemler)} yönetici ve ortak işlemi bildirildi ({len(alim)} alım, "
+                        f"{len(islemler) - len(alim)} satım)")
+    if geri and geri["sirket"]:
+        parcalar.append(f"{geri['sirket']} şirket toplam {para(geri['tutar'], 'TRY')} tutarında kendi payını geri aldı")
+    maddeler = []
+    for i in sorted((i for i in islemler if i["tutar"]), key=lambda x: -x["tutar"])[:3]:
+        ad = sirket_kisa(i["unvan"]) or i["kod"]
+        rol = tr_cumle(i["gorev"]) if i["gorev"] else None
+        kisi = tr_baslik(i["kisi"])
+        maddeler.append(_madde(
+            f"{ad} hissesinde {para(i['tutar'], 'TRY')} değerinde {'alım' if i['islem'] == 'buy' else 'satış'}",
+            f"{kisi}{' (' + rol + ')' if rol else ''}, {ad} payından {sayi(round(i['nominal']))} adetlik "
+            f"{'alım' if i['islem'] == 'buy' else 'satış'} bildirdi"
+            + (f"; işlemden sonra şirketteki payı %{str(round(i['oran_sonra'], 2)).replace('.', ',')}." if i["oran_sonra"] is not None else "."),
+            f"/bist/{i['kod']}",
+        ))
+    return _bolum("Borsa İstanbul", "; ".join(parcalar) + ".", maddeler)
+
+
 def _kripto(conn, gun, canli):
     """Kripto piyasası (yalnızca en yeni özette, canlı) ve o gün bildirilen Kongre kripto işlemleri."""
     giris, maddeler = None, []
@@ -256,10 +306,11 @@ def gunluk_ozet(gun=None):
         siyaset = _siyasetciler(conn, gun)
         yonetici = _yoneticiler(conn, gun)
         kripto = _kripto(conn, gun, canli=i == 0)
+        bist = _bist(conn, gun)
 
     manset, spot = _manset(siyaset, yonetici)
     # Emtia fiyatları canlıdır; yalnızca en güncel günün özetinde gösterilir
-    bolumler = [b for b in (siyaset, yonetici, _emtialar() if i == 0 else None, kripto) if b]
+    bolumler = [b for b in (siyaset, yonetici, bist, _emtialar() if i == 0 else None, kripto) if b]
 
     d = date.fromisoformat(gun)
     baslik = f"{uzun_tarih(gun)} {GUNLER[d.weekday()]}"

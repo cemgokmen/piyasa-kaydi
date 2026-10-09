@@ -184,8 +184,8 @@ def tr_baslik(metin):
 
 
 def tr_cumle(metin):
-    """'YÖNETİM KURULU BAŞKANI' -> 'Yönetim kurulu başkanı'"""
-    if not metin or not metin.isupper():
+    """'YÖNETİM KURULU BAŞKANI' ya da 'Yönetim Kurulu Başkanı' -> 'Yönetim kurulu başkanı'"""
+    if not metin:
         return metin
     kucuk = tr_kucuk(metin.strip())
     return kucuk[:1].translate(_TR_BUYUK).upper() + kucuk[1:]
