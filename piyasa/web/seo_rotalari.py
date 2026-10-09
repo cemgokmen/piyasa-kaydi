@@ -37,6 +37,14 @@ def _dinamik_adresler():
     return hisseler, kisiler, fonlar, bist
 
 
+def _kripto_adresleri():
+    try:
+        from piyasa.kripto import piyasa as kripto_piyasa
+        return [x["slug"] for x in kripto_piyasa.liste()] or [k["slug"] for k in KRIPTOLAR]
+    except Exception:
+        return [k["slug"] for k in KRIPTOLAR]
+
+
 @seo.route("/sitemap.xml")
 def site_haritasi():
     kok = request.url_root.rstrip("/")
@@ -48,7 +56,7 @@ def site_haritasi():
         [(a, "daily", "1.0" if a == "/" else "0.8") for a in sabit]
         + [(f"/rehber/{r['slug']}", "monthly", "0.7") for r in REHBERLER]
         + [(f"/emtia/{e['slug']}", "daily", "0.7") for e in EMTIALAR]
-        + [(f"/kripto/{k['slug']}", "daily", "0.7") for k in KRIPTOLAR]
+        + [(f"/kripto/{k}", "daily", "0.7") for k in _kripto_adresleri()]
         + [(f"/bist/{k}", "daily", "0.6") for k in bist]
         + [(f"/hisse/{t}", "daily", "0.6") for t in hisseler]
         + [(f"/kisi/{k}", "weekly", "0.5") for k in kisiler]

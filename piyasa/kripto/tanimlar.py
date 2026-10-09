@@ -669,6 +669,19 @@ KRIPTOLAR = [
 
 KRIPTO = {k["slug"]: k for k in KRIPTOLAR}
 
+# Elle profili olmayan coinlerin sayfasında gösterilen genel etkenler ve riskler
+GENEL_ETKENLER = [
+    "Kripto piyasasının genel havası: Küçük coinler çoğunlukla Bitcoin'le aynı yönde, daha sert hareket eder.",
+    "Projenin kullanımı: Ağdaki uygulama, kullanıcı ve işlem sayısındaki artış ya da azalış.",
+    "Borsa kararları: Büyük borsalarda listelenme ya da listeden çıkarılma.",
+    "Arz takvimi: Kilitli tokenların piyasaya açılması satış baskısı yaratabilir.",
+]
+GENEL_RISKLER = [
+    "Piyasa değeri küçük ve genç projeler çok sert dalgalanır; değerinin büyük kısmını kısa sürede kaybedebilir.",
+    "Tokenların büyük kısmı kurucu ekibin ya da erken yatırımcıların elinde olabilir.",
+    "Projenin tanıtımı proje ekibinin kendi açıklamasına dayanır; doğrulanmış bir değerlendirme değildir.",
+]
+
 # Liste sayfasındaki süzgeç: tür -> grup
 GRUPLAR = {
     "Dijital para": "Ödeme ve para", "Ödeme ağı": "Ödeme ve para", "Gizlilik odaklı para": "Ödeme ve para",
@@ -677,6 +690,13 @@ GRUPLAR = {
     "Akıllı sözleşme platformu": "Platformlar ve DeFi", "Borsa ve platform parası": "Platformlar ve DeFi",
     "Blokzincirleri bağlayan ağ": "Platformlar ve DeFi", "Kurumsal ağ": "Platformlar ve DeFi",
     "Veri ağı (oracle)": "Platformlar ve DeFi", "Yapay zeka ağı": "Platformlar ve DeFi",
+    # Elle profili olmayan coinlerin türleri (CoinGecko kategorilerinden)
+    "Altına dayalı token": "Sabit paralar",
+    "Borsa tokeni": "Platformlar ve DeFi", "DeFi (kredi)": "Platformlar ve DeFi",
+    "Yapay zeka": "Platformlar ve DeFi", "Gerçek varlık tokenizasyonu": "Platformlar ve DeFi",
+    "Oyun": "Platformlar ve DeFi", "Ölçekleme ağı (katman 2)": "Platformlar ve DeFi",
+    "Blokzincir (katman 1)": "Platformlar ve DeFi",
+    "Altyapı": "Platformlar ve DeFi", "Kripto para": "Diğer",
 }
 
 # Kripto ile iş yapan, ABD borsasında işlem gören şirketler. Yöneticilerinin ve

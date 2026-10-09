@@ -13,8 +13,10 @@ Kripto paraların canlı piyasa verileri (ücretsiz kaynaklar):
 Sonuçlar bellekte tutulur; boş cevaplar önbelleğe alınmaz.
 """
 
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from datetime import UTC, date, datetime, timedelta
 
 import requests
@@ -92,6 +94,7 @@ def _yuzde(deger):
 def _cg_satiri(x):
     zirve_tarihi = (x.get("ath_date") or "")[:10] or None
     return {
+        "cg_id": x.get("id"), "ad": x.get("name"), "sembol": (x.get("symbol") or "").upper(),
         "fiyat": _sayi(x.get("current_price")),
         "degisim_1s": _yuzde(x.get("price_change_percentage_1h_in_currency")),
         "degisim_24s": _yuzde(x.get("price_change_percentage_24h_in_currency")),
@@ -119,15 +122,29 @@ def _cg_satiri(x):
     }
 
 
-@sureli(2 * 60, hatada_eskisi=True)
+PIYASA_PARAMETRELERI = {"vs_currency": "usd", "per_page": 250, "price_change_percentage": "1h,24h,7d,30d,1y",
+                        "sparkline": "true"}
+
+
+@sureli(3 * 60, hatada_eskisi=True)
 def _coingecko():
-    """Takip edilen bütün coinler tek istekte: {coingecko kimliği: satır}."""
-    cevap = requests.get(f"{COINGECKO}/coins/markets", params={
-        "vs_currency": "usd", "ids": ",".join(k["coingecko"] for k in KRIPTOLAR),
-        "per_page": 250, "price_change_percentage": "1h,24h,7d,30d,1y", "sparkline": "true",
-    }, headers=BASLIK, timeout=20)
+    """
+    Piyasa değerine göre ilk 250 kripto para tek istekte; elle profili yazılmış coinlerden
+    bu listeye girmeyen olursa ikinci istekle tamamlanır. {coingecko kimliği: satır}
+    """
+    cevap = requests.get(f"{COINGECKO}/coins/markets", params={**PIYASA_PARAMETRELERI, "order": "market_cap_desc"},
+                         headers=BASLIK, timeout=25)
     cevap.raise_for_status()
     satirlar = {x["id"]: _cg_satiri(x) for x in cevap.json()}
+    eksik = [k["coingecko"] for k in KRIPTOLAR if k["coingecko"] not in satirlar]
+    if eksik:
+        try:
+            ek = requests.get(f"{COINGECKO}/coins/markets", params={**PIYASA_PARAMETRELERI, "ids": ",".join(eksik)},
+                              headers=BASLIK, timeout=25)
+            ek.raise_for_status()
+            satirlar.update({x["id"]: _cg_satiri(x) for x in ek.json()})
+        except requests.RequestException:
+            pass
     if not satirlar:
         raise VeriYok("coingecko")
     return satirlar
@@ -310,3 +327,181 @@ def vadeli(slug):
         return _vadeli(k["vadeli"], k["yahoo"])
     except Exception:
         return None
+
+
+# ---------------------------------------------------------------------------
+# BÜTÜN KRİPTOLAR: elle profili yazılmış 27 coin + hacmi yüksek diğerleri
+# ---------------------------------------------------------------------------
+
+EN_AZ_HACIM = 5_000_000          # 24 saatlik işlem hacmi, dolar
+# Başka bir coinin sarılmış, stake edilmiş ya da köprülenmiş kopyaları ayrı yatırım aracı değil
+KOPYA = re.compile(r"^(wrapped|staked|bridged|binance-peg|coinbase wrapped|liquid staked|lido staked|"
+                   r"rocket pool eth|mantle staked|ether\.fi staked|kelp|renzo|restaked|jito staked|"
+                   r"marinade staked|benqi liquid|savings|l2 standard bridged)|"
+                   r"\b(wrapped|staked|bridged)\b", re.I)
+KRIPTO_CG = {k["coingecko"]: k for k in KRIPTOLAR}
+
+# CoinGecko kategorilerinin Türkçe karşılığı (öncelik sırasıyla)
+KATEGORILER = [
+    ("Stablecoins", "Sabit para"), ("Tokenized Gold", "Altına dayalı token"), ("Meme", "Meme coin"),
+    ("Privacy Coins", "Gizlilik odaklı para"), ("Exchange-based Tokens", "Borsa tokeni"),
+    ("Decentralized Exchange (DEX)", "Merkeziyetsiz borsa"), ("Oracle", "Veri ağı (oracle)"),
+    ("Lending/Borrowing Protocols", "DeFi (kredi)"), ("Artificial Intelligence (AI)", "Yapay zeka"),
+    ("Real World Assets (RWA)", "Gerçek varlık tokenizasyonu"), ("Gaming (GameFi)", "Oyun"),
+    ("Layer 2 (L2)", "Ölçekleme ağı (katman 2)"), ("Smart Contract Platform", "Akıllı sözleşme platformu"),
+    ("Layer 1 (L1)", "Blokzincir (katman 1)"), ("Payment Solutions", "Ödeme ağı"),
+    ("Decentralized Finance (DeFi)", "DeFi (merkeziyetsiz finans)"), ("Infrastructure", "Altyapı"),
+]
+SABIT_ISARETI = re.compile(r"usd|dollar|euro|eur\b", re.I)
+
+
+def _tahmini_tur(satir):
+    """Kategori bilinmeyen coin: fiyatı 1 dolara çok yakın ve adı dolar çağrıştırıyorsa sabit para."""
+    f = satir.get("fiyat") or 0
+    if 0.97 <= f <= 1.03 and SABIT_ISARETI.search(f"{satir.get('ad')} {satir.get('sembol')}"):
+        return "Sabit para"
+    return "Kripto para"
+
+
+def liste():
+    """
+    Sitedeki bütün kripto paralar, piyasa değerine göre: [{slug, ad, sembol, tur, ozel, b}].
+    ozel=True: elle yazılmış ayrıntılı profili var (adresi kendi kısa adı, ör. /kripto/xrp).
+    """
+    try:
+        cg = _coingecko()
+    except Exception:
+        cg = {}
+    sonuc = []
+    for cg_id, b in cg.items():
+        k = KRIPTO_CG.get(cg_id)
+        if k:
+            sonuc.append({"slug": k["slug"], "ad": k["ad"], "sembol": k["sembol"], "tur": k["tur"], "ozel": True, "b": b})
+        elif (b.get("hacim_24s") or 0) >= EN_AZ_HACIM and b.get("piyasa_degeri") and not KOPYA.search(
+                f"{b.get('ad')} {cg_id}") and re.fullmatch(r"[A-Z0-9]{1,10}", b.get("sembol") or ""):
+            sonuc.append({"slug": cg_id, "ad": b["ad"], "sembol": b["sembol"],
+                          "tur": kayitli_turler().get(cg_id) or _tahmini_tur(b), "ozel": False, "b": b})
+    if not sonuc:   # CoinGecko'ya ulaşılamadı: elle profili olanlar Yahoo'dan
+        for k in KRIPTOLAR:
+            b = _yahoo_bilgisi(k)
+            if b:
+                sonuc.append({"slug": k["slug"], "ad": k["ad"], "sembol": k["sembol"], "tur": k["tur"], "ozel": True, "b": b})
+    sonuc.sort(key=lambda x: -(x["b"].get("piyasa_degeri") or 0))
+    return sonuc
+
+
+@sureli(10 * 60)
+def kayitli_turler():
+    """Profili alınmış coinlerin türü: {cg_id: tur}."""
+    from piyasa.veritabani import get_connection
+    try:
+        with closing(get_connection()) as conn:
+            return {r[0]: r[1] for r in conn.execute("SELECT cg_id, tur FROM kripto_profil WHERE tur IS NOT NULL")}
+    except Exception:
+        return {}
+
+
+def dinamik(slug):
+    """Elle profili olmayan coin (CoinGecko kimliğiyle); listede yoksa None."""
+    return next((x for x in liste() if x["slug"] == slug and not x["ozel"]), None)
+
+
+@sureli(30 * 60, hatada_eskisi=True)
+def _cg_gecmis(cg_id):
+    """CoinGecko'dan son 365 günün günlük kapanışı ve hacmi (ücretsiz sürümün sınırı)."""
+    import pandas as pd
+
+    cevap = requests.get(f"{COINGECKO}/coins/{cg_id}/market_chart",
+                         params={"vs_currency": "usd", "days": 365, "interval": "daily"}, headers=BASLIK, timeout=25)
+    cevap.raise_for_status()
+    v = cevap.json()
+    if not v.get("prices"):
+        raise VeriYok(cg_id)
+    tablo = pd.DataFrame({
+        "Close": [p[1] for p in v["prices"]],
+        "Volume": [h[1] for h in v.get("total_volumes", [])][:len(v["prices"])] or 0,
+    }, index=pd.to_datetime([p[0] for p in v["prices"]], unit="ms").normalize())
+    tablo = tablo[~tablo.index.duplicated(keep="last")]
+    return fiyat.tablodan_bilgi(cg_id, tablo)
+
+
+def _ayni_coin_mi(yahoo, cg):
+    """Yahoo'daki sembol aynı coin mi? Fiyat ve (varsa) 30 günlük ile 1 yıllık değişim tutmalı."""
+    if not (yahoo.get("fiyat") and cg.get("fiyat")) or abs(yahoo["fiyat"] / cg["fiyat"] - 1) > 0.08:
+        return False
+    for anahtar, cg_alani, pay in (("1a", "degisim_30g", 0.10), ("1y", "degisim_1y", 0.20)):
+        y = next((d["oran"] for d in yahoo["degisimler"] if d["anahtar"] == anahtar), None)
+        c = cg.get(cg_alani)
+        if y is not None and c is not None and abs((1 + y) / (1 + c) - 1) > pay:
+            return False
+    return True
+
+
+def gecmis(x):
+    """
+    Grafik ve dönemsel değişimler. Önce Yahoo ('SOL-USD' gibi; 10 yıla kadar geçmiş), Yahoo'nun
+    fiyatı CoinGecko'yla tutmuyorsa (aynı sembol başka coine ait olabilir) CoinGecko'nun son 365 günü.
+    """
+    yahoo = KRIPTO[x["slug"]]["yahoo"] if x.get("ozel") else f"{x['sembol']}-USD"
+    try:
+        b = fiyat.fiyat_bilgisi(yahoo, ham=True)
+    except Exception:
+        b = None
+    if b and (x.get("ozel") or _ayni_coin_mi(b, x.get("b") or {})):
+        return b
+    if x.get("ozel"):
+        return b
+    try:
+        return _cg_gecmis(x["slug"])
+    except Exception:
+        return None
+
+
+@sureli(24 * 3600)
+def _cg_ayrinti(cg_id):
+    cevap = requests.get(f"{COINGECKO}/coins/{cg_id}", params={
+        "localization": "false", "tickers": "false", "market_data": "false", "community_data": "false",
+        "developer_data": "false"}, headers=BASLIK, timeout=25)
+    cevap.raise_for_status()
+    return cevap.json()
+
+
+def _ilk_cumleler(metin, adet=2):
+    duz = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", (metin or "").replace("&nbsp;", " "))).strip()
+    cumleler = re.split(r"(?<=[.!?])\s+(?=[A-Z])", duz)
+    return " ".join(cumleler[:adet])[:600]
+
+
+def profil(x):
+    """
+    Elle profili olmayan coinin tanıtımı: CoinGecko açıklamasının ilk cümleleri (Türkçeye
+    çevrilir), türü, sitesi ve başlangıç yılı. Veritabanında 30 gün saklanır.
+    """
+    from piyasa.ceviri import adi_koruyarak_cevir, turkcelestir
+    from piyasa.veritabani import get_connection
+
+    cg_id = x["slug"]
+    with closing(get_connection()) as conn:
+        conn.execute("""CREATE TABLE IF NOT EXISTS kripto_profil (
+            cg_id TEXT PRIMARY KEY, ozet TEXT, ozet_en TEXT, tur TEXT, site TEXT, baslangic TEXT, guncelleme TEXT)""")
+        kayit = conn.execute("SELECT * FROM kripto_profil WHERE cg_id = ?", (cg_id,)).fetchone()
+        if kayit and kayit["ozet"] and kayit["guncelleme"] >= (datetime.now(UTC) - timedelta(days=30)).isoformat():
+            return dict(kayit)
+        try:
+            v = _cg_ayrinti(cg_id)
+        except Exception:
+            return dict(kayit) if kayit else None
+        kategoriler = v.get("categories") or []
+        tur = next((tr for en, tr in KATEGORILER if en in kategoriler), None) or _tahmini_tur(x.get("b") or {})
+        ozet_en = _ilk_cumleler((v.get("description") or {}).get("en"))
+        try:
+            ozet = turkcelestir(adi_koruyarak_cevir(ozet_en, x["ad"])) if ozet_en else None
+        except Exception:
+            ozet = None
+        site = next((s for s in (v.get("links") or {}).get("homepage", []) if s), None)
+        yeni = {"cg_id": cg_id, "ozet": ozet, "ozet_en": ozet_en or None, "tur": tur, "site": site,
+                "baslangic": v.get("genesis_date"), "guncelleme": datetime.now(UTC).isoformat()}
+        conn.execute("INSERT OR REPLACE INTO kripto_profil VALUES (:cg_id, :ozet, :ozet_en, :tur, :site, :baslangic, "
+                     ":guncelleme)", yeni)
+        conn.commit()
+    return yeni

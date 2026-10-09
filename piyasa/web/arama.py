@@ -137,11 +137,19 @@ def _dizin_kur():
             "metin": sade(f"{e['ad']} {EMTIA_ESANLAMLILARI.get(e['slug'], '')}"), "agirlik": 10_000,
         })
 
-    for k in KRIPTOLAR:
+    # Kripto paralar: elle profili olanlar ve hacmi yüksek diğerleri (CoinGecko listesi)
+    try:
+        from piyasa.kripto import piyasa as kripto_piyasa
+        kriptolar = kripto_piyasa.liste()
+    except Exception:
+        kriptolar = [{"slug": k["slug"], "ad": k["ad"], "sembol": k["sembol"], "tur": k["tur"], "ozel": True, "b": {}}
+                     for k in KRIPTOLAR]
+    for x in kriptolar:
         girdiler.append({
-            "tur": "Kripto", "etiket": f"{k['ad']} ({k['sembol']})", "alt": f"Kripto para · {k['tur']}",
-            "adres": f"/kripto/{k['slug']}", "kod": k["sembol"].lower(),
-            "metin": sade(f"{k['ad']} {k['sembol']} kripto"), "agirlik": 10_000,
+            "tur": "Kripto", "etiket": f"{x['ad']} ({x['sembol']})", "alt": f"Kripto para · {x['tur']}",
+            "adres": f"/kripto/{x['slug']}", "kod": x["sembol"].lower(),
+            "metin": sade(f"{x['ad']} {x['sembol']} kripto"),
+            "agirlik": 10_000 if x["ozel"] else 3_000,
         })
     return girdiler
 

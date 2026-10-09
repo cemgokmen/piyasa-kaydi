@@ -4,12 +4,12 @@ Kripto sayfaları: genel bakış (/kripto) ve her coinin profili (/kripto/<slug>
 
 from datetime import datetime
 
-from flask import Blueprint, abort, jsonify, render_template
+from flask import Blueprint, abort, jsonify, redirect, render_template, url_for
 
 from piyasa import fiyat
 from piyasa.emtia import haberler
 from piyasa.kripto import piyasa, sorgular
-from piyasa.kripto.tanimlar import GRUPLAR, KRIPTO, KRIPTOLAR
+from piyasa.kripto.tanimlar import GENEL_ETKENLER, GENEL_RISKLER, GRUPLAR, KRIPTO, KRIPTOLAR
 
 kripto = Blueprint("kripto", __name__)
 
@@ -19,11 +19,14 @@ def _kucuk_grafik(degerler, genislik=120, yukseklik=34):
     degerler = [v for v in degerler or [] if v is not None]
     if len(degerler) < 2:
         return None
+    if len(degerler) > 42:      # 7 günün saatlik verisi: yüzlerce satırda sayfa şişmesin
+        adim_ = len(degerler) / 42
+        degerler = [degerler[int(i * adim_)] for i in range(41)] + [degerler[-1]]
     az, cok = min(degerler), max(degerler)
     aralik = (cok - az) or 1
     adim = genislik / (len(degerler) - 1)
     noktalar = " ".join(
-        f"{i * adim:.1f},{(1 - (v - az) / aralik) * (yukseklik - 4) + 2:.1f}" for i, v in enumerate(degerler)
+        f"{i * adim:.0f},{(1 - (v - az) / aralik) * (yukseklik - 4) + 2:.0f}" for i, v in enumerate(degerler)
     )
     return {"noktalar": noktalar, "artis": degerler[-1] >= degerler[0]}
 
@@ -38,17 +41,41 @@ def _sirket_fiyatlari(ozetler):
     return ozetler
 
 
+def _coin(slug):
+    """
+    Sayfadaki coin: (k, b, x). k profil alanları (elle yazılmış ya da CoinGecko'dan), b piyasa verisi,
+    x listedeki kayıt. Bulunamazsa (None, None, None).
+    """
+    k = KRIPTO.get(slug)
+    if k:
+        b = piyasa.bilgi(slug)
+        return k, b, {"slug": slug, "ad": k["ad"], "sembol": k["sembol"], "tur": k["tur"], "ozel": True, "b": b or {}}
+    x = piyasa.dinamik(slug)
+    if not x:
+        return None, None, None
+    p = piyasa.profil(x) or {}
+    tur = p.get("tur") or x["tur"]
+    sira = x["b"].get("sira")
+    k = {
+        "slug": slug, "ad": x["ad"], "sembol": x["sembol"], "tur": tur, "dinamik": True,
+        "ozet": p.get("ozet") or (f"{x['ad']} ({x['sembol']}), piyasa değerine göre dünyada {sira}. sıradaki kripto para."
+                                  if sira else f"{x['ad']} ({x['sembol']}) bir kripto paradır."),
+        "kurulus": (p.get("baslangic") or "")[:4] or None, "site": p.get("site"),
+        "kurucu": None, "mekanizma": None, "arz": None, "ozellikler": [],
+        "etkenler": GENEL_ETKENLER, "riskler": GENEL_RISKLER,
+        "cot": None, "vadeli": None, "etfler": {}, "haber": f'"{x["ad"]}" kripto',
+    }
+    return k, x["b"], x
+
+
 @kripto.route("/kripto")
 def liste():
-    bilgiler = piyasa.toplu_bilgi()
     kartlar = []
-    for k in KRIPTOLAR:
-        b = bilgiler.get(k["slug"]) or dict.fromkeys(piyasa.ALANLAR)
-        kartlar.append({"k": k, "b": b, "grup": GRUPLAR.get(k["tur"], "Diğer"),
+    for x in piyasa.liste():
+        b = {**dict.fromkeys(piyasa.ALANLAR), **x["b"]}
+        kartlar.append({"k": x, "b": b, "grup": GRUPLAR.get(x["tur"], "Diğer"),
                         "grafik": _kucuk_grafik(b.get("hafta_serisi"))})
-    # Piyasa değerine göre; bilgisi alınamayanlar sona
-    kartlar.sort(key=lambda x: -(x["b"].get("piyasa_degeri") or 0))
-    gruplar = [g for g in dict.fromkeys(GRUPLAR.values()) if any(x["grup"] == g for x in kartlar)]
+    gruplar = [g for g in dict.fromkeys([*GRUPLAR.values(), "Diğer"]) if any(x["grup"] == g for x in kartlar)]
 
     return render_template(
         "kriptolar.html",
@@ -71,41 +98,44 @@ def liste():
 
 @kripto.route("/kripto/<slug>")
 def detay(slug):
-    k = KRIPTO.get(slug)
+    # Elle profili olan coinin CoinGecko adresi (/kripto/ripple) kendi kısa adresine gider
+    if slug in piyasa.KRIPTO_CG and piyasa.KRIPTO_CG[slug]["slug"] != slug:
+        return redirect(url_for("kripto.detay", slug=piyasa.KRIPTO_CG[slug]["slug"]), 301)
+    k, b, x = _coin(slug)
     if k is None:
         abort(404)
-    b = piyasa.bilgi(slug)
     kur = piyasa.dolar_tl()
-    sirketler = sorgular.sirket_ozetleri(slug)
+    ozel = not k.get("dinamik")
+    sirketler = sorgular.sirket_ozetleri(slug) if ozel else []
+    benzer = [y for y in piyasa.liste() if y["slug"] != slug][:24]
     return render_template(
         "kripto.html",
         aktif="kripto",
         k=k,
         b=b,
         kur=kur,
-        tl_fiyat=(b["fiyat"] * kur) if b and b["fiyat"] and kur else None,
+        tl_fiyat=(b["fiyat"] * kur) if b and b.get("fiyat") and kur else None,
         cot=sorgular.cot(slug) if k["cot"] else None,
-        etf=sorgular.etf_kurumlari(slug),
-        vadeli=piyasa.vadeli(slug),
+        etf=sorgular.etf_kurumlari(slug) if ozel else None,
+        vadeli=piyasa.vadeli(slug) if ozel else None,
         yarilanma=piyasa.yarilanma() if slug == "bitcoin" else None,
         korku=piyasa.korku_endeksi() if slug in ("bitcoin", "ethereum") else None,
-        islemler=sorgular.siyasetci_islemleri(slug),
-        siyaset_ozet=sorgular.siyasetci_ozeti(slug),
+        islemler=sorgular.siyasetci_islemleri(slug) if ozel else [],
+        siyaset_ozet=sorgular.siyasetci_ozeti(slug) if ozel else {},
         sirketler=_sirket_fiyatlari(sirketler) if sirketler else [],
         sirket_islemleri=sorgular.sirket_islemleri(slug, limit=40) if sirketler else [],
         haberler=haberler.haberler(k["haber"], 12),
-        diger=[x for x in KRIPTOLAR if x["slug"] != slug],
+        diger=benzer,
     )
 
 
 @kripto.route("/api/kripto/<slug>/fiyat")
 def fiyat_api(slug):
-    k = KRIPTO.get(slug)
-    bilgi = fiyat.fiyat_bilgisi(k["yahoo"], ham=True) if k else None
+    k, b, x = _coin(slug)
+    bilgi = piyasa.gecmis(x) if k else None
     if bilgi is None:
         return jsonify({"hata": "Bu kripto para için güncel fiyat bulunamadı."}), 404
     # Kriptoda "gün" yoktur: ilk kutu gerçek son 24 saatlik değişimdir (CoinGecko)
-    b = piyasa.bilgi(slug)
     degisimler = [
         {**d, "etiket": "24 saat", "oran": b["degisim_24s"] if b and b.get("degisim_24s") is not None else d["oran"]}
         if d["anahtar"] == "1g" else d
@@ -116,10 +146,9 @@ def fiyat_api(slug):
 
 @kripto.route("/api/kripto/<slug>/anlik")
 def anlik_api(slug):
-    k = KRIPTO.get(slug)
+    k, b, x = _coin(slug)
     if k is None:
         return jsonify({"hata": "Anlık fiyat alınamadı."}), 404
-    b = piyasa.bilgi(slug)
     if b and b.get("fiyat") and b.get("degisim_24s") is not None:
         try:
             zaman = int(datetime.fromisoformat(b["guncelleme"].replace("Z", "+00:00")).timestamp())
@@ -130,7 +159,7 @@ def anlik_api(slug):
             "degisim": b["degisim_24s"], "zaman": zaman, "durum": "REGULAR",
             "durum_etiket": "7 gün 24 saat işlem görür", "gecikme": 0, "seans_disi": None,
         })
-    bilgi = fiyat.anlik_fiyat(k["yahoo"], ham=True)
+    bilgi = fiyat.anlik_fiyat(KRIPTO[slug]["yahoo"], ham=True) if slug in KRIPTO else None
     if bilgi is None:
         return jsonify({"hata": "Anlık fiyat alınamadı."}), 404
     return jsonify(bilgi)

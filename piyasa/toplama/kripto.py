@@ -16,6 +16,7 @@ iki grup ayrı tutulur:
 """
 
 import sys
+import time
 
 import requests
 
@@ -54,6 +55,22 @@ def cot_indir(conn, hafta=160):
     return eklenen
 
 
+def profilleri_doldur(en_fazla=60, bekleme=7):
+    """
+    Elle profili olmayan coinlerin Türkçe tanıtımını önceden hazırlar (CoinGecko'nun ücretsiz
+    sürümü dakikada birkaç isteğe izin verdiği için yavaş ve sınırlı).
+    """
+    from piyasa.kripto import piyasa as kripto_piyasa
+    eksik = [x for x in kripto_piyasa.liste() if not x["ozel"] and x["slug"] not in kripto_piyasa.kayitli_turler()]
+    for x in eksik[:en_fazla]:
+        try:
+            kripto_piyasa.profil(x)
+        except Exception as hata:
+            print(f"  {x['slug']} profili alınamadı: {hata}", flush=True)
+        time.sleep(bekleme)
+    print(f"  Kripto profili: {min(len(eksik), en_fazla)} hazırlandı, {max(len(eksik) - en_fazla, 0)} kaldı", flush=True)
+
+
 def main():
     init_db()
     argumanlar = sys.argv[1:]
@@ -68,6 +85,7 @@ def main():
         cot_indir(conn)
     finally:
         conn.close()
+    profilleri_doldur()
 
 
 if __name__ == "__main__":

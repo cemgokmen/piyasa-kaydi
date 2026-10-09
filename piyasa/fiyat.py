@@ -124,7 +124,15 @@ def _indir(kod):
 
     tablo = gecmis[["Close", "Volume"]].dropna(subset=["Close"])
     tablo.index = tablo.index.tz_localize(None)
-    if len(tablo) < 2:
+    return tablodan_bilgi(kod, tablo)
+
+
+def tablodan_bilgi(kod, tablo):
+    """
+    Günlük 'Close' ve 'Volume' sütunlu tablodan fiyat bilgisi: son fiyat, dönemsel değişimler,
+    hacim ve grafik serileri. Yahoo dışındaki kaynaklar (CoinGecko) da bunu kullanır.
+    """
+    if tablo is None or len(tablo) < 2:
         return None
     kapanis = tablo["Close"]
 

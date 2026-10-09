@@ -55,7 +55,7 @@
   {% if vadeli or cot or korku %}<a href="#beklenti">Piyasa beklentisi</a>{% endif %}
   {% if etf %}<a href="#kurumlar">Kurumlar <span class="sayac">{{ etf.kurumlar|length }}</span></a>{% endif %}
   {% if sirketler %}<a href="#sirketler">{{ k.ad }} şirketleri</a>{% endif %}
-  <a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ islemler|length }}</span></a>
+  {% if not k.dinamik %}<a href="#siyasetciler">Siyasetçiler <span class="sayac">{{ islemler|length }}</span></a>{% endif %}
   <a href="#etkenler">Fiyatı neler etkiler?</a>
   <a href="#haberler">Haberler <span class="sayac">{{ haberler|length }}</span></a>
 </nav>
@@ -64,19 +64,22 @@
   <div class="panel kripto-profil">
     <h2>{{ k.ad }} nedir?</h2>
     <p class="kripto-ozet">{{ k.ozet }}</p>
+    {% set site = (b.site if b and b.site) or k.site %}
     <dl class="kripto-kunye">
-      <div><dt>Başlangıç</dt><dd>{{ k.kurulus }}</dd></div>
-      <div><dt>Kurucu</dt><dd>{{ k.kurucu }}</dd></div>
-      <div class="kunye-genis"><dt>İşlemler nasıl onaylanır?</dt><dd>{{ k.mekanizma }}</dd></div>
-      <div class="kunye-genis"><dt>Kaç tane var?</dt><dd>{{ k.arz }}</dd></div>
-      {% if b and (b.site or b.teknik_belge) %}
+      <div><dt>Türü</dt><dd>{{ k.tur }}</dd></div>
+      {% if k.kurulus %}<div><dt>Başlangıç</dt><dd>{{ k.kurulus }}</dd></div>{% endif %}
+      {% if k.kurucu %}<div><dt>Kurucu</dt><dd>{{ k.kurucu }}</dd></div>{% endif %}
+      {% if k.mekanizma %}<div class="kunye-genis"><dt>İşlemler nasıl onaylanır?</dt><dd>{{ k.mekanizma }}</dd></div>{% endif %}
+      {% if k.arz %}<div class="kunye-genis"><dt>Kaç tane var?</dt><dd>{{ k.arz }}</dd></div>{% endif %}
+      {% if site or (b and b.teknik_belge) %}
       <div><dt>Bağlantılar</dt><dd>
-        {% if b.site %}<a href="{{ b.site }}" target="_blank" rel="noopener">Resmi site</a>{% endif %}
-        {% if b.site and b.teknik_belge %} · {% endif %}
-        {% if b.teknik_belge %}<a href="{{ b.teknik_belge }}" target="_blank" rel="noopener">Teknik belge (whitepaper)</a>{% endif %}
+        {% if site %}<a href="{{ site }}" target="_blank" rel="noopener">Resmi site</a>{% endif %}
+        {% if site and b and b.teknik_belge %} · {% endif %}
+        {% if b and b.teknik_belge %}<a href="{{ b.teknik_belge }}" target="_blank" rel="noopener">Teknik belge (whitepaper)</a>{% endif %}
       </dd></div>
       {% endif %}
     </dl>
+    {% if k.dinamik %}<p class="temel-not">Tanıtım CoinGecko'daki proje açıklamasından Türkçeye çevrilmiştir.</p>{% endif %}
     {% if k.ozellikler %}
     <h3>Bilinmesi gerekenler</h3>
     <ul class="kripto-liste">{% for m in k.ozellikler %}<li>{{ m }}</li>{% endfor %}</ul>
@@ -242,6 +245,7 @@
 </section>
 {% endif %}
 
+{% if not k.dinamik %}
 <section class="bolum" id="siyasetciler">
   <header class="bolum-ust"><div>
     <h2>Siyasetçilerin {{ k.ad }} işlemleri</h2>
@@ -263,6 +267,7 @@
   </div>
   {% endif %}
 </section>
+{% endif %}
 
 <section class="bolum" id="etkenler">
   <div class="izgara-2">
@@ -293,7 +298,8 @@
 </section>
 
 <section class="bolum">
-  <header class="bolum-ust"><div><h2>Diğer kripto paralar</h2></div></header>
+  <header class="bolum-ust"><div><h2>Diğer kripto paralar</h2><p class="bolum-not">Piyasa değerine göre</p></div>
+    <a class="bolum-link" href="{{ url_for('kripto.liste') }}#fiyatlar">Bütün liste →</a></header>
   <nav class="bolum-menu">
     {% for x in diger %}<a href="{{ url_for('kripto.detay', slug=x.slug) }}">{{ x.ad }} <span class="soluk">{{ x.sembol }}</span></a>{% endfor %}
   </nav>

@@ -13,8 +13,7 @@
     <input type="hidden" name="donem" value="365">
     <button class="dugme dugme-ana" type="submit">Ara</button>
   </form>
-  {% if guncel %}<p class="guncel"><span class="canli"></span>Son bildirim {{ guncel|uzun_tarih }} ·
-    <a href="{{ url_for('analiz.gunluk_ozet') }}">Günün özetini oku →</a></p>{% endif %}
+  <p class="guncel"><a href="{{ url_for('analiz.gunluk_ozet') }}">Günün özetini oku →</a></p>
 </section>
 
 

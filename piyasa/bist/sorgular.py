@@ -14,6 +14,7 @@ from contextlib import closing
 from datetime import date, timedelta
 
 from piyasa.bicim import tr_baslik, tr_cumle
+from piyasa.bist.sektorler import sektor_adi
 from piyasa.veritabani import get_connection
 
 KAP_BILDIRIM = "https://www.kap.org.tr/tr/Bildirim/{indeks}"
@@ -48,7 +49,7 @@ LISTELER = {"tum": "Bütün hisseler", "xu100": "BIST 100", "xu030": "BIST 30"}
 
 
 def _sektor_adi(ad):
-    return tr_cumle(ad) if ad else None
+    return sektor_adi(ad)
 
 
 def sirketler(liste="tum", sektor=None):
