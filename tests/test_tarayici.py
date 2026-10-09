@@ -520,3 +520,32 @@ def test_son_aramalar(tarayici, sunucu):
     # Geçmiş temizlenebilir
     tarayici.find_element(By.CSS_SELECTOR, ".ust-arama .oneri-temizle").click()
     assert tarayici.execute_script("return localStorage.getItem('son_aramalar')") is None
+
+
+def test_telefon_alt_menusu(tarayici, sunucu):
+    """Alt menü masaüstü menüsüyle aynı: Piyasalar ve Diğer aşağıdan açılan panel açar."""
+    tarayici.set_window_size(500, 900)
+    try:
+        tarayici.get(sunucu + "/")
+        alt = tarayici.find_element(By.CSS_SELECTOR, ".alt-gezinti")
+        etiketler = [o.text for o in alt.find_elements(By.CSS_SELECTOR, "a, button")]
+        assert etiketler == ["Ana sayfa", "Piyasalar", "Sinyaller", "Karşılaştır", "Diğer"]
+        piyasalar = alt.find_element(By.CSS_SELECTOR, "[data-alt-panel='alt-piyasalar']")
+        panel = tarayici.find_element(By.ID, "alt-piyasalar")
+        assert not panel.is_displayed()
+        piyasalar.click()
+        bekle(tarayici, lambda t: panel.is_displayed())        # kısa açılış animasyonu
+        assert piyasalar.get_attribute("aria-expanded") == "true"
+        # Dışına dokununca kapanır
+        tarayici.find_element(By.CSS_SELECTOR, "[data-alt-panel-kapat]").click()
+        bekle(tarayici, lambda t: not panel.is_displayed())
+        # Diğer → Canlı akış
+        alt.find_element(By.CSS_SELECTOR, "[data-alt-panel='alt-diger']").click()
+        diger = tarayici.find_element(By.ID, "alt-diger")
+        bekle(tarayici, lambda t: diger.is_displayed())
+        diger.find_element(By.PARTIAL_LINK_TEXT, "Canlı akış").click()
+        bekle(tarayici, EC.url_contains("/canli"))
+        # Bulunulan bölüm alt menüde işaretli
+        assert tarayici.find_element(By.CSS_SELECTOR, "[data-alt-panel='alt-diger']").get_attribute("aria-current") == "page"
+    finally:
+        tarayici.set_window_size(1366, 1000)

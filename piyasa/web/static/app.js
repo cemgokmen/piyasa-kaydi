@@ -919,3 +919,38 @@ if (canliAkis) {
   // Sekmeye geri dönülünce beklemeden yenile
   document.addEventListener("visibilitychange", () => { if (!document.hidden) tazele(); });
 }
+
+// ---------------------------------------------------------------------------
+// Telefon alt menüsü: "Piyasalar" ve "Diğer" aşağıdan açılan panel açar
+// (masaüstündeki açılır menünün karşılığı). Dışına dokununca ya da Esc ile kapanır.
+// ---------------------------------------------------------------------------
+
+(function () {
+  const ort = document.querySelector("[data-alt-panel-kapat]");
+  const dugmeler = document.querySelectorAll("[data-alt-panel]");
+  if (!ort || !dugmeler.length) return;
+  const kapat = function () {
+    dugmeler.forEach(function (d) {
+      d.setAttribute("aria-expanded", "false");
+      document.getElementById(d.dataset.altPanel).hidden = true;
+    });
+    ort.hidden = true;
+  };
+  dugmeler.forEach(function (dugme) {
+    dugme.addEventListener("click", function () {
+      const panel = document.getElementById(dugme.dataset.altPanel);
+      const acik = !panel.hidden;
+      kapat();
+      if (acik) return;
+      panel.hidden = false;
+      ort.hidden = false;
+      dugme.setAttribute("aria-expanded", "true");
+      const ilk = panel.querySelector("a");
+      if (ilk) ilk.focus({ preventScroll: true });
+    });
+  });
+  ort.addEventListener("click", kapat);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") kapat(); });
+  // Geri tuşuyla sayfaya dönülünce panel açık kalmasın
+  window.addEventListener("pageshow", (e) => { if (e.persisted) kapat(); });
+})();

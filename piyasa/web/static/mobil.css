@@ -47,7 +47,7 @@ main {
   bottom: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   height: calc(var(--alt-gezinme) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: color-mix(in srgb, var(--kart) 92%, transparent);
@@ -55,16 +55,21 @@ main {
   border-top: 1px solid var(--cizgi);
 }
 
-.alt-gezinti a {
+.alt-gezinti a, .alt-gezinti button {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--yazi-3);
+  font: inherit;
   font-size: 10.5px;
   font-weight: 500;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .alt-gezinti svg {
@@ -77,8 +82,29 @@ main {
   stroke-linejoin: round;
 }
 
-.alt-gezinti a[aria-current="page"] { color: var(--vurgu); }
-.alt-gezinti a[aria-current="page"] svg { stroke-width: 2.2; }
+.alt-gezinti [aria-current="page"], .alt-gezinti [aria-expanded="true"] { color: var(--vurgu); }
+.alt-gezinti [aria-current="page"] svg, .alt-gezinti [aria-expanded="true"] svg { stroke-width: 2.2; }
+.alt-gezinti svg path[d^="M5 12h"] { stroke-width: 3.2; }      /* "Diğer": üç nokta */
+
+/* Aşağıdan açılan panel (Piyasalar, Diğer): masaüstündeki açılır menünün telefon karşılığı */
+.alt-panel-ort { position: fixed; inset: 0; z-index: 38; background: rgba(5, 10, 20, .45); }
+.alt-panel {
+  position: fixed; left: 8px; right: 8px; z-index: 39;
+  bottom: calc(var(--alt-gezinme) + env(safe-area-inset-bottom) + 8px);
+  display: flex; flex-direction: column; gap: 2px; padding: 10px;
+  background: var(--kart); border: 1px solid var(--cizgi); border-radius: 16px;
+  box-shadow: 0 -8px 32px rgba(5, 10, 20, .25);
+  animation: alt-panel-ac .18s ease-out;
+}
+@keyframes alt-panel-ac { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .alt-panel { animation: none; } }
+.alt-panel-baslik { margin: 2px 8px 6px; color: var(--yazi-3); font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
+.alt-panel a { display: flex; flex-direction: column; gap: 2px; padding: 11px 12px; border-radius: 10px; color: var(--yazi); text-decoration: none; }
+.alt-panel a:active, .alt-panel a:hover { background: var(--cizgi-2); }
+.alt-panel a[aria-current="page"] { background: var(--vurgu-yumusak); }
+.alt-panel a b { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; }
+.alt-panel a span { color: var(--yazi-3); font-size: 12.5px; }
+.alt-panel a b .canli-nokta { width: 7px; height: 7px; }
 
 /* ---------- Başlıklar ve bölümler ---------- */
 
