@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% from "_bilesenler.html" import parti_rozeti, islem_rozeti, yuklu_kartlar %}
 {% block baslik %}Piyasa Kaydı: kim aldı, kim sattı?{% endblock %}
+{% block yapisal %}
+  {# Google'a sitenin adını bildirir: arama sonucunda "Piyasa Kaydı" adı ve logosu görünsün #}
+  {% set kok = url_for('site.anasayfa', _external=True) %}
+  <script type="application/ld+json">{{ [
+    {"@context": "https://schema.org", "@type": "WebSite", "name": "Piyasa Kaydı",
+     "alternateName": ["Piyasa Kaydi", "piyasakaydi.com"], "url": kok, "inLanguage": "tr"},
+    {"@context": "https://schema.org", "@type": "Organization", "name": "Piyasa Kaydı", "url": kok,
+     "logo": url_for('static', filename='logo.png', _external=True, v=None)}
+  ]|tojson }}</script>
+{% endblock %}
 
 {% block icerik %}
 <section class="giris">

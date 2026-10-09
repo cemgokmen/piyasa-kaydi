@@ -118,3 +118,12 @@ def test_bist_fiyat_saatleri_ve_birlestirme():
     d = [(date.today() - timedelta(days=i)).isoformat() for i in (3, 2, 1, 0)]
     s = piyasa._birlestir({"t": d[:3], "c": [1.0, 2.0, 3.0]}, {"t": d[2:], "c": [3.5, 4.0]})
     assert s == {"t": d, "c": [1.0, 2.0, 3.5, 4.0]}
+
+
+def test_arama_motoru_etiketleri(istemci):
+    html = istemci.get("/", base_url="https://piyasakaydi.com").get_data(as_text=True)
+    assert '<link rel="canonical" href="https://piyasakaydi.com/">' in html
+    assert '"@type": "WebSite"' in html and "Piyasa Kaydi" in html and "/static/logo.png" in html
+    # Süzgeçli adreslerin resmi adresi süzgeçsiz sayfadır
+    html = istemci.get("/bist?liste=xu100", base_url="https://piyasakaydi.com").get_data(as_text=True)
+    assert '<link rel="canonical" href="https://piyasakaydi.com/bist">' in html

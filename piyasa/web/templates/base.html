@@ -4,19 +4,27 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block baslik %}Piyasa Kaydı{% endblock %}</title>
-  {% set sayfa_aciklamasi %}{% block aciklama %}ABD'de siyasetçilerin, şirket yöneticilerinin ve büyük fonların kamuya bildirdiği hisse işlemleri. Resmi kayıtlardan derlendi, Türkçeleştirildi.{% endblock %}{% endset %}
+  {% set sayfa_aciklamasi %}{% block aciklama %}Piyasa Kaydı: Borsa İstanbul'da KAP'a, ABD'de SEC'e ve Kongre'ye bildirilen hisse işlemleri; yöneticiler, siyasetçiler ve büyük fonlar ne aldı, ne sattı? Canlı akış, BIST, kripto ve emtia fiyatları.{% endblock %}{% endset %}
   <meta name="description" content="{{ sayfa_aciklamasi|trim }}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Piyasa Kaydı">
   <meta property="og:locale" content="tr_TR">
   <meta property="og:title" content="{{ self.baslik()|trim }}">
   <meta property="og:description" content="{{ sayfa_aciklamasi|trim }}">
+  {# Sayfanın tek resmi adresi: sorgu parametreli kopyalar (süzgeç, sayfa no) arama motorunda ayrı sayılmasın #}
+  {% set resmi_adres = kanonik or request.base_url %}
+  <link rel="canonical" href="{{ resmi_adres }}">
+  <meta property="og:url" content="{{ resmi_adres }}">
+  <meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True, v=None) }}">
   <meta name="twitter:card" content="summary">
+  {% block yapisal %}{% endblock %}
   <script>
     // Tema seçimi sayfa çizilmeden uygulanır; yoksa açılışta renkler bir an değişir
     try { var t = localStorage.getItem("tema"); if (t) document.documentElement.dataset.tema = t; } catch (e) {}
   </script>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231B4DFF'/%3E%3Cpath d='M7 22l6-7 5 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="{{ url_for('static', filename='logo.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png" sizes="512x512">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
