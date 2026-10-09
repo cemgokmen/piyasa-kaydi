@@ -159,6 +159,38 @@ def sirket_kisa_ad(ad):
 _TR_KUCUK = str.maketrans("Iİ", "ıi")
 
 
+_TR_BUYUK = str.maketrans("ıi", "Iİ")
+# Unvanlardaki kısaltmalar büyük kalır
+_BUYUK_KALANLAR = {"A.Ş.", "A.Ş", "AŞ", "A.O.", "T.A.O.", "LTD.", "ŞTİ.", "T.A.Ş.", "N.V.", "S.A.", "LLC", "INC.",
+                   "PLC", "AG", "GMBH", "T.A.Ş", "LTD", "ŞTİ"}
+_KUCUK_KALANLAR = {"VE": "ve", "İLE": "ile"}
+_SESLI = set("AEIİOÖUÜaeıioöuü")
+
+
+def tr_baslik(metin):
+    """'GÜRKAN GENÇLER' -> 'Gürkan Gençler'; 'ŞAHİN HOLDİNG A.Ş.' -> 'Şahin Holding A.Ş.'"""
+    if not metin or not metin.isupper():
+        return metin
+    kelimeler = []
+    for i, k in enumerate(metin.split()):
+        if k.upper() in _BUYUK_KALANLAR or (len(k) <= 3 and not set(k) & _SESLI):    # 'BG', 'TAV' değil
+            kelimeler.append(k)
+        elif i and k in _KUCUK_KALANLAR:
+            kelimeler.append(_KUCUK_KALANLAR[k])
+        else:
+            kucuk = tr_kucuk(k)
+            kelimeler.append(kucuk[:1].translate(_TR_BUYUK).upper() + kucuk[1:])
+    return " ".join(kelimeler)
+
+
+def tr_cumle(metin):
+    """'YÖNETİM KURULU BAŞKANI' -> 'Yönetim kurulu başkanı'"""
+    if not metin or not metin.isupper():
+        return metin
+    kucuk = tr_kucuk(metin.strip())
+    return kucuk[:1].translate(_TR_BUYUK).upper() + kucuk[1:]
+
+
 def tr_kucuk(metin):
     """Türkçe küçük harf: 'IĞDIR' -> 'ığdır' (str.lower 'I'yı 'i' yapar)."""
     return (metin or "").translate(_TR_KUCUK).lower()

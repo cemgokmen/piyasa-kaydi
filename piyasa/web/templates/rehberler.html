@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block baslik %}Rehberler: Form 4, 13F, KAP bildirimleri sade dille · Piyasa Kaydı{% endblock %}
+{% block aciklama %}Finans bilmeyenler için kısa rehberler: Form 4 nedir, 13F nasıl okunur, ABD'li siyasetçilerin hisse işlemleri, KAP pay alım satım bildirimi, pay geri alımı ve hisse oranları.{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1>Rehberler</h1>
+    <p class="sayfa-not">Sitedeki bildirimlerin ve kavramların sade anlatımı. Finans bilgisi gerekmez.</p>
+  </div>
+</header>
+<div class="rehber-izgara">
+  {% for r in rehberler %}
+  <a class="rehber-kart" href="{{ url_for('seo.rehber', slug=r.slug) }}">
+    <b>{{ r.baslik }}</b>
+    <span>{{ r.ozet }}</span>
+    <span class="kaynak-kart-link">Oku →</span>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

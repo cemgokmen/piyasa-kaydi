@@ -286,6 +286,62 @@ def init_db():
         )
     """)
 
+    # --- Borsa İstanbul ve KAP ---
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS bist_sirket (
+            kod        TEXT PRIMARY KEY,
+            unvan      TEXT,
+            mkk_oid    TEXT,
+            xu100      INTEGER DEFAULT 0,
+            xu030      INTEGER DEFAULT 0,
+            guncelleme TEXT
+        )
+    """)
+    # KAP bildirimleri: pay alım satım, geri alım ve (BIST 100 için) özel durum açıklamaları
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS kap_bildirim (
+            indeks        INTEGER PRIMARY KEY,   -- KAP bildirim numarası
+            kod           TEXT,                  -- ilgili şirketin borsa kodu
+            gonderen      TEXT,                  -- bildirimi gönderen kurum
+            baslik        TEXT,
+            ozet          TEXT,
+            yayin         TEXT,                  -- 'YYYY-MM-DD HH:MM:SS'
+            tur           TEXT,                  -- pay | geri_alim | ozel
+            metin         TEXT,                  -- açıklama metni (pay ve geri alım için)
+            detay_alindi  INTEGER DEFAULT 0
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS kap_pay_islem (
+            indeks       INTEGER PRIMARY KEY,
+            kod          TEXT,
+            kisi         TEXT,                   -- işlemi yapan kişi, şirket ya da fon kurucusu
+            kisi_turu    TEXT,                   -- kisi | sirket | fon
+            islem        TEXT,                   -- buy | sell | NULL (ayrıntı ekte)
+            islem_tarihi TEXT,
+            nominal      REAL,                   -- işleme konu payların nominal tutarı (1 TL nominal = 1 pay)
+            fiyat        REAL,                   -- ortalama ya da aralığın ortası
+            fiyat_alt    REAL,
+            fiyat_ust    REAL,
+            tutar        REAL,                   -- nominal × fiyat, TL
+            oran_sonra   REAL,                   -- işlemden sonraki sermaye payı, %
+            gorev        TEXT                    -- bildirimdeki görevi (yönetim kurulu üyesi, genel müdür…)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS kap_geri_alim (
+            kod          TEXT NOT NULL,
+            islem_tarihi TEXT NOT NULL,
+            nominal      REAL NOT NULL,
+            oran         REAL,                   -- sermayeye oranı, %
+            fiyat        REAL,
+            indeks       INTEGER,
+            PRIMARY KEY (kod, islem_tarihi, nominal, fiyat)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_kap_kod ON kap_bildirim(kod, yayin)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_kap_pay_kod ON kap_pay_islem(kod, islem_tarihi)")
+
     # --- Kripto ---
     # Kongre üyelerinin kripto para ve kripto fonu (ETF) işlemleri. Hisse analizlerine
     # karışmasın diye transactions tablosundan ayrı tutulur.
@@ -326,6 +382,8 @@ def init_db():
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_kripto_coin ON kripto_islem(coin, transaction_date)")
 
+    sutunlari_tamamla(conn, "kap_pay_islem", [("gorev", "TEXT")])
+    sutunlari_tamamla(conn, "bist_sirket", [("sehir", "TEXT")])
     sutunlari_tamamla(conn, "yurutme_varlik", [("sirket", "TEXT")])
     sutunlari_tamamla(conn, "yurutme_islem", [("sirket", "TEXT")])
     sutunlari_tamamla(conn, "sirket_profili", [("kurulus", "INTEGER")])

@@ -41,6 +41,7 @@ from piyasa.web.sorgular.ortak import (  # noqa: F401
     KAYNAKLAR,
     MECLISLER,
     OZET_SUTUNLARI,
+    ROLLER,
     SAYFA_BOYUTU,
     SIRALAMALAR,
     SIYASET_KAYNAKLARI,

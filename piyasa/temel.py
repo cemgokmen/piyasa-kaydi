@@ -13,7 +13,7 @@ from datetime import UTC, date, datetime
 import yfinance as yf
 
 from piyasa import fiyat as fiyat_servisi
-from piyasa.bicim import AYLAR, ondalik, para, uzun_tarih, yuzde
+from piyasa.bicim import AYLAR, PARA_BIRIMLERI, ondalik, para, uzun_tarih, yuzde
 from piyasa.onbellek import sureli
 
 ONBELLEK_SURESI = 6 * 3600
@@ -139,6 +139,7 @@ def _aralik_52(bilgi, son_fiyat):
 
 
 def _analist(bilgi, son_fiyat):
+    """Analist hedefleri; 'simge' fiyatın para birimidir ($, ₺...)."""
     hedef = _sayi(bilgi.get("targetMeanPrice"))
     adet = bilgi.get("numberOfAnalystOpinions")
     if not hedef or not adet:
@@ -150,6 +151,7 @@ def _analist(bilgi, son_fiyat):
         "yuksek": ondalik(_sayi(bilgi.get("targetHighPrice")), 2),
         "potansiyel": hedef / son_fiyat - 1 if son_fiyat else None,
         "oneri": oneri, "ton": ton, "adet": adet,
+        "simge": PARA_BIRIMLERI.get(bilgi.get("currency") or "USD", bilgi.get("currency") or "$"),
     }
 
 
@@ -178,12 +180,16 @@ def _hisse(bilgi, gelir, bilanco, nakit, takvim):
     borc = _sayi(bilgi.get("totalDebt"))
 
     pe = _sayi(bilgi.get("trailingPE"))
+    # Zarar kararı net kardan verilir: farklı para biriminde raporlayan şirketlerde (THY gibi)
+    # Yahoo'nun hisse başına kar rakamı net karla çelişebiliyor
+    net = _sayi(bilgi.get("netIncomeToCommon"))
+    zararda = net < 0 if net is not None else (_sayi(bilgi.get("trailingEps")) or 0) < 0
     # Bilanço başka para birimindeyse Yahoo'nun firma değeri, PD/DD ve fiyat/satış
     # oranları iki para birimini karıştırıyor: gösterilmez
     tek_para = birim == pb
     ozet = [k for k in (
         {"etiket": "Piyasa değeri", "deger": para(_sayi(bilgi.get("marketCap")), pb)},
-        {"etiket": "F/K", "deger": _kat(pe) or ("Zararda" if (_sayi(bilgi.get("trailingEps")) or 0) < 0 else None),
+        {"etiket": "F/K", "deger": _kat(pe) or ("Zararda" if zararda else None),
          "alt": "son 12 aylık kara göre"},
         {"etiket": "Net kar marjı", "deger": _oran(bilgi.get("profitMargins")), "alt": "son 12 ay"},
         {"etiket": "Temettü verimi", "deger": f"%{ondalik(temettu * 100, 2)}" if temettu else "Dağıtmıyor",
@@ -349,9 +355,12 @@ def _temel(kod):
     return sonuc
 
 
-def temel_bilgiler(ticker):
-    """Şirketin rakamları; alınamazsa None. Hata önbelleğe yazılmaz, sonraki istekte yeniden denenir."""
-    kod = fiyat_servisi.yahoo_kodu(ticker)
+def temel_bilgiler(ticker, ham=False):
+    """
+    Şirketin rakamları; alınamazsa None. Hata önbelleğe yazılmaz, sonraki istekte yeniden denenir.
+    ham=True: kod olduğu gibi kullanılır (Borsa İstanbul: 'THYAO.IS').
+    """
+    kod = ticker if ham else fiyat_servisi.yahoo_kodu(ticker)
     if not kod:
         return None
     try:

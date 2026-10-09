@@ -9,6 +9,7 @@ from piyasa.bicim import (
     kisa_tutar,
     ne_zaman,
     ondalik,
+    para,
     sayi,
     sirket_gorunen_ad,
     unvan,
@@ -22,6 +23,7 @@ def sablonlara_kaydet(app):
     """Süzgeçleri ve ortak değişkenleri Flask uygulamasına tanıtır."""
     app.add_template_filter(sayi, "sayi")
     app.add_template_filter(kisa_tutar, "tutar")
+    app.add_template_filter(lambda n: para(n, "TRY"), "tl")
     app.add_template_filter(uzun_tarih, "uzun_tarih")
     app.add_template_filter(kisa_tarih, "kisa_tarih")
     app.add_template_filter(yuzde, "yuzde")

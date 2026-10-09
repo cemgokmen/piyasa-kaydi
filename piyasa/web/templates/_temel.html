@@ -7,11 +7,11 @@
 
   {% if t.analist %}
   <p class="analist-ozet">
-    <b>{{ t.analist.adet }} analistin</b> ortalama hedef fiyatı <b>{{ t.analist.hedef }} $</b>
+    <b>{{ t.analist.adet }} analistin</b> ortalama hedef fiyatı <b>{{ t.analist.hedef }} {{ t.analist.simge }}</b>
     {% if t.analist.potansiyel is not none %}— bugünkü fiyattan
       <b class="{{ 'tutar-buy' if t.analist.potansiyel > 0 else 'tutar-sell' }}">%{{ ((t.analist.potansiyel|abs) * 100)|round(1)|string|replace('.', ',') }} {{ 'yukarıda' if t.analist.potansiyel > 0 else 'aşağıda' }}</b>{% endif %}.
     {% if t.analist.oneri %}Genel görüş: <b class="oneri-{{ t.analist.ton }}">{{ t.analist.oneri }}</b>.{% endif %}
-    <span class="soluk">Hedefler {{ t.analist.dusuk }} $ ile {{ t.analist.yuksek }} $ arasında.</span>
+    <span class="soluk">Hedefler {{ t.analist.dusuk }} {{ t.analist.simge }} ile {{ t.analist.yuksek }} {{ t.analist.simge }} arasında.</span>
   </p>
   {% endif %}
   <dl class="temel-ozet">

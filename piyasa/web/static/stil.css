@@ -1044,7 +1044,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 
 .kaynak-kartlari {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 36px;
 }
@@ -1162,7 +1162,7 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .secim select { min-width: 0; cursor: pointer; }
 
 @media (max-width: 1180px) and (min-width: 861px) {
-  .kaynak-kartlari { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kaynak-kartlari { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 860px) {
   .kaynak-kartlari { grid-template-columns: minmax(0, 1fr); }
@@ -2185,3 +2185,19 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
   .ana-menu a.menu-ana { display: none; }
   .ust-arama { flex: 1 1 170px; min-width: 150px; }
 }
+
+/* Borsa İstanbul */
+.bist-hucre { min-width: 220px; }
+.bist-hucre .etiket { margin-left: 4px; }
+.bist-tablosu .kucuk-grafik { width: 100px; }
+.bist-tablosu td.sag, .kap-tablosu td.sag { white-space: nowrap; }
+.kap-tablosu td:nth-child(3) { min-width: 160px; }
+
+/* Rehberler */
+.rehber-izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.rehber-kart { display: grid; gap: 8px; align-content: start; padding: 18px; border: 1px solid var(--cizgi); border-radius: var(--yaricap);
+  background: var(--kart); color: var(--yazi-2); text-decoration: none; line-height: 1.55; }
+.rehber-kart:hover { border-color: var(--vurgu); }
+.rehber-kart b { color: var(--yazi); font-size: 16px; line-height: 1.35; }
+.rehber p { line-height: 1.75; }
+.rehber-ilgili { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 24px 0; }

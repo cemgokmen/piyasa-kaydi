@@ -1,0 +1,39 @@
+{# KAP pay alım satım bildirimleri; 'kap_islemler' listesi, 'sirket_goster' ile şirket sütunu #}
+<div class="tablo-kap" data-kisalt="15">
+  <table class="tablo kap-tablosu">
+    <thead>
+      <tr>
+        <th scope="col">İşlem tarihi</th>
+        {% if sirket_goster %}<th scope="col">Şirket</th>{% endif %}
+        <th scope="col">Kim?</th>
+        <th scope="col">İşlem</th>
+        <th scope="col" class="sag">Pay adedi</th>
+        <th scope="col" class="sag">Fiyat</th>
+        <th scope="col" class="sag">Tutar</th>
+        <th scope="col" class="sag">Sonraki payı</th>
+        <th scope="col"><span class="gorunmez">Belge</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in kap_islemler %}
+      <tr>
+        <td data-etiket="İşlem tarihi" class="tarih">{{ i.tarih|uzun_tarih }}
+          <span class="alt-satir">bildirim {{ i.yayin[:10]|kisa_tarih }}</span></td>
+        {% if sirket_goster %}
+        <td data-etiket="Şirket"><a class="ticker" href="{{ url_for('bist.sirket', kod=i.kod) }}">{{ i.kod }}</a>
+          {% if i.unvan %}<span class="alt-satir kirp" title="{{ i.unvan }}">{{ i.unvan }}</span>{% endif %}</td>
+        {% endif %}
+        <td data-etiket="Kim?"><b>{{ i.kisi }}</b>
+          <span class="alt-satir">{{ i.gorev or i.kisi_turu_ad }}</span></td>
+        <td data-etiket="İşlem">{% if i.islem %}<span class="rozet rozet-{{ i.islem }}">{{ i.islem_metni }}</span>
+          {% else %}<span class="soluk kucuk" title="Ayrıntı KAP'taki ekte">Ekte</span>{% endif %}</td>
+        <td data-etiket="Pay adedi" class="sag sayi">{{ i.nominal|sayi if i.nominal else '—' }}</td>
+        <td data-etiket="Fiyat" class="sag sayi">{% if i.fiyat %}{{ i.fiyat|fiyat }} ₺{% if i.fiyat_alt and i.fiyat_ust and i.fiyat_alt != i.fiyat_ust %}<span class="alt-satir">{{ i.fiyat_alt|fiyat }} – {{ i.fiyat_ust|fiyat }}</span>{% endif %}{% else %}—{% endif %}</td>
+        <td data-etiket="Tutar" class="sag sayi">{% if i.tutar %}<b class="{{ 'tutar-buy' if i.islem == 'buy' else 'tutar-sell' }}">{{ i.tutar|tl }}</b>{% else %}—{% endif %}</td>
+        <td data-etiket="Sonraki payı" class="sag sayi">{{ ('%' ~ ('%.2f'|format(i.oran_sonra)).replace('.', ',')) if i.oran_sonra is not none else '—' }}</td>
+        <td data-etiket="Belge"><a class="kaynak" href="{{ i.adres }}" target="_blank" rel="noopener" title="KAP bildirimini aç">KAP ↗</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

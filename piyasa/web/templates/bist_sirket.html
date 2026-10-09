@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, fiyat_paneli %}
+{% block baslik %}{{ s.kod }} {{ kisa_ad }} hissesi: fiyat, KAP'ta kim aldı, kim sattı · Piyasa Kaydı{% endblock %}
+{% block aciklama %}{{ s.unvan }} ({{ s.kod }}): hisse fiyatı, şirketin rakamları, yöneticilerin ve büyük ortakların KAP'a bildirdiği pay alım satımları, geri alımlar ve son KAP açıklamaları.{% endblock %}
+{% block geri_adres %}{{ url_for('bist.liste') }}{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1><span class="ticker ticker-buyuk">{{ s.kod }}</span> {{ kisa_ad }}</h1>
+    <p class="sayfa-not">{{ s.unvan }}{% if s.sehir %} · {{ s.sehir }}{% endif %}
+      {% if s.xu030 %}<span class="etiket">BIST 30</span>{% elif s.xu100 %}<span class="etiket">BIST 100</span>{% endif %}</p>
+  </div>
+</header>
+
+<nav class="bolum-menu" aria-label="Bu sayfada" data-bolum-menu>
+  <a href="#fiyat">Fiyat</a>
+  <a href="#rakamlar">Rakamlar</a>
+  <a href="#iceriden">Kim aldı, kim sattı? <span class="sayac">{{ islemler|length }}</span></a>
+  {% if geri.satirlar %}<a href="#geri-alim">Geri alım</a>{% endif %}
+  {% if aciklamalar %}<a href="#kap">KAP açıklamaları</a>{% endif %}
+  <a href="#haberler">Haberler</a>
+</nav>
+
+<div id="hakkinda" data-parca-adres="{{ url_for('bist.hakkinda', kod=s.kod) }}"></div>
+
+{{ fiyat_paneli(url_for('bist.fiyat_api', kod=s.kod), anlik_adres=url_for('bist.anlik_api', kod=s.kod), birim='₺',
+   etiket='Son fiyat',
+   kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Borsa İstanbul fiyatları yaklaşık 15 dakika gecikmelidir. Değişimler ve grafik temettü ve bölünmelere göre düzeltilmiş kapanışlardır.') }}
+
+<section class="panel temel temel-iskelet" id="rakamlar" data-parca-adres="{{ url_for('bist.rakamlar', kod=s.kod) }}" aria-busy="true">
+  <p class="soluk kucuk">Şirketin rakamları yükleniyor…</p>
+</section>
+
+<section class="bolum" id="iceriden">
+  <header class="bolum-ust"><div>
+    <h2>Yöneticiler ve büyük ortaklar ne yaptı?</h2>
+    <p class="bolum-not">KAP'a bildirilen pay alım satımları. Yöneticiler ve büyük ortaklar işlemlerini bildirmek zorunda.
+    Kaynak: KAP; her satırda bildirime bağlantı var.</p>
+  </div></header>
+  {% if islemler %}
+  {% set alimlar = islemler|selectattr('islem', 'equalto', 'buy')|list %}{% set satimlar = islemler|selectattr('islem', 'equalto', 'sell')|list %}
+  <div class="kpi-izgara kpi-3">
+    {{ kpi('Bildirim', islemler|length, (islemler|map(attribute='kisi')|unique|list|length) ~ ' farklı kişi ya da kurum', birim='bildirim') }}
+    {{ kpi('Alım', (alimlar|sum(attribute='tutar')|tl) if alimlar|selectattr('tutar')|list else alimlar|length, alimlar|length ~ ' alım bildirimi', 'alim') }}
+    {{ kpi('Satım', (satimlar|sum(attribute='tutar')|tl) if satimlar|selectattr('tutar')|list else satimlar|length, satimlar|length ~ ' satım bildirimi', 'satim') }}
+  </div>
+  {% set kap_islemler = islemler %}{% set sirket_goster = False %}
+  {% include "_kap_islemleri.html" %}
+  {% else %}
+  <div class="bos-durum"><p><strong>Kayıtlarımızda {{ s.kod }} için yönetici ya da büyük ortak işlemi yok.</strong></p>
+    <p>Son 4 ayın KAP bildirimleri taranıyor; yeni bildirimler her gün eklenir.</p></div>
+  {% endif %}
+  {% if fon_bildirimleri %}
+  <details class="bilgi-kutu">
+    <summary>Fonların eşik bildirimleri ({{ fon_bildirimleri|length }})</summary>
+    <div class="bilgi-kutu-icerik">
+      <p>Portföy yönetim ve emeklilik şirketlerinin fonları {{ s.kod }} sermayesinde %3, %5, %10… eşiklerini geçtiğinde ya da altına düştüğünde.</p>
+      {% set kap_islemler = fon_bildirimleri %}{% set sirket_goster = False %}{% include "_kap_islemleri.html" %}
+    </div>
+  </details>
+  {% endif %}
+</section>
+
+{% if geri.satirlar %}
+<section class="bolum" id="geri-alim">
+  <header class="bolum-ust"><div>
+    <h2>Şirket kendi payını geri alıyor</h2>
+    <p class="bolum-not">{% if geri.son_90 %}Son 90 günde <b>{{ geri.son_90.tutar|tl }}</b> tutarında, <b>{{ geri.son_90.nominal|sayi }}</b> pay geri alındı
+      (sermayenin %{{ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ',') }}'i).{% endif %}
+      Şirketler hisselerini ucuz bulduklarında ya da fiyatı desteklemek için kendi paylarını geri alabilir.</p>
+  </div></header>
+  <div class="tablo-kap" data-kisalt="10">
+    <table class="tablo tablo-sade">
+      <thead><tr><th scope="col">İşlem tarihi</th><th scope="col" class="sag">Pay adedi</th><th scope="col" class="sag">Fiyat</th>
+        <th scope="col" class="sag">Tutar</th><th scope="col" class="sag">Sermayeye oranı</th><th scope="col"><span class="gorunmez">Belge</span></th></tr></thead>
+      <tbody>
+        {% for g in geri.satirlar %}
+        <tr>
+          <td data-etiket="Tarih" class="tarih">{{ g.islem_tarihi|uzun_tarih }}</td>
+          <td data-etiket="Pay adedi" class="sag sayi">{{ g.nominal|sayi }}</td>
+          <td data-etiket="Fiyat" class="sag sayi">{{ g.fiyat|fiyat }} ₺</td>
+          <td data-etiket="Tutar" class="sag sayi"><b>{{ g.tutar|tl }}</b></td>
+          <td data-etiket="Oran" class="sag sayi">{{ ('%' ~ ('%.3f'|format(g.oran)).replace('.', ',')) if g.oran else '—' }}</td>
+          <td data-etiket="Belge"><a class="kaynak" href="{{ g.adres }}" target="_blank" rel="noopener">KAP ↗</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if aciklamalar %}
+<section class="bolum" id="kap">
+  <header class="bolum-ust"><div><h2>Son KAP açıklamaları</h2>
+    <p class="bolum-not">Şirketin özel durum açıklamaları (yeni iş, ihale, yatırım, ortaklık gibi). Başlığa tıklayınca KAP'ta açılır.</p></div></header>
+  <div class="panel">
+    <ul class="haberler">
+      {% for a in aciklamalar %}
+      <li><a href="{{ a.adres }}" target="_blank" rel="noopener">{{ a.ozet or a.baslik }}</a>
+        <span class="haber-alt">KAP · {{ a.yayin[:10]|uzun_tarih }} {{ a.yayin[11:16] }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+<div id="haberler" class="haber-iskelet" data-parca-adres="{{ url_for('bist.haberler', kod=s.kod) }}">
+  <p class="soluk kucuk">Haberler yükleniyor…</p>
+</div>
+
+<p class="uyari-kutu"><strong>Yatırım tavsiyesi değildir.</strong> Bilgiler KAP bildirimlerinden derlenmiştir; kesin bilgi için KAP'taki
+bildirime bakın. Bir yöneticinin ya da büyük ortağın hisse alması, hissenin değer kazanacağı anlamına gelmez.</p>
+{% endblock %}
+
+{% block betik %}
+<script src="{{ url_for('static', filename='grafik.js') }}"></script>
+<script src="{{ url_for('static', filename='fiyat.js') }}"></script>
+{% endblock %}

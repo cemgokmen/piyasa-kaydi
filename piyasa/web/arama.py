@@ -14,7 +14,7 @@ import unicodedata
 from collections import Counter, defaultdict
 from contextlib import closing
 
-from piyasa.bicim import sirket_gorunen_ad, unvan
+from piyasa.bicim import sirket_gorunen_ad, tr_baslik, unvan
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kripto.tanimlar import KRIPTOLAR
 from piyasa.kurallar import GECERLI_KOD, TEMIZ, parti_bilgisi
@@ -34,7 +34,7 @@ EMTIA_ESANLAMLILARI = {
     "brent": "oil petrol ham petrol akaryakit",
 }
 
-TUR_SIRASI = {"Hisse": 0, "Emtia": 1, "Kripto": 2, "Siyasetçi": 3, "Yönetici": 4, "Fon": 5}
+TUR_SIRASI = {"Hisse": 0, "BIST": 1, "Emtia": 2, "Kripto": 3, "Siyasetçi": 4, "Yönetici": 5, "Fon": 6}
 
 
 def sade(metin):
@@ -113,6 +113,15 @@ def _dizin_kur():
             girdiler.append({
                 "tur": "Fon", "etiket": s["ad"], "alt": "Fon / banka portföyü", "adres": f"/fon/{s['fon_slug']}",
                 "kod": "", "metin": sade(s["ad"]), "agirlik": s["n"],
+            })
+
+        # Borsa İstanbul şirketleri (KAP listesi); BIST 100 öne çıkar
+        for s in conn.execute("SELECT kod, unvan, xu100 FROM bist_sirket"):
+            bist_adi = tr_baslik(s["unvan"]) if s["unvan"] else s["kod"]
+            girdiler.append({
+                "tur": "BIST", "etiket": s["kod"], "alt": f"{bist_adi} · Borsa İstanbul",
+                "adres": f"/bist/{s['kod']}", "kod": s["kod"].lower(),
+                "metin": sade(f"{s['kod']} {bist_adi}"), "agirlik": 20_000 if s["xu100"] else 50,
             })
 
     for y in YURUTME:

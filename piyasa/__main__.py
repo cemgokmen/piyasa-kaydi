@@ -15,6 +15,7 @@ Kullanım:
     python -m piyasa ihaleler [--hepsi]   şirketlere verilen devlet sözleşmeleri (USAspending.gov)
     python -m piyasa fon                  fonların 13F bildirimlerini indirir
     python -m piyasa emtia                emtia verilerini indirir (CFTC, EIA, FRED)
+    python -m piyasa kap [--gun 90]       Borsa İstanbul: KAP pay alım satım, geri alım ve özel durum bildirimleri
     python -m piyasa kripto [--tara]      Bitcoin/Ether vadelilerinde fon konumları (CFTC);
                                           --tara: eski Kongre bildirimlerinde kripto işlemlerini arar
     python -m piyasa fiyatlar             işlem yapılan hisselerin günlük fiyatlarını indirir
@@ -47,6 +48,7 @@ KOMUTLAR = {
     "fon": "piyasa.toplama.fon13f",
     "emtia": "piyasa.toplama.emtia",
     "kripto": "piyasa.toplama.kripto",
+    "kap": "piyasa.toplama.kap",
     "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
     "sirketler": "piyasa.toplama.sirketler",
     "yurutme": "piyasa.toplama.yurutme",
@@ -68,9 +70,9 @@ KOMUTLAR = {
 
 # 'guncelle' sırayla çalıştırılan adımlar
 # 'guncelle --hizli' (günde iki kez): yalnızca yeni bildirimler ve bakımları
-HIZLI_GUNCELLEME = ["form4", "kongre", "senato", "fon", "slug", "duzelt", "supheli"]
+HIZLI_GUNCELLEME = ["form4", "kongre", "senato", "kap", "fon", "slug", "duzelt", "supheli"]
 
-GUNCELLEME = ["form4", "kongre", "senato", "emtia", "kripto", "slug", "duzelt", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
+GUNCELLEME = ["form4", "kongre", "senato", "kap", "emtia", "kripto", "slug", "duzelt", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
 
 
 def yerel_ip():

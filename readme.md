@@ -53,6 +53,7 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 | **Fonlar** | Vanguard, BlackRock, Berkshire, Norveç Varlık Fonu gibi büyük kurumların 13F portföyleri ve çeyrekten çeyreğe değişimler |
 | **Hisse sayfaları** | Şirketin ne iş yaptığı, anlık fiyat, temel rakamlar (piyasa değeri, F/K, son bilanço), analist hedef fiyatları, devlet sözleşmeleri, güncel Türkçe haberler ve o hissedeki bütün bildirimler |
 | **Emtialar** | Altın, gümüş, platin, bakır ve Brent petrol: fiyat ve hacim, büyük fonların konumu, petrol stokları, Fed faiz kararları, vadeli piyasanın ve faiz piyasasının beklentisi, Kapalıçarşı altın ve gümüş fiyatları |
+| **Borsa İstanbul** | BIST 100 hisseleri ve 800'ü aşkın BIST şirketinin sayfası; KAP'tan yöneticilerin ve büyük ortakların pay alım satım bildirimleri (kişi, görevi, adet, fiyat, tutar, işlem sonrası pay oranı), fonların eşik bildirimleri, şirketlerin kendi paylarını geri alımları ve özel durum açıklamaları |
 | **Kripto paralar** | 27 kripto paranın Türkçe profili, gerçek 24 saatlik fiyat değişimi, piyasa değeri ve arz; siyasetçilerin kripto işlemleri, kripto şirketlerinde yönetici işlemleri, Bitcoin/Ethereum fonu tutan bankalar, CME vadelilerinde kurumların konumu, korku ve açgözlülük endeksi, Bitcoin yarılanma sayacı |
 
 ### Analizler
@@ -70,7 +71,10 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 
 ### Kullanım kolaylığı
 
-- Hisse, şirket, kişi, fon ve emtia için tek arama kutusu; son aramalar hatırlanır.
+- Hisse, BIST şirketi, kişi, fon, emtia ve kripto için tek arama kutusu; son aramalar hatırlanır.
+- Yönetici işlemlerinde role göre süzgeç: üst yönetim (CEO, CFO, başkan), yönetim kurulu, büyük ortaklar.
+- Rehberler: Form 4, 13F, STOCK Act, KAP pay alım satım bildirimi, pay geri alımı ve hisse oranları sade dille.
+- Arama motorları için site haritası (`/sitemap.xml`) ve `robots.txt`.
 - Karanlık ve aydınlık tema, telefona uygun görünüm.
 - Teknik terimlerin yanında sade açıklamalar ("F/K: fiyat, hisse başına yıllık karın kaç katı").
 
@@ -87,6 +91,7 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 | [CFTC](https://www.cftc.gov) · [EIA](https://www.eia.gov) · [FRED](https://fred.stlouisfed.org) | Fon konumları, petrol stokları, faizler | Haftalık / günlük |
 | Yahoo Finance | Hisse ve emtia fiyatları, şirket rakamları, analist beklentileri | Canlı (önbellekli) |
 | Google Haberler | Türkçe ve İngilizce haber başlıkları | Canlı (önbellekli) |
+| [KAP](https://www.kap.org.tr) | Borsa İstanbul pay alım satım, geri alım ve özel durum bildirimleri, BIST 100 listesi | Günde 3 kez |
 | Truncgil Finans | Kapalıçarşı altın ve gümüş fiyatları | Canlı (önbellekli) |
 | [CoinGecko](https://www.coingecko.com) · alternative.me · mempool.space | Kripto fiyatları, korku endeksi, Bitcoin blok yüksekliği | Canlı (önbellekli) |
 
@@ -147,6 +152,7 @@ Bütün işler tek giriş noktasından yapılır: `python -m piyasa <komut>`
 | `form4` | Son 90 günün eksik Form 4 günlerini indirir |
 | `kongre [yıl …]` · `senato [yıl …]` | Meclis ve Senato bildirimleri |
 | `fon` · `cusip` | 13F portföyleri ve CUSIP → hisse kodu eşlemesi |
+| `kap [--gun 90]` | Borsa İstanbul: KAP bildirimleri ve ayrıntıları (geçmişe dönük doldurma için `--gun`) |
 | `emtia` · `fiyatlar` | Emtia verileri ve hisse fiyat geçmişi |
 | `kripto [--tara]` | Bitcoin/Ether vadelilerinde fon konumları; `--tara` eski Kongre bildirimlerinde kripto işlemlerini arar |
 | `sirketler` · `profiller` · `ihaleler` | Sektörler ve komiteler, şirket tanımları, devlet sözleşmeleri |
@@ -202,6 +208,7 @@ piyasa/
 ├── analiz/              Getiri, performans, çıkar çatışması, sinyaller, sektör haritası, ihaleler, özet
 ├── emtia/               Emtia tanımları, sorgular, haberler, Kapalıçarşı, piyasa beklentileri
 ├── kripto/              Coin profilleri, CoinGecko verisi, kripto şirketleri, CFTC ve 13F sorguları
+├── bist/                BIST 100 fiyatları ve KAP bildirim sorguları
 ├── veri/                Elle hazırlanmış şirket ve endüstri tanımları
 └── web/                 Flask uygulaması, sorgular, şablonlar, CSS ve JavaScript
 tests/                   pytest ve Selenium testleri

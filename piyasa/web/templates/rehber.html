@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block baslik %}{{ r.baslik }} · Piyasa Kaydı{% endblock %}
+{% block aciklama %}{{ r.ozet }}{% endblock %}
+{% block geri_adres %}{{ url_for('seo.rehberler') }}{% endblock %}
+
+{% block icerik %}
+<article class="metin-sayfa rehber">
+  <p class="ust-yol"><a href="{{ url_for('seo.rehberler') }}">Rehberler</a></p>
+  <h1>{{ r.baslik }}</h1>
+  <p class="giris-metin">{{ r.ozet }}</p>
+  {% for alt, paragraflar in r.bolumler %}
+  <h2>{{ alt }}</h2>
+  {% for p in paragraflar %}<p>{{ p }}</p>{% endfor %}
+  {% endfor %}
+  {% if r.ilgili %}
+  <div class="rehber-ilgili">
+    <b>Sitede görün:</b>
+    {% for metin, adres in r.ilgili %}<a class="dugme" href="{{ adres }}">{{ metin }} →</a>{% endfor %}
+  </div>
+  {% endif %}
+  <p class="uyari-kutu"><strong>Yatırım tavsiyesi değildir.</strong> Bu sayfa yalnızca bilgilendirme amaçlıdır.</p>
+</article>
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Diğer rehberler</h2></div></header>
+  <nav class="bolum-menu">
+    {% for x in diger %}<a href="{{ url_for('seo.rehber', slug=x.slug) }}">{{ x.baslik.split('?')[0] }}</a>{% endfor %}
+  </nav>
+</section>
+<script type="application/ld+json">{{ {"@context": "https://schema.org", "@type": "Article", "headline": r.baslik, "description": r.ozet, "inLanguage": "tr", "mainEntityOfPage": kanonik}|tojson }}</script>
+{% endblock %}

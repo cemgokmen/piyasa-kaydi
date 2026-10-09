@@ -407,3 +407,24 @@ def test_kapalicarsi_fiyatlari(istemci):
     assert "Kapalıçarşı fiyatları" in html and "Çeyrek altın" in html and "10.702,48" in html
     assert "Gram gümüş" in istemci.get("/emtia/gumus").get_data(as_text=True)
     assert "Kapalıçarşı" not in istemci.get("/emtia/brent").get_data(as_text=True)
+
+
+def test_rol_suzgeci(istemci):
+    html = istemci.get("/islemler?kaynak=yonetici&donem=365&rol=ust").get_data(as_text=True)
+    assert 'name="rol"' in html and 'value="ust" selected' in html
+    # Siyasetçi listesinde rol süzgeci yok
+    assert 'name="rol"' not in istemci.get("/islemler?kaynak=siyasetci").get_data(as_text=True)
+    # Geçersiz değer varsayılana döner
+    assert istemci.get("/islemler?kaynak=yonetici&rol=xyz").status_code == 200
+
+
+def test_site_haritasi_ve_rehberler(istemci):
+    robots = istemci.get("/robots.txt").get_data(as_text=True)
+    assert "Sitemap:" in robots and "Disallow: /api/" in robots
+    harita = istemci.get("/sitemap.xml").get_data(as_text=True)
+    for yol in ("/rehber/form-4-nedir", "/hisse/NVDA", "/bist/THYAO", "/kripto/bitcoin", "/emtia/altin"):
+        assert yol + "</loc>" in harita, yol
+    assert "Form 4 nedir?" in istemci.get("/rehber").get_data(as_text=True)
+    sayfa = istemci.get("/rehber/kap-pay-alim-satim-bildirimi").get_data(as_text=True)
+    assert "KAP" in sayfa and "application/ld+json" in sayfa
+    assert istemci.get("/rehber/yok").status_code == 404

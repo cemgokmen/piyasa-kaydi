@@ -46,9 +46,11 @@ def create_app(vekil_arkasinda=False):
     from piyasa.web import sayfa_onbellegi
     from piyasa.web.analiz_rotalari import analiz
     from piyasa.web.bicim import sablonlara_kaydet
+    from piyasa.web.bist_rotalari import bist, fiyatlari_isit
     from piyasa.web.emtia_rotalari import emtia
     from piyasa.web.kripto_rotalari import kripto
     from piyasa.web.rotalar import site
+    from piyasa.web.seo_rotalari import seo
 
     sablonlara_kaydet(app)
     # Compress'ten sonra kaydedilir: after_request ters sırayla çalıştığı için
@@ -58,4 +60,9 @@ def create_app(vekil_arkasinda=False):
     app.register_blueprint(emtia)
     app.register_blueprint(analiz)
     app.register_blueprint(kripto)
+    app.register_blueprint(bist)
+    app.register_blueprint(seo)
+    if vekil_arkasinda:
+        # Yalnızca yayındaki sitede: BIST 100 fiyatları arka planda hazır tutulur
+        fiyatlari_isit()
     return app

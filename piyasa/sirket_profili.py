@@ -178,8 +178,9 @@ def fon_tanimi(ad, yonetici=None):
 
 
 
-def _getir(ticker):
-    bilgi = yf.Ticker(fiyat.yahoo_kodu(ticker)).info or {}
+def _getir(ticker, yahoo=None):
+    """yahoo: Yahoo kodu verilirse olduğu gibi kullanılır (Borsa İstanbul: 'THYAO.IS')."""
+    bilgi = yf.Ticker(yahoo or fiyat.yahoo_kodu(ticker)).info or {}
     tanim = bilgi.get("longBusinessSummary")
     if not tanim:
         return None
@@ -254,7 +255,7 @@ def yeniden_al(ticker):
     return True
 
 
-def profil(ticker):
+def profil(ticker, yahoo=None):
     """Kayıtlı profil; yoksa ya da eskiyse Yahoo'dan alınır. Bulunamazsa None."""
     ticker = ticker.upper()
     with closing(get_connection()) as conn:
@@ -262,7 +263,7 @@ def profil(ticker):
         if kayit and not _eski_mi(kayit):
             return _elle_yazilani_uygula(dict(kayit))
         try:
-            yeni = _getir(ticker)
+            yeni = _getir(ticker, yahoo)
         except Exception:
             yeni = None
         if yeni:

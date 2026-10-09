@@ -39,13 +39,15 @@ def islemler():
     donem = _secenek("donem", sorgular.DONEMLER, varsayilan_donem)
     sira = _secenek("sira", sorgular.SIRALAMALAR, "yeni")
     islem = _secenek("islem", ("hepsi", "buy", "sell"), "hepsi")
+    # Rol süzgeci yalnızca yönetici işlemlerinde anlamlı
+    rol = _secenek("rol", sorgular.ROLLER, "hepsi") if kaynak in ("yonetici", "hepsi") else "hepsi"
     arama = request.args.get("q", "").strip()[:80]
     try:
         sayfa = max(1, int(request.args.get("sayfa", 1)))
     except ValueError:
         sayfa = 1
 
-    satirlar, ozet = sorgular.islem_listesi(arama, islem, donem, kaynak, sira, sayfa)
+    satirlar, ozet = sorgular.islem_listesi(arama, islem, donem, kaynak, sira, sayfa, rol)
     toplam = ozet["adet"] or 0
 
     return render_template(
@@ -57,8 +59,9 @@ def islemler():
         toplam=toplam,
         son_sayfa=max(1, -(-toplam // sorgular.SAYFA_BOYUTU)),
         sayfa=sayfa,
-        filtre={"q": arama, "islem": islem, "kaynak": kaynak, "donem": donem, "sira": sira},
+        filtre={"q": arama, "islem": islem, "kaynak": kaynak, "donem": donem, "sira": sira, "rol": rol},
         kaynaklar=sorgular.KAYNAKLAR,
+        roller=sorgular.ROLLER,
         donemler=sorgular.DONEMLER,
         siralamalar=sorgular.SIRALAMALAR,
     )
@@ -195,12 +198,6 @@ def favicon():
     # Simge sayfalarda satır içi; tarayıcıların kendiliğinden istediği adres için
     return FAVICON, 200, {"Content-Type": "image/svg+xml",
                           "Cache-Control": "public, max-age=604800"}
-
-
-@site.route("/robots.txt")
-def robots():
-    return ("User-agent: *\nDisallow: /api/\n", 200,
-            {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=86400"})
 
 
 @site.route("/hakkinda")

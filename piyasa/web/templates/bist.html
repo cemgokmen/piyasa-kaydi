@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi, degisim %}
+{% block baslik %}Borsa İstanbul: BIST 100 ve KAP'ta kim aldı, kim sattı · Piyasa Kaydı{% endblock %}
+{% block aciklama %}BIST 100 hisseleri, şirket yöneticilerinin ve büyük ortakların KAP'a bildirdiği pay alım satımları ve şirketlerin kendi paylarını geri alımları.{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <h1>Borsa İstanbul</h1>
+    <p class="sayfa-not">Türkiye'de şirket yöneticileri ve büyük ortaklar şirketlerinin hisselerini alıp sattığında bunu
+    <b>KAP</b>'ta (Kamuyu Aydınlatma Platformu) duyurmak zorunda. Şirketler kendi paylarını geri aldığında da bildirir.
+    Bu bildirimleri her gün KAP'tan toplayıp sade biçimde gösteriyoruz.</p>
+  </div>
+</header>
+
+<section class="kpi-izgara">
+  {% if endeks %}
+  {{ kpi('BIST 100 endeksi', endeks.fiyat|round|int|sayi, 'günlük ' ~ endeks.g1|yuzde ~ ' · 1 yılda ' ~ endeks.y1|yuzde,
+         'alim' if endeks.g1 and endeks.g1 > 0 else 'satim' if endeks.g1 else '') }}
+  {% endif %}
+  {% if yukselen and dusen %}
+  {{ kpi('Günün en çok yükseleni', yukselen.kod, yukselen.f.g1|yuzde ~ ' · ' ~ (yukselen.f.fiyat|fiyat) ~ ' ₺', 'alim') }}
+  {{ kpi('Günün en çok düşeni', dusen.kod, dusen.f.g1|yuzde ~ ' · ' ~ (dusen.f.fiyat|fiyat) ~ ' ₺', 'satim') }}
+  {% endif %}
+  {{ kpi('İçeriden alım · 30 gün', (pay_ozeti.alim_tutar|tl) if pay_ozeti.alim_tutar else '—',
+         (pay_ozeti.alim or 0) ~ ' alım, ' ~ (pay_ozeti.satim or 0) ~ ' satım bildirimi', 'alim') }}
+</section>
+
+<nav class="bolum-menu" aria-label="Bu sayfada" data-bolum-menu>
+  <a href="#iceriden">Kim aldı, kim sattı?</a>
+  <a href="#geri-alim">Geri alımlar</a>
+  <a href="#hisseler">BIST 100 hisseleri</a>
+</nav>
+
+<section class="bolum" id="iceriden">
+  <header class="bolum-ust"><div>
+    <h2>KAP'ta kim aldı, kim sattı?</h2>
+    <p class="bolum-not">Son 60 günün pay alım satım bildirimleri; Borsa İstanbul'daki bütün şirketler. Yöneticiler ve büyük ortaklar
+    işlemlerini bildirmek zorunda; büyük fonlar ise bir şirkette %3, %5, %10 gibi eşikleri geçtiğinde bildirir.
+    "Pay adedi" nominal tutardır (1 TL nominal = 1 pay). "Ekte" yazanlarda ayrıntı KAP'taki belgededir.</p>
+  </div></header>
+
+  {% if pay_ozeti.en_cok_alinan %}
+  <div class="panel">
+    <header class="panel-ust"><div><h2>Son 30 günde içeriden en çok alınan hisseler</h2>
+      <p class="panel-not">Yöneticilerin, büyük ortakların ve ana şirketlerin alımları (fonlar hariç), toplam tutara göre</p></div></header>
+    <ul class="akis akis-sik">
+      {% set en_buyuk = pay_ozeti.en_cok_alinan[0].tutar %}
+      {% for x in pay_ozeti.en_cok_alinan %}
+      <li class="cubuklu">
+        <a class="ticker" href="{{ url_for('bist.sirket', kod=x.kod) }}">{{ x.kod }}</a>
+        <span class="akis-orta"><span class="kucuk">{{ x.unvan or x.kod }} · {{ x.kisi }} kişi/kurum, {{ x.adet }} bildirim</span>
+          <span class="mini-cubuk"><span style="width: {{ (x.tutar / en_buyuk * 100)|round(1) }}%"></span></span></span>
+        <span class="sayi tutar-buy">{{ x.tutar|tl }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% set iceriden_kisi = iceriden|rejectattr('kisi_turu', 'equalto', 'fon')|list %}
+  {% set iceriden_fon = iceriden|selectattr('kisi_turu', 'equalto', 'fon')|list %}
+  <div class="panel sekmeli-panel" data-sekmeler>
+    <div class="segment segment-kucuk" role="tablist" aria-label="Bildirim türü">
+      <button type="button" role="tab" id="kap-1" aria-controls="kap-panel-1" data-sekme="1" aria-selected="true" class="secili">Yöneticiler ve ortaklar <span class="sayac">{{ iceriden_kisi|length }}</span></button>
+      <button type="button" role="tab" id="kap-2" aria-controls="kap-panel-2" data-sekme="2" aria-selected="false" tabindex="-1">Fonlar <span class="sayac">{{ iceriden_fon|length }}</span></button>
+    </div>
+    <div role="tabpanel" id="kap-panel-1" aria-labelledby="kap-1" data-sekme-panel="1">
+      {% if iceriden_kisi %}{% set kap_islemler = iceriden_kisi %}{% set sirket_goster = True %}{% include "_kap_islemleri.html" %}
+      {% else %}<p class="bos">Bildirim yok.</p>{% endif %}
+    </div>
+    <div role="tabpanel" id="kap-panel-2" aria-labelledby="kap-2" data-sekme-panel="2" hidden>
+      <p class="kucuk soluk">Portföy yönetim ve emeklilik şirketlerinin fonları bir şirketin sermayesinde %3, %5, %10… eşiklerini geçtiğinde ya da altına düştüğünde.</p>
+      {% if iceriden_fon %}{% set kap_islemler = iceriden_fon %}{% set sirket_goster = True %}{% include "_kap_islemleri.html" %}
+      {% else %}<p class="bos">Bildirim yok.</p>{% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="bolum" id="geri-alim">
+  <header class="bolum-ust"><div>
+    <h2>Kendi payını geri alan şirketler</h2>
+    <p class="bolum-not">Şirketler, hisselerini ucuz bulduklarında ya da fiyatı desteklemek için kendi paylarını borsadan geri alabilir.
+    Son 30 günde {{ geri_alim.sirket_sayisi }} şirket toplam <b>{{ geri_alim.toplam|tl }}</b> tutarında geri alım bildirdi.</p>
+  </div></header>
+  {% if geri_alim.sirketler %}
+  <div class="tablo-kap" data-kisalt="12">
+    <table class="tablo" data-siralanabilir>
+      <thead><tr>
+        <th scope="col" data-sirala="metin">Şirket</th>
+        <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Geri alım tutarı</th>
+        <th scope="col" class="sag" data-sirala="sayi">Pay adedi</th>
+        <th scope="col" class="sag" data-sirala="sayi">Sermayeye oranı</th>
+        <th scope="col" class="sag" data-sirala="sayi">İşlem günü</th>
+        <th scope="col" data-sirala="metin">Son işlem</th>
+      </tr></thead>
+      <tbody>
+        {% for g in geri_alim.sirketler %}
+        <tr class="tiklanir" data-href="{{ url_for('bist.sirket', kod=g.kod) }}#geri-alim">
+          <td data-etiket="Şirket" data-deger="{{ g.kod }}"><a class="ticker" href="{{ url_for('bist.sirket', kod=g.kod) }}">{{ g.kod }}</a>
+            {% if g.xu100 %}<span class="etiket">BIST 100</span>{% endif %}<span class="alt-satir kirp">{{ g.unvan or '' }}</span></td>
+          <td data-etiket="Tutar" class="sag sayi" data-deger="{{ g.tutar }}"><b>{{ g.tutar|tl }}</b></td>
+          <td data-etiket="Pay adedi" class="sag sayi" data-deger="{{ g.nominal }}">{{ g.nominal|sayi }}</td>
+          <td data-etiket="Oran" class="sag sayi" data-deger="{{ g.oran or 0 }}">{{ ('%' ~ ('%.2f'|format(g.oran)).replace('.', ',')) if g.oran else '—' }}</td>
+          <td data-etiket="Gün" class="sag" data-deger="{{ g.gun }}">{{ g.gun }}</td>
+          <td data-etiket="Son işlem" class="tarih" data-deger="{{ g.son }}">{{ g.son|uzun_tarih }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="bos-durum"><p>Son 30 günde geri alım bildirimi yok.</p></div>{% endif %}
+</section>
+
+<section class="bolum" id="hisseler">
+  <header class="bolum-ust"><div>
+    <h2>BIST 100 hisseleri</h2>
+    <p class="bolum-not">Borsa İstanbul'un en büyük 100 şirketi (resmi liste: KAP). Fiyatlar günlük kapanış, borsa saatinde yaklaşık
+    15 dakika gecikmelidir. Son sütun, son 90 günde KAP'a bildirilen içeriden alım ve satım sayısıdır. Bir hisseye tıklayınca şirket sayfası açılır.</p>
+  </div></header>
+  {% if not endeks %}<p class="uyari-kutu">Fiyatlar hazırlanıyor; birkaç saniye sonra sayfayı yenileyin.</p>{% endif %}
+  <div class="filtre-satir">
+    <label class="secim filtre-kutu"><span>Hisse ara</span>
+      <input type="search" id="tablo-suz" data-tablo="bist-tablosu" placeholder="Kod ya da şirket adı" autocomplete="off"></label>
+  </div>
+  <div class="tablo-kap">
+    <table class="tablo bist-tablosu" id="bist-tablosu" data-siralanabilir>
+      <thead><tr>
+        <th scope="col" data-sirala="metin">Hisse</th>
+        <th scope="col" class="sag" data-sirala="sayi">Fiyat</th>
+        <th scope="col" class="sag" data-sirala="sayi">Gün</th>
+        <th scope="col" class="sag" data-sirala="sayi">1 hafta</th>
+        <th scope="col" class="sag" data-sirala="sayi">1 yıl</th>
+        <th scope="col" class="sag" data-sirala="sayi">İçeriden · 90 gün</th>
+        <th scope="col" class="genis">Son 3 ay</th>
+      </tr></thead>
+      <tbody>
+        {% for s in sirketler %}
+        <tr class="tiklanir" data-href="{{ url_for('bist.sirket', kod=s.kod) }}">
+          <td data-etiket="Hisse" data-deger="{{ s.kod }}" class="bist-hucre"><a class="ticker" href="{{ url_for('bist.sirket', kod=s.kod) }}">{{ s.kod }}</a>
+            {% if s.xu030 %}<span class="etiket">BIST 30</span>{% endif %}<span class="alt-satir kirp" title="{{ s.unvan }}">{{ s.unvan }}</span></td>
+          <td data-etiket="Fiyat" class="sag sayi" data-deger="{{ s.f.fiyat if s.f else 0 }}">{{ (s.f.fiyat|fiyat ~ ' ₺') if s.f else '—' }}</td>
+          <td data-etiket="Gün" class="sag" data-deger="{{ s.f.g1 if s.f and s.f.g1 is not none else 0 }}">{{ degisim(s.f.g1 if s.f else none) }}</td>
+          <td data-etiket="1 hafta" class="sag" data-deger="{{ s.f.h1 if s.f and s.f.h1 is not none else 0 }}">{{ degisim(s.f.h1 if s.f else none) }}</td>
+          <td data-etiket="1 yıl" class="sag" data-deger="{{ s.f.y1 if s.f and s.f.y1 is not none else 0 }}">{{ degisim(s.f.y1 if s.f else none) }}</td>
+          <td data-etiket="İçeriden" class="sag" data-deger="{{ (s.iceriden.alim or 0) + (s.iceriden.satim or 0) if s.iceriden else 0 }}">
+            {% if s.iceriden %}<span class="tutar-buy">{{ s.iceriden.alim or 0 }} alım</span> · <span class="tutar-sell">{{ s.iceriden.satim or 0 }} satım</span>
+            {% else %}<span class="soluk">—</span>{% endif %}</td>
+          <td data-etiket="Son 3 ay" class="genis">{% if s.grafik %}<svg class="kucuk-grafik" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="{{ s.grafik.noktalar }}" class="{{ 'cizgi-artis' if s.grafik.artis else 'cizgi-azalis' }}"/></svg>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<p class="uyari-kutu"><strong>Yatırım tavsiyesi değildir.</strong> Kaynak: KAP bildirimleri ve Yahoo Finance fiyatları. Bir yöneticinin
+ya da büyük ortağın hisse alması, hissenin değer kazanacağı anlamına gelmez. Ayrıntı ve kesin bilgi için her satırdaki KAP bağlantısına bakın.</p>
+{% endblock %}

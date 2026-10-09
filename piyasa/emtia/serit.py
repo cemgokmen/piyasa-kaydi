@@ -11,7 +11,7 @@ from piyasa.onbellek import sureli
 
 # (ad, Yahoo kodu, birim, sitede bağlantı, ondalık basamak)
 GOSTERGELER = [
-    ("BIST 100", "XU100.IS", "", None, 0),
+    ("BIST 100", "XU100.IS", "", "/bist", 0),
     ("S&P 500", "^GSPC", "", None, 0),
     ("Nasdaq", "^IXIC", "", None, 0),
     ("Dolar/TL", "TRY=X", "₺", None, 2),

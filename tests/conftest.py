@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, veritabani
+from piyasa.bist import piyasa as bist_piyasa
 from piyasa.emtia import haberler, kapalicarsi, serit
 from piyasa.kripto import piyasa as kripto_piyasa
 from piyasa.web import create_app
@@ -134,6 +135,39 @@ def ornek_kripto_verisi(conn):
          ("house-k1-1", "bitcoin", "iShares Bitcoin Trust", "IBIT", "sell", 15001, 50000, gun(20), gun(10), None),
          ("house-k1-2", "ethereum", "Ethereum", None, "buy", 1001, 15000, gun(15), gun(5), None)],
     )
+
+
+def ornek_bist_verisi(conn):
+    """Borsa İstanbul: iki BIST 100 şirketi, KAP pay alım satım ve geri alım bildirimleri."""
+    conn.executemany("INSERT INTO bist_sirket (kod, unvan, xu100, xu030, sehir) VALUES (?, ?, ?, ?, ?)", [
+        ("THYAO", "TÜRK HAVA YOLLARI A.O.", 1, 1, "İSTANBUL"),
+        ("ASELS", "ASELSAN ELEKTRONİK SANAYİ VE TİCARET A.Ş.", 1, 1, "ANKARA"),
+        ("FLAP", "FLAP KONGRE TOPLANTI HİZMETLERİ OTOMOTİV VE TURİZM A.Ş.", 0, 0, "ANKARA"),
+    ])
+    conn.executemany(
+        "INSERT INTO kap_bildirim (indeks, kod, gonderen, baslik, ozet, yayin, tur, detay_alindi) VALUES (?,?,?,?,?,?,?,1)", [
+            (1001, "THYAO", "TÜRK HAVA YOLLARI A.O.", "Pay Alım Satım Bildirimi", "Pay alım bildirimi", f"{gun(3)} 18:00:00", "pay"),
+            (1002, "FLAP", "KAMUYU AYDINLATMA PLATFORMU", "Pay Alım Satım Bildirimi", "Pay Alım Satım Bildirimi", f"{gun(2)} 19:00:00", "pay"),
+            (1003, "THYAO", "AK PORTFÖY YÖNETİMİ A.Ş.", "Pay Alım Satım Bildirimi", "Pay alım", f"{gun(1)} 18:30:00", "pay"),
+            (1004, "ASELS", "ASELSAN", "Payların Geri Alınmasına İlişkin Bildirim", "Geri alım", f"{gun(1)} 18:00:00", "geri_alim"),
+            (1005, "THYAO", "TÜRK HAVA YOLLARI A.O.", "Özel Durum Açıklaması (Genel)", "Yeni uçak siparişi", f"{gun(1)} 09:00:00", "ozel"),
+        ])
+    conn.executemany(
+        "INSERT INTO kap_pay_islem (indeks, kod, kisi, kisi_turu, islem, islem_tarihi, nominal, fiyat, fiyat_alt, "
+        "fiyat_ust, tutar, oran_sonra, gorev) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [
+            (1001, "THYAO", "Ahmet Örnek", "kisi", "buy", gun(4), 100_000, 300.0, 299.0, 301.0, 30_000_000.0, 1.5,
+             "YÖNETİM KURULU ÜYESİ"),
+            (1002, "FLAP", "Gürkan Gençler", "kisi", "sell", gun(3), 50_000, 11.2, 11.2, 11.2, 560_000.0, 13.0, None),
+            (1003, "THYAO", "AK PORTFÖY YÖNETİMİ A.Ş.", "fon", "buy", gun(2), 2_000_000, 290.0, 290.0, 290.0, 5.8e8, 3.0, None),
+        ])
+    conn.executemany("INSERT INTO kap_geri_alim VALUES (?, ?, ?, ?, ?, ?)", [
+        ("ASELS", gun(2), 100_000, 0.002, 150.0, 1004), ("ASELS", gun(1), 50_000, 0.001, 152.0, 1004),
+    ])
+
+
+def sahte_bist_fiyatlari(kodlar):
+    return {k: {"fiyat": 300.0 if k.startswith("THYAO") else 12_000.0, "tarih": gun(0), "g1": 0.012, "h1": -0.02,
+                "a1": 0.05, "y1": 0.3, "seri": [1, 2, 3, 2, 4]} for k in kodlar}
 
 
 def sahte_kripto_bilgisi(yahoo):
@@ -289,7 +323,7 @@ def sahte_hisse_haberleri(ticker, ad):
     ]
 
 
-def sahte_profil(ticker):
+def sahte_profil(ticker, yahoo=None):
     if ticker != "AAPL":
         return None
     return {"ticker": "AAPL", "ozet": "Apple akıllı telefon ve bilgisayar üretir.", "ozet_en": "Apple makes phones.",
@@ -313,6 +347,7 @@ def veritabani_yolu(tmp_path_factory):
             )
     ornek_emtia_verisi(conn)
     ornek_kripto_verisi(conn)
+    ornek_bist_verisi(conn)
     ornek_analiz_verisi(conn)
     # Devlet sözleşmeleri: NVDA'ya Jane'in alımından sonra olağanın çok üstünde sözleşme
     conn.executemany("INSERT INTO ihale VALUES (?,?,?,?,?,?,?,?,?)", [
@@ -345,6 +380,10 @@ def veritabani_yolu(tmp_path_factory):
 def uygulama(veritabani_yolu):
     eski = (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
             hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al)
+    bist_eski = bist_piyasa._indir
+    bist_piyasa._indir = sahte_bist_fiyatlari
+    bist_piyasa._durum.update(zaman=0.0, veri={})
+    bist_piyasa.fiyatlar(["THYAO", "ASELS"], bekle=True)
     kripto_piyasa._info_al = sahte_kripto_bilgisi
     kripto_piyasa._bilgi.temizle()
     kripto_piyasa._vadeli.temizle()
@@ -379,6 +418,7 @@ def uygulama(veritabani_yolu):
     (fiyat._indir, fiyat._anlik_indir, haberler._indir, sirket_profili._getir, temel._veri_al,
      hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al) = eski
     (kripto_piyasa._coingecko, kripto_piyasa._genel, kripto_piyasa._korku, kripto_piyasa._yarilanma) = kripto_eski
+    bist_piyasa._indir = bist_eski
 
 
 @pytest.fixture()

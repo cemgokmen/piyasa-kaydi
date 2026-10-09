@@ -45,11 +45,13 @@
       ] %}
       <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}{% if ad == 'anasayfa' %} class="menu-ana"{% endif %}>{{ etiket }}</a>
       {% endfor %}
-      <div class="menu-grup{% if aktif in ('emtia', 'kripto') %} menu-grup-aktif{% endif %}" data-menu-grup>
+      <div class="menu-grup{% if aktif in ('emtia', 'kripto', 'bist') %} menu-grup-aktif{% endif %}" data-menu-grup>
         <button type="button" class="menu-grup-dugme" aria-expanded="false" aria-controls="piyasalar-menusu">
           Piyasalar <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
         </button>
         <div class="menu-acilir" id="piyasalar-menusu">
+          <a href="{{ url_for('bist.liste') }}" {% if aktif == 'bist' %}aria-current="page"{% endif %}>
+            <b>Borsa İstanbul</b><span>BIST 100 · KAP'ta kim aldı, kim sattı?</span></a>
           <a href="{{ url_for('emtia.liste') }}" {% if aktif == 'emtia' %}aria-current="page"{% endif %}>
             <b>Emtialar</b><span>Altın, gümüş, petrol ve bakır</span></a>
           <a href="{{ url_for('kripto.liste') }}" {% if aktif == 'kripto' %}aria-current="page"{% endif %}>
@@ -72,7 +74,7 @@
 
     <form class="ust-arama" method="get" action="{{ url_for('site.islemler') }}" role="search">
       <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
-      <input id="genel-arama" type="search" name="q" placeholder="Hisse, kripto ya da kişi ara" autocomplete="off" aria-label="Hisse, kripto, şirket ya da kişi ara" data-oneri>
+      <input id="genel-arama" type="search" name="q" placeholder="Hisse, BIST, kripto ya da kişi ara" autocomplete="off" aria-label="Hisse, kripto, şirket ya da kişi ara" data-oneri>
       <input type="hidden" name="donem" value="365">
       <kbd aria-hidden="true">/</kbd>
     </form>
@@ -111,6 +113,7 @@
         <li><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC EDGAR</a> — yöneticiler ve fonlar</li>
         <li><a href="https://disclosures-clerk.house.gov/FinancialDisclosure" target="_blank" rel="noopener">House Clerk</a> — Kongre üyeleri</li>
         <li><a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a> — hisse ve emtia fiyatları</li>
+        <li><a href="https://www.kap.org.tr" target="_blank" rel="noopener">KAP</a> — Borsa İstanbul bildirimleri</li>
         <li><a href="https://www.coingecko.com" target="_blank" rel="noopener">CoinGecko</a> — kripto fiyatları</li>
         <li><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener">CFTC</a>, <a href="https://www.eia.gov" target="_blank" rel="noopener">EIA</a>, <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener">FRED</a> — fon konumları, stoklar, faizler</li>
       </ul>
@@ -130,10 +133,12 @@
       <ul>
         <li><a href="{{ url_for('site.islemler', kaynak='hepsi', donem='30') }}">Tüm işlemler</a></li>
         <li><a href="{{ url_for('site.siyasetciler') }}">Siyasetçiler</a></li>
+        <li><a href="{{ url_for('bist.liste') }}">Borsa İstanbul</a></li>
         <li><a href="{{ url_for('emtia.liste') }}">Emtialar</a></li>
         <li><a href="{{ url_for('kripto.liste') }}">Kripto paralar</a></li>
         <li><a href="{{ url_for('analiz.performans_sayfasi') }}">Kim piyasayı yendi?</a></li>
         <li><a href="{{ url_for('analiz.cakisma_sayfasi') }}">Çıkar çatışmaları</a></li>
+        <li><a href="{{ url_for('seo.rehberler') }}">Rehberler: Form 4, 13F, KAP nedir?</a></li>
         <li><a href="{{ url_for('site.hakkinda') }}">Nasıl çalışır? Veriler nasıl derleniyor?</a></li>
       </ul>
     </div>

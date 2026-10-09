@@ -34,6 +34,13 @@
         {% for deger, etiket in [('hepsi', 'Alım ve satım'), ('buy', 'Yalnız alım'), ('sell', 'Yalnız satım')] %}<option value="{{ deger }}" {% if filtre.islem == deger %}selected{% endif %}>{{ etiket }}</option>{% endfor %}
       </select>
     </label>
+    {% if filtre.kaynak in ('yonetici', 'hepsi') %}
+    <label class="secim"><span>Rol</span>
+      <select name="rol" data-otomatik>
+        {% for deger, bilgi in roller.items() %}<option value="{{ deger }}" {% if filtre.rol == deger %}selected{% endif %}>{{ bilgi[0] }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
     <label class="secim"><span>Dönem</span>
       <select name="donem" data-otomatik>
         {% for deger, bilgi in donemler.items() %}<option value="{{ deger }}" {% if filtre.donem == deger %}selected{% endif %}>{{ bilgi[0] }}</option>{% endfor %}
@@ -45,7 +52,7 @@
       </select>
     </label>
     <button class="dugme" type="submit">Uygula</button>
-    {% if filtre.q or filtre.islem != 'hepsi' %}<a class="temizle" href="{{ url_for('site.islemler', kaynak=filtre.kaynak) }}">Filtreleri temizle</a>{% endif %}
+    {% if filtre.q or filtre.islem != 'hepsi' or filtre.rol != 'hepsi' %}<a class="temizle" href="{{ url_for('site.islemler', kaynak=filtre.kaynak) }}">Filtreleri temizle</a>{% endif %}
   </div>
 </form>
 

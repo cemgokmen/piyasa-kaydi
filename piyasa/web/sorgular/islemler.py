@@ -7,6 +7,7 @@ from piyasa.web.sorgular.ortak import (
     DONEMLER,
     KAYNAKLAR,
     OZET_SUTUNLARI,
+    ROLLER,
     SAYFA_BOYUTU,
     SIRALAMALAR,
     baglanti,
@@ -14,9 +15,12 @@ from piyasa.web.sorgular.ortak import (
 )
 
 
-def _filtre(arama, islem, donem, kaynak):
+def _filtre(arama, islem, donem, kaynak, rol="hepsi"):
     kosullar = [TEMIZ]
     parametreler = []
+
+    if ROLLER.get(rol, ROLLER["hepsi"])[1]:
+        kosullar.append(ROLLER[rol][1])
 
     if islem in ("buy", "sell"):
         kosullar.append("action = ?")
@@ -38,9 +42,9 @@ def _filtre(arama, islem, donem, kaynak):
     return " WHERE " + " AND ".join(kosullar), parametreler
 
 
-def islem_listesi(arama, islem, donem, kaynak, sira, sayfa):
+def islem_listesi(arama, islem, donem, kaynak, sira, sayfa, rol="hepsi"):
     """Filtreli, sayfalı işlem listesi ve filtrenin özeti."""
-    where, parametreler = _filtre(arama, islem, donem, kaynak)
+    where, parametreler = _filtre(arama, islem, donem, kaynak, rol)
     with baglanti() as conn:
         ozet = dict(conn.execute(
             f"SELECT {OZET_SUTUNLARI} FROM transactions{where}", parametreler

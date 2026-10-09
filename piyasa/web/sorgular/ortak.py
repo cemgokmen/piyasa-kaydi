@@ -34,6 +34,21 @@ KAYNAKLAR = {
 }
 SIYASET_KAYNAKLARI = ("siyasetci", "meclis", "senato")
 
+# Yönetici işlemlerinde role göre süzgeç. Unvanlar Form 4'teki İngilizce haliyle saklanır.
+_UNVAN = "LOWER(COALESCE(job_title, ''))"
+UST_YONETIM = (
+    f"({_UNVAN} LIKE '%ceo%' OR {_UNVAN} LIKE '%chief executive%' OR {_UNVAN} LIKE '%cfo%' "
+    f"OR {_UNVAN} LIKE '%chief financial%' OR {_UNVAN} LIKE '%coo%' OR {_UNVAN} LIKE '%chief operating%' "
+    f"OR {_UNVAN} LIKE '%chair%' OR ({_UNVAN} LIKE '%president%' AND {_UNVAN} NOT LIKE '%vice%'))"
+)
+ROLLER = {
+    "hepsi": ("Bütün roller", None),
+    "ust": ("Üst yönetim (CEO, CFO, başkan)", f"chamber IS NULL AND {UST_YONETIM}"),
+    "kurul": ("Yönetim kurulu üyeleri", f"chamber IS NULL AND NOT {UST_YONETIM} AND "
+                                        f"({_UNVAN} = 'yönetim kurulu üyesi' OR {_UNVAN} LIKE '%director%')"),
+    "ortak": ("Büyük ortaklar (%10 üzeri)", "chamber IS NULL AND job_title = '%10 üzeri ortak'"),
+}
+
 # Siyasetçiler sayfasındaki meclis seçimi
 MECLISLER = {"meclis": "Temsilciler Meclisi", "senato": "Senato"}
 
