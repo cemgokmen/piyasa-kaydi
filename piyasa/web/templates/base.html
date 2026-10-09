@@ -27,7 +27,10 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  {# Yazı tipi sayfanın çizilmesini bekletmez: önce sistem yazı tipiyle görünür, yazı tipi gelince değişir #}
+  {% set yazi_tipi = "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" %}
+  <link rel="preload" as="style" href="{{ yazi_tipi }}" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ yazi_tipi }}"></noscript>
   <link rel="stylesheet" href="{{ url_for('static', filename='stil.css') }}">
   <!-- Telefon görünümü: yalnızca dar ekranlarda yüklenir, bilgisayar görünümüne dokunmaz -->
   <link rel="stylesheet" href="{{ url_for('static', filename='mobil.css') }}" media="(max-width: 860px)">
@@ -91,8 +94,12 @@
 
 {# Canlı sayfada göstergeler büyük kartlarda; şerit tekrar olmasın #}
 {% if aktif != 'canli' %}
-<div class="serit" id="piyasa-seridi" data-adres="{{ url_for('emtia.serit_api') }}" hidden>
-  <div class="wrap serit-ic" aria-label="Piyasa göstergeleri"></div>
+<div class="serit" id="piyasa-seridi" data-adres="{{ url_for('emtia.serit_api') }}" {% if not serit_gostergeleri %}hidden{% endif %}>
+  <div class="wrap serit-ic" aria-label="Piyasa göstergeleri">
+    {%- if serit_gostergeleri %}<div class="serit-akis">
+      {%- for g in serit_gostergeleri %}<{{ 'a' if g.adres else 'span' }} class="serit-oge" data-kod="{{ g.kod }}"{% if g.adres %} href="{{ g.adres }}"{% endif %}><span class="serit-ad">{{ g.ad }}</span><span class="serit-deger">{{ g.deger_metni }}</span>{% if g.degisim_metni %}<span class="serit-degisim {{ 'tutar-buy' if g.artis else 'tutar-sell' }}">{{ g.degisim_metni }}</span>{% endif %}</{{ 'a' if g.adres else 'span' }}>{% endfor -%}
+    </div>{% endif -%}
+  </div>
 </div>
 {% endif %}
 

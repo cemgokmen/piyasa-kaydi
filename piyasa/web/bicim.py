@@ -58,9 +58,11 @@ def sablonlara_kaydet(app):
 
     @app.context_processor
     def ortak():
+        from piyasa.emtia import serit
         from piyasa.zamanlama import son_kontrol
         return {
             "son_kontrol": son_kontrol(),
+            "serit_gostergeleri": serit.son_hali(),
             "yasal_gun": STOCK_ACT_GUN,
             "form4_gun": FORM4_IS_GUNU,
             "partiler": PARTILER,

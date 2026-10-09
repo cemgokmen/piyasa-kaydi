@@ -92,4 +92,8 @@ def create_app(vekil_arkasinda=False):
         # Yalnızca yayındaki sitede: BIST 100 fiyatları arka planda hazır tutulur
         fiyatlari_isit()
         karsilastirmayi_isit()
+        from piyasa.emtia import serit
+        serit.arkaplanda_tazele()
+        from piyasa.web import arama
+        arama.arkaplanda_tazele()
     return app

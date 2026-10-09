@@ -217,7 +217,12 @@
     kapat();
     kutu.focus();
   }
+  let gosterilen = "";
   function goster(oneriler) {
+    // Sunucu yanıtı yerel önerilerle aynıysa liste yeniden çizilmez (seçim kaybolmasın)
+    const anahtar = sonParca() + "|" + oneriler.map((o) => o.deger).join(",");
+    if (anahtar === gosterilen && !liste.hidden) return;
+    gosterilen = anahtar;
     liste.replaceChildren();
     secenekler = oneriler.filter((o) => o.deger).map(function (o, i) {
       const li = document.createElement("li");
@@ -247,10 +252,19 @@
     aktifYap(secenekler.length ? 0 : -1);
   }
 
+  const TURLER = ["BIST", "Hisse", "Kripto"];
+  kutu.addEventListener("focus", () => window.aramaDizinYukle && window.aramaDizinYukle(), { once: true });
   kutu.addEventListener("input", function () {
     clearTimeout(zamanlayici);
     const aranan = sonParca();
     if (!aranan) { kapat(); return; }
+    if (window.aramaDizinYukle) {
+      window.aramaDizinYukle().then(function (dizin) {
+        if (!dizin || sonParca() !== aranan) return;
+        const yerel = window.yerelOneriler(dizin, aranan, 8, TURLER);
+        if (yerel.length) goster(yerel);
+      });
+    }
     zamanlayici = setTimeout(function () {
       if (istek) istek.abort();
       istek = new AbortController();
@@ -258,7 +272,7 @@
         .then((c) => c.json())
         .then((veri) => { if (veri.sorgu === sonParca().slice(0, 60)) goster(veri.oneriler); })
         .catch(() => {});
-    }, 120);
+    }, 250);
   });
   kutu.addEventListener("keydown", function (e) {
     if (liste.hidden) return;

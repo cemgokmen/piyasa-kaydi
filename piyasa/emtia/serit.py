@@ -1,8 +1,13 @@
 """
 Sayfanın üstündeki piyasa şeridi: Türk yatırımcının ilk baktığı göstergeler.
 Fiyatlar anlıktır (1 dakikalık önbellek); sayfa açıkken dakikada bir yenilenir.
+
+Yayındaki sitede şerit arka planda sürekli taze tutulur (arkaplanda_tazele) ve sayfanın
+içine gömülü gelir (son_hali): ziyaretçi Yahoo'yu hiç beklemez.
 """
 
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from piyasa import fiyat
@@ -27,6 +32,35 @@ def _gunluk(bilgi):
     return bilgi["degisim"]
 
 
+_son = {"zaman": 0.0, "veri": []}
+
+
+def son_hali():
+    """En son hesaplanan şerit (indirme yapmaz); hiç hesaplanmadıysa boş liste."""
+    return _son["veri"]
+
+
+def arkaplanda_tazele(aralik=50):
+    def dongu():
+        while True:
+            try:
+                serit.temizle()
+                serit()
+            except Exception:
+                pass
+            time.sleep(aralik)
+    threading.Thread(target=dongu, name="serit-tazeleme", daemon=True).start()
+
+
+def bicimli(g):
+    """Şablon için: '$4.209', '49,34 ₺', '▲ %0,43' (app.js'teki biçimle aynı)."""
+    sayi = f"{g['deger']:,.{g['basamak']}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    deger = f"${sayi}" if g["birim"] == "$" else f"{sayi} ₺" if g["birim"] == "₺" else sayi
+    d = g["degisim"]
+    degisim = None if d is None else f"{'▲' if d >= 0 else '▼'} %{abs(d) * 100:.2f}".replace(".", ",")
+    return {**g, "deger_metni": deger, "degisim_metni": degisim, "artis": d is not None and d >= 0}
+
+
 @sureli(fiyat.ANLIK_SURESI)
 def serit():
     kodlar = [k for _, k, *_ in GOSTERGELER]
@@ -49,4 +83,6 @@ def serit():
             "adres": "/emtia/altin", "basamak": 2,
             "degisim": None if a is None or k is None else (1 + a) * (1 + k) - 1,
         })
+    if ogeler:
+        _son.update(zaman=time.time(), veri=[bicimli(g) for g in ogeler])
     return ogeler

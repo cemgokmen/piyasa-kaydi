@@ -3,7 +3,7 @@ Sitenin sayfaları. Her fonksiyon isteği okur, sorgular.py'den veriyi alır
 ve şablonu çizer; SQL burada yazılmaz.
 """
 
-from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, jsonify, redirect, render_template, request, url_for
 
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, uyeler
 from piyasa.analiz import cakisma, ihale, performans, portfoy, sinyaller
@@ -152,6 +152,16 @@ def oneri_api():
     sorgu = request.args.get("q", "").strip()[:60]
     turler = {t for t in request.args.get("turler", "").split(",") if t in arama.TUR_SIRASI} or None
     return jsonify({"sorgu": sorgu, "oneriler": arama.oneriler(sorgu, turler=turler)})
+
+
+@site.route("/api/arama-dizini")
+def arama_dizini_api():
+    """Arama önerileri için tarayıcıya bir kez gönderilen dizin (tarayıcıda ve Cloudflare'de 10 dakika)."""
+    import json
+    govde = json.dumps({"girdiler": arama.istemci_dizini(), "turler": list(arama.TUR_SIRASI)},
+                       ensure_ascii=False, separators=(",", ":"))
+    return current_app.response_class(govde, mimetype="application/json",
+                                      headers={"Cache-Control": "public, max-age=600, s-maxage=600"})
 
 
 @site.route("/kisi/<slug>")

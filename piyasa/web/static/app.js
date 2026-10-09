@@ -180,6 +180,45 @@ function sonAramaKaydet(kayit) {
   } catch (e) { /* gizli pencere vb.: saklanamazsa önemli değil */ }
 }
 
+// Tarayıcıdaki arama dizini: kutuya ilk odaklanınca bir kez indirilir; öneriler sunucuya
+// gidip gelmeden, tuşa basılır basılmaz hesaplanır (puanlama sunucudakiyle aynı, bkz. arama.py)
+let aramaDizini = null;
+function aramaDizinYukle() {
+  if (!aramaDizini) {
+    aramaDizini = fetch("/api/arama-dizini")
+      .then((c) => (c.ok ? c.json() : Promise.reject(c.status)))
+      .then((v) => ({ girdiler: v.girdiler, sira: Object.fromEntries(v.turler.map((t, i) => [t, i])) }))
+      .catch(() => { aramaDizini = null; return null; });
+  }
+  return aramaDizini;
+}
+window.aramaDizinYukle = aramaDizinYukle;
+
+function aramaSade(metin) {
+  return (metin || "").replace(/[ıİ]/g, "i").normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function yerelOneriler(dizin, sorgu, enFazla = 8, turler = null) {
+  const aranan = aramaSade(sorgu);
+  if (!dizin || !aranan) return [];
+  const sonuc = [];
+  for (const [tur, etiket, alt, adres, kod, metin, ek, deger] of dizin.girdiler) {
+    if (turler && !turler.includes(tur)) continue;
+    let taban;
+    if (kod && kod === aranan) taban = 1000;
+    else if (kod && kod.startsWith(aranan)) taban = 700;
+    else if (metin.startsWith(aranan)) taban = 600;
+    else if ((" " + metin).includes(" " + aranan)) taban = 450;
+    else if (aranan.length >= 3 && metin.includes(aranan)) taban = 250;
+    else continue;
+    sonuc.push({ puan: taban + ek, tur, etiket, alt, adres, deger });
+  }
+  sonuc.sort((a, b) => b.puan - a.puan || dizin.sira[a.tur] - dizin.sira[b.tur]);
+  return sonuc.slice(0, enFazla);
+}
+window.yerelOneriler = yerelOneriler;
+
 document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
   const form = kutu.form;
   const liste = document.createElement("ul");
@@ -333,17 +372,37 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
     }
   });
 
+  kutu.addEventListener("focus", aramaDizinYukle, { once: true });
+  kutu.addEventListener("pointerenter", aramaDizinYukle, { once: true });
+
+  // Gösterilen önerilerin adresleri: sunucu yanıtı aynı listeyi getirirse yeniden çizilmez
+  let gosterilen = "";
+  function oneriGoster(oneriler, aranan) {
+    const anahtar = aranan + "|" + oneriler.map((o) => o.adres).join(",");
+    if (anahtar === gosterilen && !liste.hidden) return;
+    gosterilen = anahtar;
+    goster(oneriler, aranan);
+  }
+
   kutu.addEventListener("input", function () {
     clearTimeout(zamanlayici);
     const aranan = kutu.value.trim();
     if (!aranan) {
+      gosterilen = "";
       if (escBasildi) escBasildi = false;
       else sonlariGoster();
       return;
     }
     escBasildi = false;
-    // Yazmaya başlanınca son aramalar listesi hemen kapanır; öneriler gelince yenisi açılır
+    // Yazmaya başlanınca son aramalar listesi hemen kapanır
     if (liste.dataset.gecmis) kapat();
+    // Önce tarayıcıdaki dizinden, anında
+    aramaDizinYukle().then(function (dizin) {
+      if (!dizin || kutu.value.trim() !== aranan) return;
+      const yerel = yerelOneriler(dizin, aranan);
+      if (yerel.length) oneriGoster(yerel, aranan);
+    });
+    // Sonra sunucudan: dizinde olmayan, az işlem görmüş hisse ve kişiler için
     zamanlayici = setTimeout(function () {
       if (istek) istek.abort();
       istek = new AbortController();
@@ -352,10 +411,10 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
         .then(function (veri) {
           // Yanıt gelene kadar kutu değiştiyse eski yanıtı gösterme
           if (veri.sorgu !== kutu.value.trim().slice(0, 60)) return;
-          goster(veri.oneriler, aranan);
+          oneriGoster(veri.oneriler, aranan);
         })
         .catch(() => {});
-    }, 120);
+    }, 250);
   });
 
   kutu.addEventListener("keydown", function (olay) {
@@ -487,7 +546,13 @@ if (serit) {
       .catch(() => {});
   };
 
-  fetch(serit.dataset.adres)
+  // Yayındaki sitede şerit sayfayla birlikte gelir: beklemeden kaymaya başlar, değerler hemen tazelenir
+  const hazir = serit.querySelector(".serit-akis");
+  if (hazir) {
+    seridiKaydir(serit, hazir);
+    tazele();
+    setInterval(tazele, 60 * 1000);
+  } else fetch(serit.dataset.adres)
     .then((cevap) => (cevap.ok ? cevap.json() : Promise.reject(cevap.status)))
     .then(function (veri) {
       const ic = document.createElement("div");

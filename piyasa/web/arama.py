@@ -10,6 +10,8 @@ harf ve Türkçe karakterlerden bağımsızdır: "sandisk", "SanDisk", "altin",
 import html
 import math
 import re
+import threading
+import time
 import unicodedata
 from collections import Counter, defaultdict
 from contextlib import closing
@@ -18,7 +20,6 @@ from piyasa.bicim import sirket_gorunen_ad, tr_baslik, unvan
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kripto.tanimlar import KRIPTOLAR
 from piyasa.kurallar import GECERLI_KOD, TEMIZ, parti_bilgisi
-from piyasa.onbellek import sureli
 from piyasa.uyeler import YURUTME
 from piyasa.veritabani import get_connection
 
@@ -156,13 +157,52 @@ def _dizin_kur():
     return girdiler
 
 
-@sureli(ONBELLEK_SURESI)
+# Dizin bellekte tutulur. Yayındaki sitede arka planda yenilenir (arkaplanda_tazele): ziyaretçi
+# hiçbir zaman dizinin kurulmasını beklemez. Arka plan yoksa (geliştirme, testler) süresi dolunca kurulur.
+_dizin = {"zaman": 0.0, "veri": None, "istemci": None}
+_kurulum = threading.Lock()
+
+
+def _yenile():
+    veri = _dizin_kur()
+    _dizin.update(zaman=time.monotonic(), veri=veri, istemci=_istemci_dizini_kur(veri))
+
+
 def dizin():
-    return _dizin_kur()
+    if _dizin["veri"] is None or time.monotonic() - _dizin["zaman"] > ONBELLEK_SURESI * (3 if _arka_plan else 1):
+        with _kurulum:                       # aynı anda tek kurulum
+            if _dizin["veri"] is None or time.monotonic() - _dizin["zaman"] > ONBELLEK_SURESI:
+                _yenile()
+    return _dizin["veri"]
 
 
 def onbellegi_temizle():
-    dizin.temizle()
+    _dizin.update(zaman=0.0, veri=None, istemci=None)
+
+
+_arka_plan = False
+
+
+def arkaplanda_tazele(aralik=ONBELLEK_SURESI - 60):
+    """Dizini süresi dolmadan arka planda yeniden kurar; eskisi yenisi hazır olana kadar kullanılır."""
+    global _arka_plan
+    _arka_plan = True
+
+    def dongu():
+        while True:
+            try:
+                with _kurulum:
+                    _yenile()
+            except Exception:
+                pass
+            time.sleep(aralik)
+    threading.Thread(target=dongu, name="arama-dizini", daemon=True).start()
+
+
+def _ek_puan(girdi):
+    """Eşleşme türünden bağımsız puan: öne çıkanlar, çok işlem görenler, kısa adlar."""
+    puan = 200 if girdi["tur"] in ("Emtia", "Kripto") or girdi.get("one_cikar") else 0
+    return puan + 25 * math.log10(1 + girdi["agirlik"]) - min(len(girdi["metin"]), 60) * 0.3
 
 
 def _puan(girdi, aranan):
@@ -180,11 +220,9 @@ def _puan(girdi, aranan):
         taban = 250
     else:
         return 0
-    # Sitenin kendi emtia sayfaları "altın", "gold", "petrol" aramalarında öne çıksın
-    if girdi["tur"] in ("Emtia", "Kripto") or girdi.get("one_cikar"):
-        taban += 200
-    # Çok işlem görenler öne; kısa adlar (tam eşleşmeye yakın) biraz önde
-    return taban + 25 * math.log10(1 + girdi["agirlik"]) - min(len(metin), 60) * 0.3
+    # Sitenin kendi emtia sayfaları "altın", "gold", "petrol" aramalarında öne çıksın;
+    # çok işlem görenler öne, kısa adlar (tam eşleşmeye yakın) biraz önde
+    return taban + _ek_puan(girdi)
 
 
 def oneriler(sorgu, en_fazla=EN_FAZLA, turler=None):
@@ -198,3 +236,29 @@ def oneriler(sorgu, en_fazla=EN_FAZLA, turler=None):
         {**{k: g[k] for k in ("tur", "etiket", "alt", "adres")}, **({"deger": g["deger"]} if g.get("deger") else {})}
         for _, g in puanli[:en_fazla]
     ]
+
+
+# Tarayıcıya gönderilen dizin: öneriler tuşa basılır basılmaz tarayıcıda hesaplanır, sunucuya gidip
+# gelmek beklenmez. Bütün BIST şirketleri, kriptolar, emtialar, siyasetçiler ve fonlar ile en çok
+# işlem gören hisse ve yöneticiler; geri kalanlar için tarayıcı yine sunucuya sorar.
+ISTEMCI_SINIRI = {"Hisse": 1500, "Yönetici": 800}
+
+
+def istemci_dizini():
+    dizin()
+    return _dizin["istemci"]
+
+
+def _istemci_dizini_kur(girdiler):
+    sayac = Counter()
+    secilen = []
+    for g in sorted(girdiler, key=lambda g: -g["agirlik"]):
+        sinir = ISTEMCI_SINIRI.get(g["tur"])
+        if sinir is not None:
+            if sayac[g["tur"]] >= sinir:
+                continue
+            sayac[g["tur"]] += 1
+        # [tür, etiket, alt, adres, kod, metin, ek puan, karşılaştırma kodu]
+        secilen.append([g["tur"], g["etiket"], g["alt"], g["adres"], g["kod"], g["metin"],
+                        round(_ek_puan(g), 1), g.get("deger", "")])
+    return secilen

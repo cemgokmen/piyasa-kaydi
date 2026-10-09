@@ -440,3 +440,22 @@ def test_site_haritasindaki_sabit_sayfalar_acilir(istemci):
     assert len(sabit) >= 15
     for adres in sabit:
         assert istemci.get(adres.replace("&amp;", "&")).status_code == 200, adres
+
+
+def test_tarayici_arama_dizini(istemci):
+    r = istemci.get("/api/arama-dizini")
+    assert r.status_code == 200 and "max-age=600" in r.headers["Cache-Control"]
+    veri = r.get_json()
+    assert veri["girdiler"] and all(len(g) == 8 for g in veri["girdiler"])
+    turler = {g[0] for g in veri["girdiler"]}
+    assert {"BIST", "Hisse"} <= turler and set(veri["turler"]) >= turler
+    # BIST şirketleri karşılaştırma koduyla gelir
+    assert any(g[0] == "BIST" and g[7] == "THYAO" for g in veri["girdiler"])
+
+
+def test_serit_sayfaya_gomulu(istemci, monkeypatch):
+    from piyasa.emtia import serit
+    monkeypatch.setitem(serit._son, "veri", [serit.bicimli(
+        {"ad": "Dolar/TL", "kod": "TRY=X", "deger": 49.34, "birim": "₺", "adres": None, "basamak": 2, "degisim": 0.0011})])
+    html = istemci.get("/bist").get_data(as_text=True)
+    assert 'class="serit-akis"' in html and "49,34 ₺" in html and "▲ %0,11" in html
