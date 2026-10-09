@@ -6,7 +6,9 @@ Kullanım:
     python -m piyasa site --ag            aynı Wi-Fi'daki telefondan da açılabilir
     python -m piyasa yayin                sitenin yayın sürümü (gunicorn); --kur ile Mac açılınca başlar
     python -m piyasa guncelle             tüm veriyi günceller (--hizli: yalnızca yeni bildirimler)
-    python -m piyasa zamanla              tam güncelleme her sabah 07:00, hızlı güncelleme 12:00 ve 00:00
+    python -m piyasa guncelle --canli     gün içi Form 4 ve KAP bildirimleri (15 dakikada bir çalışır)
+    python -m piyasa zamanla              tam güncelleme 07:00, hızlı güncelleme 12, 18, 21 ve 00:00,
+                                          canlı güncelleme 15 dakikada bir
                                           (--saat 6:15 ile saat, --kaldir ile kapatma)
 
     python -m piyasa form4                son 90 günün eksik Form 4 günlerini indirir
@@ -42,6 +44,7 @@ import sys
 KOMUTLAR = {
     "form4": "piyasa.toplama.form4_gecmis",
     "form4-bugun": "piyasa.toplama.form4",
+    "form4-canli": "piyasa.toplama.form4_canli",
     "kongre": "piyasa.toplama.kongre",
     "senato": "piyasa.toplama.senato",
     "ihaleler": "piyasa.toplama.ihaleler",
@@ -69,7 +72,9 @@ KOMUTLAR = {
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
-# 'guncelle --hizli' (günde iki kez): yalnızca yeni bildirimler ve bakımları
+# 'guncelle --hizli' (günde dört kez): yalnızca yeni bildirimler ve bakımları
+# 'guncelle --canli' (15 dakikada bir): gün içi Form 4 ve KAP'ın o günkü bildirimleri
+CANLI_GUNCELLEME = ["form4-canli", ("kap", ["--canli", "--gun", "1", "--en-fazla", "60"]), "slug", "supheli"]
 HIZLI_GUNCELLEME = ["form4", "kongre", "senato", "kap", "fon", "slug", "duzelt", "supheli"]
 
 GUNCELLEME = ["form4", "kongre", "senato", "kap", "emtia", "kripto", "slug", "duzelt", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
@@ -108,6 +113,9 @@ def guncelle(argumanlar=()):
     from piyasa import zamanlama
 
     hizli = "--hizli" in argumanlar
+    if "--canli" in argumanlar:
+        canli_guncelle()
+        return
     saat, dakika = 7, 0
     if "--gerekirse" in argumanlar:
         sira = list(argumanlar).index("--gerekirse")
@@ -135,6 +143,22 @@ def guncelle(argumanlar=()):
     print(f"\n##### {'Hızlı güncelleme' if hizli else 'Güncelleme'} bitti: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
 
 
+def canli_guncelle():
+    """15 dakikada bir: kendi kilidiyle çalışır, uzun süren tam güncellemeyi beklemez."""
+    from datetime import datetime
+
+    from piyasa import zamanlama
+
+    if not zamanlama.internet_bekle(sure=60):
+        return
+    with zamanlama.tek_guncelleme(zamanlama.CANLI_KILIT) as kilit:
+        if not kilit:
+            print("Önceki canlı güncelleme sürüyor; bu çalıştırma atlandı.", flush=True)
+            return
+        hatalar = adimlari_calistir(CANLI_GUNCELLEME, "Canlı güncelleme")
+    zamanlama.hizli_durum_yaz(datetime.now(), not hatalar, zamanlama.CANLI_DURUM)
+
+
 def adimlari_calistir(adimlar=None, baslik="Güncelleme"):
     """Adımları sırayla çalıştırır; hata veren adımların listesini döndürür."""
     import time
@@ -144,10 +168,11 @@ def adimlari_calistir(adimlar=None, baslik="Güncelleme"):
     print(f"\n##### {baslik} başladı: {datetime.now():%Y-%m-%d %H:%M} #####", flush=True)
     hatalar = []
     for adim in adimlar or GUNCELLEME:
+        adim, ek = adim if isinstance(adim, tuple) else (adim, [])
         baslangic = time.time()
         print(f"\n=== {adim} ===", flush=True)
         try:
-            calistir(adim, [])
+            calistir(adim, ek)
         except Exception:
             traceback.print_exc()
             hatalar.append(adim)

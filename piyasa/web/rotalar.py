@@ -8,10 +8,12 @@ from flask import Blueprint, abort, jsonify, redirect, render_template, request,
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, uyeler
 from piyasa.analiz import cakisma, ihale, performans, portfoy, sinyaller
 from piyasa.analiz import yurutme as yurutme_analizi
+from piyasa.bist import sorgular as bist_sorgulari
 from piyasa.emtia.tanimlar import EMTIALAR
 from piyasa.kripto.tanimlar import KRIPTOLAR
 from piyasa.kurallar import PARTILER, parti_bilgisi
 from piyasa.web import arama, sorgular
+from piyasa.web.sorgular import canli as canli_akisi
 
 site = Blueprint("site", __name__)
 
@@ -27,8 +29,18 @@ def anasayfa():
     # Eski sürümde liste ana sayfadaydı; filtreli eski bağlantılar listeye gitsin
     if request.args:
         return redirect(url_for("site.islemler", **request.args))
-    return render_template("anasayfa.html", aktif="anasayfa", emtia_sayisi=len(EMTIALAR), kripto_sayisi=len(KRIPTOLAR),
-                           **sorgular.genel_bakis())
+    son_dakika = canli_akisi.son_dakika()
+    return render_template("anasayfa.html", aktif="anasayfa", emtia_sayisi=len(EMTIALAR),
+                           kripto_sayisi=_kripto_sayisi(), bist_sayisi=len(bist_sorgulari.sirketler()),
+                           son_dakika=son_dakika, **sorgular.genel_bakis())
+
+
+def _kripto_sayisi():
+    try:
+        from piyasa.kripto import piyasa as kripto_piyasa
+        return len(kripto_piyasa.liste()) or len(KRIPTOLAR)
+    except Exception:
+        return len(KRIPTOLAR)
 
 
 @site.route("/islemler")

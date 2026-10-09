@@ -17,6 +17,7 @@ KAP'ı yormamak için istekler arasında beklenir. Her kayıtta KAP bildirimine 
 Çalıştırmak için:
   python -m piyasa kap               son 7 günün bildirimleri ve ayrıntıları
   python -m piyasa kap --gun 90      geçmişe dönük doldurma
+  python -m piyasa kap --canli --gun 1   gün içi (şirket listesini yeniden indirmez)
 """
 
 import html
@@ -665,7 +666,10 @@ def main():
     init_db()
     conn = get_connection()
     try:
-        bist100 = endeksleri_guncelle(conn)
+        if "--canli" in argumanlar:       # 15 dakikalık çalıştırma: şirket listesi veritabanından
+            bist100 = {r[0] for r in conn.execute("SELECT kod FROM bist_sirket WHERE xu100 = 1")}
+        else:
+            bist100 = endeksleri_guncelle(conn)
         bit = date.today()
         eklenen = 0
         while gun > 0:

@@ -1,0 +1,23 @@
+{# Canlı akışta tek bildirim; değişken: o #}
+{% from "_bilesenler.html" import parti_rozeti %}
+<li class="canli-oge kaynak-{{ o.kaynak }}" data-anahtar="{{ o.kaynak }}|{{ o.gun }}|{{ o.kod }}|{{ o.kisi or '' }}|{{ o.islem or o.etiket }}|{{ o.dis_adres }}">
+  <span class="canli-saat sayi">{{ o.saat or '' }}</span>
+  <div class="canli-govde">
+    <div class="canli-ust">
+      <span class="canli-kaynak">{% if o.kaynak == 'abd' %}ABD{% elif o.kaynak == 'siyaset' %}Kongre{% else %}{{ o.etiket }}{% endif %}</span>
+      <a class="ticker" href="{{ o.kod_adres }}">{{ o.kod }}</a>
+      <a class="canli-sirket kirp" href="{{ o.kod_adres }}" title="{{ o.sirket }}">{{ o.sirket }}</a>
+    </div>
+    <div class="canli-alt">
+      {% if o.kisi %}{% if o.kisi_adres %}<a href="{{ o.kisi_adres }}">{{ o.kisi }}</a>{% else %}<span>{{ o.kisi }}</span>{% endif %}{% endif %}
+      {% if o.parti %}{{ parti_rozeti(o.parti) }}{% endif %}
+      {% if o.rol %}<span class="soluk">{{ o.rol }}</span>{% endif %}
+      {% if o.not %}<span class="soluk kirp canli-not" title="{{ o.not }}">{{ o.not }}</span>{% endif %}
+      <a class="soluk dis-baglanti" href="{{ o.dis_adres }}" target="_blank" rel="noopener">{{ o.dis_ad }} ↗</a>
+    </div>
+  </div>
+  <div class="canli-sag">
+    {% if o.islem %}<span class="rozet rozet-{{ o.islem }}">{{ 'Alım' if o.islem == 'buy' else 'Satım' }}</span>{% endif %}
+    {% if o.tutar %}<span class="sayi canli-tutar">{{ o.tutar }}</span>{% endif %}
+  </div>
+</li>

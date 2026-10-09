@@ -47,14 +47,15 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 
 | Bölüm | Ne gösterir |
 |---|---|
+| **Canlı** | Piyasa göstergeleri, Borsa İstanbul'da günün hareketi ve ABD yöneticileri, Kongre ve KAP'tan en yeni bildirimler tek akışta; 15 dakikada bir toplanır, sayfa dakikada bir yenilenir |
 | **Siyasetçiler** | Temsilciler Meclisi ve Senato üyelerinin STOCK Act bildirimleri; parti, eyalet, komite üyelikleri, resmi fotoğraflar, tahmini portföy ve geç bildirimler |
 | **Başkan ve Başkan Yardımcısı** | OGE yıllık mali durum bildirimlerinden ayıklanan hisse ve fon portföyü ile yıl içindeki işlemler |
 | **Şirket yöneticileri** | SEC Form 4 bildirimlerinden yalnızca açık piyasa alım ve satımları; unvanlar Türkçe |
 | **Fonlar** | Vanguard, BlackRock, Berkshire, Norveç Varlık Fonu gibi büyük kurumların 13F portföyleri ve çeyrekten çeyreğe değişimler |
 | **Hisse sayfaları** | Şirketin ne iş yaptığı, anlık fiyat, temel rakamlar (piyasa değeri, F/K, son bilanço), analist hedef fiyatları, devlet sözleşmeleri, güncel Türkçe haberler ve o hissedeki bütün bildirimler |
 | **Emtialar** | Altın, gümüş, platin, bakır ve Brent petrol: fiyat ve hacim, büyük fonların konumu, petrol stokları, Fed faiz kararları, vadeli piyasanın ve faiz piyasasının beklentisi, Kapalıçarşı altın ve gümüş fiyatları |
-| **Borsa İstanbul** | Pay piyasasındaki 650 hissenin fiyatı ve KAP sektörü (BIST 100 / BIST 30 / sektör süzgeci), her şirketin sayfası (fiyat, rakamlar, aynı sektördeki şirketler); KAP'tan yöneticilerin ve büyük ortakların pay alım satım bildirimleri (kişi, görevi, adet, fiyat, tutar, işlem sonrası pay oranı), fonların eşik bildirimleri, şirketlerin kendi paylarını geri alımları ve özel durum açıklamaları |
-| **Kripto paralar** | 27 kripto paranın Türkçe profili, gerçek 24 saatlik fiyat değişimi, piyasa değeri ve arz; siyasetçilerin kripto işlemleri, kripto şirketlerinde yönetici işlemleri, Bitcoin/Ethereum fonu tutan bankalar, CME vadelilerinde kurumların konumu, korku ve açgözlülük endeksi, Bitcoin yarılanma sayacı |
+| **Borsa İstanbul** | Pay piyasasındaki 650 hissenin fiyatı ve KAP sektörü (BIST 100 / BIST 30 / sektör süzgeci), her şirketin sayfası (fiyat, rakamlar, aynı sektördeki şirketler); KAP'tan yöneticilerin ve büyük ortakların pay alım satım bildirimleri (kişi, görevi, adet, fiyat, tutar, işlem sonrası pay oranı), fonların eşik bildirimleri, şirketlerin kendi paylarını geri alımları, özel durum açıklamaları; hisseyi kimlerin tuttuğu (ortaklık yapısı, halka açıklık, yönetim kurulu, bağlı ortaklıklar) ve büyük ortakların sayfaları |
+| **Kripto paralar** | İşlem hacmi yüksek bütün kripto paralar (yaklaşık 180); Türkçe profil, gerçek 24 saatlik fiyat değişimi, piyasa değeri ve arz; siyasetçilerin kripto işlemleri, kripto şirketlerinde yönetici işlemleri, Bitcoin/Ethereum fonu tutan bankalar, CME vadelilerinde kurumların konumu, korku ve açgözlülük endeksi, Bitcoin yarılanma sayacı |
 
 ### Analizler
 
@@ -82,16 +83,16 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 
 | Kaynak | Veri | Sıklık |
 |---|---|---|
-| [SEC EDGAR](https://www.sec.gov/edgar) | Form 4 yönetici işlemleri, 13F fon portföyleri, şirket sektörleri | Günlük / çeyreklik |
-| [House Clerk](https://disclosures-clerk.house.gov) | Temsilciler Meclisi işlem bildirimleri (PDF) | Günde 3 kez |
-| [Senate eFD](https://efdsearch.senate.gov) | Senato işlem bildirimleri | Günde 3 kez |
+| [SEC EDGAR](https://www.sec.gov/edgar) | Form 4 yönetici işlemleri, 13F fon portföyleri, şirket sektörleri | 15 dakikada bir / çeyreklik |
+| [House Clerk](https://disclosures-clerk.house.gov) | Temsilciler Meclisi işlem bildirimleri (PDF) | Günde 5 kez |
+| [Senate eFD](https://efdsearch.senate.gov) | Senato işlem bildirimleri | Günde 5 kez |
 | [OGE](https://www.oge.gov) | Başkan ve Başkan Yardımcısının mali durum bildirimleri | Yıllık |
 | [congress-legislators](https://github.com/unitedstates/congress-legislators) | Üyeler, partiler, komiteler | Günlük |
 | [USAspending.gov](https://www.usaspending.gov) | Federal sözleşmeler | Günlük |
 | [CFTC](https://www.cftc.gov) · [EIA](https://www.eia.gov) · [FRED](https://fred.stlouisfed.org) | Fon konumları, petrol stokları, faizler | Haftalık / günlük |
 | Yahoo Finance | Hisse ve emtia fiyatları, şirket rakamları, analist beklentileri | Canlı (önbellekli) |
 | Google Haberler | Türkçe ve İngilizce haber başlıkları | Canlı (önbellekli) |
-| [KAP](https://www.kap.org.tr) | Borsa İstanbul pay alım satım, geri alım ve özel durum bildirimleri, BIST 100 listesi | Günde 3 kez |
+| [KAP](https://www.kap.org.tr) | Borsa İstanbul pay alım satım, geri alım ve özel durum bildirimleri, şirket listesi, sektörler ve ortaklık yapısı | 15 dakikada bir |
 | Truncgil Finans | Kapalıçarşı altın ve gümüş fiyatları | Canlı (önbellekli) |
 | [CoinGecko](https://www.coingecko.com) · alternative.me · mempool.space | Kripto fiyatları, korku endeksi, Bitcoin blok yüksekliği | Canlı (önbellekli) |
 
@@ -132,10 +133,13 @@ python -m piyasa zamanla          # macOS (launchd)
 | Saat | Görev | Süre |
 |---|---|---|
 | 07:00 | **Tam güncelleme:** bildirimler, fiyatlar, fonlar, emtialar, şirket bilgileri, analizler | dakikalar |
-| 12:00 ve 00:00 | **Hızlı güncelleme:** yalnızca yeni Form 4, Meclis ve Senato bildirimleri | ~1 dakika |
+| 12:00, 18:00, 21:00 ve 00:00 | **Hızlı güncelleme:** yeni Form 4, Meclis, Senato, KAP ve fon bildirimleri | birkaç dakika |
+| 15 dakikada bir | **Canlı güncelleme:** SEC'e gün içinde düşen Form 4'ler (son bildirimler akışı) ve KAP'ın o günkü bildirimleri | ~1 dakika |
 
 - Bilgisayar o saatte kapalı ya da uykudaysa güncelleme, açıldığında kendiliğinden yapılır.
-- İnternet bağlantısı gelene kadar beklenir; iki güncelleme aynı anda çalışmaz.
+- İnternet bağlantısı gelene kadar beklenir; iki güncelleme aynı anda çalışmaz
+  (canlı güncellemenin kendi kilidi vardır, uzun süren tam güncellemeyi beklemez).
+- `/canli` sayfası bütün kaynaklardan en yeni bildirimleri tek akışta gösterir ve açık kaldıkça dakikada bir yenilenir.
 - Her adım ayrı çalışır; biri hata verirse diğerleri devam eder.
 - Son güncelleme zamanı sitenin alt kısmında görünür.
 

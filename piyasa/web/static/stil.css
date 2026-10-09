@@ -2233,3 +2233,62 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .benzer-ad { color: var(--yazi); font-size: 13.5px; line-height: 1.35; min-height: 2.7em; }
 .benzer-alt { font-size: 12.5px; }
 .bist-tablosu .sektor-hucre { min-width: 170px; max-width: 230px; line-height: 1.35; }
+
+/* ---------- Canlı sayfa ---------- */
+
+.menu-canli { display: inline-flex; align-items: center; gap: 6px; }
+.menu-canli .canli-nokta { width: 6px; height: 6px; }
+.ust-yol .canli-nokta { display: inline-block; margin-right: 4px; vertical-align: middle; }
+.canli-durum { margin: 0; font-size: 13px; white-space: nowrap; }
+
+.canli-gostergeler { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.canli-gostergeler .kpi { text-decoration: none; color: inherit; min-height: 86px; }
+.canli-gostergeler a.kpi:hover { border-color: var(--vurgu); }
+.canli-gostergeler .kpi-deger { font-size: 22px; }
+.canli-gostergeler .iskelet-kutu { opacity: .5; }
+.kpi .tazelendi { animation: tazelendi 1.2s ease-out; }
+@keyframes tazelendi { from { background: var(--vurgu-yumusak); } to { background: transparent; } }
+
+.canli-akis { padding: 0; overflow: hidden; }
+.canli-gun + .canli-gun { border-top: 1px solid var(--cizgi); }
+.canli-gun-baslik {
+  margin: 0; padding: 10px 16px;
+  background: var(--zemin, var(--kart)); border-bottom: 1px solid var(--cizgi-2);
+  font-size: 13px; font-weight: 600; letter-spacing: .01em;
+}
+.canli-liste { margin: 0; padding: 0; list-style: none; }
+.canli-oge {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 16px; border-bottom: 1px solid var(--cizgi-2);
+  box-shadow: inset 3px 0 0 transparent;
+}
+.canli-oge:last-child { border-bottom: 0; }
+.canli-oge.yeni { animation: canli-yeni 4s ease-out; }
+@keyframes canli-yeni { from { background: var(--vurgu-yumusak); } to { background: transparent; } }
+.canli-saat { flex: none; width: 42px; color: var(--yazi-3); font-size: 12.5px; }
+.canli-govde { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.canli-ust, .canli-alt { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.canli-alt { font-size: 12.5px; flex-wrap: wrap; row-gap: 2px; }
+.canli-alt a { color: var(--yazi-2); text-decoration: none; }
+.canli-alt a:hover { color: var(--vurgu); }
+.canli-sirket { color: var(--yazi); text-decoration: none; font-size: 14px; min-width: 0; }
+.canli-sirket:hover { color: var(--vurgu); }
+.canli-not { max-width: 46ch; }
+.canli-kaynak {
+  flex: none; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; background: var(--cizgi-2); color: var(--yazi-2);
+}
+.kaynak-abd .canli-kaynak { background: var(--vurgu-yumusak); color: var(--vurgu); }
+.kaynak-bist .canli-kaynak { background: var(--uyari-yumusak, var(--cizgi-2)); color: var(--uyari, var(--yazi-2)); }
+.canli-sag { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.canli-tutar { font-size: 13px; font-weight: 600; }
+
+@media (max-width: 1100px) { .canli-gostergeler { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) {
+  .canli-gostergeler { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .canli-gostergeler .kpi-deger { font-size: 18px; }
+  .canli-oge { gap: 10px; padding: 10px 12px; align-items: flex-start; }
+  .canli-saat { width: 36px; padding-top: 2px; }
+  .canli-not { display: none; }
+  .canli-durum { white-space: normal; }
+}

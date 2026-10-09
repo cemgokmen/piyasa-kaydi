@@ -13,7 +13,8 @@
     <input type="hidden" name="donem" value="365">
     <button class="dugme dugme-ana" type="submit">Ara</button>
   </form>
-  <p class="guncel"><a href="{{ url_for('analiz.gunluk_ozet') }}">Günün özetini oku →</a></p>
+  <p class="guncel"><a href="{{ url_for('canli.sayfa') }}"><span class="canli-nokta acik" aria-hidden="true"></span> Canlı akış</a>
+    <span class="soluk">·</span> <a href="{{ url_for('analiz.gunluk_ozet') }}">Günün özetini oku →</a></p>
 </section>
 
 
@@ -40,8 +41,8 @@
   </a>
   <a class="kaynak-kart" href="{{ url_for('bist.liste') }}">
     <span class="kaynak-kart-baslik">Borsa İstanbul</span>
-    <span class="kaynak-kart-sayi">100 <small>hisse</small></span>
-    <span class="kaynak-kart-metin">BIST 100 ve KAP'ta yöneticilerin, büyük ortakların pay alım satımları, şirketlerin geri alımları</span>
+    <span class="kaynak-kart-sayi">{{ bist_sayisi|sayi }} <small>hisse</small></span>
+    <span class="kaynak-kart-metin">Bütün hisseler; KAP'ta yöneticilerin, büyük ortakların pay alım satımları, şirketlerin geri alımları, hisseyi kimlerin tuttuğu</span>
     <span class="kaynak-kart-link">Borsa İstanbul'u gör →</span>
   </a>
   <a class="kaynak-kart" href="{{ url_for('emtia.liste') }}">
@@ -53,10 +54,27 @@
   <a class="kaynak-kart" href="{{ url_for('kripto.liste') }}">
     <span class="kaynak-kart-baslik">Kripto paralar</span>
     <span class="kaynak-kart-sayi">{{ kripto_sayisi }} <small>kripto</small></span>
-    <span class="kaynak-kart-metin">Bitcoin, Ethereum ve diğerleri: fiyatlar, kripto şirketlerinde kim aldı, Bitcoin fonu alan bankalar</span>
+    <span class="kaynak-kart-metin">Bitcoin, Ethereum ve işlem hacmi yüksek bütün coinler: fiyatlar, kripto şirketlerinde kim aldı, Bitcoin fonu alan bankalar</span>
     <span class="kaynak-kart-link">Kriptoları gör →</span>
   </a>
 </section>
+
+{% if son_dakika %}
+<section class="bolum">
+  <header class="bolum-ust">
+    <div>
+      <h2><span class="canli-nokta acik" aria-hidden="true"></span> Son dakika</h2>
+      <p class="bolum-not">ABD'de ve Borsa İstanbul'da en son bildirilen hisse işlemleri; 15 dakikada bir güncellenir.</p>
+    </div>
+    <a class="bolum-link" href="{{ url_for('canli.sayfa') }}">Canlı akışın tamamı →</a>
+  </header>
+  <div class="panel canli-akis">
+    <ul class="canli-liste">
+      {% for o in son_dakika %}{% include "_canli_oge.html" %}{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
 
 <section class="bolum">
   <header class="bolum-ust">

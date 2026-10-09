@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_bilesenler.html" import kpi %}
+{% block baslik %}Canlı piyasa: son dakika bildirimleri · Piyasa Kaydı{% endblock %}
+{% block aciklama %}Borsa ve döviz göstergeleri, Borsa İstanbul'da günün hareketi; ABD'de yöneticilerin ve siyasetçilerin, Türkiye'de KAP'a bildirilen en yeni hisse işlemleri tek akışta.{% endblock %}
+
+{% macro hisse_satiri(s, deger, sinif='') -%}
+<li class="tiklanir" data-href="{{ url_for('bist.sirket', kod=s.kod) }}">
+  <a class="ticker" href="{{ url_for('bist.sirket', kod=s.kod) }}">{{ s.kod }}</a>
+  <span class="akis-orta kirp" title="{{ s.unvan }}">{{ s.unvan }}</span>
+  <span class="sayi {{ sinif }}">{{ deger }}</span>
+</li>
+{%- endmacro %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><span class="canli-nokta acik" aria-hidden="true"></span> Canlı</p>
+    <h1>Piyasada şu an</h1>
+    <p class="sayfa-not">Göstergeler dakikada bir, bildirimler 15 dakikada bir güncellenir; bu sayfa açık kaldıkça kendini yeniler.
+    ABD'deki yönetici bildirimleri SEC'e düştükten, KAP bildirimleri yayımlandıktan kısa süre sonra burada görünür.</p>
+  </div>
+  <p class="canli-durum soluk" id="canli-durum" aria-live="polite">
+    {% if son_kontrol %}Son veri kontrolü {{ son_kontrol.strftime('%H:%M') }}{% endif %}
+  </p>
+</header>
+
+<section class="bolum">
+  <div class="canli-gostergeler" id="canli-gostergeler" data-adres="{{ url_for('emtia.serit_api') }}" aria-label="Piyasa göstergeleri">
+    {% for _ in range(10) %}<div class="kpi iskelet-kutu"></div>{% endfor %}
+  </div>
+</section>
+
+<section class="kpi-izgara">
+  {{ kpi('ABD yönetici bildirimi · bugün', sayilar.abd|sayi, (sayilar.abd_alim|sayi) ~ ' tanesi kendi parasıyla alım', 'alim' if sayilar.abd_alim else '') }}
+  {{ kpi('KAP bildirimi · bugün', sayilar.kap|sayi, 'içeriden işlem, geri alım ve özel durum') }}
+  {{ kpi('Siyasetçi bildirimi · bugün', sayilar.siyaset|sayi, 'ABD Kongresi üyeleri') }}
+  {% if artan or azalan %}
+  {{ kpi('BIST yükselen / düşen', artan ~ ' / ' ~ azalan, 'hisse sayısı · ' ~ (hareket_gunu|kisa_tarih if hareket_gunu else ''),
+         'alim' if artan > azalan else 'satim') }}
+  {% endif %}
+</section>
+
+{% if yukselenler %}
+<section class="bolum">
+  <header class="bolum-ust"><div>
+    <h2>Borsa İstanbul'da günün hareketi</h2>
+    <p class="bolum-not">{% if endeks %}BIST 100 {{ endeks.fiyat|round|int|sayi }} ({{ endeks.g1|yuzde }}). {% endif %}Fiyatlar borsa saatinde yaklaşık 15 dakika gecikmelidir.
+    <a href="{{ url_for('bist.liste') }}">Bütün hisseler →</a></p>
+  </div></header>
+  <div class="izgara-2">
+    <div class="panel">
+      <header class="panel-ust"><div><h2>En çok yükselenler</h2></div></header>
+      <ul class="akis akis-sik">{% for s in yukselenler %}{{ hisse_satiri(s, s.f.g1|yuzde, 'tutar-buy') }}{% endfor %}</ul>
+    </div>
+    <div class="panel">
+      <header class="panel-ust"><div><h2>En çok düşenler</h2></div></header>
+      <ul class="akis akis-sik">{% for s in dusenler %}{{ hisse_satiri(s, s.f.g1|yuzde, 'tutar-sell') }}{% endfor %}</ul>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="bolum" id="akis">
+  <header class="bolum-ust"><div>
+    <h2>Son bildirimler</h2>
+    <p class="bolum-not">Şirket yöneticilerinin, büyük ortakların ve siyasetçilerin hisse alım satımları; şirketlerin kendi hisselerini geri alması
+    ve önemli KAP açıklamaları. Saat, bildirimin yayımlandığı (ya da bizim aldığımız) Türkiye saatidir. Alım satımın kendisi birkaç gün önce yapılmış olabilir.</p>
+  </div></header>
+  <div class="filtre-satir">
+    <div class="segment" role="group" aria-label="Kaynak">
+      <a class="{% if not kaynak %}secili{% endif %}" href="{{ url_for('canli.sayfa') }}#akis">Hepsi</a>
+      {% for deger, ad in kaynaklar.items() %}
+      <a class="{% if kaynak == deger %}secili{% endif %}" href="{{ url_for('canli.sayfa', kaynak=deger) }}#akis">{{ ad }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="panel canli-akis" id="canli-akis" data-adres="{{ url_for('canli.akis_api', kaynak=kaynak) }}">
+    {% include "_canli_akis.html" %}
+  </div>
+</section>
+{% endblock %}

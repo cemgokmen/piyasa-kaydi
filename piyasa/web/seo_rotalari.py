@@ -48,7 +48,7 @@ def _kripto_adresleri():
 @seo.route("/sitemap.xml")
 def site_haritasi():
     kok = request.url_root.rstrip("/")
-    sabit = ["/", "/gunluk-ozet", "/siyasetciler", "/islemler?kaynak=yonetici", "/fonlar", "/sinyaller",
+    sabit = ["/", "/canli", "/gunluk-ozet", "/siyasetciler", "/islemler?kaynak=yonetici", "/fonlar", "/sinyaller",
              "/siyasetciler/performans", "/siyasetciler/cikar-catismasi", "/sektorler", "/emtialar", "/kripto",
              "/bist", "/rehber", "/hakkinda"]
     hisseler, kisiler, fonlar, bist = _dinamik_adresler()

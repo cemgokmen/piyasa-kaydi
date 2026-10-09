@@ -765,3 +765,92 @@ document.querySelectorAll("[data-menu-grup]").forEach(function (grup) {
     if (olay.key === "Escape" && grup.classList.contains("acik")) { ayarla(false); dugme.focus(); }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Canlı sayfa: göstergeler ve bildirim akışı sayfa açıkken dakikada bir yenilenir
+// ---------------------------------------------------------------------------
+
+const canliGostergeler = document.getElementById("canli-gostergeler");
+if (canliGostergeler) {
+  const bicim = (n, basamak) => new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: basamak, maximumFractionDigits: basamak,
+  }).format(n);
+  const degerYaz = (g) => `${g.birim === "$" ? "$" : ""}${bicim(g.deger, g.basamak)}${g.birim === "₺" ? " ₺" : ""}`;
+
+  const kartYap = function (g) {
+    const kart = document.createElement(g.adres ? "a" : "div");
+    if (g.adres) kart.href = g.adres;
+    kart.dataset.kod = g.kod;
+    const etiket = document.createElement("span");
+    etiket.className = "kpi-etiket";
+    etiket.textContent = g.ad;
+    const deger = document.createElement("span");
+    deger.className = "kpi-deger sayi";
+    const alt = document.createElement("span");
+    alt.className = "kpi-alt";
+    kart.append(etiket, deger, alt);
+    return kart;
+  };
+
+  const doldur = function (kart, g) {
+    const deger = kart.querySelector(".kpi-deger");
+    const yeni = degerYaz(g);
+    if (deger.textContent && deger.textContent !== yeni) {
+      deger.classList.remove("tazelendi");
+      void deger.offsetWidth;            // animasyonu yeniden başlat
+      deger.classList.add("tazelendi");
+    }
+    deger.textContent = yeni;
+    const yon = g.degisim == null ? "" : g.degisim >= 0 ? "alim" : "satim";
+    kart.className = "kpi" + (yon ? " kpi-" + yon : "");
+    kart.querySelector(".kpi-alt").textContent = g.degisim == null ? "" :
+      `${g.degisim >= 0 ? "▲" : "▼"} %${bicim(Math.abs(g.degisim * 100), 2)} bugün`;
+  };
+
+  const tazele = function () {
+    if (document.hidden && canliGostergeler.dataset.dolu) return;
+    fetch(canliGostergeler.dataset.adres)
+      .then((cevap) => (cevap.ok ? cevap.json() : null))
+      .then(function (veri) {
+        if (!veri || !veri.gostergeler.length) return;
+        if (!canliGostergeler.dataset.dolu) {
+          canliGostergeler.replaceChildren(...veri.gostergeler.map(kartYap));
+          canliGostergeler.dataset.dolu = "1";
+        }
+        veri.gostergeler.forEach(function (g) {
+          const kart = canliGostergeler.querySelector(`[data-kod="${CSS.escape(g.kod)}"]`);
+          if (kart) doldur(kart, g);
+        });
+      })
+      .catch(() => {});
+  };
+  tazele();
+  setInterval(tazele, 60000);
+}
+
+const canliAkis = document.getElementById("canli-akis");
+if (canliAkis) {
+  const durum = document.getElementById("canli-durum");
+  const anahtarlar = () => new Set([...canliAkis.querySelectorAll("[data-anahtar]")].map((o) => o.dataset.anahtar));
+  const saat = () => new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+
+  const tazele = function () {
+    if (document.hidden) return;
+    const onceki = anahtarlar();
+    fetch(canliAkis.dataset.adres)
+      .then((cevap) => (cevap.ok ? cevap.text() : null))
+      .then(function (html) {
+        if (!html) return;
+        canliAkis.innerHTML = html;
+        let yeni = 0;
+        canliAkis.querySelectorAll("[data-anahtar]").forEach(function (o) {
+          if (!onceki.has(o.dataset.anahtar)) { o.classList.add("yeni"); yeni += 1; }
+        });
+        if (durum) durum.textContent = `Akış ${saat()}'de yenilendi` + (yeni ? ` · ${yeni} yeni bildirim` : "");
+      })
+      .catch(() => {});
+  };
+  setInterval(tazele, 60000);
+  // Sekmeye geri dönülünce beklemeden yenile
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tazele(); });
+}

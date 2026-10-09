@@ -12,8 +12,11 @@ Günlük otomatik güncelleme (macOS launchd).
      'guncelle --gerekirse' çalıştırır; günün güncellemesi henüz yapılmadıysa
      (ve saat 07:00'ı geçtiyse) başlatır, yapıldıysa hemen çıkar. Hata veren
      güncelleme bir saat sonra yeniden denenir, günde en çok DENEME_SINIRI kez.
-  2. Hızlı güncelleme (her gün 12:00 ve 00:00): yalnızca yeni bildirimler
-     (yöneticiler, Meclis, Senato, fonlar) ve onların bakımı.
+  2. Hızlı güncelleme (her gün 12:00, 18:00, 21:00 ve 00:00): yalnızca yeni
+     bildirimler (yöneticiler, Meclis, Senato, KAP, fonlar) ve onların bakımı.
+  3. Canlı güncelleme (15 dakikada bir): SEC'e gün içinde düşen Form 4
+     bildirimleri ve KAP'ın o günkü bildirimleri. Kendi kilidi vardır; uzun
+     süren tam güncelleme sırasında da çalışır.
 
 İkisi de başlamadan internetin gelmesini bekler (uykudan uyanan Mac'te ağ
 birkaç saniye geç geliyor); internet gelmezse bu çalıştırma deneme sayılmaz.
@@ -38,13 +41,18 @@ ETIKET = "com.piyasakaydi.guncelle"
 PLIST = Path.home() / "Library" / "LaunchAgents" / f"{ETIKET}.plist"
 HIZLI_ETIKET = "com.piyasakaydi.hizli"
 HIZLI_PLIST = Path.home() / "Library" / "LaunchAgents" / f"{HIZLI_ETIKET}.plist"
-HIZLI_SAATLER = (0, 12)
+HIZLI_SAATLER = (0, 12, 18, 21)
+CANLI_ETIKET = "com.piyasakaydi.canli"
+CANLI_PLIST = Path.home() / "Library" / "LaunchAgents" / f"{CANLI_ETIKET}.plist"
+CANLI_ARALIK = 900              # saniye: 15 dakika
 INTERNET_BEKLEME = 300          # saniye
 DENETIM_ADRESI = "www.sec.gov"
 GUNLUK = VERI_DIZINI / "guncelleme.log"
 DURUM = VERI_DIZINI / "son_guncelleme.json"
 HIZLI_DURUM = VERI_DIZINI / "son_hizli_guncelleme.json"
+CANLI_DURUM = VERI_DIZINI / "son_canli_guncelleme.json"
 KILIT = VERI_DIZINI / "guncelleme.kilit"
+CANLI_KILIT = VERI_DIZINI / "canli.kilit"
 DENEME_SINIRI = 3
 KONTROL_ARALIGI = 3600          # saniye: saat başı
 
@@ -108,14 +116,14 @@ def durum_yaz(simdi, basarili, hatalar, saat=7, dakika=0):
     }, ensure_ascii=False, indent=2))
 
 
-def hizli_durum_yaz(simdi, basarili):
-    HIZLI_DURUM.write_text(json.dumps({"zaman": simdi.isoformat(timespec="seconds"), "basarili": basarili}))
+def hizli_durum_yaz(simdi, basarili, dosya=HIZLI_DURUM):
+    dosya.write_text(json.dumps({"zaman": simdi.isoformat(timespec="seconds"), "basarili": basarili}))
 
 
 def son_kontrol():
-    """En son başarılı güncellemenin (tam ya da hızlı) zamanı; yoksa None."""
+    """En son başarılı güncellemenin (tam, hızlı ya da canlı) zamanı; yoksa None."""
     zamanlar = []
-    for dosya in (DURUM, HIZLI_DURUM):
+    for dosya in (DURUM, HIZLI_DURUM, CANLI_DURUM):
         try:
             veri = json.loads(dosya.read_text())
         except (OSError, ValueError):
@@ -126,10 +134,10 @@ def son_kontrol():
 
 
 @contextmanager
-def tek_guncelleme():
+def tek_guncelleme(kilit=KILIT):
     """Aynı anda yalnızca bir güncelleme: kilit alınamazsa False verir."""
-    KILIT.parent.mkdir(parents=True, exist_ok=True)
-    with open(KILIT, "w") as f:
+    kilit.parent.mkdir(parents=True, exist_ok=True)
+    with open(kilit, "w") as f:
         try:
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
@@ -184,17 +192,23 @@ def kur(saat=7, dakika=0):
     hizli = _gorev_yaz(HIZLI_ETIKET, HIZLI_PLIST, ["guncelle", "--hizli"], {
         "StartCalendarInterval": [{"Hour": h, "Minute": 0} for h in HIZLI_SAATLER],
     })
+    canli = _gorev_yaz(CANLI_ETIKET, CANLI_PLIST, ["guncelle", "--canli"], {
+        "StartInterval": CANLI_ARALIK,
+    })
     if tam:
         print(f"Tam güncelleme her gün {saat:02d}:{dakika:02d}'de; Mac o saatte kapalıysa açılınca yapılır.")
     if hizli:
-        print("Hızlı güncelleme (yönetici, Kongre ve fon bildirimleri) her gün "
-              + " ve ".join(f"{h:02d}:00" for h in HIZLI_SAATLER) + "'de.")
+        saatler = [f"{h:02d}:00" for h in sorted(HIZLI_SAATLER)]
+        print("Hızlı güncelleme (yönetici, Kongre, KAP ve fon bildirimleri) her gün "
+              + ", ".join(saatler[:-1]) + " ve " + saatler[-1] + "'de.")
+    if canli:
+        print(f"Canlı güncelleme (gün içi Form 4 ve KAP bildirimleri) {CANLI_ARALIK // 60} dakikada bir.")
     print(f"Çıktı: {GUNLUK}")
-    return tam and hizli
+    return tam and hizli and canli
 
 
 def kaldir():
-    for plist in (PLIST, HIZLI_PLIST):
+    for plist in (PLIST, HIZLI_PLIST, CANLI_PLIST):
         _launchctl("bootout", f"gui/{os.getuid()}", str(plist))
         if plist.exists():
             plist.unlink()

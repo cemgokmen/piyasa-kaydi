@@ -58,6 +58,27 @@ def _fiyat_ekle(sirketler, fiyatlar):
     return sirketler
 
 
+def gunun_hareketi(fiyatlar, adet=6):
+    """
+    En çok yükselen ve düşen hisseler, yükselen/düşen sayısı. Borsa İstanbul'da günlük hareket
+    ±%10 ile sınırlı: bunu aşanlar bölünme ya da bedelsiz sermaye artırımının düzeltilmediği veri
+    hatasıdır. Son işlem günü fiyatı gelmeyen (eski kalan) hisseler de sayılmaz.
+    """
+    tum = _fiyat_ekle(sorgular.sirketler(), fiyatlar)
+    fiyatli = [s for s in tum if s["f"] and s["f"]["g1"] is not None]
+    son_gun = Counter(s["f"]["tarih"] for s in fiyatli).most_common(1)[0][0] if fiyatli else None
+    fiyatli = [s for s in fiyatli if s["f"]["tarih"] == son_gun and abs(s["f"]["g1"]) <= GUNLUK_SINIR]
+    hareketli = sorted((s for s in fiyatli if s["f"]["fiyat"] >= 1), key=lambda s: s["f"]["g1"])
+    return {
+        "toplam": len(tum),
+        "yukselenler": hareketli[::-1][:adet],
+        "dusenler": hareketli[:adet],
+        "artan": sum(1 for s in fiyatli if s["f"]["g1"] > 0),
+        "azalan": sum(1 for s in fiyatli if s["f"]["g1"] < 0),
+        "hareket_gunu": son_gun,
+    }
+
+
 @bist.route("/bist")
 def liste():
     liste_ = request.args.get("liste", "tum")
@@ -72,14 +93,6 @@ def liste():
     for s in sirketler:
         s["iceriden"] = son.get(s["kod"])
 
-    # Günün hareketi bütün hisselerden. Borsa İstanbul'da günlük hareket ±%10 ile sınırlı:
-    # bunu aşanlar bölünme ya da bedelsiz sermaye artırımının düzeltilmediği veri hatasıdır.
-    # Son işlem günü fiyatı gelmeyen (eski kalan) hisseler de sayılmaz.
-    tum = _fiyat_ekle(sorgular.sirketler(), fiyatlar)
-    fiyatli = [s for s in tum if s["f"] and s["f"]["g1"] is not None]
-    son_gun = Counter(s["f"]["tarih"] for s in fiyatli).most_common(1)[0][0] if fiyatli else None
-    fiyatli = [s for s in fiyatli if s["f"]["tarih"] == son_gun and abs(s["f"]["g1"]) <= GUNLUK_SINIR]
-    hareketli = sorted((s for s in fiyatli if s["f"]["fiyat"] >= 1), key=lambda s: s["f"]["g1"])
     return render_template(
         "bist.html",
         aktif="bist",
@@ -88,13 +101,9 @@ def liste():
         listeler=sorgular.LISTELER,
         sektor=sektor,
         sektorler=sektorler,
-        toplam=len(tum),
         endeks=fiyatlar.get("XU100"),
         endeks30=fiyatlar.get("XU030"),
-        yukselenler=hareketli[::-1][:6],
-        dusenler=hareketli[:6],
-        artan=sum(1 for s in fiyatli if s["f"]["g1"] > 0),
-        azalan=sum(1 for s in fiyatli if s["f"]["g1"] < 0),
+        **gunun_hareketi(fiyatlar),
         pay_ozeti=sorgular.pay_ozeti(30),
         iceriden=sorgular.pay_islemleri(gun=60, limit=150),
         geri_alim=sorgular.geri_alim_ozeti(30),

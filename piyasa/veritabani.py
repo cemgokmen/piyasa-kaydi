@@ -288,6 +288,9 @@ def init_db():
         )
     """)
 
+    # Gün içi Form 4 akışında işlenen bildirimler (alım/satım içermeyenler de tekrar indirilmesin)
+    conn.execute("CREATE TABLE IF NOT EXISTS form4_islenen (numara TEXT PRIMARY KEY, zaman TEXT)")
+
     # --- Borsa İstanbul ve KAP ---
     conn.execute("""
         CREATE TABLE IF NOT EXISTS bist_sirket (

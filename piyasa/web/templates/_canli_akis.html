@@ -1,0 +1,13 @@
+{# Canlı akış: gün başlıkları ve bildirimler. /canli sayfası ve dakikalık yenileme (/api/canli/akis) kullanır. #}
+{% for g in gunler %}
+<section class="canli-gun">
+  <h3 class="canli-gun-baslik">{% if g.ad %}{{ g.ad }} <span class="soluk">· {{ g.gun|uzun_tarih }}</span>{% else %}{{ g.gun|uzun_tarih }}{% endif %}</h3>
+  <ul class="canli-liste">
+    {% for o in g.ogeler %}
+    {% include "_canli_oge.html" %}
+    {% endfor %}
+  </ul>
+</section>
+{% else %}
+<p class="bos">Bu süzgeçte son günlerde bildirim yok.</p>
+{% endfor %}

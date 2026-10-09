@@ -47,6 +47,7 @@ def create_app(vekil_arkasinda=False):
     from piyasa.web.analiz_rotalari import analiz
     from piyasa.web.bicim import sablonlara_kaydet
     from piyasa.web.bist_rotalari import bist, fiyatlari_isit
+    from piyasa.web.canli_rotalari import canli
     from piyasa.web.emtia_rotalari import emtia
     from piyasa.web.kripto_rotalari import kripto
     from piyasa.web.rotalar import site
@@ -62,6 +63,7 @@ def create_app(vekil_arkasinda=False):
     app.register_blueprint(kripto)
     app.register_blueprint(bist)
     app.register_blueprint(seo)
+    app.register_blueprint(canli)
     if vekil_arkasinda:
         # Yalnızca yayındaki sitede: BIST 100 fiyatları arka planda hazır tutulur
         fiyatlari_isit()
