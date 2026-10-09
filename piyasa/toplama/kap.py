@@ -25,6 +25,8 @@ import json
 import re
 import sys
 import time
+import xml.etree.ElementTree as ET
+import zipfile
 from datetime import UTC, date, datetime, timedelta
 
 import pdfplumber
@@ -38,6 +40,7 @@ LISTE_URL = SITE + "/tr/api/disclosure/list/main"
 BILDIRIM_URL = SITE + "/tr/Bildirim/{indeks}"
 ENDEKS_URL = SITE + "/tr/Endeksler"
 SIRKETLER_URL = SITE + "/tr/bist-sirketler"
+SEKTORLER_URL = SITE + "/tr/api/company/sectors/excel"
 # KAP sıradan program isteklerini geri çeviriyor; tarayıcı gibi görünmek gerekiyor
 BASLIK = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -97,6 +100,67 @@ def bist_sirketleri(sayfa):
     return sirketler
 
 
+def xlsx_satirlari(icerik):
+    """Basit bir .xlsx dosyasının ilk sayfası: [[hücre, ...], ...] (ek paket gerektirmez)."""
+    ns = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+    z = zipfile.ZipFile(io.BytesIO(icerik))
+    ortak = ["".join(t.text or "" for t in si.iter(ns + "t"))
+             for si in ET.fromstring(z.read("xl/sharedStrings.xml")).findall(ns + "si")]
+    satirlar = []
+    for satir in ET.fromstring(z.read("xl/worksheets/sheet1.xml")).iter(ns + "row"):
+        hucreler = []
+        for c in satir.findall(ns + "c"):
+            v = c.find(ns + "v")
+            deger = v.text if v is not None else ""
+            hucreler.append(ortak[int(deger)] if c.get("t") == "s" else deger)
+        satirlar.append(hucreler)
+    return satirlar
+
+
+def sektor_eslemesi(satirlar):
+    """
+    KAP sektör listesi: başlık satırı (sektör adı), ardından 'Sıra, Kod, Unvan' satırları.
+    Ana sektörlerin listesi alt sektörlerininkini kapsar. Dönen: {kod: (ana sektör, alt sektör)}.
+    """
+    bolumler, ad = [], None
+    for h in satirlar:
+        if len(h) == 1 and h[0] and h[0] != "Kayıt Bulunamadı":
+            ad = h[0].strip()
+            bolumler.append((ad, set()))
+        elif len(h) >= 3 and ad and h[1] and h[1] != "Kod":
+            for kod in h[1].split(","):
+                bolumler[-1][1].add(kod.strip())
+    bolumler = [(a, k) for a, k in bolumler if k and a != "DİĞER"]
+    sonuc, ana = {}, None
+    for i, (ad, kodlar) in enumerate(bolumler):
+        sonraki = bolumler[i + 1][1] if i + 1 < len(bolumler) else set()
+        # Bir başlık, ardındaki başlığın şirketlerini kapsıyorsa ana sektördür
+        if ana is None or not kodlar <= ana[1] or (sonraki and sonraki <= kodlar and kodlar != sonraki):
+            if ana is None or not kodlar <= ana[1]:
+                ana = (ad, kodlar)
+                for k in kodlar:
+                    sonuc.setdefault(k, [ad, None])
+                    sonuc[k][0] = ad
+                continue
+        for k in kodlar:
+            sonuc.setdefault(k, [ana[0], None])
+            if sonuc[k][1] is None or len(kodlar) < len(dict(bolumler).get(sonuc[k][1], kodlar) or kodlar):
+                sonuc[k][1] = ad
+    return {k: (a, alt) for k, (a, alt) in sonuc.items()}
+
+
+def sektorleri_guncelle(conn):
+    try:
+        esleme = sektor_eslemesi(xlsx_satirlari(_istek("GET", SEKTORLER_URL).content))
+    except (requests.RequestException, zipfile.BadZipFile, KeyError, ET.ParseError) as hata:
+        print(f"  Sektörler alınamadı: {hata}", flush=True)
+        return
+    for kod, (ana, alt) in esleme.items():
+        conn.execute("UPDATE bist_sirket SET ana_sektor = ?, sektor = ? WHERE kod = ?", (ana, alt or ana, kod))
+    conn.commit()
+    print(f"  Sektör bilgisi: {len(esleme)} şirket", flush=True)
+
+
 def endeksleri_guncelle(conn):
     sayfa = _istek("GET", ENDEKS_URL).text
     xu100 = endeks_bilesenleri(sayfa, "XU100")
@@ -126,6 +190,7 @@ def endeksleri_guncelle(conn):
         )
     conn.commit()
     print(f"  BIST şirketi: {len(tum)}, BIST 100: {len(xu100)}, BIST 30: {len(xu030)}", flush=True)
+    sektorleri_guncelle(conn)
     return {s["stockCode"] for s in xu100}
 
 

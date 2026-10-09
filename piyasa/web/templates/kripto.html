@@ -196,7 +196,7 @@
             {% for x in etf.kurumlar %}
             <tr class="tiklanir" data-href="{{ url_for('site.fon', slug=x.fon_slug) }}">
               <td data-etiket="Kurum"><a href="{{ url_for('site.fon', slug=x.fon_slug) }}">{{ x.fon_adi }}</a>
-                <span class="alt-satir kirp">{{ x.fonlar[:4]|join(', ') }}{% if x.fonlar|length > 4 %} +{{ x.fonlar|length - 4 }}{% endif %}</span></td>
+                <span class="alt-satir">{% for f in x.fonlar[:4] %}<a class="ticker ticker-kucuk" href="{{ url_for('site.hisse', ticker=f) }}">{{ f }}</a> {% endfor %}{% if x.fonlar|length > 4 %}<span class="soluk">+{{ x.fonlar|length - 4 }}</span>{% endif %}</span></td>
               <td data-etiket="Tutar" class="sag sayi"><b>{{ x.deger|tutar }}</b></td>
               <td data-etiket="Durum" class="sag">
                 {% if x.durum == 'yeni' %}<span class="rozet rozet-buy">Yeni girdi</span>
@@ -216,7 +216,7 @@
       <ul class="akis akis-sik">
         {% set en_buyuk = etf.etfler[0].deger if etf.etfler else 1 %}
         {% for f in etf.etfler %}
-        <li class="cubuklu">
+        <li class="tiklanir cubuklu" data-href="{{ url_for('site.hisse', ticker=f.kod) }}">
           <a class="ticker" href="{{ url_for('site.hisse', ticker=f.kod) }}">{{ f.kod }}</a>
           <span class="akis-orta"><span class="kucuk">{{ f.ad }}</span>
             <span class="mini-cubuk"><span style="width: {{ (f.deger / en_buyuk * 100)|round(1) }}%"></span></span></span>

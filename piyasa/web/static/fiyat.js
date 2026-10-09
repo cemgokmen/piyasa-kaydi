@@ -100,11 +100,23 @@
     hata.hidden = false;
   }
 
-  fetch(panel.dataset.fiyatUrl)
-    .then((cevap) => cevap.json().then((govde) => ({ tamam: cevap.ok, govde })))
-    .then(function ({ tamam, govde }) {
+  // Fiyat kaynağı anlık olarak yavaşlayabiliyor: iki kez daha, birkaç saniye arayla denenir
+  function getir(kalan) {
+    return fetch(panel.dataset.fiyatUrl)
+      .then((cevap) => cevap.json().then((govde) => ({ tamam: cevap.ok, govde, durum: cevap.status })))
+      .catch(() => ({ tamam: false, govde: {}, ag: true }))
+      .then(function (sonuc) {
+        // "Bulunamadı" (404) kesin cevaptır; yalnızca ağ ve sunucu hatalarında yeniden denenir
+        if (sonuc.tamam || sonuc.durum === 404 || kalan <= 0) return sonuc;
+        return new Promise((r) => setTimeout(r, 4000)).then(() => getir(kalan - 1));
+      });
+  }
+
+  getir(2)
+    .then(function ({ tamam, govde, ag }) {
       if (!tamam) {
-        hataGoster(govde.hata || "Fiyat bilgisi alınamadı.");
+        hataGoster(ag ? "Fiyat bilgisine şu an ulaşılamıyor. Sayfayı biraz sonra yenileyin."
+          : (govde.hata || "Fiyat bilgisi alınamadı."));
         return;
       }
       veri = govde;

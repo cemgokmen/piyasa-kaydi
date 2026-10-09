@@ -84,7 +84,7 @@ komitede olabilir. Sektörler SEC'in resmi sanayi kodlarından (SIC) belirlenir.
               <span class="etiket">{{ g.sektor }}</span>
               <ul>
                 {% for h in g.hisseler[:4] %}
-                <li><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+                <li class="tiklanir" data-href="{{ url_for('site.hisse', ticker=h.ticker) }}"><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
                   {% if h.ad and h.ad|upper != h.ticker %}<span class="cakisma-sirket">{{ h.ad }}</span>{% endif %}
                   <span class="cakisma-adet">{% if h.alim %}<span class="tutar-buy">{{ h.alim }} alım</span>{% endif %}{% if h.alim and h.satim %} · {% endif %}{% if h.satim %}<span class="tutar-sell">{{ h.satim }} satış</span>{% endif %}</span></li>
                 {% endfor %}

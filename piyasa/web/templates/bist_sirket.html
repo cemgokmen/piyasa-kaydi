@@ -8,10 +8,27 @@
 <header class="sayfa-ust">
   <div>
     <h1><span class="ticker ticker-buyuk">{{ s.kod }}</span> {{ kisa_ad }}</h1>
-    <p class="sayfa-not">{{ s.unvan }}{% if s.sehir %} · {{ s.sehir }}{% endif %}
-      {% if s.xu030 %}<span class="etiket">BIST 30</span>{% elif s.xu100 %}<span class="etiket">BIST 100</span>{% endif %}</p>
+    <p class="sayfa-not">{{ s.unvan }}{% if s.sehir %} · {{ s.sehir }}{% endif %}</p>
+    <p class="sirket-etiketleri">
+      {% if s.xu030 %}<a class="etiket" href="{{ url_for('bist.liste', liste='xu030') }}#hisseler">BIST 30</a>
+      {% elif s.xu100 %}<a class="etiket" href="{{ url_for('bist.liste', liste='xu100') }}#hisseler">BIST 100</a>{% endif %}
+      {% if s.ana_sektor %}<a class="etiket" href="{{ url_for('bist.liste', sektor=s.ana_sektor) }}#hisseler">{{ s.ana_sektor_adi }}</a>{% endif %}
+      {% if s.sektor and s.sektor != s.ana_sektor %}<span class="etiket etiket-soluk">{{ s.sektor_adi }}</span>{% endif %}
+    </p>
   </div>
 </header>
+
+{% if f %}
+{% set fark = (f.y1 - endeks.y1) if endeks and f.y1 is not none and endeks.y1 is not none else none %}
+<section class="ozet-serit" aria-label="Özet">
+  <div><span>Son kapanış</span><b>{{ f.fiyat|fiyat }} ₺</b><small>{{ f.tarih|uzun_tarih }}</small></div>
+  <div><span>Günlük</span><b class="{{ 'tutar-buy' if f.g1 and f.g1 > 0 else 'tutar-sell' if f.g1 else '' }}">{{ f.g1|yuzde if f.g1 is not none else '—' }}</b><small>1 hafta {{ f.h1|yuzde if f.h1 is not none else '—' }}</small></div>
+  <div><span>1 yılda</span><b class="{{ 'tutar-buy' if f.y1 and f.y1 > 0 else 'tutar-sell' if f.y1 else '' }}">{{ f.y1|yuzde if f.y1 is not none else '—' }}</b>
+    <small>{% if fark is not none %}BIST 100'ün {{ ('%.0f'|format((fark|abs) * 100)) }} puan {{ 'üstünde' if fark > 0 else 'altında' }}{% else %}&nbsp;{% endif %}</small></div>
+  <div><span>İçeriden işlem</span><b>{{ islemler|length }}</b><small>son 4 ayda KAP bildirimi</small></div>
+  <div><span>Geri alım · 90 gün</span><b>{{ geri.son_90.tutar|tl if geri.son_90 else '—' }}</b><small>{% if geri.son_90 %}sermayenin %{{ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ',') }}'i{% else %}bildirim yok{% endif %}</small></div>
+</section>
+{% endif %}
 
 <nav class="bolum-menu" aria-label="Bu sayfada" data-bolum-menu>
   <a href="#fiyat">Fiyat</a>
@@ -20,6 +37,7 @@
   {% if geri.satirlar %}<a href="#geri-alim">Geri alım</a>{% endif %}
   {% if aciklamalar %}<a href="#kap">KAP açıklamaları</a>{% endif %}
   <a href="#haberler">Haberler</a>
+  {% if benzerler %}<a href="#benzerler">Aynı sektör</a>{% endif %}
 </nav>
 
 <div id="hakkinda" data-parca-adres="{{ url_for('bist.hakkinda', kod=s.kod) }}"></div>
@@ -109,6 +127,24 @@
 <div id="haberler" class="haber-iskelet" data-parca-adres="{{ url_for('bist.haberler', kod=s.kod) }}">
   <p class="soluk kucuk">Haberler yükleniyor…</p>
 </div>
+
+{% if benzerler %}
+<section class="bolum" id="benzerler">
+  <header class="bolum-ust"><div><h2>Aynı sektördeki şirketler</h2>
+    <p class="bolum-not">{{ s.sektor_adi or s.ana_sektor_adi }} · KAP sektör sınıflandırması</p></div>
+    <a class="bolum-link" href="{{ url_for('bist.liste', sektor=s.ana_sektor) }}#hisseler">Bütün sektör →</a></header>
+  <div class="benzer-izgara">
+    {% for b in benzerler %}
+    <a class="benzer-kart" href="{{ url_for('bist.sirket', kod=b.kod) }}">
+      <span class="benzer-ust"><span class="ticker">{{ b.kod }}</span>
+        {% if b.f and b.f.g1 is not none %}<span class="{{ 'tutar-buy' if b.f.g1 > 0 else 'tutar-sell' }} sayi kucuk">{{ b.f.g1|yuzde }}</span>{% endif %}</span>
+      <span class="benzer-ad">{{ b.unvan }}</span>
+      <span class="benzer-alt">{% if b.f %}<b>{{ b.f.fiyat|fiyat }} ₺</b> · 1 yılda {{ b.f.y1|yuzde if b.f.y1 is not none else '—' }}{% else %}&nbsp;{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 
 <p class="uyari-kutu"><strong>Yatırım tavsiyesi değildir.</strong> Bilgiler KAP bildirimlerinden derlenmiştir; kesin bilgi için KAP'taki
 bildirime bakın. Bir yöneticinin ya da büyük ortağın hisse alması, hissenin değer kazanacağı anlamına gelmez.</p>

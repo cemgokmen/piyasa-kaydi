@@ -16,15 +16,17 @@ if (filtreFormu) {
     }
   }
 
-  filtreFormu.querySelectorAll("select[data-otomatik]").forEach(function (secim) {
-    secim.addEventListener("change", () => filtreFormu.requestSubmit());
-  });
 
   // Boş arama kutusu adres çubuğunda "q=" olarak görünmesin
   filtreFormu.addEventListener("submit", function () {
     if (aramaKutusu && !aramaKutusu.value.trim()) aramaKutusu.disabled = true;
   });
 }
+
+// Seçim değişince kendi formu gönderilir (işlem listesi, Borsa İstanbul süzgeçleri)
+document.querySelectorAll("select[data-otomatik]").forEach(function (secim) {
+  secim.addEventListener("change", () => secim.form && secim.form.requestSubmit());
+});
 
 // ---------------------------------------------------------------------------
 // Klavye kısayolu: "/" tuşu arama kutusuna götürür
@@ -46,16 +48,16 @@ document.addEventListener("keydown", function (olay) {
 // Satırdaki bağlantılar kendi işini yapar; metin seçerken de tetiklenmez.
 // ---------------------------------------------------------------------------
 
-document.querySelectorAll("tr.tiklanir[data-href]").forEach(function (satir) {
-  satir.addEventListener("click", function (olay) {
-    if (olay.target.closest("a, button, input, select")) return;
-    if (window.getSelection().toString()) return;
-    if (olay.metaKey || olay.ctrlKey) {
-      window.open(satir.dataset.href, "_blank");
-    } else {
-      window.location.href = satir.dataset.href;
-    }
-  });
+// Belge düzeyinde dinlenir: sonradan yüklenen parçalarda ve liste öğelerinde de çalışır
+document.addEventListener("click", function (olay) {
+  const satir = olay.target.closest(".tiklanir[data-href]");
+  if (!satir || olay.target.closest("a, button, input, select, summary")) return;
+  if (window.getSelection().toString()) return;
+  if (olay.metaKey || olay.ctrlKey) {
+    window.open(satir.dataset.href, "_blank");
+  } else {
+    window.location.href = satir.dataset.href;
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -609,7 +611,7 @@ function parcaYukle(yer, kalan) {
     })
     .catch(() => (kalan > 0 ? setTimeout(() => parcaYukle(yer, kalan - 1), 4000) : yer.remove()));
 }
-document.querySelectorAll("[data-parca-adres]").forEach((yer) => parcaYukle(yer, 2));
+document.querySelectorAll("[data-parca-adres]").forEach((yer) => parcaYukle(yer, 3));
 
 
 // ---------------------------------------------------------------------------

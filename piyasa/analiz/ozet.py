@@ -43,8 +43,9 @@ def ozet_gunleri(conn, adet=60):
     )]
 
 
-def _madde(baslik, metin, adres=None, vurgu=None):
-    return {"baslik": baslik, "metin": metin, "adres": adres, "vurgu": vurgu}
+def _madde(baslik, metin, adres=None, vurgu=None, vurgu_adres=None):
+    """vurgu: maddenin başındaki hisse kodu; vurgu_adres verilmezse ABD hisse sayfasına gider."""
+    return {"baslik": baslik, "metin": metin, "adres": adres, "vurgu": vurgu, "vurgu_adres": vurgu_adres}
 
 
 def _bolum(ad, giris, maddeler):
@@ -231,7 +232,7 @@ def _bist(conn, gun):
             f"{kisi}{' (' + rol + ')' if rol else ''}, {ad} payından {sayi(round(i['nominal']))} adetlik "
             f"{'alım' if i['islem'] == 'buy' else 'satış'} bildirdi"
             + (f"; işlemden sonra şirketteki payı %{str(round(i['oran_sonra'], 2)).replace('.', ',')}." if i["oran_sonra"] is not None else "."),
-            f"/bist/{i['kod']}",
+            f"/bist/{i['kod']}", i["kod"], f"/bist/{i['kod']}",
         ))
     return _bolum("Borsa İstanbul", "; ".join(parcalar) + ".", maddeler)
 

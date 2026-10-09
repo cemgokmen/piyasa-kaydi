@@ -25,7 +25,7 @@
   {% if liste %}
   <ol>
     {% for k in liste %}
-    <li>
+    <li class="tiklanir" data-href="{{ url_for('site.hisse', ticker=k.ticker) }}">
       <a class="ticker" href="{{ url_for('site.hisse', ticker=k.ticker) }}">{{ k.ticker }}</a>
       <span class="konsensus-ad">{{ k.sirket|sirket_adi }}</span>
       <span class="konsensus-sayi">

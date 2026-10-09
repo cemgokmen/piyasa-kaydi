@@ -109,7 +109,7 @@
     </header>
     <ul class="akis">
       {% for k in son_siyaset %}
-      <li>
+      <li class="tiklanir" data-href="{{ url_for('site.hisse', ticker=k.ticker) }}">
         <a class="ticker" href="{{ url_for('site.hisse', ticker=k.ticker) }}">{{ k.ticker }}</a>
         <span class="akis-orta">
           <span><a class="kisi-ad" href="{{ url_for('site.kisi', slug=k.person_slug) }}">{{ k.person }}</a> {{ parti_rozeti(k.parti) }}</span>

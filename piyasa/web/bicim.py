@@ -17,6 +17,7 @@ from piyasa.bicim import (
     yuzde,
 )
 from piyasa.kurallar import FORM4_IS_GUNU, PARTILER, STOCK_ACT_GUN
+from piyasa.web.hisse_kodlari import hisse_kodlari
 
 
 def sablonlara_kaydet(app):
@@ -33,6 +34,7 @@ def sablonlara_kaydet(app):
     app.add_template_filter(unvan, "unvan")
     app.add_template_filter(ne_zaman, "ne_zaman")
     app.add_template_global(kisa_aralik, "aralik")
+    app.add_template_global(hisse_kodlari, "hisse_kodlari")
 
     @app.context_processor
     def ortak():

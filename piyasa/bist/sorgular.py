@@ -44,18 +44,62 @@ def _unvan(unvan):
     return tr_baslik(unvan) if unvan else unvan
 
 
-def sirketler():
+LISTELER = {"tum": "Bütün hisseler", "xu100": "BIST 100", "xu030": "BIST 30"}
+
+
+def _sektor_adi(ad):
+    return tr_cumle(ad) if ad else None
+
+
+def sirketler(liste="tum", sektor=None):
+    """
+    Pay piyasasında işlem gören şirketler (KAP sektör listesinde olanlar; yalnızca tahvil
+    ihraç edenler hariç). liste: tum | xu100 | xu030; sektor: ana sektör adı (KAP'taki haliyle).
+    """
+    kosullar = ["ana_sektor IS NOT NULL OR xu100 = 1"]
+    parametre = []
+    if liste in ("xu100", "xu030"):
+        kosullar.append(f"{liste} = 1")
+    if sektor:
+        kosullar.append("ana_sektor = ?")
+        parametre.append(sektor)
+    nerede = " AND ".join(f"({k})" for k in kosullar)
     with baglanti() as conn:
-        return [dict(r, unvan=_unvan(r["unvan"])) for r in conn.execute(
-            "SELECT kod, unvan, xu030, sehir FROM bist_sirket WHERE xu100 = 1 ORDER BY kod")]
+        return [dict(r, unvan=_unvan(r["unvan"]), sektor_adi=_sektor_adi(r["sektor"]),
+                     ana_sektor_adi=_sektor_adi(r["ana_sektor"]))
+                for r in conn.execute(
+                    f"SELECT kod, unvan, xu100, xu030, sehir, ana_sektor, sektor FROM bist_sirket WHERE {nerede} "
+                    "ORDER BY kod", parametre)]
+
+
+def sektorler():
+    """[(ana sektör, görünen ad, şirket sayısı)] — büyükten küçüğe."""
+    with baglanti() as conn:
+        return [(r["ana_sektor"], _sektor_adi(r["ana_sektor"]), r["n"]) for r in conn.execute(
+            """SELECT ana_sektor, COUNT(*) AS n FROM bist_sirket WHERE ana_sektor IS NOT NULL
+               GROUP BY ana_sektor ORDER BY n DESC""")]
+
+
+def benzerler(kod, sektor, ana_sektor, adet=12):
+    """Aynı alt sektördeki (yetmezse ana sektördeki) diğer şirketler; BIST 100 önce."""
+    if not ana_sektor:
+        return []
+    with baglanti() as conn:
+        satirlar = [dict(r) for r in conn.execute(
+            """SELECT kod, unvan, xu100 FROM bist_sirket WHERE kod != ? AND (sektor = ? OR ana_sektor = ?)
+               ORDER BY (sektor = ?) DESC, xu100 DESC, kod LIMIT ?""",
+            (kod, sektor, ana_sektor, sektor, adet))]
+    return [dict(r, unvan=_unvan(r["unvan"])) for r in satirlar]
 
 
 def sirket(kod):
     """Borsa İstanbul şirketi (KAP listesinden) ya da KAP'ta bildirimi olan şirket; yoksa None."""
     with baglanti() as conn:
-        r = conn.execute("SELECT kod, unvan, xu100, xu030, sehir FROM bist_sirket WHERE kod = ?", (kod,)).fetchone()
+        r = conn.execute("SELECT kod, unvan, xu100, xu030, sehir, ana_sektor, sektor FROM bist_sirket WHERE kod = ?",
+                         (kod,)).fetchone()
         if r:
-            return dict(r, unvan=_unvan(r["unvan"]), sehir=tr_baslik(r["sehir"]) if r["sehir"] else None)
+            return dict(r, unvan=_unvan(r["unvan"]), sehir=tr_baslik(r["sehir"]) if r["sehir"] else None,
+                        sektor_adi=_sektor_adi(r["sektor"]), ana_sektor_adi=_sektor_adi(r["ana_sektor"]))
         # BIST 100 dışında: bildirimi olan şirket (unvanı şirketin kendi gönderdiği bildirimden)
         b = conn.execute(
             """SELECT kod, gonderen FROM kap_bildirim WHERE kod = ?
@@ -65,7 +109,8 @@ def sirket(kod):
         return None
     gonderen = b["gonderen"] or ""
     kendi = not any(k in gonderen.upper() for k in ("PORTFÖY", "KAMUYU", "EMEKLİLİK"))
-    return {"kod": kod, "unvan": _unvan(gonderen) if kendi else kod, "xu100": 0, "xu030": 0, "sehir": None}
+    return {"kod": kod, "unvan": _unvan(gonderen) if kendi else kod, "xu100": 0, "xu030": 0, "sehir": None,
+            "ana_sektor": None, "sektor": None, "sektor_adi": None, "ana_sektor_adi": None}
 
 
 def _islem(r):
@@ -170,7 +215,8 @@ def son_islem_tarihleri(kodlar):
     yer = ", ".join("?" for _ in kodlar)
     with baglanti() as conn:
         return {r["kod"]: dict(r) for r in conn.execute(
-            f"""SELECT p.kod, MAX(b.yayin) AS son, SUM(p.islem = 'buy') AS alim, SUM(p.islem = 'sell') AS satim
+            f"""SELECT p.kod, MAX(b.yayin) AS son, SUM(p.islem = 'buy') AS alim, SUM(p.islem = 'sell') AS satim,
+                       COUNT(*) AS bildirim
                 FROM kap_pay_islem p JOIN kap_bildirim b USING (indeks)
                 WHERE p.kod IN ({yer}) AND b.yayin >= ? AND p.kisi_turu != 'fon' GROUP BY p.kod""",
             [*kodlar, (date.today() - timedelta(days=90)).isoformat()])}

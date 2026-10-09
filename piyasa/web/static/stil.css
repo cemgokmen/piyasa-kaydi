@@ -356,6 +356,9 @@ h1 {
 }
 
 .kpi-izgara.kpi-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.kpi-izgara.kpi-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.izgara-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1100px) { .kpi-izgara.kpi-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .izgara-3 { grid-template-columns: minmax(0, 1fr); } }
 
 .kpi {
   display: flex;
@@ -1121,7 +1124,8 @@ a.kisi-ad:hover { color: var(--vurgu); }
 .alt-satir { display: block; margin-top: 1px; color: var(--yazi-3); font-size: 12.5px; font-family: var(--sans); }
 .alt-satir.kirp { max-width: 240px; }
 
-.tablo tr.tiklanir { cursor: pointer; }
+.tablo tr.tiklanir, .tiklanir[data-href] { cursor: pointer; }
+.akis li.tiklanir:hover { background: var(--vurgu-yumusak); }
 .tablo tr.tiklanir:hover td { background: var(--vurgu-yumusak); }
 
 .rozet-yuklu {
@@ -2201,3 +2205,31 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .rehber-kart b { color: var(--yazi); font-size: 16px; line-height: 1.35; }
 .rehber p { line-height: 1.75; }
 .rehber-ilgili { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 24px 0; }
+
+.ticker-kucuk { font-size: 11px; padding: 1px 5px; }
+.bist-suzgec { align-items: flex-end; }
+.akis .akis-orta.kirp { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Şirket sayfası: başlık etiketleri, özet şeridi, aynı sektör */
+.sirket-etiketleri { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.sirket-etiketleri a.etiket { text-decoration: none; }
+.sirket-etiketleri a.etiket:hover { background: var(--vurgu); color: #fff; }
+.etiket-soluk { background: var(--kart-2); color: var(--yazi-2); }
+.ozet-serit { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 0 16px;
+  border: 1px solid var(--cizgi); border-radius: var(--yaricap); background: var(--kart); overflow: hidden; }
+.ozet-serit > div { display: grid; gap: 2px; padding: 12px 16px; border-left: 1px solid var(--cizgi-2); }
+.ozet-serit > div:first-child { border-left: 0; }
+.ozet-serit span { color: var(--yazi-3); font-size: 12.5px; }
+.ozet-serit b { font-family: var(--mono); font-size: 18px; color: var(--yazi); }
+.ozet-serit b.tutar-buy { color: var(--alim); } .ozet-serit b.tutar-sell { color: var(--satim); }
+.ozet-serit small { color: var(--yazi-3); font-size: 12px; }
+@media (max-width: 860px) { .ozet-serit { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ozet-serit > div { border-left: 0; border-top: 1px solid var(--cizgi-2); } .ozet-serit > div:nth-child(-n+2) { border-top: 0; } }
+.benzer-izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.benzer-kart { display: grid; gap: 6px; padding: 14px; border: 1px solid var(--cizgi); border-radius: var(--yaricap);
+  background: var(--kart); color: var(--yazi-2); text-decoration: none; }
+.benzer-kart:hover { border-color: var(--vurgu); }
+.benzer-ust { display: flex; justify-content: space-between; align-items: center; }
+.benzer-ad { color: var(--yazi); font-size: 13.5px; line-height: 1.35; min-height: 2.7em; }
+.benzer-alt { font-size: 12.5px; }
+.bist-tablosu .sektor-hucre { min-width: 170px; max-width: 230px; line-height: 1.35; }

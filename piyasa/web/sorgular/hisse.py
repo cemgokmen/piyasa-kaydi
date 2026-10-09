@@ -113,4 +113,26 @@ def hisse(ticker):
             "fon_donemi": donem_metni(son_donem) if son_donem else "",
             "cubuklar": _aylik_dagilim(conn, ticker),
             "yurutme": [dict(y, kisi_bilgi=uyeler.YURUTME_SLUG.get(y["kisi"])) for y in yurutme],
+            "sektor": _sektor(conn, ticker),
+            "benzerler": _benzerler(conn, ticker),
         }
+
+
+def _sektor(conn, ticker):
+    r = conn.execute("SELECT sektor, sic_aciklama FROM sirket WHERE ticker = ?", (ticker,)).fetchone()
+    return dict(r) if r and r["sektor"] else None
+
+
+def _benzerler(conn, ticker, adet=8):
+    """Aynı sektörde son bir yılda en çok işlem bildirilen diğer hisseler."""
+    sektor = _sektor(conn, ticker)
+    if not sektor:
+        return []
+    return [dict(r) for r in conn.execute(
+        f"""SELECT t.ticker, MAX(t.asset_name) AS sirket, COUNT(*) AS adet,
+                   SUM(t.action = 'buy') AS alim, SUM(t.action = 'sell') AS satim
+            FROM transactions t JOIN sirket s ON s.ticker = t.ticker
+            WHERE s.sektor = ? AND t.ticker != ? AND {TEMIZ} AND t.disclosed_date >= date('now', '-365 day')
+            GROUP BY t.ticker ORDER BY adet DESC LIMIT ?""",
+        (sektor["sektor"], ticker, adet),
+    )]

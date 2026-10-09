@@ -139,11 +139,13 @@ def ornek_kripto_verisi(conn):
 
 def ornek_bist_verisi(conn):
     """Borsa İstanbul: iki BIST 100 şirketi, KAP pay alım satım ve geri alım bildirimleri."""
-    conn.executemany("INSERT INTO bist_sirket (kod, unvan, xu100, xu030, sehir) VALUES (?, ?, ?, ?, ?)", [
-        ("THYAO", "TÜRK HAVA YOLLARI A.O.", 1, 1, "İSTANBUL"),
-        ("ASELS", "ASELSAN ELEKTRONİK SANAYİ VE TİCARET A.Ş.", 1, 1, "ANKARA"),
-        ("FLAP", "FLAP KONGRE TOPLANTI HİZMETLERİ OTOMOTİV VE TURİZM A.Ş.", 0, 0, "ANKARA"),
-    ])
+    conn.executemany(
+        "INSERT INTO bist_sirket (kod, unvan, xu100, xu030, sehir, ana_sektor, sektor) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+            ("THYAO", "TÜRK HAVA YOLLARI A.O.", 1, 1, "İSTANBUL", "ULAŞTIRMA VE DEPOLAMA", "ULAŞTIRMA VE DEPOLAMA"),
+            ("ASELS", "ASELSAN ELEKTRONİK SANAYİ VE TİCARET A.Ş.", 1, 1, "ANKARA", "TEKNOLOJİ", "SAVUNMA"),
+            ("OTKAR", "OTOKAR OTOMOTİV VE SAVUNMA SANAYİ A.Ş.", 1, 0, "SAKARYA", "TEKNOLOJİ", "SAVUNMA"),
+            ("FLAP", "FLAP KONGRE TOPLANTI HİZMETLERİ OTOMOTİV VE TURİZM A.Ş.", 0, 0, "ANKARA", None, None),
+        ])
     conn.executemany(
         "INSERT INTO kap_bildirim (indeks, kod, gonderen, baslik, ozet, yayin, tur, detay_alindi) VALUES (?,?,?,?,?,?,?,1)", [
             (1001, "THYAO", "TÜRK HAVA YOLLARI A.O.", "Pay Alım Satım Bildirimi", "Pay alım bildirimi", f"{gun(3)} 18:00:00", "pay"),
@@ -383,7 +385,7 @@ def uygulama(veritabani_yolu):
     bist_eski = bist_piyasa._indir
     bist_piyasa._indir = sahte_bist_fiyatlari
     bist_piyasa._durum.update(zaman=0.0, veri={})
-    bist_piyasa.fiyatlar(["THYAO", "ASELS"], bekle=True)
+    bist_piyasa.fiyatlar(["THYAO", "ASELS", "OTKAR"], bekle=True)
     kripto_piyasa._info_al = sahte_kripto_bilgisi
     kripto_piyasa._bilgi.temizle()
     kripto_piyasa._vadeli.temizle()

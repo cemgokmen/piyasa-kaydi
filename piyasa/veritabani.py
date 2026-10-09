@@ -383,7 +383,7 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_kripto_coin ON kripto_islem(coin, transaction_date)")
 
     sutunlari_tamamla(conn, "kap_pay_islem", [("gorev", "TEXT")])
-    sutunlari_tamamla(conn, "bist_sirket", [("sehir", "TEXT")])
+    sutunlari_tamamla(conn, "bist_sirket", [("sehir", "TEXT"), ("ana_sektor", "TEXT"), ("sektor", "TEXT")])
     sutunlari_tamamla(conn, "yurutme_varlik", [("sirket", "TEXT")])
     sutunlari_tamamla(conn, "yurutme_islem", [("sirket", "TEXT")])
     sutunlari_tamamla(conn, "sirket_profili", [("kurulus", "INTEGER")])

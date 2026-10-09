@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_bilesenler.html" import kpi, islem_tablosu, fiyat_paneli, yonetici_satis_notu %}
 {% block baslik %}{{ ticker }} — {{ sirket|sirket_adi }} hisse işlemleri, fiyatı ve rakamları · Piyasa Kaydı{% endblock %}
+{% block aciklama %}{{ sirket|sirket_adi }} ({{ ticker }}) hissesi: fiyat, şirketin rakamları, analist hedefleri, ABD'li siyasetçilerin ve şirket yöneticilerinin bildirdiği alım satımlar, hisseyi tutan büyük fonlar ve güncel haberler.{% endblock %}
 
 {% block geri_adres %}{{ url_for('site.islemler', donem='365') }}{% endblock %}
 
@@ -10,6 +11,8 @@
     <h1><span class="ticker ticker-buyuk">{{ ticker }}</span> <span class="h1-alt">{{ sirket|sirket_adi }}</span></h1>
     {% if profil and (profil.sektor or profil.endustri) %}
     <p class="hisse-alt">{{ profil.sektor or '' }}{% if profil.sektor and profil.endustri %} · {% endif %}{{ profil.endustri or '' }}</p>
+    {% elif sektor %}
+    <p class="hisse-alt">{{ sektor.sektor }}</p>
     {% endif %}
   </div>
 </header>
@@ -23,6 +26,7 @@
   {% if fonlar %}<a href="#fonlar">Fonlar <span class="sayac">{{ fon_sayisi }}</span></a>{% endif %}
   {% if ihaleler %}<a href="#ihaleler">Devlet sözleşmeleri</a>{% endif %}
   <a href="#haberler">Haberler</a>
+  {% if benzerler %}<a href="#benzerler">Aynı sektör</a>{% endif %}
 </nav>
 
 {% for y in yurutme if y.kisi_bilgi %}
@@ -162,6 +166,23 @@
   <h2>Güncel haberler</h2>
   <p class="soluk kucuk">Haberler yükleniyor…</p>
 </div>
+
+{% if benzerler %}
+<section class="bolum" id="benzerler">
+  <header class="bolum-ust"><div><h2>Aynı sektörde en çok işlem görenler</h2>
+    <p class="bolum-not">{{ sektor.sektor }} · son bir yılda siyasetçilerin ve yöneticilerin en çok işlem bildirdiği diğer hisseler</p></div>
+    <a class="bolum-link" href="{{ url_for('analiz.sektorler_sayfasi') }}">Sektör haritası →</a></header>
+  <div class="benzer-izgara">
+    {% for b in benzerler %}
+    <a class="benzer-kart" href="{{ url_for('site.hisse', ticker=b.ticker) }}">
+      <span class="benzer-ust"><span class="ticker">{{ b.ticker }}</span><span class="soluk kucuk">{{ b.adet }} işlem</span></span>
+      <span class="benzer-ad">{{ (b.sirket or '')|sirket_adi }}</span>
+      <span class="benzer-alt"><span class="tutar-buy">{{ b.alim }} alım</span> · <span class="tutar-sell">{{ b.satim }} satım</span></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 {% endblock %}
 
 {% block betik %}

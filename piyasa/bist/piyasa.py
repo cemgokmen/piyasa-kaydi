@@ -1,12 +1,12 @@
 """
 Borsa İstanbul fiyatları (Yahoo Finance, ücretsiz; borsa saatinde yaklaşık 15 dakika gecikmeli).
 
-  fiyatlar(kodlar)  BIST 100 şirketlerinin son fiyatı, günlük / haftalık / yıllık değişimi ve
+  fiyatlar(kodlar)  Borsa İstanbul hisselerinin son fiyatı, günlük / haftalık / yıllık değişimi ve
                     küçük grafik için son 3 ayın kapanışları
   yahoo_kodu(kod)   'THYAO' -> 'THYAO.IS'
 
-100 hissenin toplu indirilmesi yarım dakikayı bulabildiği için sayfa beklemez: fiyatlar
-arka planda tazelenir, sayfa elde olan en son veriyi gösterir.
+Yüzlerce hissenin indirilmesi dakikaları bulabildiği için sayfa beklemez: fiyatlar arka planda
+100'erli parçalar halinde tazelenir, sayfa elde olan en son veriyi gösterir.
 """
 
 import threading
@@ -15,8 +15,9 @@ import time
 import pandas as pd
 import yfinance as yf
 
-ENDEKS = "XU100.IS"
-TAZELIK = 15 * 60          # saniye
+ENDEKSLER = ("XU100.IS", "XU030.IS")
+TAZELIK = 20 * 60          # saniye
+PARCA = 100
 
 _durum = {"zaman": 0.0, "veri": {}, "calisiyor": False}
 _kilit = threading.Lock()
@@ -63,11 +64,17 @@ def tazele(kodlar):
             return
         _durum["calisiyor"] = True
     try:
-        yahoo = sorted({yahoo_kodu(k) for k in kodlar} | {ENDEKS})
-        veri = _indir(yahoo)
-        if veri:
+        # Endeksler ve (çağıranın öne koyduğu) büyük hisseler ilk parçada gelir
+        yahoo = list(ENDEKSLER) + [yahoo_kodu(k) for k in kodlar if yahoo_kodu(k) not in ENDEKSLER]
+        yahoo = list(dict.fromkeys(yahoo))
+        for i in range(0, len(yahoo), PARCA):
+            try:
+                veri = _indir(yahoo[i:i + PARCA])
+            except Exception:
+                continue
             # Bu turda gelmeyen hisselerin eski fiyatı korunur
             _durum["veri"] = {**_durum["veri"], **{k.removesuffix(".IS"): v for k, v in veri.items()}}
+        if _durum["veri"]:
             _durum["zaman"] = time.monotonic()
     except Exception:
         pass

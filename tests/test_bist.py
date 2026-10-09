@@ -92,7 +92,8 @@ def test_turkce_bicim():
 def test_bist_sayfalari(istemci):
     html = istemci.get("/bist").get_data(as_text=True)
     for metin in ("Borsa İstanbul", "KAP'ta kim aldı, kim sattı?", "Ahmet Örnek", "Yönetim kurulu üyesi",
-                  "Kendi payını geri alan şirketler", "ASELS", "BIST 100 hisseleri", "Türk Hava Yolları A.O."):
+                  "Kendi payını geri alan şirketler", "ASELS", "Hisseler", "Türk Hava Yolları A.O.",
+                  "En çok yükselenler", "Teknoloji"):
         assert metin in html, metin
     # Fon eşik bildirimleri ayrı sekmede
     assert "Ak Portföy Yönetimi A.Ş." in html
@@ -100,7 +101,15 @@ def test_bist_sayfalari(istemci):
     for metin in ("Türk Hava Yolları", "BIST 30", "Yöneticiler ve büyük ortaklar ne yaptı?", "Ahmet Örnek",
                   "Fonların eşik bildirimleri", "Yeni uçak siparişi", "https://www.kap.org.tr/tr/Bildirim/1001"):
         assert metin in html, metin
-    assert "Şirket kendi payını geri alıyor" in istemci.get("/bist/ASELS").get_data(as_text=True)
+    html = istemci.get("/bist/ASELS").get_data(as_text=True)
+    assert "Şirket kendi payını geri alıyor" in html
+    # Sektör etiketi, özet şeridi ve aynı sektördeki şirketler
+    assert "Savunma" in html and "Aynı sektördeki şirketler" in html and "/bist/OTKAR" in html
+    assert "ozet-serit" in html
+    # Sektör ve endeks süzgeci
+    html = istemci.get("/bist?sektor=TEKNOLOJİ").get_data(as_text=True)
+    assert "/bist/ASELS" in html and 'href="/bist/THYAO"' not in html.split('id="hisseler"')[1].split('id="iceriden"')[0]
+    assert "/bist/THYAO" in istemci.get("/bist?liste=xu030").get_data(as_text=True)
     # BIST 100 dışındaki şirketin de sayfası var (KAP listesinden)
     assert "Flap Kongre" in istemci.get("/bist/FLAP").get_data(as_text=True)
     assert istemci.get("/bist/YOKBOYLE").status_code == 404
@@ -112,3 +121,11 @@ def test_bist_arama(istemci):
     oneriler = istemci.get("/api/oneri?q=thyao").get_json()["oneriler"]
     assert oneriler[0]["adres"] == "/bist/THYAO"
     assert istemci.get("/api/oneri?q=aselsan").get_json()["oneriler"][0]["adres"] == "/bist/ASELS"
+
+
+def test_haberlerde_hisse_kodlari(uygulama):
+    from piyasa.web.hisse_kodlari import _kodlar, hisse_kodlari
+    _kodlar.temizle()
+    assert hisse_kodlari("THYAO ve ASELS zirvede, BIST 100 rekor") == [("THYAO", "/bist/THYAO"), ("ASELS", "/bist/ASELS")]
+    assert hisse_kodlari("Nvidia (NVDA) yükseldi") == [("NVDA", "/hisse/NVDA")]
+    assert hisse_kodlari("ALTIN ve DOLAR") == []

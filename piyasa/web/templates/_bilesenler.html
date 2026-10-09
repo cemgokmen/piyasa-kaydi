@@ -133,6 +133,7 @@
   <li>
     <a href="{{ h.adres }}" target="_blank" rel="noopener">{{ h.baslik }}</a>
     <span class="haber-alt">
+      {% set kodlar = hisse_kodlari(h.baslik) %}{% for kod, adres in kodlar %}<a class="ticker ticker-kucuk" href="{{ adres }}" title="{{ kod }} hisse sayfası">{{ kod }}</a>{% endfor %}
       {% for et in h.etiketler %}<span class="etiket">{{ et }}</span>{% endfor %}
       <span class="soluk">{{ h.kaynak }} · {{ h.tarih|kisa_tarih }}</span>
     </span>

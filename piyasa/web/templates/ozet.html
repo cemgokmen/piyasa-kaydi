@@ -38,7 +38,7 @@
     {% for m in b.maddeler %}
     <div class="ozet-haber">
       <h4>{% if m.adres %}<a href="{{ m.adres }}">{{ m.baslik }}</a>{% else %}{{ m.baslik }}{% endif %}</h4>
-      <p>{% if m.vurgu %}<a class="ticker" href="{{ url_for('site.hisse', ticker=m.vurgu) }}" title="{{ m.vurgu }} hisse sayfası">{{ m.vurgu }}</a> {% endif %}{{ m.metin }}</p>
+      <p>{% if m.vurgu %}<a class="ticker" href="{{ m.vurgu_adres or url_for('site.hisse', ticker=m.vurgu) }}" title="{{ m.vurgu }} hisse sayfası">{{ m.vurgu }}</a> {% endif %}{{ m.metin }}</p>
     </div>
     {% endfor %}
   </section>

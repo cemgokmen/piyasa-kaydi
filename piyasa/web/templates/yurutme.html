@@ -88,7 +88,7 @@
       <header class="panel-ust"><div><h2>{{ baslik }}</h2><p class="panel-not">tutar aralığına göre</p></div></header>
       <ul class="akis akis-sik">
         {% for h in liste %}
-        <li><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
+        <li class="tiklanir" data-href="{{ url_for('site.hisse', ticker=h.ticker) }}"><a class="ticker" href="{{ url_for('site.hisse', ticker=h.ticker) }}">{{ h.ticker }}</a>
           <span class="akis-orta soluk kucuk kirp">{{ (h.ad or '')|sirket_adi }}</span>
           <span class="sayi {{ sinif }}">{{ aralik(h.alt, h.ust) }}</span>
           <span class="soluk kucuk">{{ h.adet }}×</span></li>
