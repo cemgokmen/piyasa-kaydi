@@ -18,3 +18,5 @@ data/site.log
 data/son_hizli_guncelleme.json
 data/*.db-wal
 data/*.db-shm
+data/canli.kilit
+data/son_canli_guncelleme.json
