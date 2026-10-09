@@ -46,6 +46,86 @@ def kisa_tutar(n):
 PARA_BIRIMLERI = {"USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "TRY": "₺"}
 
 
+# ---------------------------------------------------------------------------
+# Türkçe ekler: "2016'da", "%40'ı", "%6'sı", "Bitcoin'e", "Solana'ya"
+# ---------------------------------------------------------------------------
+
+_BIRLER = {1: "bir", 2: "iki", 3: "üç", 4: "dört", 5: "beş", 6: "altı", 7: "yedi", 8: "sekiz", 9: "dokuz"}
+_ONLAR = {1: "on", 2: "yirmi", 3: "otuz", 4: "kırk", 5: "elli", 6: "altmış", 7: "yetmiş", 8: "seksen", 9: "doksan"}
+_UNLULER = "aeıioöuü"
+
+
+def _sayi_son_kelimesi(n):
+    """Sayının okunuşundaki son kelime: 2016 → 'altı', 40 → 'kırk', 1000 → 'bin'."""
+    if n == 0:
+        return "sıfır"
+    if n % 10:
+        return _BIRLER[n % 10]
+    if n % 100:
+        return _ONLAR[(n // 10) % 10]
+    if n % 1000:
+        return "yüz"
+    if n % 10**6:
+        return "bin"
+    return "milyon" if n % 10**9 else "milyar"
+
+
+def _son_kelime(metin):
+    """Ekin uyacağı kelime: metin sayıyla bitiyorsa okunuşu, değilse son kelime."""
+    import re
+    # Saat: "07:00" yedi diye, "16:30" otuz diye okunur
+    saat = re.search(r"(\d{1,2}):(\d{2})\s*$", metin)
+    if saat:
+        return _sayi_son_kelimesi(int(saat.group(1)) if saat.group(2) == "00" else int(saat.group(2)))
+    m = re.search(r"(\d[\d.]*)(?:,(\d+))?\s*$", metin)
+    if m:
+        return _sayi_son_kelimesi(int(m.group(2) if m.group(2) else m.group(1).replace(".", "")))
+    kelime = (metin.split() or [""])[-1].lower()
+    return kelime if any(h in _UNLULER for h in kelime) else "i"    # kısaltma: XRP → "iks-ar-pi"
+
+
+def ek(metin, tur):
+    """
+    Metne kesme işaretiyle Türkçe ek ekler. tur: 'e' (yönelme), 'de' (bulunma), 'den' (ayrılma),
+    'i' (belirtme), 'si' (iyelik), 'lik', 'in' (ilgi).
+        ek('2016', 'de') → "2016'da";  ek('%6', 'si') → "%6'sı";  ek('Solana', 'e') → "Solana'ya"
+    """
+    metin = str(metin)
+    kelime = _son_kelime(metin)
+    unlu = [h for h in kelime if h in _UNLULER][-1]
+    kalin = unlu in "aıou"
+    dort = {"a": "ı", "ı": "ı", "o": "u", "u": "u", "e": "i", "i": "i", "ö": "ü", "ü": "ü"}[unlu]
+    unluyle = kelime[-1] in _UNLULER
+    sert = kelime[-1] in "fstkçşhp"
+    iki = "a" if kalin else "e"
+    ekler = {
+        "e": ("y" if unluyle else "") + iki,
+        "de": ("t" if sert else "d") + iki,
+        "den": ("t" if sert else "d") + iki + "n",
+        "i": ("y" if unluyle else "") + dort,
+        "si": ("s" if unluyle else "") + dort,
+        "lik": "l" + dort + "k",
+        "in": ("n" if unluyle else "") + dort + "n",
+    }
+    return f"{metin}'{ekler[tur]}"
+
+
+PARA_ADLARI = {"TRY": "TL", "USD": "dolar"}
+
+
+def para_metni(n, birim="TRY"):
+    """Cümle içinde okunacak tutar: 12345.6 → '12.346 TL'; 1.3e6 → '1,30 milyon dolar'."""
+    if n is None:
+        return "—"
+    ad = PARA_ADLARI.get(birim, birim)
+    isaret = "−" if n < 0 else ""
+    n = abs(n)
+    for bolen, ek in ((1e9, "milyar"), (1e6, "milyon")):
+        if n >= bolen:
+            return f"{isaret}{n / bolen:.2f}".replace(".", ",") + f" {ek} {ad}"
+    return f"{isaret}{sayi(round(n))} {ad}"
+
+
 def para(n, birim="USD"):
     """Eksi değer ve farklı para birimiyle kısa tutar: -2.5e9 -> '−2,5 mr $'; TWD -> '4,4 trl TWD'"""
     if n is None:
@@ -111,6 +191,13 @@ def kisa_tarih(iso):
     """'2026-08-18' -> '18 Ağu'"""
     d = date.fromisoformat(iso[:10])
     return f"{d.day} {AYLAR[d.month - 1]}"
+
+
+def ay_yil(ay, tur=None):
+    """'2012-03' → 'Mart 2012'; tur='den' → "Mart 2012'den" (bkz. ek)."""
+    y, a = ay[:7].split("-")
+    metin = f"{AYLAR_UZUN[int(a) - 1]} {y}"
+    return ek(metin, tur) if tur else metin
 
 
 def uzun_tarih(iso):

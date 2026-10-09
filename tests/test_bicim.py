@@ -92,3 +92,15 @@ def test_haber_secimi():
     ], 10)
     assert [x["baslik"] for x in secilen] == ["OPEC üretimi artırma kararı aldı"]
     assert set(secilen[0]["etiketler"]) >= {"OPEC", "Arz"}
+
+
+def test_turkce_ekler():
+    from piyasa.bicim import ek
+    ornekler = {("2016", "de"): "2016'da", ("2013", "den"): "2013'ten", ("2012", "e"): "2012'ye",
+                ("%40", "si"): "%40'ı", ("%25", "si"): "%25'i", ("%6", "si"): "%6'sı", ("%10", "si"): "%10'u",
+                ("%92", "lik"): "%92'lik", ("%30", "lik"): "%30'luk", ("1.050.000", "de"): "1.050.000'de",
+                ("1.000.000", "de"): "1.000.000'da", ("3,125", "den"): "3,125'ten", ("Ethereum", "e"): "Ethereum'a",
+                ("Solana", "e"): "Solana'ya", ("XRP", "e"): "XRP'ye", ("07:00", "de"): "07:00'de",
+                ("21:00", "de"): "21:00'de", ("06:15", "de"): "06:15'te", ("16:30", "de"): "16:30'da"}
+    for (metin, tur), beklenen in ornekler.items():
+        assert ek(metin, tur) == beklenen

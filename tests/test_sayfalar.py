@@ -428,3 +428,14 @@ def test_site_haritasi_ve_rehberler(istemci):
     sayfa = istemci.get("/rehber/kap-pay-alim-satim-bildirimi").get_data(as_text=True)
     assert "KAP" in sayfa and "application/ld+json" in sayfa
     assert istemci.get("/rehber/yok").status_code == 404
+
+
+def test_site_haritasindaki_sabit_sayfalar_acilir(istemci):
+    """Site haritasındaki bölüm sayfalarının hepsi açılır (yeniden düzenlemede kaybolan rota kalmasın)."""
+    import re
+    xml = istemci.get("/sitemap.xml").get_data(as_text=True)
+    adresler = re.findall(r"<loc>https?://[^/]+(/[^<]*)</loc>", xml)
+    sabit = [a for a in adresler if a.count("/") <= 1 or a.startswith(("/rehber/", "/siyasetciler/"))]
+    assert len(sabit) >= 15
+    for adres in sabit:
+        assert istemci.get(adres.replace("&amp;", "&")).status_code == 200, adres

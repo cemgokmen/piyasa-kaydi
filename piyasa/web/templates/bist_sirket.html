@@ -26,7 +26,7 @@
   <div><span>1 yılda</span><b class="{{ 'tutar-buy' if f.y1 and f.y1 > 0 else 'tutar-sell' if f.y1 else '' }}">{{ f.y1|yuzde if f.y1 is not none else '—' }}</b>
     <small>{% if fark is not none %}BIST 100'ün {{ ('%.0f'|format((fark|abs) * 100)) }} puan {{ 'üstünde' if fark > 0 else 'altında' }}{% else %}&nbsp;{% endif %}</small></div>
   <div><span>İçeriden işlem</span><b>{{ islemler|length }}</b><small>son 4 ayda KAP bildirimi</small></div>
-  <div><span>Geri alım · 90 gün</span><b>{{ geri.son_90.tutar|tl if geri.son_90 else '—' }}</b><small>{% if geri.son_90 %}sermayenin %{{ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ',') }}'i{% else %}bildirim yok{% endif %}</small></div>
+  <div><span>Geri alım · 90 gün</span><b>{{ geri.son_90.tutar|tl if geri.son_90 else '—' }}</b><small>{% if geri.son_90 %}sermayenin {{ ('%' ~ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ','))|ek('si') }}{% else %}bildirim yok{% endif %}</small></div>
 </section>
 {% endif %}
 
@@ -147,7 +147,7 @@
 <section class="bolum" id="geri-alim">
   <header class="bolum-ust"><div>
     <h2>Şirket kendi payını geri alıyor</h2>
-    <p class="bolum-not">{% if geri.son_90 %}Son 90 günde <b>{{ geri.son_90.tutar|tl }}</b> tutarında, <b>{{ geri.son_90.nominal|sayi }}</b> pay geri alındı (sermayenin %{{ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ',') }}'i). {% endif %}Şirketin kendi paylarını borsadan geri alması.</p>
+    <p class="bolum-not">{% if geri.son_90 %}Son 90 günde <b>{{ geri.son_90.tutar|tl }}</b> tutarında, <b>{{ geri.son_90.nominal|sayi }}</b> pay geri alındı (sermayenin {{ ('%' ~ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ','))|ek('si') }}). {% endif %}Şirketin kendi paylarını borsadan geri alması.</p>
   </div></header>
   <div class="tablo-kap" data-kisalt="10">
     <table class="tablo tablo-sade">

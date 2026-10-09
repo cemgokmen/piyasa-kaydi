@@ -12,7 +12,7 @@
       <span class="akis-orta soluk kirp" title="{{ p.sirket_adi }}">{{ p.sirket_adi|sirket_adi }}</span>
       <span class="sayi">
         {% if tur == 'artis' and p.yuzde %}<span class="tutar-buy">+%{{ p.yuzde }}</span> · {% endif %}
-        {% if tur == 'azalis' and p.yuzde %}<span class="tutar-sell">%{{ p.yuzde }}</span> · {% endif %}
+        {% if tur == 'azalis' and p.yuzde %}<span class="tutar-sell">−%{{ p.yuzde|abs }}</span> · {% endif %}
         {{ p.deger_kisa }}
       </span>
     </li>

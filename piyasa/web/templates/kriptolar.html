@@ -161,7 +161,7 @@
           <td data-etiket="Net pozisyon" class="sag sayi {{ 'tutar-buy' if c.kurum_net >= 0 else 'tutar-sell' }}">{{ isaretli(c.kurum_net) }} <span class="soluk kucuk">sözleşme</span></td>
           <td data-etiket="Haftalık" class="sag sayi {{ 'tutar-buy' if c.haftalik_degisim >= 0 else 'tutar-sell' }}">{{ isaretli(c.haftalik_degisim) }}</td>
           <td data-etiket="1 yıllık konum" class="genis">
-            <span class="konum-cubuk" title="Son 1 yılın %{{ c.konum }}'lik diliminde"><span class="konum-isaret" style="left: {{ c.konum }}%"></span></span>
+            <span class="konum-cubuk" title="Son 1 yılın {{ ('%' ~ c.konum)|ek('lik') }} diliminde"><span class="konum-isaret" style="left: {{ c.konum }}%"></span></span>
             <span class="konum-etiket">{{ c.konum }}<span class="soluk">/100</span></span>
           </td>
           <td data-etiket="Rapor" class="tarih">{{ c.tarih|kisa_tarih }}</td>

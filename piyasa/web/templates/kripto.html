@@ -100,18 +100,18 @@
     {% if yarilanma %}
     <div class="yarilanma">
       <b>Sonraki yarılanma: yaklaşık {{ yarilanma.kalan_gun|sayi }} gün sonra ({{ yarilanma.tarih|uzun_tarih }} civarı)</b>
-      <p>Blok {{ yarilanma.sonraki_blok|sayi }}'de madencilerin her blok için aldığı yeni bitcoin
-        {{ ('%g'|format(yarilanma.odul_simdi)).replace('.', ',') }}'ten {{ ('%g'|format(yarilanma.odul_sonra)).replace('.', ',') }}'e inecek.
+      <p>Blok {{ (yarilanma.sonraki_blok|sayi)|ek('de') }} madencilerin her blok için aldığı yeni bitcoin
+        {{ ('%g'|format(yarilanma.odul_simdi)).replace('.', ',')|ek('den') }} {{ ('%g'|format(yarilanma.odul_sonra)).replace('.', ',')|ek('e') }} inecek.
         Şu an blok {{ yarilanma.yukseklik|sayi }}{% if not yarilanma.kesin %} (tahmini){% endif %}; {{ yarilanma.kalan_blok|sayi }} blok kaldı (her blok yaklaşık 10 dakika).
         {% if yarilanma.kesin %}Kaynak: Bitcoin ağı (blockchain.info).{% endif %}</p>
     </div>
     {% endif %}
     {% if b.azami_arz %}
     {% set oran = b.dolasim / b.azami_arz %}
-    <div class="arz-cubuk" role="img" aria-label="Azami arzın yüzde {{ (oran * 100)|round|int }}'i dolaşımda">
+    <div class="arz-cubuk" role="img" aria-label="Azami arzın {{ ('%' ~ (oran * 100)|round|int)|ek('si') }} dolaşımda">
       <span style="width: {{ [oran * 100, 100]|min }}%"></span>
     </div>
-    <p class="kucuk soluk">Azami arzın <b>%{{ (oran * 100)|round(1)|string|replace('.', ',') }}</b>'i şu anda dolaşımda.</p>
+    <p class="kucuk soluk">Azami arzın <b>{{ ('%' ~ ((oran * 100)|round(1)|string|replace('.', ',')))|ek('si') }}</b> şu anda dolaşımda.</p>
     {% endif %}
   </div>
 </section>
@@ -127,7 +127,7 @@
     <h3>Vadeli piyasada {{ k.ad }} fiyatı</h3>
     <p class="beklenti-cumle"><b>{{ vadeli.vade }}</b> teslimi için bugün anlaşılan fiyat <b>{{ vadeli.fiyat|fiyat }} $</b>;
       bu, bugünkü fiyatın <b class="{{ 'tutar-buy' if vadeli.fark > 0 else 'tutar-sell' }}">%{{ ((vadeli.fark|abs) * 100)|round(1)|string|replace('.', ',') }} {{ 'üstünde' if vadeli.fark > 0 else 'altında' }}</b>.
-      {% if vadeli.yillik is not none %}Yıllığa çevrildiğinde fark <b>%{{ (vadeli.yillik * 100)|round(1)|string|replace('.', ',') }}</b>.{% endif %}</p>
+      {% if vadeli.yillik is not none %}Yıllığa çevrildiğinde fark <b>{{ vadeli.yillik|yuzde(basamak=1) }}</b>.{% endif %}</p>
     <p class="temel-not">Bu bir fiyat tahmini değildir. Vadeli fiyat genellikle faiz kadar yukarıdadır; fark faizden çok yüksekse
       piyasada iyimserlik ve kaldıraçlı alım fazla, düşükse ya da eksideyse ilgi zayıf demektir. Kaynak: Yahoo Finance (CME).</p>
   </div>
@@ -235,7 +235,7 @@
 <section class="bolum" id="sirketler">
   <header class="bolum-ust"><div>
     <h2>{{ k.ad }} şirketlerinde kim aldı, kim sattı?</h2>
-    <p class="bolum-not">İşi doğrudan {{ k.ad }}'e bağlı, ABD borsasında işlem gören şirketlerde yönetici ve siyasetçi işlemleri. Son 90 gün.</p>
+    <p class="bolum-not">İşi doğrudan {{ k.ad|ek('e') }} bağlı, ABD borsasında işlem gören şirketlerde yönetici ve siyasetçi işlemleri. Son 90 gün.</p>
   </div></header>
   {{ yonetici_satis_notu() }}
   {% set yonetici_islem = sirket_islemleri|rejectattr('siyasetci')|list %}{% set siyaset_islem = sirket_islemleri|selectattr('siyasetci')|list %}

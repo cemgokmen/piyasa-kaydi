@@ -37,6 +37,7 @@ from datetime import datetime, time, timedelta
 from pathlib import Path
 
 from piyasa.ayarlar import KOK, VERI_DIZINI
+from piyasa.bicim import ek
 
 ETIKET = "com.piyasakaydi.guncelle"
 PLIST = Path.home() / "Library" / "LaunchAgents" / f"{ETIKET}.plist"
@@ -220,11 +221,11 @@ def kur(saat=7, dakika=0):
         "StartInterval": CANLI_ARALIK,
     })
     if tam:
-        print(f"Tam güncelleme her gün {saat:02d}:{dakika:02d}'de; Mac o saatte kapalıysa açılınca yapılır.")
+        print(f"Tam güncelleme her gün {ek(f'{saat:02d}:{dakika:02d}', 'de')}; Mac o saatte kapalıysa açılınca yapılır.")
     if hizli:
         saatler = [f"{h:02d}:00" for h in sorted(HIZLI_SAATLER)]
         print("Hızlı güncelleme (Kongre ve fon bildirimleri) her gün "
-              + ", ".join(saatler[:-1]) + " ve " + saatler[-1] + "'de.")
+              + ", ".join(saatler[:-1]) + " ve " + ek(saatler[-1], "de") + ".")
     if canli:
         print(f"Canlı güncelleme (gün içi Form 4 ve KAP bildirimleri) {CANLI_ARALIK // 60} dakikada bir.")
     print(f"Çıktı: {GUNLUK}")

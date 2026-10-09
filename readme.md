@@ -205,21 +205,23 @@ piyasa/
 ├── ayarlar.py           Dosya yolları, SEC_USER_AGENT
 ├── veritabani.py        SQLite şeması
 ├── kurallar.py          Yasal süreler, eşikler, partiler, ortak SQL koşulları
-├── bicim.py             Tutar, yüzde, tarih, kişi adı ve unvanların Türkçe gösterimi
+├── bicim.py             Tutar, yüzde, tarih, Türkçe ekler (2016'da, %6'sı), kişi adı ve unvanların gösterimi
 ├── zamanlama.py         Otomatik güncelleme (launchd)
 ├── fiyat.py             Anlık ve geçmiş fiyatlar
 ├── temel.py             Şirket rakamları ve analist beklentileri
 ├── sirket_profili.py    "Şirket ne iş yapıyor?" metinleri
 ├── hisse_haberleri.py   Hisse haberleri (çevirili)
 ├── ceviri.py            Ücretsiz çeviri, özel adları koruyarak
-├── toplama/             Form 4, Meclis, Senato, 13F, OGE, USAspending, CFTC/EIA/FRED
+├── toplama/             Form 4 (günlük dizin ve canlı akış), Meclis, Senato, 13F, OGE, USAspending, KAP,
+│                        CFTC/EIA/FRED, enflasyon (TCMB, FRED)
 ├── bakim/               Veri düzeltme, şüpheli kayıtlar
-├── analiz/              Getiri, performans, çıkar çatışması, sinyaller, sektör haritası, ihaleler, özet
+├── analiz/              Getiri, performans, çıkar çatışması, sinyaller, sektör haritası, ihaleler, özet,
+│                        yatırım karşılaştırma
 ├── emtia/               Emtia tanımları, sorgular, haberler, Kapalıçarşı, piyasa beklentileri
 ├── kripto/              Coin profilleri, CoinGecko verisi, kripto şirketleri, CFTC ve 13F sorguları
-├── bist/                BIST 100 fiyatları ve KAP bildirim sorguları
+├── bist/                Fiyatlar (borsa saatinde, süreçler arası paylaşımlı), günün hareketi, KAP sorguları
 ├── veri/                Elle hazırlanmış şirket ve endüstri tanımları
-└── web/                 Flask uygulaması, sorgular, şablonlar, CSS ve JavaScript
+└── web/                 Flask uygulaması: her bölümün rotası (*_rotalari.py), sorgular, şablonlar, CSS ve JavaScript
 tests/                   pytest ve Selenium testleri
 data/                    Fon listesi; veritabanı yerelde oluşturulur
 ```

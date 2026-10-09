@@ -8,6 +8,7 @@ from flask import Blueprint, abort, jsonify, render_template
 from piyasa import fiyat
 from piyasa.emtia import beklenti, haberler, kapalicarsi, serit, sorgular
 from piyasa.emtia.tanimlar import EMTIA, EMTIALAR, GOSTERGELER, GRUPLAR, ONS_GRAM
+from piyasa.web.grafik import kucuk_grafik
 
 emtia = Blueprint("emtia", __name__)
 
@@ -21,23 +22,6 @@ def _degisim(bilgi, anahtar):
     if not bilgi:
         return None
     return next((d["oran"] for d in bilgi["degisimler"] if d["anahtar"] == anahtar), None)
-
-
-def _kucuk_grafik(bilgi, genislik=120, yukseklik=34):
-    """Kartlardaki küçük 1 yıllık fiyat çizgisi için SVG noktaları."""
-    if not bilgi:
-        return None
-    degerler = [n[1] for n in bilgi["seriler"].get("1y", []) if n[1] is not None]
-    if len(degerler) < 2:
-        return None
-    az, cok = min(degerler), max(degerler)
-    aralik = (cok - az) or 1
-    adim = genislik / (len(degerler) - 1)
-    noktalar = " ".join(
-        f"{i * adim:.1f},{(1 - (v - az) / aralik) * (yukseklik - 4) + 2:.1f}"
-        for i, v in enumerate(degerler)
-    )
-    return {"noktalar": noktalar, "artis": degerler[-1] >= degerler[0]}
 
 
 def _gram_altin(fiyatlar):
@@ -74,7 +58,7 @@ def liste():
             "a1": _degisim(bilgi, "1a"),
             "y1": _degisim(bilgi, "1y"),
             "hacim": bilgi.get("hacim") if bilgi else None,
-            "grafik": _kucuk_grafik(bilgi),
+            "grafik": kucuk_grafik([n[1] for n in bilgi["seriler"].get("1y", [])], basamak=1) if bilgi else None,
         })
 
     altin, gumus = fiyatlar.get("GC=F"), fiyatlar.get("SI=F")

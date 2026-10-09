@@ -10,11 +10,10 @@ from datetime import date
 from flask import Blueprint, render_template, request
 
 from piyasa.analiz import karsilastirma as k
+from piyasa.bicim import AYLAR_UZUN, ay_yil, para_metni
 
 karsilastir = Blueprint("karsilastir", __name__)
 
-AY_ADLARI = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim",
-             "Kasım", "Aralık"]
 PARALAR = {"TRY": "TL", "USD": "Dolar"}
 TURLER = {"tek": "Tek seferlik", "aylik": "Her ay"}
 EN_FAZLA_TUTAR = 1_000_000_000
@@ -32,56 +31,6 @@ HAZIRLAR = [
     ("2008 krizinden bugüne", "Eylül 2008'de 10.000 dolar",
      {"para": "USD", "tutar": 10_000, "bas": "2008-09", "v": "sp500,nasdaq,altin,bist100,dolar"}),
 ]
-
-
-# Sayının okunuşunun son kelimesi: (son ünlü kalın mı, ünlüyle mi biter, sert ünsüzle mi biter)
-_BIRLER = {1: "bir", 2: "iki", 3: "üç", 4: "dört", 5: "beş", 6: "altı", 7: "yedi", 8: "sekiz", 9: "dokuz"}
-_ONLAR = {1: "on", 2: "yirmi", 3: "otuz", 4: "kırk", 5: "elli", 6: "altmış", 7: "yetmiş", 8: "seksen", 9: "doksan"}
-
-
-def _son_kelime(n):
-    if n % 10:
-        return _BIRLER[n % 10]
-    if n % 100:
-        return _ONLAR[(n // 10) % 10]
-    return "yüz" if n % 1000 else "bin"
-
-
-def sayi_eki(n, ek):
-    """2016 → 'da' / 'dan' / 'ya'; 2012 → 'de' / 'den' / 'ye'. ek: 'de', 'den' ya da 'e'."""
-    kelime = _son_kelime(n)
-    kalin = [h for h in kelime if h in "aeıioöuü"][-1] in "aıou"
-    unlu = kelime[-1] in "aeıioöuü"
-    sert = kelime[-1] in "fstkçşhp"
-    if ek == "e":
-        return ("y" if unlu else "") + ("a" if kalin else "e")
-    d = "t" if sert else "d"
-    return d + ("a" if kalin else "e") + ("n" if ek == "den" else "")
-
-
-def ay_metni(ay, ek=None):
-    """'2012-03' → 'Mart 2012'; ek='den' → "Mart 2012'den"."""
-    y, a = ay.split("-")
-    metin = f"{AY_ADLARI[int(a) - 1]} {y}"
-    return f"{metin}'{sayi_eki(int(y), ek)}" if ek else metin
-
-
-def para_yaz(n, para, kisa=False):
-    """12345.6 → '12.346 ₺' / '$12.346'; büyük tutarlarda '18,73 milyon ₺'."""
-    if n is None:
-        return "—"
-    isaret = "−" if n < 0 else ""
-    n = abs(n)
-    if kisa or n >= 1e6:
-        for bolen, ek in ((1e9, "milyar"), (1e6, "milyon")):
-            if n >= bolen:
-                metin = f"{n / bolen:.2f}".replace(".", ",") + f" {ek}"
-                break
-        else:
-            metin = f"{n:,.0f}".replace(",", ".")
-    else:
-        metin = f"{n:,.0f}".replace(",", ".")
-    return f"{isaret}{metin} ₺" if para == "TRY" else f"{isaret}${metin}"
 
 
 def _secimler():
@@ -127,9 +76,9 @@ def sayfa():
     return render_template(
         "karsilastir.html", aktif="karsilastir", s=s, sonuc=sonuc,
         grafik=grafik_verisi(sonuc, s) if sonuc and sonuc["varliklar"] else None,
-        varlik_gruplari=_gruplar(), paralar=PARALAR, turler=TURLER, ay_adlari=AY_ADLARI,
+        varlik_gruplari=_gruplar(), paralar=PARALAR, turler=TURLER, ay_adlari=AYLAR_UZUN,
         yillar=list(range(int(k.ILK_AY[:4]), bugun.year)), hazirlar=HAZIRLAR,
-        ay_metni=ay_metni, para_yaz=para_yaz,
+        ay_metni=ay_yil, para_metni=para_metni,
     )
 
 
@@ -149,8 +98,8 @@ def ana_sayfa_ozeti():
         return None
     if not sonuc or not sonuc["varliklar"]:
         return None
-    return {"bas": ay_metni(sonuc["aylar"][0], "den"), "varliklar": [(v["ad"], para_yaz(v["son"], "TRY")) for v in sonuc["varliklar"]],
-            "enflasyon": para_yaz(sonuc["enflasyon"][-1], "TRY") if sonuc["enflasyon"] else None}
+    return {"bas": ay_yil(sonuc["aylar"][0], "den"), "varliklar": [(v["ad"], para_metni(v["son"], "TRY")) for v in sonuc["varliklar"]],
+            "enflasyon": para_metni(sonuc["enflasyon"][-1], "TRY") if sonuc["enflasyon"] else None}
 
 
 def isit():

@@ -53,15 +53,20 @@
   const tum = seriler.flatMap((s) => s.degerler).filter((d) => d > 0);
   logKutu.checked = Math.max(...tum) / Math.min(...tum) > 40;
 
+  // Eksen: birimsiz kısa değer (birim grafiğin başlığında); ipucu: cümledeki gibi '1,30 milyon dolar'
   const kisa = function (n) {
-    const p = veri.para === "TRY";
-    const yaz = (x, ek) => `${p ? "" : "$"}${x.toLocaleString("tr-TR", { maximumFractionDigits: x < 10 ? 1 : 0 })}${ek}${p ? " ₺" : ""}`;
+    const yaz = (x, ek) => `${x.toLocaleString("tr-TR", { maximumFractionDigits: x < 10 ? 1 : 0 })}${ek}`;
     if (n >= 1e9) return yaz(n / 1e9, " mr");
     if (n >= 1e6) return yaz(n / 1e6, " mn");
     if (n >= 1e4) return yaz(n / 1e3, " bin");
     return yaz(n, "");
   };
-  const tam = (n) => (veri.para === "TRY" ? `${Math.round(n).toLocaleString("tr-TR")} ₺` : `$${Math.round(n).toLocaleString("tr-TR")}`);
+  const birim = veri.para === "TRY" ? "TL" : "dolar";
+  const tam = function (n) {
+    if (n >= 1e9) return `${(n / 1e9).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} milyar ${birim}`;
+    if (n >= 1e6) return `${(n / 1e6).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} milyon ${birim}`;
+    return `${Math.round(n).toLocaleString("tr-TR")} ${birim}`;
+  };
   const ayYaz = (a) => `${AYLAR[Number(a.slice(5)) - 1]} ${a.slice(0, 4)}`;
 
   function el(ad, ozellik, ust) {

@@ -29,7 +29,7 @@
       <span class="emtia-alt">
         <span>1 ay {{ degisim(k.a1) }}</span>
         <span>1 yıl {{ degisim(k.y1) }}</span>
-        {% if k.hacim and k.hacim.oran and k.hacim.oran >= 1.3 %}<span class="etiket etiket-uyari" title="Son işlem gününün hacmi 20 günlük ortalamanın %{{ (k.hacim.oran * 100)|round|int }}'i">Hacim yüksek</span>{% endif %}
+        {% if k.hacim and k.hacim.oran and k.hacim.oran >= 1.3 %}<span class="etiket etiket-uyari" title="Son işlem gününün hacmi 20 günlük ortalamanın {{ ('%' ~ (k.hacim.oran * 100)|round|int)|ek('si') }}">Hacim yüksek</span>{% endif %}
       </span>
     </a>
     {% endfor %}{% endfor %}
@@ -83,7 +83,7 @@
           <td data-etiket="Net pozisyon" class="sag sayi {{ 'tutar-buy' if f.fon_net >= 0 else 'tutar-sell' }}">{{ '+' if f.fon_net > 0 }}{{ f.fon_net|sayi }} <span class="soluk kucuk">sözleşme</span></td>
           <td data-etiket="Haftalık değişim" class="sag sayi {{ 'tutar-buy' if f.haftalik_degisim >= 0 else 'tutar-sell' }}">{{ '+' if f.haftalik_degisim > 0 }}{{ f.haftalik_degisim|sayi }}</td>
           <td data-etiket="1 yıllık konum" class="genis">
-            <span class="konum-cubuk" title="Son 1 yılın %{{ f.konum }}'lik diliminde">
+            <span class="konum-cubuk" title="Son 1 yılın {{ ('%' ~ f.konum)|ek('lik') }} diliminde">
               <span class="konum-isaret" style="left: {{ f.konum }}%"></span>
             </span>
             <span class="konum-etiket">{{ f.konum }}<span class="soluk">/100</span>

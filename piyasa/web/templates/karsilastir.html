@@ -31,7 +31,7 @@
       <span class="kars-etiket">Tutar</span>
       <span class="kars-tutar-kutu">
         <input type="text" inputmode="numeric" name="tutar" value="{{ '{:,.0f}'.format(s.tutar).replace(',', '.') }}" aria-label="Yatırım tutarı" autocomplete="off">
-        <span class="kars-birim">{{ '₺' if s.para == 'TRY' else '$' }}</span>
+        <span class="kars-birim">{{ "TL" if s.para == "TRY" else "dolar" }}</span>
       </span>
     </label>
     <fieldset class="kars-alan">
@@ -104,11 +104,11 @@
 <section class="bolum kars-sonuc" aria-live="polite">
   <p class="kars-manset">
     {% if s.tur == 'tek' %}
-    {{ ay_metni(s.bas, 'de') }} <b>{{ para_yaz(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız bugün
-    <b class="kars-buyuk">{{ para_yaz(ilk.son, s.para) }}</b> paranız olurdu.
+    {{ ay_metni(s.bas, 'de') }} <b>{{ para_metni(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız bugün
+    <b class="kars-buyuk">{{ para_metni(ilk.son, s.para) }}</b> paranız olurdu.
     {% else %}
-    {{ ay_metni(s.bas, 'den') }} bu yana her ay <b>{{ para_yaz(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız,
-    toplam {{ para_yaz(sonuc.yatirilan, s.para) }} yatırımınız bugün <b class="kars-buyuk">{{ para_yaz(ilk.son, s.para) }}</b> ederdi.
+    {{ ay_metni(s.bas, 'den') }} bu yana her ay <b>{{ para_metni(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız,
+    toplam {{ para_metni(sonuc.yatirilan, s.para) }} yatırımınız bugün <b class="kars-buyuk">{{ para_metni(ilk.son, s.para) }}</b> ederdi.
     {% endif %}
   </p>
 
@@ -117,7 +117,7 @@
     <div class="kars-kart" style="--renk: {{ v.renk }}">
       <span class="kars-kart-sira">{{ loop.index }}.</span>
       <span class="kars-kart-ad">{{ v.ad }}</span>
-      <span class="kars-kart-deger sayi">{{ para_yaz(v.son, s.para) }}</span>
+      <span class="kars-kart-deger sayi">{{ para_metni(v.son, s.para) }}</span>
       <span class="kars-kart-alt"><b class="{{ 'tutar-buy' if v.getiri > 0.0005 else 'tutar-sell' if v.getiri < -0.0005 else '' }}">{{ kat_yaz(v.kat) }}</b>
         {% if v.reel is not none %} · enflasyondan sonra {{ yuzde_yaz(v.reel) }}{% endif %}</span>
     </div>
@@ -125,7 +125,7 @@
     {% if sonuc.enflasyon %}
     <div class="kars-kart kars-kart-enflasyon">
       <span class="kars-kart-ad">Enflasyon</span>
-      <span class="kars-kart-deger sayi">{{ para_yaz(sonuc.enflasyon[-1], s.para) }}</span>
+      <span class="kars-kart-deger sayi">{{ para_metni(sonuc.enflasyon[-1], s.para) }}</span>
       <span class="kars-kart-alt">Alım gücünü korumak için gereken tutar; fiyatlar {{ kat_yaz(sonuc.enflasyon_orani + 1) }} arttı
         ({{ 'TÜFE' if s.para == 'TRY' else 'ABD TÜFE' }})</span>
     </div>
@@ -150,7 +150,7 @@
   <header class="bolum-ust"><div>
     <h2>Sıralama</h2>
     <p class="bolum-not">{{ 'Tek seferlik' if s.tur == 'tek' else 'Her ay düzenli' }} yatırım, {{ ay_metni(s.bas) }} – {{ ay_metni(sonuc.son_ay) }}.
-    Yatırılan toplam: <b>{{ para_yaz(sonuc.yatirilan, s.para) }}</b>.</p>
+    Yatırılan toplam: <b>{{ para_metni(sonuc.yatirilan, s.para) }}</b>.</p>
   </div></header>
   <div class="tablo-kap">
     <table class="tablo kars-tablo">
@@ -172,7 +172,7 @@
             <span class="kars-aciklama soluk">{{ v.aciklama }}</span>
           </td>
           <td class="sag sayi" data-etiket="Bugünkü değer">
-            {{ para_yaz(v.son, s.para) }}
+            {{ para_metni(v.son, s.para) }}
             <span class="kars-cubuk"><i style="width: {{ [(v.son / en_cok * 100) if en_cok else 0, 1]|max }}%; background: {{ v.renk }}"></i></span>
           </td>
           <td class="sag sayi {{ 'tutar-buy' if v.getiri > 0.0005 else 'tutar-sell' if v.getiri < -0.0005 else '' }}" data-etiket="Getiri">{{ yuzde_yaz(v.getiri) }}</td>

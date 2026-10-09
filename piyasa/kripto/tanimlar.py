@@ -284,7 +284,7 @@ KRIPTOLAR = [
         "slug": "stellar", "coingecko": "stellar", "ad": "Stellar", "sembol": "XLM", "yahoo": "XLM-USD",
         "tur": "Ödeme ağı",
         "ozet": "Ülkeler arası para transferini ucuzlatmak ve bankası olmayan insanlara finansal hizmet ulaştırmak "
-                "için kurulan bir ödeme ağı. Kâr amacı gütmeyen Stellar Vakfı tarafından desteklenir.",
+                "için kurulan bir ödeme ağı. Kar amacı gütmeyen Stellar Vakfı tarafından desteklenir.",
         "kurulus": 2014, "kurucu": "Jed McCaleb ve Joyce Kim",
         "mekanizma": "Stellar uzlaşma protokolü: madencilik yoktur, güvenilen sunucular anlaşır.",
         "arz": "Toplam 50 milyar XLM; yeni üretim 2019'da durduruldu.",

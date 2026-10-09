@@ -89,3 +89,12 @@ def test_hatada_eski_sonuc(monkeypatch):
     veri.temizle()
     with pytest.raises(ConnectionError):
         veri()                              # eski sonuç da yoksa hata
+
+
+@pytest.mark.parametrize("dosya", sorted((KOK / "web").glob("*.py")), ids=lambda p: p.name)
+def test_rota_dosyalari_birbirinin_ic_fonksiyonunu_kullanmaz(dosya):
+    """Ortak iş mantığı alan modüllerinde (bist/, analiz/, bicim) durur; rotalar birbirinin '_' adlarını almaz."""
+    agac = ast.parse(dosya.read_text(encoding="utf-8"))
+    ihlal = [f"{d.module}.{a.name}" for d in ast.walk(agac) if isinstance(d, ast.ImportFrom) and d.module
+             and d.module.endswith("_rotalari") for a in d.names if a.name.startswith("_")]
+    assert not ihlal, f"{dosya.name}: {ihlal}"

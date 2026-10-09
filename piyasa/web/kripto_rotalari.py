@@ -10,25 +10,9 @@ from piyasa import fiyat
 from piyasa.emtia import haberler
 from piyasa.kripto import piyasa, sorgular
 from piyasa.kripto.tanimlar import GENEL_ETKENLER, GENEL_RISKLER, GRUPLAR, KRIPTO, KRIPTOLAR
+from piyasa.web.grafik import kucuk_grafik
 
 kripto = Blueprint("kripto", __name__)
-
-
-def _kucuk_grafik(degerler, genislik=120, yukseklik=34):
-    """Küçük fiyat çizgisi için SVG noktaları."""
-    degerler = [v for v in degerler or [] if v is not None]
-    if len(degerler) < 2:
-        return None
-    if len(degerler) > 42:      # 7 günün saatlik verisi: yüzlerce satırda sayfa şişmesin
-        adim_ = len(degerler) / 42
-        degerler = [degerler[int(i * adim_)] for i in range(41)] + [degerler[-1]]
-    az, cok = min(degerler), max(degerler)
-    aralik = (cok - az) or 1
-    adim = genislik / (len(degerler) - 1)
-    noktalar = " ".join(
-        f"{i * adim:.0f},{(1 - (v - az) / aralik) * (yukseklik - 4) + 2:.0f}" for i, v in enumerate(degerler)
-    )
-    return {"noktalar": noktalar, "artis": degerler[-1] >= degerler[0]}
 
 
 def _sirket_fiyatlari(ozetler):
@@ -74,7 +58,7 @@ def liste():
     for x in piyasa.liste():
         b = {**dict.fromkeys(piyasa.ALANLAR), **x["b"]}
         kartlar.append({"k": x, "b": b, "grup": GRUPLAR.get(x["tur"], "Diğer"),
-                        "grafik": _kucuk_grafik(b.get("hafta_serisi"))})
+                        "grafik": kucuk_grafik(b.get("hafta_serisi"), nokta=42)})
     gruplar = [g for g in dict.fromkeys([*GRUPLAR.values(), "Diğer"]) if any(x["grup"] == g for x in kartlar)]
 
     return render_template(
