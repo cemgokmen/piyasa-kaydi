@@ -75,3 +75,8 @@ def test_canli_guncelleme_adimlari():
         assert komut in KOMUTLAR
     from piyasa import zamanlama
     assert zamanlama.CANLI_ARALIK == 900 and {12, 18, 21, 0} <= set(zamanlama.HIZLI_SAATLER)
+
+
+def test_www_adresi_yonlenir(istemci):
+    r = istemci.get("/bist?liste=xu100", base_url="https://www.piyasakaydi.com")
+    assert r.status_code == 301 and r.headers["Location"] == "https://piyasakaydi.com/bist?liste=xu100"

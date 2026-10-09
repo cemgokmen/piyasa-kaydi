@@ -7,7 +7,7 @@ Piyasa Kaydı web sitesi.
 
 from pathlib import Path
 
-from flask import Flask, request
+from flask import Flask, redirect, request
 from flask_compress import Compress
 
 STATIK = Path(__file__).parent / "static"
@@ -33,6 +33,13 @@ def create_app(vekil_arkasinda=False):
             dosya = STATIK / degerler.get("filename", "")
             if dosya.is_file():
                 degerler["v"] = int(dosya.stat().st_mtime)
+
+    @app.before_request
+    def www_olmadan():
+        # Tek adres: www.piyasakaydi.com → piyasakaydi.com (arama motorları aynı sayfayı iki kez saymasın)
+        if request.host.startswith("www."):
+            return redirect(request.url.replace("://www.", "://", 1), code=301)
+        return None
 
     @app.after_request
     def guvenlik_basliklari(cevap):
