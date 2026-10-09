@@ -130,33 +130,6 @@
         <li><a href="https://www.tcmb.gov.tr" target="_blank" rel="noopener">TCMB</a> — Türkiye enflasyonu (TÜİK TÜFE)</li>
       </ul>
     </div>
-    <div>
-      <p class="alt-baslik">Veri güncelliği</p>
-      <ul class="guncellik">
-        {% for ad, tarih in veri_guncelligi %}
-        <li><span>{{ ad }}</span> <span class="soluk">{{ tarih|uzun_tarih if tarih else '—' }}</span></li>
-        {% endfor %}
-        {% if son_kontrol %}<li class="son-kontrol"><span>Son kontrol</span>
-          <span class="soluk">{{ son_kontrol.isoformat()|kisa_tarih }} {{ son_kontrol.strftime('%H:%M') }}</span></li>{% endif %}
-      </ul>
-    </div>
-    <div>
-      <p class="alt-baslik">Sayfalar</p>
-      <ul>
-        <li><a href="{{ url_for('canli.sayfa') }}">Canlı akış</a></li>
-        <li><a href="{{ url_for('analiz.gunluk_ozet') }}">Günlük özet</a></li>
-        <li><a href="{{ url_for('karsilastir.sayfa') }}">Yatırım karşılaştırma</a></li>
-        <li><a href="{{ url_for('site.islemler', kaynak='hepsi', donem='30') }}">Tüm işlemler</a></li>
-        <li><a href="{{ url_for('site.siyasetciler') }}">Siyasetçiler</a></li>
-        <li><a href="{{ url_for('bist.liste') }}">Borsa İstanbul</a></li>
-        <li><a href="{{ url_for('emtia.liste') }}">Emtialar</a></li>
-        <li><a href="{{ url_for('kripto.liste') }}">Kripto paralar</a></li>
-        <li><a href="{{ url_for('analiz.performans_sayfasi') }}">Kim piyasayı yendi?</a></li>
-        <li><a href="{{ url_for('analiz.cakisma_sayfasi') }}">Çıkar çatışmaları</a></li>
-        <li><a href="{{ url_for('seo.rehberler') }}">Rehberler: Form 4, 13F, KAP nedir?</a></li>
-        <li><a href="{{ url_for('site.hakkinda') }}">Nasıl çalışır? Veriler nasıl derleniyor?</a></li>
-      </ul>
-    </div>
   </div>
 </footer>
 

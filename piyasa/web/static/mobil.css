@@ -404,7 +404,6 @@ h1 { font-size: 23px; line-height: 1.25; }
 
 .alt { font-size: 13px; }
 .alt-ic { gap: 18px; padding-block: 24px 28px; }
-.alt-ic > div:last-child { display: none; }    /* sayfa listesi: alt gezinme ve menü zaten var */
 
 .sayfalama { gap: 8px; }
 .sayfalama .dugme { padding: 0 12px; }

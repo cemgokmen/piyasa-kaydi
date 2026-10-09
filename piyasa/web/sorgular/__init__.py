@@ -23,7 +23,6 @@ from piyasa.web.sorgular.fonlar import (  # noqa: F401
 from piyasa.web.sorgular.genel import (  # noqa: F401
     genel_bakis,
     siyasetcilerin_yuklu_alimlari,
-    veri_guncelligi,
     yoneticilerin_toplu_alimlari,
 )
 from piyasa.web.sorgular.hisse import (  # noqa: F401

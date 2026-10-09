@@ -57,7 +57,7 @@ def grafik_verisi(sonuc, secim):
     return {
         "aylar": sonuc["aylar"],
         "para": secim["para"],
-        "seriler": [{"ad": v["ad"], "renk": v["renk"], "degerler": [round(d, 2) for d in v["degerler"]]}
+        "seriler": [{"ad": v["ad"], "renk": v["renk"], "degerler": [None if d is None else round(d, 2) for d in v["degerler"]]}
                     for v in sonuc["varliklar"]],
         "enflasyon": [round(d, 2) for d in sonuc["enflasyon"]] if sonuc["enflasyon"] else None,
         # Yatırılan para: tek seferlikte sabit, düzenli yatırımda her ay artar

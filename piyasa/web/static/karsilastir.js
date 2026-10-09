@@ -102,7 +102,7 @@
     const gorunen = seriler.filter((s) => !gizli.has(s.ad));
     kap.replaceChildren();
     if (!gorunen.length) return;
-    const degerler = gorunen.flatMap((s) => s.degerler).concat(veri.yatirilan);
+    const degerler = gorunen.flatMap((s) => s.degerler).concat(veri.yatirilan).filter((d) => d != null);
     let az = Math.min(...degerler.filter((d) => d > 0)), cok = Math.max(...degerler);
     if (!log) az = 0;
     const f = log ? Math.log10 : (x) => x;
@@ -139,9 +139,12 @@
     // Yatırılan para (kesikli ince çizgi)
     el("path", { d: veri.yatirilan.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(""), class: "kars-yatirilan" }, svg);
 
+    // Verisi sonradan başlayan yatırımın çizgisi ilk değerinden başlar
+    const yol = (dizi) => dizi.map((v, i) => [v, i]).filter(([v]) => v != null)
+      .map(([v, i], j) => `${j ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
     gorunen.forEach(function (s) {
       el("path", {
-        d: s.degerler.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(""),
+        d: yol(s.degerler),
         class: "kars-cizgi" + (s.kesik ? " kesik" : ""), stroke: s.renk,
       }, svg);
     });
@@ -158,8 +161,12 @@
       const px = (ex - r.left) * (G / r.width);
       const i = Math.max(0, Math.min(n - 1, Math.round(((px - sol) / (G - sol - sag)) * (n - 1))));
       imlec.setAttribute("x1", x(i)); imlec.setAttribute("x2", x(i)); imlec.setAttribute("visibility", "visible");
-      gorunen.forEach((s, j) => { noktalar[j].setAttribute("cx", x(i)); noktalar[j].setAttribute("cy", y(s.degerler[i])); noktalar[j].setAttribute("visibility", "visible"); });
-      const satirlar = gorunen.map((s) => [s, s.degerler[i]]).sort((a, b) => b[1] - a[1])
+      gorunen.forEach(function (s, j) {
+        const v = s.degerler[i];
+        noktalar[j].setAttribute("visibility", v == null ? "hidden" : "visible");
+        if (v != null) { noktalar[j].setAttribute("cx", x(i)); noktalar[j].setAttribute("cy", y(v)); }
+      });
+      const satirlar = gorunen.map((s) => [s, s.degerler[i]]).filter(([, v]) => v != null).sort((a, b) => b[1] - a[1])
         .map(([s, v]) => `<div><i style="background:${s.renk}"></i><span>${s.ad}</span><b>${tam(v)}</b></div>`).join("");
       kutu.innerHTML = `<p>${ayYaz(veri.aylar[i])} · yatırılan ${tam(veri.yatirilan[i])}</p>${satirlar}`;
       kutu.hidden = false;

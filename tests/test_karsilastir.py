@@ -109,3 +109,17 @@ def test_menu_sirasi(istemci):
     sira = [m for m in re.findall(r">\s*(Ana sayfa|Piyasalar|Sinyaller|Yatırım karşılaştırma|Siyasetçiler)", menu)]
     assert sira == ["Ana sayfa", "Piyasalar", "Sinyaller", "Yatırım karşılaştırma", "Siyasetçiler"]
     assert "Canlı</a>" not in menu and "Günlük özet" not in menu
+
+
+def test_sonradan_baslayan_yatirim_kendi_ilk_ayindan(sabit_veri, monkeypatch):
+    """Verisi seçilen aydan sonra başlayan (ör. yeni halka arz) yatırım dışarıda kalmaz, kendi ilk ayından hesaplanır."""
+    monkeypatch.setattr(k, "aylar", lambda bas, son: [f"2020-{i:02d}" for i in range(1, 13)])
+    yeni = {f"2020-{i:02d}": 10.0 * (i - 5) for i in range(6, 13)}         # Haziran'da 10, Aralık'ta 70
+    eski_aylik = k.aylik
+    monkeypatch.setattr(k, "aylik", lambda y: yeni if y == "YENI" else eski_aylik(y))
+    r = k.hesapla([_varlik("A", "A"), _varlik("Yeni", "YENI")], "2020-01", 1_000, "USD")
+    yeni_sonuc = next(v for v in r["varliklar"] if v["ad"] == "Yeni")
+    assert not r["eksik"]
+    assert yeni_sonuc["bas"] == "2020-06" and not yeni_sonuc["tam"]
+    assert yeni_sonuc["son"] == pytest.approx(7_000) and yeni_sonuc["degerler"][:5] == [None] * 5
+    assert next(v for v in r["varliklar"] if v["ad"] == "A")["tam"]

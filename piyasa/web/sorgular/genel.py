@@ -105,19 +105,3 @@ def genel_bakis():
                 f"SELECT MAX(disclosed_date) FROM transactions WHERE {TEMIZ}"
             ).fetchone()[0],
         }
-
-
-def veri_guncelligi():
-    """Alt bilgide gösterilen: her kaynağın en son kaydı."""
-    with baglanti() as conn:
-        def tek(sorgu):
-            try:
-                return conn.execute(sorgu).fetchone()[0]
-            except Exception:
-                return None
-        return [
-            ("Yönetici bildirimleri", tek(f"SELECT MAX(disclosed_date) FROM transactions WHERE chamber IS NULL AND {TEMIZ}")),
-            ("Kongre bildirimleri", tek("SELECT MAX(disclosed_date) FROM transactions WHERE chamber IS NOT NULL")),
-            ("Fon bildirimleri", tek("SELECT MAX(bildirim_tarihi) FROM holdings")),
-            ("Emtia verileri", (tek("SELECT zaman FROM emtia_guncelleme WHERE anahtar = 'son'") or "")[:10] or None),
-        ]

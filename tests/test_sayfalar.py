@@ -238,7 +238,8 @@ def test_paylasim_etiketleri_ve_guncellik(istemci):
     html = istemci.get("/kisi/jane-senator").get_data(as_text=True)
     assert '<meta property="og:title" content="Jane Senator · Piyasa Kaydı">' in html
     assert 'property="og:locale" content="tr_TR"' in html
-    assert "Veri güncelliği" in html and "Kongre bildirimleri" in html
+    # Alt bilgide veri güncelliği ve sayfa listesi yok (ana menü ve ana sayfa yeterli)
+    assert "Veri güncelliği" not in html and 'alt-baslik">Sayfalar' not in html
 
 
 def test_serit_api(istemci):

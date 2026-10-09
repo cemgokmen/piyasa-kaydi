@@ -227,32 +227,39 @@ def hesapla(varliklar, bas, tutar, para="TRY", tur="tek"):
         else:
             ham = [1.0] * len(ay_listesi)
         fiyatlar = [_cevir(f, k, v["para"], para) for f, k in zip(ham, kur, strict=True)]
-        if fiyatlar[0] is None or any(f is None for f in fiyatlar):
-            ilk = min(seriler.get(v["yahoo"], {}) or [None]) if v["yahoo"] else None
-            eksik.append({**v, "ilk": ilk})
+        # Verisi seçilen aydan sonra başlayan yatırım (ör. sonradan halka arz olan hisse) kendi ilk ayından
+        # hesaplanır; o aya kadar grafikte çizgisi yoktur
+        ilk = next((i for i, f in enumerate(fiyatlar) if f is not None), None)
+        if ilk is None or ilk == len(fiyatlar) - 1:
+            eksik.append(v)
             continue
-        degerler, yatirilan, odemeler = yatirim(fiyatlar)
+        kendi = fiyatlar[ilk:]
+        degerler, yatirilan, odemeler = yatirim(kendi)
         son_deger = degerler[-1]
-        yil = (len(ay_listesi) - 1) / 12
+        yil = (len(kendi) - 1) / 12
         if tur == "tek":
             yillik = (son_deger / yatirilan) ** (1 / yil) - 1 if yil >= 1 and son_deger > 0 else None
         else:
             yillik = _ic_getiri(odemeler, son_deger) if yil >= 1 else None
-        enf_son = enflasyon_cizgisi[-1] if enflasyon_cizgisi else None
+        # Enflasyon karşılığı da yatırımın kendi döneminden
+        kendi_tufe = tufe_dizi[ilk:]
+        enf_son = (_enflasyon_degeri(kendi_tufe, tutar, tur)[-1] * kendi_tufe[-1]) if all(kendi_tufe) else None
         sonuc.append({
             **v,
             "aciklama": v.get("aciklama") or ACIKLAMALAR.get(v["anahtar"], ""),
-            "degerler": degerler,
+            "degerler": [None] * ilk + degerler,
+            "bas": ay_listesi[ilk],
+            "tam": ilk == 0,                 # seçilen ayın başından beri mi?
             "son": son_deger,
             "yatirilan": yatirilan,
             "getiri": son_deger / yatirilan - 1,
             "kat": son_deger / yatirilan,
             "yillik": yillik,
             "reel": son_deger / enf_son - 1 if enf_son else None,
-            "dusus": _en_buyuk_dusus(fiyatlar),
+            "dusus": _en_buyuk_dusus(kendi),
         })
     sonuc.sort(key=lambda s: s["son"], reverse=True)
-    yatirilan = sonuc[0]["yatirilan"] if sonuc else (tutar * (len(ay_listesi) if tur == "aylik" else 1))
+    yatirilan = tutar * (len(ay_listesi) if tur == "aylik" else 1)
     return {
         "aylar": ay_listesi,
         "varliklar": sonuc,

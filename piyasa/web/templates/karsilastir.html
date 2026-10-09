@@ -100,15 +100,17 @@
 
 {% if sonuc and sonuc.varliklar %}
 {% set ilk = sonuc.varliklar[0] %}
+{# Başlık cümlesi: seçilen aydan beri verisi olan en iyi yatırım (yoksa en iyisi, kendi başlangıcıyla) #}
+{% set manset = (sonuc.varliklar|selectattr('tam')|first) or ilk %}
 {% set son = sonuc.varliklar[-1] %}
 <section class="bolum kars-sonuc" aria-live="polite">
   <p class="kars-manset">
     {% if s.tur == 'tek' %}
-    {{ ay_metni(s.bas, 'de') }} <b>{{ para_metni(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız bugün
-    <b class="kars-buyuk">{{ para_metni(ilk.son, s.para) }}</b> paranız olurdu.
+    {{ ay_metni(manset.bas, 'de') }} <b>{{ para_metni(s.tutar, s.para) }}</b> ile <b style="color: {{ manset.renk }}">{{ manset.ad }}</b> alsaydınız bugün
+    <b class="kars-buyuk">{{ para_metni(manset.son, s.para) }}</b> paranız olurdu.
     {% else %}
-    {{ ay_metni(s.bas, 'den') }} bu yana her ay <b>{{ para_metni(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız,
-    toplam {{ para_metni(sonuc.yatirilan, s.para) }} yatırımınız bugün <b class="kars-buyuk">{{ para_metni(ilk.son, s.para) }}</b> ederdi.
+    {{ ay_metni(manset.bas, 'den') }} bu yana her ay <b>{{ para_metni(s.tutar, s.para) }}</b> ile <b style="color: {{ manset.renk }}">{{ manset.ad }}</b> alsaydınız,
+    toplam {{ para_metni(manset.yatirilan, s.para) }} yatırımınız bugün <b class="kars-buyuk">{{ para_metni(manset.son, s.para) }}</b> ederdi.
     {% endif %}
   </p>
 
@@ -116,7 +118,7 @@
     {% for v in sonuc.varliklar[:3] %}
     <div class="kars-kart" style="--renk: {{ v.renk }}">
       <span class="kars-kart-sira">{{ loop.index }}.</span>
-      <span class="kars-kart-ad">{{ v.ad }}</span>
+      <span class="kars-kart-ad">{{ v.ad }}{% if not v.tam %} <small class="soluk">· {{ ay_metni(v.bas, 'den') }} itibaren</small>{% endif %}</span>
       <span class="kars-kart-deger sayi">{{ para_metni(v.son, s.para) }}</span>
       <span class="kars-kart-alt"><b class="{{ 'tutar-buy' if v.getiri > 0.0005 else 'tutar-sell' if v.getiri < -0.0005 else '' }}">{{ kat_yaz(v.kat) }}</b>
         {% if v.reel is not none %} · enflasyondan sonra {{ yuzde_yaz(v.reel) }}{% endif %}</span>
@@ -150,7 +152,9 @@
   <header class="bolum-ust"><div>
     <h2>Sıralama</h2>
     <p class="bolum-not">{{ 'Tek seferlik' if s.tur == 'tek' else 'Her ay düzenli' }} yatırım, {{ ay_metni(s.bas) }} – {{ ay_metni(sonuc.son_ay) }}.
-    Yatırılan toplam: <b>{{ para_metni(sonuc.yatirilan, s.para) }}</b>.</p>
+    Yatırılan toplam: <b>{{ para_metni(sonuc.yatirilan, s.para) }}</b>.
+    {% if sonuc.varliklar|rejectattr('tam')|list %}Sonradan işlem görmeye başlayanlar kendi ilk aylarından hesaplanır;
+    farklı süreleri karşılaştırırken yıllık ortalamaya bakın.{% endif %}</p>
   </div></header>
   <div class="tablo-kap">
     <table class="tablo kars-tablo">
@@ -170,6 +174,7 @@
             <span class="kars-ad"><i class="kars-nokta" style="background: {{ v.renk }}"></i>
               {% if v.adres %}<a href="{{ v.adres }}">{{ v.ad }}</a>{% else %}{{ v.ad }}{% endif %}</span>
             <span class="kars-aciklama soluk">{{ v.aciklama }}</span>
+            {% if not v.tam %}<span class="kars-baslangic">{{ ay_metni(v.bas, 'den') }} itibaren{% if s.tur == 'aylik' %} · yatırılan {{ para_metni(v.yatirilan, s.para) }}{% endif %}</span>{% endif %}
           </td>
           <td class="sag sayi" data-etiket="Bugünkü değer">
             {{ para_metni(v.son, s.para) }}
@@ -185,8 +190,8 @@
     </table>
   </div>
   {% if sonuc.eksik %}
-  <p class="kars-not soluk">Bu tarihte verisi olmadığı için hesaba katılmayanlar:
-    {% for e in sonuc.eksik %}{{ e.ad }}{% if e.ilk %} ({{ ay_metni(e.ilk, 'den') }} itibaren){% endif %}{{ ', ' if not loop.last }}{% endfor %}.</p>
+  <p class="kars-not soluk">Fiyat verisi bulunamadığı için hesaba katılmayanlar:
+    {% for e in sonuc.eksik %}{{ e.ad }}{{ ', ' if not loop.last }}{% endfor %}.</p>
   {% endif %}
   <div class="kars-paylas">
     <button type="button" class="dugme" id="kars-paylas">Bağlantıyı kopyala</button>
