@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_bilesenler.html" import kpi, fiyat_paneli %}
+{% from "_bilesenler.html" import kpi, fiyat_paneli, pasta_grafigi %}
 {% block baslik %}{{ s.kod }} {{ kisa_ad }} hissesi: fiyat, KAP'ta kim aldı, kim sattı · Piyasa Kaydı{% endblock %}
 {% block aciklama %}{{ s.unvan }} ({{ s.kod }}): hisse fiyatı, şirketin rakamları, yöneticilerin ve büyük ortakların KAP'a bildirdiği pay alım satımları, geri alımlar ve son KAP açıklamaları.{% endblock %}
 {% block geri_adres %}{{ url_for('bist.liste') }}{% endblock %}
@@ -33,6 +33,7 @@
 <nav class="bolum-menu" aria-label="Bu sayfada" data-bolum-menu>
   <a href="#fiyat">Fiyat</a>
   <a href="#rakamlar">Rakamlar</a>
+  {% if ortaklik %}<a href="#ortaklik">Ortaklar</a>{% endif %}
   <a href="#iceriden">Kim aldı, kim sattı? <span class="sayac">{{ islemler|length }}</span></a>
   {% if geri.satirlar %}<a href="#geri-alim">Geri alım</a>{% endif %}
   {% if aciklamalar %}<a href="#kap">KAP açıklamaları</a>{% endif %}
@@ -49,6 +50,70 @@
 <section class="panel temel temel-iskelet" id="rakamlar" data-parca-adres="{{ url_for('bist.rakamlar', kod=s.kod) }}" aria-busy="true">
   <p class="soluk kucuk">Şirketin rakamları yükleniyor…</p>
 </section>
+
+{% if ortaklik %}{% set o = ortaklik %}
+<section class="bolum" id="ortaklik">
+  <header class="bolum-ust"><div>
+    <h2>Hisseyi kimler tutuyor?</h2>
+    <p class="bolum-not">Sermayenin %5'inden fazlasına sahip ortaklar, KAP'taki şirket genel bilgi formundan{% if o.profil.tarih %}
+      (formun bu bölümü en son {{ o.profil.tarih }} tarihinde güncellenmiş){% endif %}. Fonların payları, eşik bildirimlerinden.</p>
+  </div></header>
+  <div class="kpi-izgara kpi-3">
+    {{ kpi('Halka açıklık', ('%' ~ ('%.1f'|format(o.profil.halka_aciklik)).replace('.', ',')) if o.profil.halka_aciklik is not none else '—', 'borsada fiilen dolaşan payların oranı') }}
+    {{ kpi('Büyük ortakların toplamı', ('%' ~ ('%.1f'|format(o.toplam)).replace('.', ',')) if o.ortaklar else '—', (o.ortaklar|length) ~ ' ortak, her biri %5 üzeri') }}
+    {{ kpi('Ödenmiş sermaye', (o.profil.odenmis_sermaye|tl) if o.profil.odenmis_sermaye else '—', ('kuruluş ' ~ o.profil.tescil_yili) if o.profil.tescil_yili else 'nominal') }}
+  </div>
+  <div class="izgara-2">
+    {% if o.dilimler %}{{ pasta_grafigi(o.dilimler, 'Ortaklık yapısı') }}{% endif %}
+    <div class="panel">
+      <header class="panel-ust"><div><h2>Büyük ortaklar</h2><p class="panel-not">Sermayedeki payına göre</p></div></header>
+      {% if o.ortaklar %}
+      <ul class="akis akis-sik">
+        {% for x in o.ortaklar %}
+        <li class="tiklanir" data-href="{{ url_for('bist.ortak', slug=x.slug) }}">
+          <a class="akis-orta" href="{{ url_for('bist.ortak', slug=x.slug) }}">{{ x.ad }}</a>
+          <span class="sayi"><b>%{{ ('%.2f'|format(x.oran or 0)).replace('.', ',') }}</b></span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="bos">KAP'ta %5'i aşan ortak bildirilmemiş.</p>{% endif %}
+    </div>
+  </div>
+  {% if o.fonlar %}
+  <div class="panel">
+    <header class="panel-ust"><div><h2>Fonların son bildirdiği paylar</h2>
+      <p class="panel-not">Portföy yönetim ve emeklilik şirketlerinin fonları %3, %5, %10… eşiklerini geçtiğinde ya da altına düştüğünde bildirir</p></div></header>
+    <ul class="akis akis-sik">
+      {% for f in o.fonlar %}
+      <li><span class="akis-orta">{{ f.ad }} <span class="soluk kucuk">· {{ f.yayin[:10]|uzun_tarih }}</span></span>
+        {% if f.islem %}<span class="rozet rozet-{{ f.islem }}">{{ 'Artırdı' if f.islem == 'buy' else 'Azalttı' }}</span>{% endif %}
+        <span class="sayi">{{ ('%' ~ ('%.2f'|format(f.oran_sonra)).replace('.', ',')) if f.oran_sonra is not none else '—' }}</span>
+        <a class="kaynak" href="{{ f.adres }}" target="_blank" rel="noopener">KAP ↗</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  {% if o.yonetim or o.bagli %}
+  <div class="izgara-2">
+    {% if o.yonetim %}
+    <div class="panel">
+      <header class="panel-ust"><div><h2>Yönetim kurulu</h2></div></header>
+      <ul class="akis akis-sik">{% for y in o.yonetim[:12] %}<li><span class="akis-orta">{{ y.ad }}</span><span class="soluk kucuk">{{ y.gorev }}</span></li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    {% if o.bagli %}
+    <div class="panel">
+      <header class="panel-ust"><div><h2>Bağlı ortaklıkları</h2><p class="panel-not">Şirketin sermayesine ortak olduğu şirketler</p></div></header>
+      <div data-kisalt="8"><table class="tablo tablo-sade"><tbody>
+        {% for b in o.bagli %}<tr><td>{{ b.ad }}<span class="alt-satir">{{ b.faaliyet }}</span></td>
+          <td class="sag sayi">{{ ('%' ~ ('%.1f'|format(b.oran)).replace('.', ',')) if b.oran is not none else '—' }}</td></tr>{% endfor %}
+      </tbody></table></div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
 
 <section class="bolum" id="iceriden">
   <header class="bolum-ust"><div>

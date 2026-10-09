@@ -11,9 +11,11 @@ DB_PATH = VERITABANI
 
 def get_connection():
     """Veritabanına bağlanır."""
-    # Toplayıcı yazarken site okuyabilsin diye kilit beklemesi uzun
-    conn = sqlite3.connect(DB_PATH, timeout=30)
+    # Toplayıcılar aynı anda yazabildiği için kilit beklemesi uzun; WAL kipinde okuyanlar
+    # (site) yazanı, yazan da okuyanları beklemez
+    conn = sqlite3.connect(DB_PATH, timeout=120)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 
@@ -339,6 +341,32 @@ def init_db():
             PRIMARY KEY (kod, islem_tarihi, nominal, fiyat)
         )
     """)
+    # KAP şirket genel bilgi formu: ortaklık yapısı, halka açıklık, yönetim (haftalık)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS bist_profil (
+            kod             TEXT PRIMARY KEY,
+            halka_aciklik   REAL,              -- fiili dolaşımdaki pay oranı, %
+            odenmis_sermaye REAL,              -- TL (nominal)
+            tescil_yili     INTEGER,
+            site            TEXT,
+            yonetim         TEXT,              -- JSON: [{ad, gorev}]
+            bagli           TEXT,              -- JSON: [{ad, faaliyet, oran}]
+            tarih           TEXT,              -- ortaklık bilgisinin KAP'taki tarihi
+            guncelleme      TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS bist_ortak (
+            kod      TEXT NOT NULL,
+            ortak    TEXT NOT NULL,            -- KAP'taki yazımıyla (büyük harf)
+            slug     TEXT,
+            oran     REAL,                     -- sermayedeki payı, %
+            oy_orani REAL,
+            tutar    REAL,                     -- nominal TL
+            PRIMARY KEY (kod, ortak)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_bist_ortak_slug ON bist_ortak(slug)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_kap_kod ON kap_bildirim(kod, yayin)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_kap_pay_kod ON kap_pay_islem(kod, islem_tarihi)")
 

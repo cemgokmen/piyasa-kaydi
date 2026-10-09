@@ -15,6 +15,7 @@ from datetime import date, timedelta
 
 from piyasa.bicim import tr_baslik, tr_cumle
 from piyasa.bist.sektorler import sektor_adi
+from piyasa.slug import slugify
 from piyasa.veritabani import get_connection
 
 KAP_BILDIRIM = "https://www.kap.org.tr/tr/Bildirim/{indeks}"
@@ -221,3 +222,70 @@ def son_islem_tarihleri(kodlar):
                 FROM kap_pay_islem p JOIN kap_bildirim b USING (indeks)
                 WHERE p.kod IN ({yer}) AND b.yayin >= ? AND p.kisi_turu != 'fon' GROUP BY p.kod""",
             [*kodlar, (date.today() - timedelta(days=90)).isoformat()])}
+
+
+# ---------------------------------------------------------------------------
+# Ortaklık yapısı (KAP genel bilgi formu) ve fonların eşik bildirimleri
+# ---------------------------------------------------------------------------
+
+def ortaklik(kod):
+    """Şirketin ortakları, halka açıklık, yönetim kurulu, bağlı ortaklıklar ve fonların son bildirdiği payları."""
+    import json
+    with baglanti() as conn:
+        p = conn.execute("SELECT * FROM bist_profil WHERE kod = ?", (kod,)).fetchone()
+        ortaklar = [dict(r, ad=_unvan(r["ortak"])) for r in conn.execute(
+            "SELECT ortak, slug, oran, oy_orani, tutar FROM bist_ortak WHERE kod = ? ORDER BY oran DESC", (kod,))]
+        # Her fon kurucusunun bu şirketteki son bildirdiği pay oranı (eşik bildirimlerinden)
+        fonlar = [dict(r) for r in conn.execute(
+            """SELECT p.kisi, p.islem, p.oran_sonra, MAX(b.yayin) AS yayin, p.indeks
+               FROM kap_pay_islem p JOIN kap_bildirim b USING (indeks)
+               WHERE p.kod = ? AND p.kisi_turu = 'fon' GROUP BY p.kisi ORDER BY yayin DESC""", (kod,))]
+    if not p and not ortaklar and not fonlar:
+        return None
+    profil = dict(p) if p else dict.fromkeys(("halka_aciklik", "odenmis_sermaye", "tescil_yili", "site", "yonetim",
+                                               "bagli", "tarih"))
+    yonetim = json.loads(profil.get("yonetim") or "[]")
+    bagli = json.loads(profil.get("bagli") or "[]")
+    for y in yonetim:
+        y["ad"] = tr_baslik(y["ad"])
+    for f in fonlar:
+        f["ad"] = tr_baslik(f["kisi"])
+        f["adres"] = KAP_BILDIRIM.format(indeks=f["indeks"])
+    toplam = sum(o["oran"] or 0 for o in ortaklar)
+    dilimler = [{"ticker": o["ad"][:28], "deger": o["oran"]} for o in ortaklar if o["oran"]]
+    if 0 < toplam < 100:
+        dilimler.append({"ticker": "Diğer ortaklar ve halka açık", "deger": 100 - toplam})
+    return {"profil": profil, "ortaklar": ortaklar, "fonlar": fonlar, "yonetim": yonetim, "bagli": bagli,
+            "dilimler": dilimler, "toplam": toplam}
+
+
+def buyuk_ortaklar(adet=20):
+    """Birden çok BIST şirketinde %5'ten fazla payı olan ortaklar (holdingler, kamu, yabancılar)."""
+    with baglanti() as conn:
+        satirlar = [dict(r) for r in conn.execute(
+            """SELECT slug, MAX(ortak) AS ortak, COUNT(*) AS sirket, GROUP_CONCAT(kod || ':' || oran, ',') AS paylar
+               FROM bist_ortak GROUP BY slug HAVING sirket >= 2 ORDER BY sirket DESC, ortak LIMIT ?""", (adet,))]
+    for r in satirlar:
+        r["ad"] = _unvan(r["ortak"])
+        r["paylar"] = sorted(([k, float(o or 0)] for k, o in (p.split(":") for p in r["paylar"].split(","))),
+                             key=lambda x: -x[1])
+    return satirlar
+
+
+def ortak(slug):
+    """Bir ortağın pay sahibi olduğu şirketler ve (adı eşleşirse) KAP'a bildirdiği işlemler."""
+    with baglanti() as conn:
+        paylar = [dict(r, unvan=_unvan(r["unvan"]), sektor_adi=_sektor_adi(r["sektor"])) for r in conn.execute(
+            """SELECT o.kod, o.ortak, o.oran, o.oy_orani, o.tutar, s.unvan, s.sektor, s.xu100
+               FROM bist_ortak o LEFT JOIN bist_sirket s ON s.kod = o.kod WHERE o.slug = ? ORDER BY o.oran DESC""",
+            (slug,))]
+        if not paylar:
+            return None
+        ad = paylar[0]["ortak"]
+        # Ortağın KAP'a bildirdiği işlemler: adı (Türkçe harf farkları gözetilmeden) aynı olanlar
+        yer = ", ".join("?" for _ in paylar)
+        islemler = [_islem(r) for r in conn.execute(
+            f"""SELECT p.*, b.yayin, b.ozet, s.unvan, s.xu100 FROM kap_pay_islem p JOIN kap_bildirim b USING (indeks)
+                LEFT JOIN bist_sirket s ON s.kod = p.kod WHERE p.kod IN ({yer}) ORDER BY b.yayin DESC""",
+            [x["kod"] for x in paylar]) if slugify(r["kisi"] or "") == slug]
+    return {"ad": _unvan(ad), "slug": slug, "paylar": paylar, "islemler": islemler[:100]}

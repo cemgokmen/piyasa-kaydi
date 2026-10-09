@@ -546,6 +546,107 @@ def ayrintilari_al(conn, en_fazla=800, bist100=frozenset()):
 
 
 # ---------------------------------------------------------------------------
+# ŞİRKET GENEL BİLGİ FORMU: ortaklık yapısı, halka açıklık, yönetim
+# ---------------------------------------------------------------------------
+
+GENEL_BILGI_URL = SITE + "/tr/sirket-bilgileri/genel/{oid}"
+RSC_PARCASI = re.compile(r'self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)')
+
+
+def rsc_metni(sayfa):
+    """Next.js sayfasına gömülü veri parçalarını birleştirir (kaçışlar çözülmüş haliyle)."""
+    return "".join(json.loads(p) for p in RSC_PARCASI.findall(sayfa))
+
+
+def form_kalemi(rsc, anahtar):
+    """Genel bilgi formundaki bir kalemin değeri (liste ya da metin); yoksa None."""
+    i = rsc.find(f'"itemKey":"{anahtar}"')
+    if i < 0:
+        return None
+    j = rsc.find('"value":', i)
+    if j < 0:
+        return None
+    try:
+        return json.JSONDecoder().raw_decode(rsc, j + len('"value":'))[0]
+    except ValueError:
+        return None
+
+
+def genel_bilgi_coz(sayfa):
+    rsc = rsc_metni(sayfa)
+    ortaklar = []
+    for o in form_kalemi(rsc, "kpy41_acc5_sermayede_dogrudan") or []:
+        ad = (o.get("shareholder") or "").strip()
+        if not ad or ad.upper() in ("TOPLAM", "DİĞER", "DIĞER", "DİĞER ORTAKLAR", "HALKA AÇIK"):
+            continue
+        ortaklar.append({"ortak": ad, "oran": _sayi(o.get("ratioInCapital")),
+                         "oy_orani": _sayi(o.get("votingRightRatio")), "tutar": _sayi(o.get("shareInCapital"))})
+    fiili = form_kalemi(rsc, "kpy41_acc5_fiili_dolasimdaki_pay") or []
+    halka = _sayi(fiili[0].get("actualOutstandingSharesRatio")) if fiili and isinstance(fiili, list) else None
+    tescil = form_kalemi(rsc, "kpy41_acc4_tescil_tarihi")
+    yil = re.search(r"(\d{4})", tescil or "")
+    yonetim = [{"ad": (y.get("nameSurname") or "").strip(),
+                "gorev": ((y.get("title") or {}).get("text") or "").strip()}
+               for y in form_kalemi(rsc, "kpy41_acc6_yonetim_kurulu_uyeleri") or [] if y.get("nameSurname")]
+    bagli = [{"ad": (b.get("companyTitle") or "").strip(), "faaliyet": (b.get("scopeOfActivitiesOfCompany") or "").strip(),
+              "oran": _sayi(b.get("ratioOfCapitalShareOfCompany"))}
+             for b in form_kalemi(rsc, "kpy41_acc7_bagli_ortakliklar") or [] if b.get("companyTitle")]
+    site = form_kalemi(rsc, "kpy41_acc1_int_addres")
+    tarih = re.search(r'"itemKey":"kpy41_acc5_sermayede_dogrudan".*?"creationDate":"([^"]+)"', rsc)
+    return {
+        "ortaklar": ortaklar, "halka_aciklik": halka,
+        "odenmis_sermaye": _sayi(form_kalemi(rsc, "kpy41_acc5_odenmis_sermaye")) if isinstance(
+            form_kalemi(rsc, "kpy41_acc5_odenmis_sermaye"), str) else None,
+        "tescil_yili": int(yil.group(1)) if yil else None,
+        "site": (site.split("/")[0].strip() if isinstance(site, str) and site.strip() else None),
+        "yonetim": yonetim, "bagli": bagli[:40], "tarih": tarih.group(1) if tarih else None,
+    }
+
+
+def sirket_bilgileri_guncelle(conn, en_fazla=150, yas_gun=7):
+    """
+    Genel bilgi formu eski (ya da hiç alınmamış) şirketler, BIST 100 önce. KAP'ı yormamak
+    için her çalıştırmada en fazla 'en_fazla' şirket.
+    """
+    from piyasa.slug import slugify
+
+    sinir = (datetime.now(UTC) - timedelta(days=yas_gun)).isoformat()
+    sirketler = conn.execute(
+        """SELECT s.kod, s.mkk_oid FROM bist_sirket s LEFT JOIN bist_profil p ON p.kod = s.kod
+           WHERE (s.ana_sektor IS NOT NULL OR s.xu100 = 1) AND s.mkk_oid IS NOT NULL
+             AND (p.guncelleme IS NULL OR p.guncelleme < ?)
+           ORDER BY s.xu100 DESC, p.guncelleme IS NOT NULL, s.kod LIMIT ?""",
+        (sinir, en_fazla),
+    ).fetchall()
+    # Aynı şirketin birden çok kodu (KRDMA, KRDMB, KRDMD) tek sayfadan
+    sayfalar = {}
+    for n, s in enumerate(sirketler, 1):
+        try:
+            if s["mkk_oid"] not in sayfalar:
+                sayfalar[s["mkk_oid"]] = genel_bilgi_coz(_istek("GET", GENEL_BILGI_URL.format(oid=s["mkk_oid"])).text)
+                time.sleep(BEKLEME)
+            b = sayfalar[s["mkk_oid"]]
+        except (requests.RequestException, ValueError) as hata:
+            print(f"  {s['kod']} genel bilgi alınamadı: {hata}", flush=True)
+            continue
+        conn.execute("DELETE FROM bist_ortak WHERE kod = ?", (s["kod"],))
+        for o in b["ortaklar"]:
+            conn.execute("INSERT OR REPLACE INTO bist_ortak VALUES (?, ?, ?, ?, ?, ?)",
+                         (s["kod"], o["ortak"], slugify(o["ortak"]), o["oran"], o["oy_orani"], o["tutar"]))
+        conn.execute(
+            """INSERT OR REPLACE INTO bist_profil (kod, halka_aciklik, odenmis_sermaye, tescil_yili, site, yonetim,
+                 bagli, tarih, guncelleme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (s["kod"], b["halka_aciklik"], b["odenmis_sermaye"], b["tescil_yili"], b["site"],
+             json.dumps(b["yonetim"], ensure_ascii=False), json.dumps(b["bagli"], ensure_ascii=False), b["tarih"],
+             datetime.now(UTC).isoformat()),
+        )
+        conn.commit()
+        if n % 50 == 0:
+            print(f"  Genel bilgi: {n}/{len(sirketler)}", flush=True)
+    print(f"  Şirket genel bilgisi güncellendi: {len(sirketler)}", flush=True)
+
+
+# ---------------------------------------------------------------------------
 # ANA AKIŞ
 # ---------------------------------------------------------------------------
 
@@ -553,6 +654,14 @@ def main():
     argumanlar = sys.argv[1:]
     gun = int(argumanlar[argumanlar.index("--gun") + 1]) if "--gun" in argumanlar else 7
     en_fazla = int(argumanlar[argumanlar.index("--en-fazla") + 1]) if "--en-fazla" in argumanlar else 800
+    if "--genel" in argumanlar:            # yalnızca şirket genel bilgileri (ortaklık yapısı)
+        init_db()
+        conn = get_connection()
+        try:
+            sirket_bilgileri_guncelle(conn, en_fazla=en_fazla)
+        finally:
+            conn.close()
+        return
     init_db()
     conn = get_connection()
     try:

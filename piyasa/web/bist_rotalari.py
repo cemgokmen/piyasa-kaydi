@@ -11,6 +11,7 @@ from flask import Blueprint, abort, jsonify, render_template, request
 
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel
 from piyasa.bist import piyasa, sorgular
+from piyasa.web.sorgular.fonlar import pasta_dilimleri
 
 bist = Blueprint("bist", __name__)
 
@@ -97,7 +98,23 @@ def liste():
         pay_ozeti=sorgular.pay_ozeti(30),
         iceriden=sorgular.pay_islemleri(gun=60, limit=150),
         geri_alim=sorgular.geri_alim_ozeti(30),
+        ortaklar=sorgular.buyuk_ortaklar(),
     )
+
+
+def _ortaklik(kod):
+    o = sorgular.ortaklik(kod)
+    if o:
+        o["dilimler"] = pasta_dilimleri(o["dilimler"], adet=8)
+    return o
+
+
+@bist.route("/bist/ortak/<slug>")
+def ortak(slug):
+    veri = sorgular.ortak(slug)
+    if veri is None:
+        abort(404)
+    return render_template("bist_ortak.html", aktif="bist", **veri)
 
 
 @bist.route("/bist/<kod>")
@@ -116,6 +133,7 @@ def sirket(kod):
         aktif="bist",
         s=s,
         f=_gecerli(fiyatlar.get(kod)),
+        ortaklik=_ortaklik(kod),
         endeks=fiyatlar.get("XU100"),
         benzerler=benzerler,
         kisa_ad=sorgular.kisa_unvan(s["unvan"]),

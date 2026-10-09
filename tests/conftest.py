@@ -162,6 +162,14 @@ def ornek_bist_verisi(conn):
             (1002, "FLAP", "Gürkan Gençler", "kisi", "sell", gun(3), 50_000, 11.2, 11.2, 11.2, 560_000.0, 13.0, None),
             (1003, "THYAO", "AK PORTFÖY YÖNETİMİ A.Ş.", "fon", "buy", gun(2), 2_000_000, 290.0, 290.0, 290.0, 5.8e8, 3.0, None),
         ])
+    conn.execute("INSERT INTO bist_profil (kod, halka_aciklik, odenmis_sermaye, tescil_yili, site, yonetim, bagli, tarih, "
+                 "guncelleme) VALUES ('THYAO', 49.14, 1380000000, 1933, 'www.thy.com', "
+                 "'[{\"ad\": \"MURAT ŞEKER\", \"gorev\": \"Yönetim Kurulu Başkanı\"}]', "
+                 "'[{\"ad\": \"THY Teknik A.Ş.\", \"faaliyet\": \"Uçak bakım\", \"oran\": 100}]', '01/08/2020', '2999-01-01')")
+    conn.executemany("INSERT INTO bist_ortak VALUES (?, ?, ?, ?, ?, ?)", [
+        ("THYAO", "TÜRKİYE VARLIK FONU", "turkiye-varlik-fonu", 49.12, 49.12, 677884848.57),
+        ("ASELS", "TÜRKİYE VARLIK FONU", "turkiye-varlik-fonu", 74.2, 74.2, 3.4e9),
+    ])
     conn.executemany("INSERT INTO kap_geri_alim VALUES (?, ?, ?, ?, ?, ?)", [
         ("ASELS", gun(2), 100_000, 0.002, 150.0, 1004), ("ASELS", gun(1), 50_000, 0.001, 152.0, 1004),
     ])

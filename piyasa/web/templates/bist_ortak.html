@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block baslik %}{{ ad }}: Borsa İstanbul'daki payları ve işlemleri · Piyasa Kaydı{% endblock %}
+{% block aciklama %}{{ ad }} hangi Borsa İstanbul şirketlerinde ne kadar paya sahip? KAP şirket genel bilgi formları ve pay alım satım bildirimleri.{% endblock %}
+{% block geri_adres %}{{ url_for('bist.liste') }}#ortaklar{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('bist.liste') }}">Borsa İstanbul</a></p>
+    <h1>{{ ad }}</h1>
+    <p class="sayfa-not">Borsa İstanbul'da {{ paylar|length }} şirketin sermayesinde %5'ten fazla payı var
+      (KAP şirket genel bilgi formları).</p>
+  </div>
+</header>
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Payları</h2></div></header>
+  <div class="tablo-kap">
+    <table class="tablo" data-siralanabilir>
+      <thead><tr>
+        <th scope="col" data-sirala="metin">Şirket</th>
+        <th scope="col" data-sirala="metin">Sektör</th>
+        <th scope="col" class="sag" data-sirala="sayi" aria-sort="descending">Sermayedeki payı</th>
+        <th scope="col" class="sag" data-sirala="sayi">Oy hakkı</th>
+        <th scope="col" class="sag" data-sirala="sayi">Nominal pay</th>
+      </tr></thead>
+      <tbody>
+        {% for p in paylar %}
+        <tr class="tiklanir" data-href="{{ url_for('bist.sirket', kod=p.kod) }}#ortaklik">
+          <td data-etiket="Şirket" data-deger="{{ p.kod }}" class="bist-hucre"><a class="ticker" href="{{ url_for('bist.sirket', kod=p.kod) }}">{{ p.kod }}</a>
+            {% if p.xu100 %}<span class="etiket">BIST 100</span>{% endif %}<span class="alt-satir kirp">{{ p.unvan or '' }}</span></td>
+          <td data-etiket="Sektör" class="kucuk" data-deger="{{ p.sektor_adi or '' }}">{{ p.sektor_adi or '—' }}</td>
+          <td data-etiket="Pay" class="sag sayi" data-deger="{{ p.oran or 0 }}"><b>%{{ ('%.2f'|format(p.oran or 0)).replace('.', ',') }}</b></td>
+          <td data-etiket="Oy hakkı" class="sag sayi" data-deger="{{ p.oy_orani or 0 }}">{{ ('%' ~ ('%.2f'|format(p.oy_orani)).replace('.', ',')) if p.oy_orani is not none else '—' }}</td>
+          <td data-etiket="Nominal" class="sag sayi" data-deger="{{ p.tutar or 0 }}">{{ p.tutar|sayi if p.tutar else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>KAP'a bildirdiği işlemler</h2>
+    <p class="bolum-not">Bu ortağın son 4 ayda bu şirketlerin paylarında bildirdiği alım ve satımlar.</p></div></header>
+  {% if islemler %}{% set kap_islemler = islemler %}{% set sirket_goster = True %}{% include "_kap_islemleri.html" %}
+  {% else %}<div class="bos-durum"><p>Son 4 ayda bildirilmiş işlemi yok.</p></div>{% endif %}
+</section>
+
+<p class="uyari-kutu"><strong>Yatırım tavsiyesi değildir.</strong> Ortaklık bilgileri şirketlerin KAP'a bildirdiği son genel bilgi
+formlarındandır; şirketler bu formu her değişiklikte güncellemeyebilir.</p>
+{% endblock %}

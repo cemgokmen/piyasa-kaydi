@@ -43,6 +43,7 @@
   <a href="#hisseler">Hisseler <span class="sayac">{{ sirketler|length }}</span></a>
   <a href="#iceriden">Kim aldı, kim sattı?</a>
   <a href="#geri-alim">Geri alımlar</a>
+  {% if ortaklar %}<a href="#ortaklar">Büyük ortaklar</a>{% endif %}
 </nav>
 
 {% if not endeks %}<p class="uyari-kutu">Fiyatlar hazırlanıyor; birkaç saniye sonra sayfayı yenileyin.</p>{% endif %}
@@ -194,6 +195,30 @@
   </div>
   {% else %}<div class="bos-durum"><p>Son 30 günde geri alım bildirimi yok.</p></div>{% endif %}
 </section>
+
+{% if ortaklar %}
+<section class="bolum" id="ortaklar">
+  <header class="bolum-ust"><div>
+    <h2>Birden çok şirkette büyük ortak olanlar</h2>
+    <p class="bolum-not">Borsa İstanbul'da birden fazla şirketin sermayesinde %5'ten fazla payı olan holdingler, kamu kurumları ve
+    yatırımcılar (KAP şirket genel bilgi formları). Bir ortağa tıklayınca bütün payları görünür.</p>
+  </div></header>
+  <div class="tablo-kap" data-kisalt="10">
+    <table class="tablo tablo-sade">
+      <thead><tr><th scope="col">Ortak</th><th scope="col" class="sag">Şirket</th><th scope="col">Payları</th></tr></thead>
+      <tbody>
+        {% for r in ortaklar %}
+        <tr class="tiklanir" data-href="{{ url_for('bist.ortak', slug=r.slug) }}">
+          <td data-etiket="Ortak"><a href="{{ url_for('bist.ortak', slug=r.slug) }}"><b>{{ r.ad }}</b></a></td>
+          <td data-etiket="Şirket" class="sag sayi">{{ r.sirket }}</td>
+          <td data-etiket="Payları">{% for kod, oran in r.paylar[:8] %}<a class="ticker ticker-kucuk" href="{{ url_for('bist.sirket', kod=kod) }}">{{ kod }} <span class="soluk">%{{ ('%.0f'|format(oran)) }}</span></a> {% endfor %}{% if r.paylar|length > 8 %}<span class="soluk kucuk">+{{ r.paylar|length - 8 }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
 
 <p class="uyari-kutu"><strong>Yatırım tavsiyesi değildir.</strong> Kaynak: KAP bildirimleri ve Yahoo Finance fiyatları. Bir yöneticinin
 ya da büyük ortağın hisse alması, hissenin değer kazanacağı anlamına gelmez. Kesin bilgi için her satırdaki KAP bağlantısına bakın.</p>

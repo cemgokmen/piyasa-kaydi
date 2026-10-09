@@ -129,3 +129,27 @@ def test_haberlerde_hisse_kodlari(uygulama):
     assert hisse_kodlari("THYAO ve ASELS zirvede, BIST 100 rekor") == [("THYAO", "/bist/THYAO"), ("ASELS", "/bist/ASELS")]
     assert hisse_kodlari("Nvidia (NVDA) yükseldi") == [("NVDA", "/hisse/NVDA")]
     assert hisse_kodlari("ALTIN ve DOLAR") == []
+
+
+def test_ortaklik_yapisi(istemci):
+    html = istemci.get("/bist/THYAO").get_data(as_text=True)
+    for metin in ("Hisseyi kimler tutuyor?", "Türkiye Varlık Fonu", "%49,12", "Halka açıklık", "Murat Şeker",
+                  "THY Teknik", "Fonların son bildirdiği paylar", "Ak Portföy"):
+        assert metin in html, metin
+    html = istemci.get("/bist").get_data(as_text=True)
+    assert "Birden çok şirkette büyük ortak olanlar" in html and "/bist/ortak/turkiye-varlik-fonu" in html
+    html = istemci.get("/bist/ortak/turkiye-varlik-fonu").get_data(as_text=True)
+    assert "Türkiye Varlık Fonu" in html and "/bist/ASELS" in html and "%74,20" in html
+    assert istemci.get("/bist/ortak/yok-boyle").status_code == 404
+
+
+def test_genel_bilgi_formu():
+    import json
+    veri = {"itemKey": "kpy41_acc5_sermayede_dogrudan", "value": [
+        {"shareholder": "KOÇ HOLDİNG A.Ş.", "shareInCapital": "1.000", "ratioInCapital": "41,5", "votingRightRatio": "41,5"},
+        {"shareholder": "DİĞER", "shareInCapital": "1.410", "ratioInCapital": "58,5", "votingRightRatio": "58,5"},
+        {"shareholder": "TOPLAM", "shareInCapital": "2.410", "ratioInCapital": "100", "votingRightRatio": "100"}]}
+    rsc = json.dumps(veri, ensure_ascii=False, separators=(",", ":"))
+    sayfa = f"<script>self.__next_f.push([1,{json.dumps(rsc, ensure_ascii=False)}])</script>"
+    b = kap.genel_bilgi_coz(sayfa)
+    assert b["ortaklar"] == [{"ortak": "KOÇ HOLDİNG A.Ş.", "oran": 41.5, "oy_orani": 41.5, "tutar": 1000}]
