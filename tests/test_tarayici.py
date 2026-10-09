@@ -78,7 +78,7 @@ def test_ana_menu_baglantilari(tarayici, sunucu):
         "Siyasetçiler": "Siyasetçilerin hisse işlemleri",
         "Yöneticiler": "Şirket yöneticilerinin işlemleri",
         "Fonlar": "Fonlar ve bankalar",
-        "Günlük özet": "",
+        "Yatırım karşılaştırma": "Yatırım karşılaştırma",
         "Sinyaller": "Sinyaller",
         "Ana sayfa": "Piyasa Kaydı: kim aldı, kim sattı?",
     }

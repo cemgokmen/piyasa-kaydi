@@ -113,6 +113,10 @@ def ek_varlik(kod, sira=0):
     if kripto:
         return {"anahtar": kod, "ad": kripto["ad"], "yahoo": kripto["yahoo"], "para": "USD", "grup": "Kripto",
                 "renk": renk, "adres": f"/kripto/{kripto['slug']}", "aciklama": "Kripto para"}
+    if kod.endswith("-USD"):
+        sembol = kod.removesuffix("-USD")
+        return {"anahtar": kod, "ad": sembol, "yahoo": kod, "para": "USD", "grup": "Kripto", "renk": renk,
+                "adres": None, "aciklama": "Kripto para"}
     return {"anahtar": kod, "ad": kod, "yahoo": kod, "para": "USD", "grup": "Hisse", "renk": renk,
             "adres": f"/hisse/{kod}", "aciklama": "ABD hissesi (temettüler dahil)"}
 

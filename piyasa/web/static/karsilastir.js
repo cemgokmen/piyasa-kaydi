@@ -172,3 +172,88 @@
   window.addEventListener("resize", () => { clearTimeout(zamanlayici); zamanlayici = setTimeout(ciz, 150); });
   ciz();
 })();
+
+// Hisse ya da kripto ekleme kutusu: yazılan son kelime için öneriler; seçilen kod listeye eklenir
+(function () {
+  "use strict";
+  const kutu = document.querySelector("input[data-kod-oneri]");
+  if (!kutu) return;
+  const liste = document.createElement("ul");
+  liste.className = "oneri-listesi";
+  liste.id = "kod-onerileri";
+  liste.setAttribute("role", "listbox");
+  liste.hidden = true;
+  kutu.parentElement.appendChild(liste);
+  kutu.setAttribute("role", "combobox");
+  kutu.setAttribute("aria-autocomplete", "list");
+  kutu.setAttribute("aria-controls", liste.id);
+  kutu.setAttribute("aria-expanded", "false");
+
+  let secenekler = [], aktif = -1, zamanlayici = null, istek = null;
+  const parcalar = () => kutu.value.split(",").map((p) => p.trim());
+  const sonParca = () => parcalar().pop() || "";
+
+  function kapat() { liste.hidden = true; aktif = -1; kutu.setAttribute("aria-expanded", "false"); }
+  function aktifYap(i) {
+    secenekler.forEach((s, j) => s.setAttribute("aria-selected", j === i ? "true" : "false"));
+    aktif = i;
+    if (i >= 0) secenekler[i].scrollIntoView({ block: "nearest" });
+  }
+  function sec(li) {
+    const onceki = parcalar().slice(0, -1).filter(Boolean).filter((p) => p.toUpperCase() !== li.dataset.deger);
+    kutu.value = [...onceki, li.dataset.deger].slice(-4).join(", ") + ", ";
+    kapat();
+    kutu.focus();
+  }
+  function goster(oneriler) {
+    liste.replaceChildren();
+    secenekler = oneriler.filter((o) => o.deger).map(function (o, i) {
+      const li = document.createElement("li");
+      li.id = `kod-onerisi-${i}`;
+      li.setAttribute("role", "option");
+      li.dataset.deger = o.deger;
+      const tur = document.createElement("span");
+      tur.className = `oneri-tur oneri-${o.tur.toLocaleLowerCase("tr-TR").replace(/[^a-zçğıöşü]/g, "")}`;
+      tur.textContent = o.tur === "Hisse" ? "ABD" : o.tur;
+      const govde = document.createElement("span");
+      govde.className = "oneri-govde";
+      const etiket = document.createElement("span");
+      etiket.className = "oneri-etiket";
+      etiket.textContent = o.etiket;
+      const alt = document.createElement("span");
+      alt.className = "oneri-alt";
+      alt.textContent = o.alt || "";
+      govde.append(etiket, alt);
+      li.append(tur, govde);
+      // Kutu odağını kaybetmeden seçilsin
+      li.addEventListener("mousedown", (e) => { e.preventDefault(); sec(li); });
+      liste.appendChild(li);
+      return li;
+    });
+    liste.hidden = !secenekler.length;
+    kutu.setAttribute("aria-expanded", String(!liste.hidden));
+    aktifYap(secenekler.length ? 0 : -1);
+  }
+
+  kutu.addEventListener("input", function () {
+    clearTimeout(zamanlayici);
+    const aranan = sonParca();
+    if (!aranan) { kapat(); return; }
+    zamanlayici = setTimeout(function () {
+      if (istek) istek.abort();
+      istek = new AbortController();
+      fetch(`/api/oneri?turler=BIST,Hisse,Kripto&q=${encodeURIComponent(aranan)}`, { signal: istek.signal })
+        .then((c) => c.json())
+        .then((veri) => { if (veri.sorgu === sonParca().slice(0, 60)) goster(veri.oneriler); })
+        .catch(() => {});
+    }, 120);
+  });
+  kutu.addEventListener("keydown", function (e) {
+    if (liste.hidden) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); aktifYap((aktif + 1) % secenekler.length); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); aktifYap(aktif <= 0 ? secenekler.length - 1 : aktif - 1); }
+    else if (e.key === "Enter" && aktif >= 0) { e.preventDefault(); sec(secenekler[aktif]); }
+    else if (e.key === "Escape") { kapat(); }
+  });
+  kutu.addEventListener("blur", () => setTimeout(kapat, 100));
+})();

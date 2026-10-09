@@ -44,19 +44,8 @@
     </a>
 
     <nav class="ana-menu" id="ana-menu" aria-label="Ana menü">
-      {% for ad, adres, etiket in [
-          ('anasayfa', url_for('site.anasayfa'), 'Ana sayfa'),
-          ('ozet', url_for('analiz.gunluk_ozet'), 'Günlük özet'),
-          ('siyasetci', url_for('site.siyasetciler'), 'Siyasetçiler'),
-          ('yonetici', url_for('site.islemler', kaynak='yonetici'), 'Yöneticiler'),
-          ('fonlar', url_for('site.fonlar'), 'Fonlar'),
-      ] %}
-      <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}{% if ad == 'anasayfa' %} class="menu-ana"{% endif %}>{{ etiket }}</a>
-      {% if ad == 'anasayfa' %}
-      <a href="{{ url_for('canli.sayfa') }}" class="menu-canli" {% if aktif == 'canli' %}aria-current="page"{% endif %}><span class="canli-nokta acik" aria-hidden="true"></span>Canlı</a>
-      {% endif %}
-      {% endfor %}
-      <div class="menu-grup{% if aktif in ('emtia', 'kripto', 'bist', 'karsilastir') %} menu-grup-aktif{% endif %}" data-menu-grup>
+      <a href="{{ url_for('site.anasayfa') }}" class="menu-ana" {% if aktif == 'anasayfa' %}aria-current="page"{% endif %}>Ana sayfa</a>
+      <div class="menu-grup{% if aktif in ('emtia', 'kripto', 'bist') %} menu-grup-aktif{% endif %}" data-menu-grup>
         <button type="button" class="menu-grup-dugme" aria-expanded="false" aria-controls="piyasalar-menusu">
           Piyasalar <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
         </button>
@@ -67,11 +56,17 @@
             <b>Emtialar</b><span>Altın, gümüş, petrol ve bakır</span></a>
           <a href="{{ url_for('kripto.liste') }}" {% if aktif == 'kripto' %}aria-current="page"{% endif %}>
             <b>Kripto paralar</b><span>Bitcoin, Ethereum ve hacmi yüksek bütün coinler</span></a>
-          <a href="{{ url_for('karsilastir.sayfa') }}" {% if aktif == 'karsilastir' %}aria-current="page"{% endif %}>
-            <b>Yatırım karşılaştırma</b><span>10 yıl önce yatırsaydınız bugün ne olurdu?</span></a>
         </div>
       </div>
-      <a href="{{ url_for('analiz.sinyaller_sayfasi') }}" {% if aktif == 'sinyal' %}aria-current="page"{% endif %}>Sinyaller</a>
+      {% for ad, adres, etiket in [
+          ('sinyal', url_for('analiz.sinyaller_sayfasi'), 'Sinyaller'),
+          ('karsilastir', url_for('karsilastir.sayfa'), 'Yatırım karşılaştırma'),
+          ('siyasetci', url_for('site.siyasetciler'), 'Siyasetçiler'),
+          ('yonetici', url_for('site.islemler', kaynak='yonetici'), 'Yöneticiler'),
+          ('fonlar', url_for('site.fonlar'), 'Fonlar'),
+      ] %}
+      <a href="{{ adres }}" {% if aktif == ad %}aria-current="page"{% endif %}>{{ etiket }}</a>
+      {% endfor %}
     </nav>
 
     <div class="ust-dugmeler">

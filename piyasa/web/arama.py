@@ -87,7 +87,7 @@ def _dizin_kur():
             ad = _guzel_ad(adlar)
             girdiler.append({
                 "tur": "Hisse", "etiket": ticker, "alt": ad,
-                "adres": f"/hisse/{ticker}", "kod": sade(ticker), "metin": sade(ad),
+                "adres": f"/hisse/{ticker}", "kod": sade(ticker), "metin": sade(ad), "deger": ticker,
                 "agirlik": hisse_sayisi[ticker],
             })
 
@@ -120,7 +120,7 @@ def _dizin_kur():
             bist_adi = tr_baslik(s["unvan"]) if s["unvan"] else s["kod"]
             girdiler.append({
                 "tur": "BIST", "etiket": s["kod"], "alt": f"{bist_adi} · Borsa İstanbul",
-                "adres": f"/bist/{s['kod']}", "kod": s["kod"].lower(),
+                "adres": f"/bist/{s['kod']}", "kod": s["kod"].lower(), "deger": s["kod"],
                 "metin": sade(f"{s['kod']} {bist_adi}"), "agirlik": 20_000 if s["xu100"] else 50,
             })
 
@@ -148,6 +148,8 @@ def _dizin_kur():
         girdiler.append({
             "tur": "Kripto", "etiket": f"{x['ad']} ({x['sembol']})", "alt": f"Kripto para · {x['tur']}",
             "adres": f"/kripto/{x['slug']}", "kod": x["sembol"].lower(),
+            # Yatırım karşılaştırmada kullanılan kod: elle profili olanlarda sembol, diğerlerinde Yahoo kodu
+            "deger": x["sembol"] if x["ozel"] else f"{x['sembol']}-USD",
             "metin": sade(f"{x['ad']} {x['sembol']} kripto"),
             "agirlik": 10_000 if x["ozel"] else 3_000,
         })
@@ -185,13 +187,14 @@ def _puan(girdi, aranan):
     return taban + 25 * math.log10(1 + girdi["agirlik"]) - min(len(metin), 60) * 0.3
 
 
-def oneriler(sorgu, en_fazla=EN_FAZLA):
+def oneriler(sorgu, en_fazla=EN_FAZLA, turler=None):
+    """turler: yalnızca bu türler (ör. yatırım karşılaştırmada Hisse, BIST, Kripto)."""
     aranan = sade(sorgu)
     if not aranan:
         return []
-    puanli = [(p, g) for g in dizin() if (p := _puan(g, aranan)) > 0]
+    puanli = [(p, g) for g in dizin() if (not turler or g["tur"] in turler) and (p := _puan(g, aranan)) > 0]
     puanli.sort(key=lambda x: (-x[0], TUR_SIRASI[x[1]["tur"]]))
     return [
-        {k: g[k] for k in ("tur", "etiket", "alt", "adres")}
+        {**{k: g[k] for k in ("tur", "etiket", "alt", "adres")}, **({"deger": g["deger"]} if g.get("deger") else {})}
         for _, g in puanli[:en_fazla]
     ]

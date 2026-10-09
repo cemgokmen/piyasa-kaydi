@@ -2340,8 +2340,8 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .kars-cip input:checked + span::before { background: var(--renk); }
 .kars-cip input:focus-visible + span { outline: 2px solid var(--vurgu); outline-offset: 2px; }
 .kars-ek input {
-  height: 34px; width: 220px; padding: 0 12px; border: 1px solid var(--cizgi); border-radius: 999px;
-  background: var(--zemin); color: var(--yazi); font: 500 13.5px "IBM Plex Mono", ui-monospace, monospace; text-transform: uppercase;
+  height: 34px; width: 320px; padding: 0 12px; border: 1px solid var(--cizgi); border-radius: 999px;
+  background: var(--zemin); color: var(--yazi); font: 500 13.5px "IBM Plex Mono", ui-monospace, monospace;
 }
 .kars-ek input::placeholder { text-transform: none; color: var(--yazi-3); }
 .kars-ek input:focus { outline: 0; border-color: var(--vurgu); }
@@ -2444,3 +2444,6 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
   .kars-cubuk { display: none; }
   .kars-aciklama { display: none; }
 }
+.kars-ek-kutu { position: relative; display: block; }
+.kars-ek-kutu .oneri-listesi { min-width: 320px; right: auto; }
+@media (max-width: 720px) { .kars-ek-kutu .oneri-listesi { min-width: 0; right: 0; } }

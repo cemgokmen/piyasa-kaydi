@@ -80,13 +80,15 @@
     {% endfor %}
     <label class="kars-grup kars-ek">
       <span class="kars-etiket">Hisse ya da kripto ekle</span>
-      <input type="text" name="ek" value="{{ s.ek|join(', ') }}" placeholder="THYAO, AAPL, SOL" autocomplete="off" spellcheck="false">
+      <span class="kars-ek-kutu">
+        <input type="text" name="ek" value="{{ s.ek|join(', ') }}" placeholder="Kod ya da ad yazın: THYAO, Apple, Solana" autocomplete="off" spellcheck="false" data-kod-oneri>
+      </span>
     </label>
   </div>
 
   <div class="kars-alt">
     <button class="dugme dugme-ana" type="submit">Karşılaştır</button>
-    <span class="soluk kars-ipucu">Borsa İstanbul ve ABD hisse kodları ile kripto sembolleri; en çok {{ 4 }} tane.</span>
+    <span class="soluk kars-ipucu">Borsa İstanbul ve ABD hisseleri ile kripto paralar; en çok 4 tane.</span>
   </div>
 </form>
 

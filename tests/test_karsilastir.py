@@ -91,3 +91,21 @@ def test_karsilastir_secimleri_ve_hatali_girdi(istemci):
 def test_ana_sayfada_karsilastirma_tanitimi(istemci):
     html = istemci.get("/").get_data(as_text=True)
     assert "10 yıl önce 10.000 TL yatırsaydınız?" in html
+
+
+def test_hisse_ve_kripto_onerileri(istemci):
+    veri = istemci.get("/api/oneri?turler=BIST,Hisse,Kripto&q=thy").get_json()
+    assert veri["oneriler"] and {o["tur"] for o in veri["oneriler"]} <= {"BIST", "Hisse", "Kripto"}
+    assert any(o.get("deger") == "THYAO" for o in veri["oneriler"])
+    # Elle profili olan kripto paralar sembolüyle önerilir
+    veri = istemci.get("/api/oneri?turler=Kripto&q=bitc").get_json()
+    assert veri["oneriler"][0]["deger"] == "BTC"
+
+
+def test_menu_sirasi(istemci):
+    import re
+    html = istemci.get("/bist").get_data(as_text=True)
+    menu = html[html.index('id="ana-menu"'):html.index("</nav>", html.index('id="ana-menu"'))]
+    sira = [m for m in re.findall(r">\s*(Ana sayfa|Piyasalar|Sinyaller|Yatırım karşılaştırma|Siyasetçiler)", menu)]
+    assert sira == ["Ana sayfa", "Piyasalar", "Sinyaller", "Yatırım karşılaştırma", "Siyasetçiler"]
+    assert "Canlı</a>" not in menu and "Günlük özet" not in menu

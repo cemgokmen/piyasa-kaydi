@@ -150,7 +150,8 @@ def anlik_api(ticker):
 def oneri_api():
     """Arama kutusunun altında açılan öneriler."""
     sorgu = request.args.get("q", "").strip()[:60]
-    return jsonify({"sorgu": sorgu, "oneriler": arama.oneriler(sorgu)})
+    turler = {t for t in request.args.get("turler", "").split(",") if t in arama.TUR_SIRASI} or None
+    return jsonify({"sorgu": sorgu, "oneriler": arama.oneriler(sorgu, turler=turler)})
 
 
 @site.route("/kisi/<slug>")
