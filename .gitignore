@@ -22,3 +22,6 @@ data/canli.kilit
 data/son_canli_guncelleme.json
 data/site_eski.log
 data/tunel.log
+data/bist_fiyatlari.json
+data/bist_fiyatlari.tmp
+data/bist_fiyatlari.kilit

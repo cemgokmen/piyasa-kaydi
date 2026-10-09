@@ -208,10 +208,11 @@ def anlik_api(kod):
     return jsonify(bilgi)
 
 
-def fiyatlari_isit(aralik=14 * 60):
+def fiyatlari_isit(aralik=5 * 60):
     """
-    Yayındaki sitede BIST 100 fiyatlarını arka planda tazeler: 100 hissenin toplu
-    indirilmesi yarım dakika sürebiliyor, ziyaretçi beklemesin.
+    Yayındaki sitede BIST fiyatlarını arka planda tazeler: yüzlerce hissenin toplu indirilmesi
+    dakikaları bulabiliyor, ziyaretçi beklemesin. Beş dakikada bir yalnızca kontrol edilir;
+    indirme borsa açıkken 20 dakikada bir ve kapanıştan sonra bir kez yapılır (bkz. bist/piyasa.py).
     """
     def dongu():
         time.sleep(5)

@@ -133,12 +133,15 @@ python -m piyasa zamanla          # macOS (launchd)
 | Saat | Görev | Süre |
 |---|---|---|
 | 07:00 | **Tam güncelleme:** bildirimler, fiyatlar, fonlar, emtialar, şirket bilgileri, analizler | dakikalar |
-| 12:00, 18:00, 21:00 ve 00:00 | **Hızlı güncelleme:** yeni Form 4, Meclis, Senato, KAP ve fon bildirimleri | birkaç dakika |
-| 15 dakikada bir | **Canlı güncelleme:** SEC'e gün içinde düşen Form 4'ler (son bildirimler akışı) ve KAP'ın o günkü bildirimleri | ~1 dakika |
+| 12:00, 18:00, 21:00 ve 00:00 | **Hızlı güncelleme:** yeni Meclis, Senato ve fon bildirimleri (Form 4 ve KAP canlı güncellemede) | birkaç dakika |
+| 15 dakikada bir | **Canlı güncelleme:** SEC'e gün içinde düşen Form 4'ler (son bildirimler akışı) ve KAP'ın o günkü bildirimleri; gece ve hafta sonu saatte bir | ~1 dakika |
 
 - Bilgisayar o saatte kapalı ya da uykudaysa güncelleme, açıldığında kendiliğinden yapılır.
 - İnternet bağlantısı gelene kadar beklenir; iki güncelleme aynı anda çalışmaz
   (canlı güncellemenin kendi kilidi vardır, uzun süren tam güncellemeyi beklemez).
+- İnternet kotası için: BIST fiyatları yalnızca borsa açıkken 20 dakikada bir indirilir (bir yıllık geçmiş günde bir kez,
+  gün içinde yalnızca son 5 gün), sitenin işçileri aynı veriyi tek kez indirip `data/bist_fiyatlari.json` üzerinden paylaşır.
+  Sayfalar Cloudflare'de 2 dakika (API 30 saniye) tutulabilecek şekilde `s-maxage` başlığıyla gönderilir.
 - `/canli` sayfası bütün kaynaklardan en yeni bildirimleri tek akışta gösterir ve açık kaldıkça dakikada bir yenilenir.
 - Her adım ayrı çalışır; biri hata verirse diğerleri devam eder.
 - Son güncelleme zamanı sitenin alt kısmında görünür.

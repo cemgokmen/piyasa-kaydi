@@ -175,9 +175,14 @@ def ornek_bist_verisi(conn):
     ])
 
 
-def sahte_bist_fiyatlari(kodlar):
-    return {k: {"fiyat": 300.0 if k.startswith("THYAO") else 12_000.0, "tarih": gun(0), "g1": 0.012, "h1": -0.02,
-                "a1": 0.05, "y1": 0.3, "seri": [1, 2, 3, 2, 4]} for k in kodlar}
+def sahte_bist_fiyatlari(kodlar, donem="1y"):
+    """Bir yıllık kapanış serisi: son fiyat 300 (THYAO) ya da 12.000; günlük +%1,2, haftalık −%2, aylık +%5, yıllık +%30."""
+    sonuc = {}
+    for k in kodlar:
+        f = 300.0 if k.startswith("THYAO") else 12_000.0
+        c = [f / 1.3] * 230 + [f / 1.05] + [f] * 15 + [f / 0.98] + [f] * 3 + [f / 1.012, f]
+        sonuc[k] = {"t": [gun(len(c) - 1 - i) for i in range(len(c))], "c": c}
+    return sonuc
 
 
 def sahte_kripto_bilgisi(yahoo):
@@ -392,7 +397,10 @@ def uygulama(veritabani_yolu):
             hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al)
     bist_eski = bist_piyasa._indir
     bist_piyasa._indir = sahte_bist_fiyatlari
-    bist_piyasa._durum.update(zaman=0.0, veri={})
+    bist_dosya = (bist_piyasa.DOSYA, bist_piyasa.KILIT)
+    bist_piyasa.DOSYA = veritabani_yolu.parent / "bist_fiyatlari.json"
+    bist_piyasa.KILIT = veritabani_yolu.parent / "bist_fiyatlari.kilit"
+    bist_piyasa._durum.update(zaman=0.0, tam=0.0, seri={}, veri={}, dosya=0.0)
     bist_piyasa.fiyatlar(["THYAO", "ASELS", "OTKAR"], bekle=True)
     kripto_piyasa._info_al = sahte_kripto_bilgisi
     kripto_piyasa._bilgi.temizle()
@@ -429,6 +437,7 @@ def uygulama(veritabani_yolu):
      hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al) = eski
     (kripto_piyasa._coingecko, kripto_piyasa._genel, kripto_piyasa._korku, kripto_piyasa._yarilanma) = kripto_eski
     bist_piyasa._indir = bist_eski
+    bist_piyasa.DOSYA, bist_piyasa.KILIT = bist_dosya
 
 
 @pytest.fixture()

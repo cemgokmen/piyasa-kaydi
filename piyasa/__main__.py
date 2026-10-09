@@ -75,7 +75,9 @@ KOMUTLAR = {
 # 'guncelle --hizli' (günde dört kez): yalnızca yeni bildirimler ve bakımları
 # 'guncelle --canli' (15 dakikada bir): gün içi Form 4 ve KAP'ın o günkü bildirimleri
 CANLI_GUNCELLEME = ["form4-canli", ("kap", ["--canli", "--gun", "1", "--en-fazla", "60"]), "slug", "supheli"]
-HIZLI_GUNCELLEME = ["form4", "kongre", "senato", "kap", "fon", "slug", "duzelt", "supheli"]
+# Form 4 ve KAP'ı canlı güncelleme zaten 15 dakikada bir alıyor; hızlı güncelleme onları tekrar taramaz
+# (kaçan olursa sabahki tam güncelleme günlük dizinden ve son 7 günden tamamlar)
+HIZLI_GUNCELLEME = ["kongre", "senato", "fon", "slug", "duzelt", "supheli"]
 
 GUNCELLEME = ["form4", "kongre", "senato", "kap", "emtia", "kripto", "slug", "duzelt", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
 
@@ -144,10 +146,16 @@ def guncelle(argumanlar=()):
 
 
 def canli_guncelle():
-    """15 dakikada bir: kendi kilidiyle çalışır, uzun süren tam güncellemeyi beklemez."""
+    """
+    15 dakikada bir tetiklenir; kendi kilidiyle çalışır, uzun süren tam güncellemeyi beklemez.
+    Bildirimlerin yoğun geldiği saatler dışında (gece, hafta sonu) saatte bir çalışır.
+    """
     from datetime import datetime
 
     from piyasa import zamanlama
+
+    if not zamanlama.canli_zamani_mi(datetime.now()):
+        return
 
     if not zamanlama.internet_bekle(sure=60):
         return

@@ -12,11 +12,12 @@ Günlük otomatik güncelleme (macOS launchd).
      'guncelle --gerekirse' çalıştırır; günün güncellemesi henüz yapılmadıysa
      (ve saat 07:00'ı geçtiyse) başlatır, yapıldıysa hemen çıkar. Hata veren
      güncelleme bir saat sonra yeniden denenir, günde en çok DENEME_SINIRI kez.
-  2. Hızlı güncelleme (her gün 12:00, 18:00, 21:00 ve 00:00): yalnızca yeni
-     bildirimler (yöneticiler, Meclis, Senato, KAP, fonlar) ve onların bakımı.
+  2. Hızlı güncelleme (her gün 12:00, 18:00, 21:00 ve 00:00): yeni Meclis,
+     Senato ve fon bildirimleri ve bakımları (Form 4 ve KAP canlı güncellemede).
   3. Canlı güncelleme (15 dakikada bir): SEC'e gün içinde düşen Form 4
      bildirimleri ve KAP'ın o günkü bildirimleri. Kendi kilidi vardır; uzun
-     süren tam güncelleme sırasında da çalışır.
+     süren tam güncelleme sırasında da çalışır. İnternet kotasını korumak için
+     bildirimlerin gelmediği saatlerde (gece, hafta sonu) saatte bire düşer.
 
 İkisi de başlamadan internetin gelmesini bekler (uykudan uyanan Mac'te ağ
 birkaç saniye geç geliyor); internet gelmezse bu çalıştırma deneme sayılmaz.
@@ -45,6 +46,7 @@ HIZLI_SAATLER = (0, 12, 18, 21)
 CANLI_ETIKET = "com.piyasakaydi.canli"
 CANLI_PLIST = Path.home() / "Library" / "LaunchAgents" / f"{CANLI_ETIKET}.plist"
 CANLI_ARALIK = 900              # saniye: 15 dakika
+SAKIN_ARALIK = 55 * 60          # yoğun olmayan saatlerde canlı güncelleme en çok saatte bir
 INTERNET_BEKLEME = 300          # saniye
 DENETIM_ADRESI = "www.sec.gov"
 GUNLUK = VERI_DIZINI / "guncelleme.log"
@@ -118,6 +120,28 @@ def durum_yaz(simdi, basarili, hatalar, saat=7, dakika=0):
 
 def hizli_durum_yaz(simdi, basarili, dosya=HIZLI_DURUM):
     dosya.write_text(json.dumps({"zaman": simdi.isoformat(timespec="seconds"), "basarili": basarili}))
+
+
+def bildirim_saati_mi(simdi):
+    """
+    Bildirimlerin yoğun geldiği saatler (Türkiye saati). KAP: hafta içi 08:00–24:00.
+    SEC: hafta içi ABD'de 08:00–22:00, yani Türkiye'de 13:00'ten ertesi gün 05:00'e.
+    """
+    gun, saat = simdi.weekday(), simdi.hour
+    kap = gun < 5 and saat >= 8
+    sec = (gun < 5 and saat >= 13) or (1 <= gun <= 5 and saat < 5)
+    return kap or sec
+
+
+def canli_zamani_mi(simdi):
+    """Yoğun saatlerde her tetiklemede; diğer saatlerde son çalışmadan en az SAKIN_ARALIK sonra."""
+    if bildirim_saati_mi(simdi):
+        return True
+    try:
+        son = datetime.fromisoformat(json.loads(CANLI_DURUM.read_text())["zaman"])
+    except (OSError, ValueError, KeyError):
+        return True
+    return (simdi - son).total_seconds() >= SAKIN_ARALIK
 
 
 def son_kontrol():
@@ -199,7 +223,7 @@ def kur(saat=7, dakika=0):
         print(f"Tam güncelleme her gün {saat:02d}:{dakika:02d}'de; Mac o saatte kapalıysa açılınca yapılır.")
     if hizli:
         saatler = [f"{h:02d}:00" for h in sorted(HIZLI_SAATLER)]
-        print("Hızlı güncelleme (yönetici, Kongre, KAP ve fon bildirimleri) her gün "
+        print("Hızlı güncelleme (Kongre ve fon bildirimleri) her gün "
               + ", ".join(saatler[:-1]) + " ve " + saatler[-1] + "'de.")
     if canli:
         print(f"Canlı güncelleme (gün içi Form 4 ve KAP bildirimleri) {CANLI_ARALIK // 60} dakikada bir.")

@@ -11,6 +11,20 @@ from flask import Flask, redirect, request
 from flask_compress import Compress
 
 STATIK = Path(__file__).parent / "static"
+# Cloudflare'in (paylaşılan önbellek, s-maxage) başarılı cevapları tutma süresi. Aynı sayfayı
+# isteyen sonraki ziyaretçiye cevap Cloudflare'den gider, Mac'in internetinden çıkmaz.
+# Tarayıcı her seferinde sorar (max-age=0); sayfalar zaten sunucuda 2 dakika önbellekte.
+CDN_SAYFA = 120
+CDN_API = 30
+
+
+def onbellek_basligi(istek, cevap):
+    if istek.method not in ("GET", "HEAD") or cevap.status_code != 200 or "Set-Cookie" in cevap.headers:
+        return "no-cache"
+    sure = CDN_API if istek.path.startswith("/api/") else CDN_SAYFA
+    return f"public, max-age=0, s-maxage={sure}"
+
+
 # Statik dosyalar adresine sürüm eklendiği için tarayıcıda ve Cloudflare'de
 # uzun süre tutulabilir; dosya değişince adres de değişir
 STATIK_SURESI = 365 * 24 * 3600
@@ -47,7 +61,7 @@ def create_app(vekil_arkasinda=False):
         cevap.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         cevap.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         if request.endpoint != "static" and "Cache-Control" not in cevap.headers:
-            cevap.headers["Cache-Control"] = "no-cache"
+            cevap.headers["Cache-Control"] = onbellek_basligi(request, cevap)
         return cevap
 
     from piyasa.web import sayfa_onbellegi

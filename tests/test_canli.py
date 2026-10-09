@@ -80,3 +80,41 @@ def test_canli_guncelleme_adimlari():
 def test_www_adresi_yonlenir(istemci):
     r = istemci.get("/bist?liste=xu100", base_url="https://www.piyasakaydi.com")
     assert r.status_code == 301 and r.headers["Location"] == "https://piyasakaydi.com/bist?liste=xu100"
+
+
+def test_cloudflare_onbellek_basliklari(istemci):
+    assert istemci.get("/bist").headers["Cache-Control"] == "public, max-age=0, s-maxage=120"
+    assert istemci.get("/api/canli/akis").headers["Cache-Control"] == "public, max-age=0, s-maxage=30"
+    # Hata sayfaları önbelleğe alınmaz
+    assert istemci.get("/bist/YOKBOYLE").headers["Cache-Control"] == "no-cache"
+
+
+def test_bildirim_saatleri():
+    from datetime import datetime
+
+    from piyasa import zamanlama
+    assert zamanlama.bildirim_saati_mi(datetime(2026, 10, 9, 10, 0))      # cuma sabah: KAP
+    assert zamanlama.bildirim_saati_mi(datetime(2026, 10, 10, 3, 0))      # cumartesi gece: ABD cuma akşamı
+    assert not zamanlama.bildirim_saati_mi(datetime(2026, 10, 10, 14, 0)) # cumartesi öğlen
+    assert not zamanlama.bildirim_saati_mi(datetime(2026, 10, 12, 6, 0))  # pazartesi sabah 6
+
+
+def test_bist_fiyat_saatleri_ve_birlestirme():
+    from datetime import date, datetime, timedelta
+
+    from piyasa.bist import piyasa
+    assert piyasa.borsa_acik(datetime(2026, 10, 9, 11, 0))
+    assert not piyasa.borsa_acik(datetime(2026, 10, 10, 11, 0))           # cumartesi
+    # Cumartesi: son kapanış cuma 18:35; cuma akşamı indirildiyse yeniden indirilmez
+    cumartesi = datetime(2026, 10, 10, 12, 0)
+    assert piyasa.son_kapanis(cumartesi) == datetime(2026, 10, 9, 18, 35)
+    assert not piyasa.gerekli_mi(cumartesi, datetime(2026, 10, 9, 19, 0).timestamp())
+    assert piyasa.gerekli_mi(cumartesi, datetime(2026, 10, 9, 15, 0).timestamp())
+    # Borsa açıkken 20 dakikada bir
+    acik = datetime(2026, 10, 9, 11, 0)
+    assert not piyasa.gerekli_mi(acik, (acik - timedelta(minutes=10)).timestamp())
+    assert piyasa.gerekli_mi(acik, (acik - timedelta(minutes=25)).timestamp())
+    # Son günler saklanan geçmişe eklenir, aynı gün güncellenir
+    d = [(date.today() - timedelta(days=i)).isoformat() for i in (3, 2, 1, 0)]
+    s = piyasa._birlestir({"t": d[:3], "c": [1.0, 2.0, 3.0]}, {"t": d[2:], "c": [3.5, 4.0]})
+    assert s == {"t": d, "c": [1.0, 2.0, 3.5, 4.0]}
