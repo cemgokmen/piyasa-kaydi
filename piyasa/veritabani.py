@@ -288,6 +288,10 @@ def init_db():
         )
     """)
 
+    # Aylık enflasyon endeksleri (yatırım karşılaştırma): TR = TÜFE (TCMB), US = CPI (FRED)
+    conn.execute("""CREATE TABLE IF NOT EXISTS enflasyon (
+        ulke TEXT, ay TEXT, endeks REAL, aylik REAL, guncelleme TEXT, PRIMARY KEY (ulke, ay))""")
+
     # Gün içi Form 4 akışında işlenen bildirimler (alım/satım içermeyenler de tekrar indirilmesin)
     conn.execute("CREATE TABLE IF NOT EXISTS form4_islenen (numara TEXT PRIMARY KEY, zaman TEXT)")
 

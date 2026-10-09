@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block baslik %}Yatırım karşılaştırma: {{ ay_metni(s.bas, 'de') }} yatırsaydınız bugün ne olurdu? · Piyasa Kaydı{% endblock %}
+{% block aciklama %}Geçmişte dolar, altın, Borsa İstanbul, ABD borsası, Bitcoin ya da istediğiniz bir hisseye yatırılan paranın bugünkü değeri; enflasyondan arındırılmış getiri, yıllık ortalama ve en büyük düşüşle.{% endblock %}
+
+{% macro yuzde_yaz(oran, isaretli=True) -%}
+  {%- if oran is none -%}—{%- else -%}
+  {%- set y = oran * 100 -%}
+  {{ ('+' if isaretli and y > 0 else '−' if y < 0 else '') }}%{{ ('{:,.0f}' if y|abs >= 100 else '{:,.1f}').format(y|abs).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro kat_yaz(kat) -%}
+  {%- if kat >= 10 -%}{{ '{:,.0f}'.format(kat).replace(',', '.') }} kat
+  {%- elif kat >= 1 -%}{{ ('%.1f'|format(kat)).replace('.', ',') }} kat
+  {%- else -%}{{ yuzde_yaz(kat - 1) }}{%- endif -%}
+{%- endmacro %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol">Araçlar</p>
+    <h1>Yatırım karşılaştırma</h1>
+    <p class="sayfa-not">Geçmişte yapılan bir yatırımın bugünkü değeri: dolar, altın, borsalar, kripto paralar ve hisseler;
+    enflasyondan arındırılmış getiriyle.</p>
+  </div>
+</header>
+
+<form class="panel kars-form" method="get" action="{{ url_for('karsilastir.sayfa') }}" id="kars-form">
+  <div class="kars-satir">
+    <label class="kars-alan kars-tutar">
+      <span class="kars-etiket">Tutar</span>
+      <span class="kars-tutar-kutu">
+        <input type="text" inputmode="numeric" name="tutar" value="{{ '{:,.0f}'.format(s.tutar).replace(',', '.') }}" aria-label="Yatırım tutarı" autocomplete="off">
+        <span class="kars-birim">{{ '₺' if s.para == 'TRY' else '$' }}</span>
+      </span>
+    </label>
+    <fieldset class="kars-alan">
+      <legend class="kars-etiket">Para birimi</legend>
+      <div class="segment kars-segment">
+        {% for deger, ad in paralar.items() %}
+        <label class="{% if s.para == deger %}secili{% endif %}"><input type="radio" name="para" value="{{ deger }}" {% if s.para == deger %}checked{% endif %}>{{ ad }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <fieldset class="kars-alan">
+      <legend class="kars-etiket">Yatırım biçimi</legend>
+      <div class="segment kars-segment">
+        {% for deger, ad in turler.items() %}
+        <label class="{% if s.tur == deger %}secili{% endif %}"><input type="radio" name="tur" value="{{ deger }}" {% if s.tur == deger %}checked{% endif %}>{{ ad }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div class="kars-alan">
+      <span class="kars-etiket">Başlangıç</span>
+      <span class="kars-tarih">
+        <select id="kars-ay" aria-label="Başlangıç ayı">
+          {% for ad in ay_adlari %}<option value="{{ '%02d'|format(loop.index) }}" {% if s.bas[5:] == '%02d'|format(loop.index) %}selected{% endif %}>{{ ad }}</option>{% endfor %}
+        </select>
+        <select id="kars-yil" aria-label="Başlangıç yılı">
+          {% for y in yillar|reverse %}<option value="{{ y }}" {% if s.bas[:4] == y|string %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+        <input type="hidden" name="bas" value="{{ s.bas }}" id="kars-bas">
+      </span>
+    </div>
+  </div>
+
+  <div class="kars-varliklar">
+    {% for grup, liste in varlik_gruplari.items() %}
+    <div class="kars-grup">
+      <span class="kars-etiket">{{ grup }}</span>
+      <div class="kars-cipler">
+        {% for v in liste %}
+        <label class="kars-cip" style="--renk: {{ v.renk }}">
+          <input type="checkbox" name="v" value="{{ v.anahtar }}" {% if v.anahtar in s.v %}checked{% endif %}>
+          <span>{{ v.ad }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    <label class="kars-grup kars-ek">
+      <span class="kars-etiket">Hisse ya da kripto ekle</span>
+      <input type="text" name="ek" value="{{ s.ek|join(', ') }}" placeholder="THYAO, AAPL, SOL" autocomplete="off" spellcheck="false">
+    </label>
+  </div>
+
+  <div class="kars-alt">
+    <button class="dugme dugme-ana" type="submit">Karşılaştır</button>
+    <span class="soluk kars-ipucu">Borsa İstanbul ve ABD hisse kodları ile kripto sembolleri; en çok {{ 4 }} tane.</span>
+  </div>
+</form>
+
+<nav class="kars-hazirlar" aria-label="Hazır karşılaştırmalar">
+  {% for baslik, alt, p in hazirlar %}
+  <a class="kars-hazir" href="{{ url_for('karsilastir.sayfa', **p) }}"><b>{{ baslik }}</b><span>{{ alt }}</span></a>
+  {% endfor %}
+</nav>
+
+{% if sonuc and sonuc.varliklar %}
+{% set ilk = sonuc.varliklar[0] %}
+{% set son = sonuc.varliklar[-1] %}
+<section class="bolum kars-sonuc" aria-live="polite">
+  <p class="kars-manset">
+    {% if s.tur == 'tek' %}
+    {{ ay_metni(s.bas, 'de') }} <b>{{ para_yaz(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız bugün
+    <b class="kars-buyuk">{{ para_yaz(ilk.son, s.para) }}</b> paranız olurdu.
+    {% else %}
+    {{ ay_metni(s.bas, 'den') }} bu yana her ay <b>{{ para_yaz(s.tutar, s.para) }}</b> ile <b style="color: {{ ilk.renk }}">{{ ilk.ad }}</b> alsaydınız,
+    toplam {{ para_yaz(sonuc.yatirilan, s.para) }} yatırımınız bugün <b class="kars-buyuk">{{ para_yaz(ilk.son, s.para) }}</b> ederdi.
+    {% endif %}
+  </p>
+
+  <div class="kars-kartlar">
+    {% for v in sonuc.varliklar[:3] %}
+    <div class="kars-kart" style="--renk: {{ v.renk }}">
+      <span class="kars-kart-sira">{{ loop.index }}.</span>
+      <span class="kars-kart-ad">{{ v.ad }}</span>
+      <span class="kars-kart-deger sayi">{{ para_yaz(v.son, s.para) }}</span>
+      <span class="kars-kart-alt"><b class="{{ 'tutar-buy' if v.getiri > 0.0005 else 'tutar-sell' if v.getiri < -0.0005 else '' }}">{{ kat_yaz(v.kat) }}</b>
+        {% if v.reel is not none %} · enflasyondan sonra {{ yuzde_yaz(v.reel) }}{% endif %}</span>
+    </div>
+    {% endfor %}
+    {% if sonuc.enflasyon %}
+    <div class="kars-kart kars-kart-enflasyon">
+      <span class="kars-kart-ad">Enflasyon</span>
+      <span class="kars-kart-deger sayi">{{ para_yaz(sonuc.enflasyon[-1], s.para) }}</span>
+      <span class="kars-kart-alt">Alım gücünü korumak için gereken tutar; fiyatlar {{ kat_yaz(sonuc.enflasyon_orani + 1) }} arttı
+        ({{ 'TÜFE' if s.para == 'TRY' else 'ABD TÜFE' }})</span>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="bolum">
+  <div class="panel kars-grafik-panel">
+    <header class="panel-ust">
+      <div><h2>Yatırımın değeri</h2>
+        <p class="panel-not">{{ ay_metni(sonuc.aylar[0]) }} – {{ ay_metni(sonuc.aylar[-1]) }}, aylık · {{ 'TL' if s.para == 'TRY' else 'dolar' }}</p></div>
+      <label class="kars-log"><input type="checkbox" id="kars-log"> Logaritmik ölçek</label>
+    </header>
+    <div class="kars-lejant" id="kars-lejant"></div>
+    <div class="kars-grafik" id="kars-grafik" role="img" aria-label="Seçilen yatırımların zaman içindeki değeri"></div>
+    <script type="application/json" id="kars-veri">{{ grafik|tojson }}</script>
+  </div>
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust"><div>
+    <h2>Sıralama</h2>
+    <p class="bolum-not">{{ 'Tek seferlik' if s.tur == 'tek' else 'Her ay düzenli' }} yatırım, {{ ay_metni(s.bas) }} – {{ ay_metni(sonuc.son_ay) }}.
+    Yatırılan toplam: <b>{{ para_yaz(sonuc.yatirilan, s.para) }}</b>.</p>
+  </div></header>
+  <div class="tablo-kap">
+    <table class="tablo kars-tablo">
+      <thead><tr>
+        <th>Yatırım</th>
+        <th class="sag">Bugünkü değer</th>
+        <th class="sag">Getiri</th>
+        <th class="sag" title="{{ 'Yıllık bileşik getiri' if s.tur == 'tek' else 'Düzenli yatırımın yıllık getirisi (iç verim oranı)' }}">Yıllık ortalama</th>
+        <th class="sag" title="Enflasyondan arındırılmış getiri: paranın alım gücündeki gerçek değişim">Enflasyondan sonra</th>
+        <th class="sag" title="Dönem içinde bir zirveden sonraki en derin düşüş">En büyük düşüş</th>
+      </tr></thead>
+      <tbody>
+        {% set en_cok = ilk.son %}
+        {% for v in sonuc.varliklar %}
+        <tr>
+          <td>
+            <span class="kars-ad"><i class="kars-nokta" style="background: {{ v.renk }}"></i>
+              {% if v.adres %}<a href="{{ v.adres }}">{{ v.ad }}</a>{% else %}{{ v.ad }}{% endif %}</span>
+            <span class="kars-aciklama soluk">{{ v.aciklama }}</span>
+          </td>
+          <td class="sag sayi" data-etiket="Bugünkü değer">
+            {{ para_yaz(v.son, s.para) }}
+            <span class="kars-cubuk"><i style="width: {{ [(v.son / en_cok * 100) if en_cok else 0, 1]|max }}%; background: {{ v.renk }}"></i></span>
+          </td>
+          <td class="sag sayi {{ 'tutar-buy' if v.getiri > 0.0005 else 'tutar-sell' if v.getiri < -0.0005 else '' }}" data-etiket="Getiri">{{ yuzde_yaz(v.getiri) }}</td>
+          <td class="sag sayi" data-etiket="Yıllık ortalama">{{ yuzde_yaz(v.yillik) }}</td>
+          <td class="sag sayi {{ 'tutar-buy' if v.reel and v.reel >= 0 else 'tutar-sell' if v.reel is not none else '' }}" data-etiket="Enflasyondan sonra">{{ yuzde_yaz(v.reel) }}</td>
+          <td class="sag sayi {{ 'tutar-sell' if v.dusus < 0 else '' }}" data-etiket="En büyük düşüş">{{ yuzde_yaz(v.dusus) if v.dusus < 0 else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if sonuc.eksik %}
+  <p class="kars-not soluk">Bu tarihte verisi olmadığı için hesaba katılmayanlar:
+    {% for e in sonuc.eksik %}{{ e.ad }}{% if e.ilk %} ({{ ay_metni(e.ilk, 'den') }} itibaren){% endif %}{{ ', ' if not loop.last }}{% endfor %}.</p>
+  {% endif %}
+  <div class="kars-paylas">
+    <button type="button" class="dugme" id="kars-paylas">Bağlantıyı kopyala</button>
+    <span class="soluk">Bu karşılaştırma, seçimlerinizle birlikte paylaşılabilir.</span>
+  </div>
+</section>
+{% elif s.v or s.ek %}
+<p class="bos-durum">Seçilen yatırımlar için fiyat verisine şu an ulaşılamadı. Biraz sonra yeniden deneyin.</p>
+{% else %}
+<p class="bos-durum">Karşılaştırmak için en az bir yatırım seçin.</p>
+{% endif %}
+
+<section class="bolum kars-yontem">
+  <h2>Nasıl hesaplanır?</h2>
+  <ul>
+    <li><b>Fiyatlar</b> aylık kapanışlardır (Yahoo Finance). ABD fonlarında ve hisselerinde temettüler yeniden yatırılmış sayılır.
+      Altın ve gümüş ons fiyatıdır; gram fiyatı aynı oranda değişir.</li>
+    <li><b>Para birimi:</b> Bütün yatırımlar her ayın dolar/TL kuruyla seçilen para birimine çevrilir.</li>
+    <li><b>Enflasyondan sonra:</b> Bugünkü değerin, yatırılan paranın enflasyonla güncellenmiş karşılığına göre farkı.
+      TL'de TÜİK'in tüketici fiyatları endeksi (TCMB), dolarda ABD tüketici fiyatları endeksi kullanılır{% if sonuc and sonuc.enflasyon_son_ay %};
+      enflasyon verisi {{ ay_metni(sonuc.enflasyon_son_ay, 'e') }} kadardır{% endif %}.</li>
+    <li><b>Her ay:</b> Başlangıç ayından bugüne her ay aynı tutar yatırılır. Yıllık ortalama, bu düzenli yatırımın iç verim oranıdır.</li>
+    <li>Vergi, komisyon, alış-satış farkı ve saklama ücreti hesaba katılmaz. Mevduat faizi bu karşılaştırmada yer almaz.</li>
+    <li>Geçmiş getiri gelecekteki getirinin göstergesi değildir; bu sayfa yatırım tavsiyesi değildir.</li>
+  </ul>
+</section>
+{% endblock %}
+
+{% block betik %}<script src="{{ url_for('static', filename='karsilastir.js') }}" defer></script>{% endblock %}

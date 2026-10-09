@@ -68,6 +68,21 @@
   </a>
 </section>
 
+{% if karsilastirma %}
+<section class="bolum">
+  <a class="kars-tanitim" href="{{ url_for('karsilastir.sayfa') }}">
+    <div>
+      <h2>10 yıl önce 10.000 TL yatırsaydınız?</h2>
+      <p>{{ karsilastirma.bas }} bugüne dolar, altın, borsa ve kripto; enflasyonla birlikte. Kendi karşılaştırmanızı yapın →</p>
+    </div>
+    <div class="kars-tanitim-liste">
+      {% for ad, deger in karsilastirma.varliklar %}<div><span>{{ ad }}</span><b>{{ deger }}</b></div>{% endfor %}
+      {% if karsilastirma.enflasyon %}<div><span>Enflasyon karşılığı</span><b>{{ karsilastirma.enflasyon }}</b></div>{% endif %}
+    </div>
+  </a>
+</section>
+{% endif %}
+
 {% if son_dakika %}
 <section class="bolum">
   <header class="bolum-ust">

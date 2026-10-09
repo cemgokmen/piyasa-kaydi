@@ -17,6 +17,7 @@ Kullanım:
     python -m piyasa ihaleler [--hepsi]   şirketlere verilen devlet sözleşmeleri (USAspending.gov)
     python -m piyasa fon                  fonların 13F bildirimlerini indirir
     python -m piyasa emtia                emtia verilerini indirir (CFTC, EIA, FRED)
+    python -m piyasa enflasyon            Türkiye (TCMB) ve ABD (FRED) aylık enflasyon endeksleri
     python -m piyasa kap [--gun 90]       Borsa İstanbul: KAP pay alım satım, geri alım ve özel durum bildirimleri
     python -m piyasa kripto [--tara]      Bitcoin/Ether vadelilerinde fon konumları (CFTC);
                                           --tara: eski Kongre bildirimlerinde kripto işlemlerini arar
@@ -50,6 +51,7 @@ KOMUTLAR = {
     "ihaleler": "piyasa.toplama.ihaleler",
     "fon": "piyasa.toplama.fon13f",
     "emtia": "piyasa.toplama.emtia",
+    "enflasyon": "piyasa.toplama.enflasyon",
     "kripto": "piyasa.toplama.kripto",
     "kap": "piyasa.toplama.kap",
     "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
@@ -79,7 +81,7 @@ CANLI_GUNCELLEME = ["form4-canli", ("kap", ["--canli", "--gun", "1", "--en-fazla
 # (kaçan olursa sabahki tam güncelleme günlük dizinden ve son 7 günden tamamlar)
 HIZLI_GUNCELLEME = ["kongre", "senato", "fon", "slug", "duzelt", "supheli"]
 
-GUNCELLEME = ["form4", "kongre", "senato", "kap", "emtia", "kripto", "slug", "duzelt", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
+GUNCELLEME = ["form4", "kongre", "senato", "kap", "emtia", "enflasyon", "kripto", "slug", "duzelt", "supheli", "sirketler", "yurutme", "yurutme-portfoy", "fiyatlar", "profiller", "ihaleler", "analiz"]
 
 
 def yerel_ip():

@@ -56,7 +56,7 @@
       <a href="{{ url_for('canli.sayfa') }}" class="menu-canli" {% if aktif == 'canli' %}aria-current="page"{% endif %}><span class="canli-nokta acik" aria-hidden="true"></span>Canlı</a>
       {% endif %}
       {% endfor %}
-      <div class="menu-grup{% if aktif in ('emtia', 'kripto', 'bist') %} menu-grup-aktif{% endif %}" data-menu-grup>
+      <div class="menu-grup{% if aktif in ('emtia', 'kripto', 'bist', 'karsilastir') %} menu-grup-aktif{% endif %}" data-menu-grup>
         <button type="button" class="menu-grup-dugme" aria-expanded="false" aria-controls="piyasalar-menusu">
           Piyasalar <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
         </button>
@@ -67,6 +67,8 @@
             <b>Emtialar</b><span>Altın, gümüş, petrol ve bakır</span></a>
           <a href="{{ url_for('kripto.liste') }}" {% if aktif == 'kripto' %}aria-current="page"{% endif %}>
             <b>Kripto paralar</b><span>Bitcoin, Ethereum ve hacmi yüksek bütün coinler</span></a>
+          <a href="{{ url_for('karsilastir.sayfa') }}" {% if aktif == 'karsilastir' %}aria-current="page"{% endif %}>
+            <b>Yatırım karşılaştırma</b><span>10 yıl önce yatırsaydınız bugün ne olurdu?</span></a>
         </div>
       </div>
       <a href="{{ url_for('analiz.sinyaller_sayfasi') }}" {% if aktif == 'sinyal' %}aria-current="page"{% endif %}>Sinyaller</a>

@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from piyasa import fiyat, hisse_haberleri, sirket_profili, temel, veritabani
+from piyasa.analiz import karsilastirma
 from piyasa.bist import piyasa as bist_piyasa
 from piyasa.emtia import haberler, kapalicarsi, serit
 from piyasa.kripto import piyasa as kripto_piyasa
@@ -173,6 +174,29 @@ def ornek_bist_verisi(conn):
     conn.executemany("INSERT INTO kap_geri_alim VALUES (?, ?, ?, ?, ?, ?)", [
         ("ASELS", gun(2), 100_000, 0.002, 150.0, 1004), ("ASELS", gun(1), 50_000, 0.001, 152.0, 1004),
     ])
+
+
+def _ay_listesi():
+    from piyasa.analiz.karsilastirma import aylar
+    bugun = date.today()
+    return aylar("2005-01", f"{bugun.year:04d}-{bugun.month:02d}")
+
+
+def ornek_enflasyon(conn):
+    """TL'de aylık %2, dolarda aylık %0,25 enflasyon."""
+    for ulke, oran in (("TR", 0.02), ("US", 0.0025)):
+        conn.executemany("INSERT INTO enflasyon (ulke, ay, endeks, aylik) VALUES (?, ?, ?, ?)",
+                         [(ulke, ay, 100 * (1 + oran) ** i, oran * 100) for i, ay in enumerate(_ay_listesi())])
+
+
+# Aylık büyüme oranları: dolar/TL aylık %2, altın %0,8, S&P %1, Bitcoin %4 (2014'ten), BIST (TL) %1,5
+SAHTE_AYLIK = {"TRY=X": (1.4, 0.02, None), "GC=F": (400, 0.008, None), "SPY": (120, 0.01, None),
+               "BTC-USD": (400, 0.04, "2014-09"), "XU100.IS": (300, 0.015, None)}
+
+
+def sahte_aylik(yahoo):
+    bas, oran, ilk = SAHTE_AYLIK.get(yahoo, (50, 0.005, None))
+    return {ay: bas * (1 + oran) ** i for i, ay in enumerate(_ay_listesi()) if not ilk or ay >= ilk}
 
 
 def sahte_bist_fiyatlari(kodlar, donem="1y"):
@@ -363,6 +387,7 @@ def veritabani_yolu(tmp_path_factory):
     ornek_emtia_verisi(conn)
     ornek_kripto_verisi(conn)
     ornek_bist_verisi(conn)
+    ornek_enflasyon(conn)
     ornek_analiz_verisi(conn)
     # Devlet sözleşmeleri: NVDA'ya Jane'in alımından sonra olağanın çok üstünde sözleşme
     conn.executemany("INSERT INTO ihale VALUES (?,?,?,?,?,?,?,?,?)", [
@@ -397,6 +422,8 @@ def uygulama(veritabani_yolu):
             hisse_haberleri._al, kapalicarsi._veri, kripto_piyasa._info_al)
     bist_eski = bist_piyasa._indir
     bist_piyasa._indir = sahte_bist_fiyatlari
+    karsilastirma_eski = karsilastirma._aylik
+    karsilastirma._aylik = sahte_aylik
     bist_dosya = (bist_piyasa.DOSYA, bist_piyasa.KILIT)
     bist_piyasa.DOSYA = veritabani_yolu.parent / "bist_fiyatlari.json"
     bist_piyasa.KILIT = veritabani_yolu.parent / "bist_fiyatlari.kilit"
@@ -438,6 +465,7 @@ def uygulama(veritabani_yolu):
     (kripto_piyasa._coingecko, kripto_piyasa._genel, kripto_piyasa._korku, kripto_piyasa._yarilanma) = kripto_eski
     bist_piyasa._indir = bist_eski
     bist_piyasa.DOSYA, bist_piyasa.KILIT = bist_dosya
+    karsilastirma._aylik = karsilastirma_eski
 
 
 @pytest.fixture()
