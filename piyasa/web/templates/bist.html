@@ -15,9 +15,7 @@
 <header class="sayfa-ust">
   <div>
     <h1>Borsa İstanbul</h1>
-    <p class="sayfa-not">Borsa İstanbul'daki {{ toplam }} hissenin fiyatları ve KAP bildirimleri. Şirket yöneticileri ve büyük ortaklar
-    hisse alıp sattığında bunu KAP'ta (Kamuyu Aydınlatma Platformu) duyurmak zorunda; bu bildirimleri her gün toplayıp sade biçimde gösteriyoruz.
-    <a href="{{ url_for('seo.rehber', slug='kap-pay-alim-satim-bildirimi') }}">KAP bildirimleri nasıl okunur? →</a></p>
+    <p class="sayfa-not">Borsa İstanbul'da işlem gören {{ toplam }} hisse: fiyatlar, sektörler ve KAP'a (Kamuyu Aydınlatma Platformu) bildirilen yönetici, büyük ortak ve şirket işlemleri. <a href="{{ url_for('seo.rehber', slug='kap-pay-alim-satim-bildirimi') }}">KAP bildirimleri nasıl okunur? →</a></p>
   </div>
 </header>
 
@@ -77,9 +75,7 @@
 <section class="bolum" id="hisseler">
   <header class="bolum-ust"><div>
     <h2>Hisseler</h2>
-    <p class="bolum-not">Pay piyasasında işlem gören şirketler; sektörler KAP'ın resmi sınıflandırmasıdır. Fiyatlar günlük kapanıştır
-    (borsa saatinde yaklaşık 15 dakika gecikmeli). "İçeriden" sütunu, son 90 günde KAP'a bildirilen yönetici ve ortak işlemleridir.
-    Bir hisseye tıklayınca şirket sayfası açılır.</p>
+    <p class="bolum-not">Pay piyasasındaki şirketler; sektörler KAP sınıflandırmasıdır. Fiyatlar yaklaşık 15 dakika gecikmelidir. "İçeriden": son 90 günde KAP'a bildirilen yönetici ve ortak işlemleri.</p>
   </div></header>
   <form class="filtre-satir bist-suzgec" method="get" action="{{ url_for('bist.liste') }}#hisseler">
     <div class="segment" role="group" aria-label="Endeks">
@@ -138,8 +134,7 @@
 <section class="bolum" id="iceriden">
   <header class="bolum-ust"><div>
     <h2>KAP'ta kim aldı, kim sattı?</h2>
-    <p class="bolum-not">Son 60 günün pay alım satım bildirimleri. "Pay adedi" nominal tutardır (1 TL nominal = 1 pay); tutar yaklaşıktır.
-    "Ekte" yazanlarda ayrıntı KAP'taki belgededir; her satırda bildirime bağlantı var.</p>
+    <p class="bolum-not">Son 60 günün pay alım satım bildirimleri. Pay adedi nominal tutardır (1 TL nominal = 1 pay); tutarlar yaklaşıktır. "Ekte" yazanlarda ayrıntı KAP'taki belgededir.</p>
   </div></header>
   {% set iceriden_kisi = iceriden|rejectattr('kisi_turu', 'equalto', 'fon')|list %}
   {% set iceriden_fon = iceriden|selectattr('kisi_turu', 'equalto', 'fon')|list %}
@@ -163,9 +158,7 @@
 <section class="bolum" id="geri-alim">
   <header class="bolum-ust"><div>
     <h2>Kendi payını geri alan şirketler</h2>
-    <p class="bolum-not">Şirketler hisselerini ucuz bulduklarında ya da fiyatı desteklemek için kendi paylarını borsadan geri alabilir.
-    Son 30 günde {{ geri_alim.sirket_sayisi }} şirket toplam <b>{{ geri_alim.toplam|tl }}</b> tutarında geri alım bildirdi.
-    <a href="{{ url_for('seo.rehber', slug='pay-geri-alimi-nedir') }}">Geri alım nedir? →</a></p>
+    <p class="bolum-not">Şirketlerin kendi paylarını borsadan geri alması. Son 30 günde {{ geri_alim.sirket_sayisi }} şirket toplam <b>{{ geri_alim.toplam|tl }}</b> tutarında geri alım bildirdi. <a href="{{ url_for('seo.rehber', slug='pay-geri-alimi-nedir') }}">Geri alım nedir? →</a></p>
   </div></header>
   {% if geri_alim.sirketler %}
   <div class="tablo-kap" data-kisalt="12">
@@ -200,8 +193,7 @@
 <section class="bolum" id="ortaklar">
   <header class="bolum-ust"><div>
     <h2>Birden çok şirkette büyük ortak olanlar</h2>
-    <p class="bolum-not">Borsa İstanbul'da birden fazla şirketin sermayesinde %5'ten fazla payı olan holdingler, kamu kurumları ve
-    yatırımcılar (KAP şirket genel bilgi formları). Bir ortağa tıklayınca bütün payları görünür.</p>
+    <p class="bolum-not">Birden fazla Borsa İstanbul şirketinde %5'in üzerinde payı bulunan holdingler, kamu kurumları ve yatırımcılar. Kaynak: KAP şirket genel bilgi formları.</p>
   </div></header>
   <div class="tablo-kap" data-kisalt="10">
     <table class="tablo tablo-sade">

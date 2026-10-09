@@ -6,14 +6,13 @@
 <header class="sayfa-ust">
   <div>
     <h1>Emtialar</h1>
-    <p class="sayfa-not">Altın, gümüş, Brent petrol ve diğer temel emtiaların fiyatları; büyük fonların
-    konumu, stoklar, faiz kararları ve ilgili haberler. Bir emtiaya tıklayarak ayrıntısına gidebilirsiniz.</p>
+    <p class="sayfa-not">Altın, gümüş, Brent petrol ve diğer temel emtialar: fiyatlar, büyük fonların konumu, stoklar, faiz kararları ve haberler.</p>
   </div>
 </header>
 
 <section class="bolum">
   <header class="bolum-ust"><div><h2>Güncel fiyatlar</h2>
-    <p class="bolum-not">Ayrıntı, grafik ve haberler için bir emtiaya tıklayın.</p></div></header>
+    <p class="bolum-not">ABD vadeli işlem fiyatları ve günlük değişim.</p></div></header>
   <div class="kart-izgara emtia-izgara">
     {% for grup, kartlar in gruplar %}{% for k in kartlar %}
     <a class="emtia-kart" href="{{ url_for('emtia.detay', slug=k.emtia.slug) }}">

@@ -55,8 +55,7 @@
 <section class="bolum" id="ortaklik">
   <header class="bolum-ust"><div>
     <h2>Hisseyi kimler tutuyor?</h2>
-    <p class="bolum-not">Sermayenin %5'inden fazlasına sahip ortaklar, KAP'taki şirket genel bilgi formundan{% if o.profil.tarih %}
-      (formun bu bölümü en son {{ o.profil.tarih }} tarihinde güncellenmiş){% endif %}. Fonların payları, eşik bildirimlerinden.</p>
+    <p class="bolum-not">Sermayenin %5'inden fazlasına sahip ortaklar. Kaynak: KAP şirket genel bilgi formu{% if o.profil.tarih %} ({{ o.profil.tarih }} itibarıyla){% endif %}; fon payları eşik bildirimlerinden.</p>
   </div></header>
   <div class="kpi-izgara kpi-3">
     {{ kpi('Halka açıklık', ('%' ~ ('%.1f'|format(o.profil.halka_aciklik)).replace('.', ',')) if o.profil.halka_aciklik is not none else '—', 'borsada fiilen dolaşan payların oranı') }}
@@ -118,8 +117,7 @@
 <section class="bolum" id="iceriden">
   <header class="bolum-ust"><div>
     <h2>Yöneticiler ve büyük ortaklar ne yaptı?</h2>
-    <p class="bolum-not">KAP'a bildirilen pay alım satımları. Yöneticiler ve büyük ortaklar işlemlerini bildirmek zorunda.
-    Kaynak: KAP; her satırda bildirime bağlantı var.</p>
+    <p class="bolum-not">Yöneticilerin ve büyük ortakların KAP'a bildirdiği pay alım satımları.</p>
   </div></header>
   {% if islemler %}
   {% set alimlar = islemler|selectattr('islem', 'equalto', 'buy')|list %}{% set satimlar = islemler|selectattr('islem', 'equalto', 'sell')|list %}
@@ -149,9 +147,7 @@
 <section class="bolum" id="geri-alim">
   <header class="bolum-ust"><div>
     <h2>Şirket kendi payını geri alıyor</h2>
-    <p class="bolum-not">{% if geri.son_90 %}Son 90 günde <b>{{ geri.son_90.tutar|tl }}</b> tutarında, <b>{{ geri.son_90.nominal|sayi }}</b> pay geri alındı
-      (sermayenin %{{ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ',') }}'i).{% endif %}
-      Şirketler hisselerini ucuz bulduklarında ya da fiyatı desteklemek için kendi paylarını geri alabilir.</p>
+    <p class="bolum-not">{% if geri.son_90 %}Son 90 günde <b>{{ geri.son_90.tutar|tl }}</b> tutarında, <b>{{ geri.son_90.nominal|sayi }}</b> pay geri alındı (sermayenin %{{ ('%.2f'|format(geri.son_90.oran or 0)).replace('.', ',') }}'i). {% endif %}Şirketin kendi paylarını borsadan geri alması.</p>
   </div></header>
   <div class="tablo-kap" data-kisalt="10">
     <table class="tablo tablo-sade">
@@ -177,7 +173,7 @@
 {% if aciklamalar %}
 <section class="bolum" id="kap">
   <header class="bolum-ust"><div><h2>Son KAP açıklamaları</h2>
-    <p class="bolum-not">Şirketin özel durum açıklamaları (yeni iş, ihale, yatırım, ortaklık gibi). Başlığa tıklayınca KAP'ta açılır.</p></div></header>
+    <p class="bolum-not">Yeni iş, ihale, yatırım ve ortaklık gibi gelişmelere ilişkin özel durum açıklamaları. Kaynak: KAP.</p></div></header>
   <div class="panel">
     <ul class="haberler">
       {% for a in aciklamalar %}

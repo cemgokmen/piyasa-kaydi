@@ -11,9 +11,7 @@
 <header class="sayfa-ust">
   <div>
     <h1>Kripto paralar</h1>
-    <p class="sayfa-not">Hiçbir devletin ya da bankanın çıkarmadığı, internet üzerinden kişiden kişiye gönderilebilen dijital paralar.
-    Fiyatların yanında, kripto şirketlerinin yöneticilerinin ve ABD'li siyasetçilerin işlemlerini, büyük bankaların hangi
-    kripto fonlarını aldığını görebilirsiniz.</p>
+    <p class="sayfa-not">Kripto para piyasası: fiyatlar ve piyasa değerleri, kripto şirketlerinde yönetici ve siyasetçi işlemleri, büyük kurumların kripto fonu (ETF) payları.</p>
   </div>
 </header>
 
@@ -53,8 +51,7 @@
 
 <section class="bolum" id="fiyatlar">
   <header class="bolum-ust"><div><h2>Fiyatlar</h2>
-    <p class="bolum-not">Piyasa değerine göre sıralı; # dünya sıralamasıdır. Değişimler gerçek zamanlı son 24 saate, 7 güne ve 1 yıla göredir.
-    Bir kripto paraya tıklayınca profiline gidersiniz.</p></div></header>
+    <p class="bolum-not">Piyasa değerine göre sıralı; # dünya sıralamasıdır. Değişimler son 24 saat, 7 gün ve 1 yıl içindir.</p></div></header>
   <div class="segment segment-kucuk kripto-suzgec" role="group" aria-label="Kripto türü">
     <button type="button" class="secili" aria-pressed="true" data-kripto-grup="">Tümü <span class="soluk">{{ kartlar|length }}</span></button>
     {% for g in gruplar %}<button type="button" aria-pressed="false" data-kripto-grup="{{ g }}">{{ g }}</button>{% endfor %}
@@ -107,8 +104,7 @@
 <section class="bolum" id="sirketler">
   <header class="bolum-ust"><div>
     <h2>Kripto şirketlerinde kim aldı, kim sattı?</h2>
-    <p class="bolum-not">Kripto borsaları, Bitcoin madencileri ve kasasında kripto tutan şirketler ABD borsasında işlem görüyor. Yöneticilerinin
-    (Form 4) ve siyasetçilerin bu hisselerdeki işlemleri her gün güncellenir. Tablo son 90 günü özetler.</p>
+    <p class="bolum-not">ABD borsasında işlem gören kripto borsaları, Bitcoin madencileri ve kasasında kripto tutan şirketler; yöneticilerinin (Form 4) ve siyasetçilerin bu hisselerdeki işlemleri. Son 90 gün.</p>
   </div></header>
   {{ yonetici_satis_notu() }}
   {% set yonetici_islem = sirket_yonetici %}{% set siyaset_islem = sirket_siyaset %}
@@ -119,8 +115,7 @@
 <section class="bolum" id="kurumlar">
   <header class="bolum-ust"><div>
     <h2>Büyük bankalar ve fonlar kripto fonu alıyor mu?</h2>
-    <p class="bolum-not">ABD'de borsada işlem gören Bitcoin ve Ethereum fonları (ETF), kripto parayı doğrudan almadan yatırım yapmayı sağlar.
-    Takip ettiğimiz büyük kurumların bu fonlardaki payları, SEC 13F bildirimlerinden ({{ etf[0][1].donem[:4] }} {{ ((etf[0][1].donem[5:7]|int + 2) // 3) }}. çeyrek sonu).</p>
+    <p class="bolum-not">Bitcoin ve Ethereum fonları (ETF), kripto parayı doğrudan almadan yatırım yapmayı sağlar. Büyük kurumların bu fonlardaki payları, SEC 13F bildirimlerinden ({{ etf[0][1].donem[:4] }} {{ ((etf[0][1].donem[5:7]|int + 2) // 3) }}. çeyrek sonu).</p>
   </div></header>
   <div class="izgara-2">
     {% for k, e in etf %}
@@ -199,7 +194,7 @@
 
 <section class="bolum" id="haberler">
   <header class="bolum-ust"><div><h2>Kripto haberleri</h2>
-    <p class="bolum-not">Son iki haftanın Türkçe haberleri. Başlığa tıklayınca haber kaynağında açılır.</p></div></header>
+    <p class="bolum-not">Son iki haftanın Türkçe haberleri.</p></div></header>
   <div class="panel">{{ haber_listesi(haberler) }}</div>
 </section>
 

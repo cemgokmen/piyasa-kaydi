@@ -16,11 +16,10 @@
   <div>
     <p class="ust-yol"><span class="canli-nokta acik" aria-hidden="true"></span> Canlı</p>
     <h1>Piyasada şu an</h1>
-    <p class="sayfa-not">Göstergeler dakikada bir, bildirimler 15 dakikada bir güncellenir; bu sayfa açık kaldıkça kendini yeniler.
-    ABD'deki yönetici bildirimleri SEC'e düştükten, KAP bildirimleri yayımlandıktan kısa süre sonra burada görünür.</p>
+    <p class="sayfa-not">ABD ve Türkiye piyasalarında anlık göstergeler ve içeriden işlem bildirimleri. Kaynak: SEC, KAP ve ABD Kongresi; bildirimler 15 dakikada bir güncellenir.</p>
   </div>
   <p class="canli-durum soluk" id="canli-durum" aria-live="polite">
-    {% if son_kontrol %}Son veri kontrolü {{ son_kontrol.strftime('%H:%M') }}{% endif %}
+    {% if son_kontrol %}Son güncelleme {{ son_kontrol.strftime("%H:%M") }}{% endif %}
   </p>
 </header>
 
@@ -44,8 +43,7 @@
 <section class="bolum">
   <header class="bolum-ust"><div>
     <h2>Borsa İstanbul'da günün hareketi</h2>
-    <p class="bolum-not">{% if endeks %}BIST 100 {{ endeks.fiyat|round|int|sayi }} ({{ endeks.g1|yuzde }}). {% endif %}Fiyatlar borsa saatinde yaklaşık 15 dakika gecikmelidir.
-    <a href="{{ url_for('bist.liste') }}">Bütün hisseler →</a></p>
+    <p class="bolum-not">{% if endeks %}BIST 100 {{ endeks.fiyat|round|int|sayi }} ({{ endeks.g1|yuzde }}). {% endif %}Fiyatlar yaklaşık 15 dakika gecikmelidir. <a href="{{ url_for('bist.liste') }}">Bütün hisseler →</a></p>
   </div></header>
   <div class="izgara-2">
     <div class="panel">
@@ -63,8 +61,7 @@
 <section class="bolum" id="akis">
   <header class="bolum-ust"><div>
     <h2>Son bildirimler</h2>
-    <p class="bolum-not">Şirket yöneticilerinin, büyük ortakların ve siyasetçilerin hisse alım satımları; şirketlerin kendi hisselerini geri alması
-    ve önemli KAP açıklamaları. Saat, bildirimin yayımlandığı (ya da bizim aldığımız) Türkiye saatidir. Alım satımın kendisi birkaç gün önce yapılmış olabilir.</p>
+    <p class="bolum-not">Yönetici, büyük ortak ve siyasetçi işlemleri; pay geri alımları ve özel durum açıklamaları. Saatler Türkiye saatidir; işlemin kendisi bildirimden birkaç gün önce yapılmış olabilir.</p>
   </div></header>
   <div class="filtre-satir">
     <div class="segment" role="group" aria-label="Kaynak">

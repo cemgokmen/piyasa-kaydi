@@ -846,7 +846,7 @@ if (canliAkis) {
         canliAkis.querySelectorAll("[data-anahtar]").forEach(function (o) {
           if (!onceki.has(o.dataset.anahtar)) { o.classList.add("yeni"); yeni += 1; }
         });
-        if (durum) durum.textContent = `Akış ${saat()}'de yenilendi` + (yeni ? ` · ${yeni} yeni bildirim` : "");
+        if (durum) durum.textContent = `Son güncelleme ${saat()}` + (yeni ? ` · ${yeni} yeni bildirim` : "");
       })
       .catch(() => {});
   };
