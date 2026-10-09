@@ -53,7 +53,7 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 | **Fonlar** | Vanguard, BlackRock, Berkshire, Norveç Varlık Fonu gibi büyük kurumların 13F portföyleri ve çeyrekten çeyreğe değişimler |
 | **Hisse sayfaları** | Şirketin ne iş yaptığı, anlık fiyat, temel rakamlar (piyasa değeri, F/K, son bilanço), analist hedef fiyatları, devlet sözleşmeleri, güncel Türkçe haberler ve o hissedeki bütün bildirimler |
 | **Emtialar** | Altın, gümüş, platin, bakır ve Brent petrol: fiyat ve hacim, büyük fonların konumu, petrol stokları, Fed faiz kararları, vadeli piyasanın ve faiz piyasasının beklentisi, Kapalıçarşı altın ve gümüş fiyatları |
-| **Borsa İstanbul** | BIST 100 hisseleri ve 800'ü aşkın BIST şirketinin sayfası; KAP'tan yöneticilerin ve büyük ortakların pay alım satım bildirimleri (kişi, görevi, adet, fiyat, tutar, işlem sonrası pay oranı), fonların eşik bildirimleri, şirketlerin kendi paylarını geri alımları ve özel durum açıklamaları |
+| **Borsa İstanbul** | Pay piyasasındaki 650 hissenin fiyatı ve KAP sektörü (BIST 100 / BIST 30 / sektör süzgeci), her şirketin sayfası (fiyat, rakamlar, aynı sektördeki şirketler); KAP'tan yöneticilerin ve büyük ortakların pay alım satım bildirimleri (kişi, görevi, adet, fiyat, tutar, işlem sonrası pay oranı), fonların eşik bildirimleri, şirketlerin kendi paylarını geri alımları ve özel durum açıklamaları |
 | **Kripto paralar** | 27 kripto paranın Türkçe profili, gerçek 24 saatlik fiyat değişimi, piyasa değeri ve arz; siyasetçilerin kripto işlemleri, kripto şirketlerinde yönetici işlemleri, Bitcoin/Ethereum fonu tutan bankalar, CME vadelilerinde kurumların konumu, korku ve açgözlülük endeksi, Bitcoin yarılanma sayacı |
 
 ### Analizler

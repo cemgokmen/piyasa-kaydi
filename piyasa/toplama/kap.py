@@ -422,6 +422,9 @@ def form_coz(metin, gonderen=None):
             bilgi["oran_sonra"] = tablo["oran_sonra"] if tablo["oran_sonra"] is not None else bilgi["oran_sonra"]
     if not bilgi:
         return None
+    # Alımdan sonra pay oranı sıfır olamaz: formda oran boş bırakılmış
+    if bilgi.get("islem") == "buy" and not bilgi.get("oran_sonra"):
+        bilgi["oran_sonra"] = None
     if kisi:
         bilgi["kisi"] = kisi
         bilgi["kisi_turu"] = _kisi_turu(kisi, metin) if bilgi["kisi_turu"] != "fon" else "fon"
