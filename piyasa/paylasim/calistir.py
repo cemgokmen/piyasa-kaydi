@@ -6,6 +6,7 @@ Paylaşım kuralları ve komut: python -m piyasa paylas [--gercek] [--hepsi]
   - Her çalıştırmada en çok bir gönderi (15 dakikalık canlı güncellemeyle doğal aralık).
   - Paylaşılan her bildirim 'paylasim' tablosuna yazılır, ikinci kez paylaşılmaz.
   - Deneme (varsayılan): hiçbir şey göndermez ve kaydetmez; sıradakileri listeler.
+  - Otomatik paylaşım x.env'de X_PAYLASIM=acik olunca çalışır; --zorla ile tek gönderi elle atılır.
 """
 
 import sys
@@ -71,6 +72,9 @@ def main():
             return
         if not x.anahtarlar():
             print(f"X anahtarları yok ({x.ANAHTAR_DOSYASI}); paylaşım atlandı.")
+            return
+        if not x.acik_mi() and "--zorla" not in argumanlar:
+            print("Otomatik paylaşım kapalı (x.env: X_PAYLASIM=acik değil); paylaşım atlandı.")
             return
         evet, neden = paylasabilir_mi(conn, simdi)
         if not evet or not liste:

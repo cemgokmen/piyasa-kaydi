@@ -6,6 +6,7 @@ Anahtarlar data/x.env dosyasındadır (depoya girmez):
     X_API_SECRET=...
     X_ACCESS_TOKEN=...
     X_ACCESS_SECRET=...
+    X_PAYLASIM=acik      otomatik paylaşım ancak bu satır 'acik' ise çalışır (varsayılan kapalı)
 """
 
 import base64
@@ -36,6 +37,14 @@ def anahtarlar():
             k, v = s.split("=", 1)
             degerler[k.strip()] = v.strip().strip('"').strip("'")
     return degerler if all(degerler.get(k) for k in GEREKLI) else None
+
+
+def acik_mi():
+    """Otomatik paylaşım açık mı (x.env'de X_PAYLASIM=acik)?"""
+    try:
+        return any(s.replace(" ", "").lower() == "x_paylasim=acik" for s in ANAHTAR_DOSYASI.read_text().splitlines())
+    except OSError:
+        return False
 
 
 def _yuzde_kodla(metin):

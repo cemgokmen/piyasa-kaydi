@@ -72,3 +72,12 @@ def test_anahtar_yoksa_paylasmaz(tmp_path, monkeypatch):
     (tmp_path / "x.env").write_text("X_API_KEY=a\nX_API_SECRET=b\nX_ACCESS_TOKEN=c\nX_ACCESS_SECRET=d\n")
     monkeypatch.setattr(x, "ANAHTAR_DOSYASI", tmp_path / "x.env")
     assert x.anahtarlar()["X_ACCESS_SECRET"] == "d"
+
+
+def test_paylasim_varsayilan_kapali(tmp_path, monkeypatch):
+    dosya = tmp_path / "x.env"
+    dosya.write_text("X_API_KEY=a\nX_PAYLASIM=kapali\n")
+    monkeypatch.setattr(x, "ANAHTAR_DOSYASI", dosya)
+    assert not x.acik_mi()
+    dosya.write_text("X_PAYLASIM=acik\n")
+    assert x.acik_mi()
