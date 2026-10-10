@@ -17,7 +17,7 @@
 </header>
 
 {{ fiyat_paneli(url_for('emtia.fiyat_api', slug=e.slug), anlik_adres=url_for('emtia.anlik_api', slug=e.slug), birim=e.birim, etiket='Son fiyat',
-   kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Anlık fiyat dakikada bir yenilenir, vadelilerde 10-15 dakika gecikmelidir. Grafik günlük kapanışlardır; hacim, sözleşme adedidir.') }}
+   kaynak_notu='Kaynak: Yahoo Finance · Vadeli fiyatlar 10–15 dakika gecikmelidir. Grafik günlük kapanışlardır; hacim, sözleşme adedidir.') }}
 
 {% if vadeli %}
 <div class="panel beklenti-kutu">

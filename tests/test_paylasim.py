@@ -44,7 +44,7 @@ def test_adaylar_ornek_veride(uygulama):
     # Örnek veride THYAO'da 30 milyon TL'lik yönetim kurulu üyesi alımı var; fon eşik bildirimi paylaşılmaz
     assert any(a["anahtar"] == "kap:1001" for a in liste)
     assert not any(a["anahtar"] == "kap:1003" for a in liste)
-    assert all(calistir.uzunluk(a["metin"]) <= 280 for a in liste)
+    assert all(calistir.uzunluk(a["metin"]) <= calistir.X_SINIRI for a in liste)
     # Önce haberler (kendi puanıyla), sonra alım satımlar (dolar karşılığıyla) sıralı
     haberler = [a for a in liste if a["grup"] == "haber"]
     islemler = [a for a in liste if a["grup"] == "islem"]

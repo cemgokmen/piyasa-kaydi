@@ -34,7 +34,7 @@ def test_ayni_haber_kumelenir():
 
 def test_gunun_ozeti_haberli_ve_guncel(istemci):
     html = istemci.get("/gunluk-ozet").get_data(as_text=True)
-    assert "Günün haberleri" in html and "Son 24 saatte olanlar" in html
+    assert "Günün haberleri" in html and "dakikada bir" not in html
     # Manşet: aynı haberi iki kaynak verdi (en önemli), fiyat sayfası değil
     assert "Merkez Bankası politika faizini" in html and "2 kaynakta" in html
     assert "Derbi" not in html                                   # ekonomi dışı haber alınmaz

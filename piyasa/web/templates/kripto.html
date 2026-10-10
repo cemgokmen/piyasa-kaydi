@@ -22,7 +22,7 @@
 
 {{ fiyat_paneli(url_for('kripto.fiyat_api', slug=k.slug), anlik_adres=url_for('kripto.anlik_api', slug=k.slug), birim='$',
    etiket='Anlık fiyat', hacim_birim='$',
-   kaynak_notu='Kaynak: CoinGecko ve Yahoo Finance (ücretsiz) · Kripto paralar 7 gün 24 saat işlem görür; anlık fiyat dakikada bir yenilenir ve "24 saat" gerçek son 24 saatlik değişimdir. Grafik günlük kapanışlardır (Türkiye saatiyle 03:00).') }}
+   kaynak_notu='Kaynak: CoinGecko ve Yahoo Finance · Kripto paralar 7 gün 24 saat işlem görür; "24 saat" son 24 saatlik değişimdir. Grafik günlük kapanışlardır (Türkiye saatiyle 03:00).') }}
 
 <section class="kpi-izgara">
   {{ kpi('Piyasa değeri', b.piyasa_degeri|tutar if b and b.piyasa_degeri else '—', ('dünyada ' ~ b.sira ~ '. sırada') if b and b.sira else 'dolaşımdaki bütün ' ~ k.sembol ~ ' × fiyat') }}
@@ -260,7 +260,7 @@
   {% else %}
   <div class="bos-durum">
     <p><strong>2025'ten bu yana hiçbir Kongre üyesi doğrudan {{ k.ad }} işlemi bildirmedi.</strong></p>
-    <p>Kongre üyelerinin kripto işlemleri çok seyrektir; bildirim gelirse her gün kendiliğinden eklenir.
+    <p>Kongre üyelerinin kripto işlemleri çok seyrektir.
       <a href="{{ url_for('kripto.liste') }}#siyasetciler">Bütün kripto işlemleri →</a></p>
   </div>
   {% endif %}

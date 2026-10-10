@@ -19,7 +19,7 @@ from piyasa.veritabani import get_connection, init_db
 GUNLUK_SINIR = 8
 ARALIK = 40                 # dakika
 SESSIZ = (0, 8)             # saat aralığı: paylaşım yok
-X_SINIRI = 280              # karakter (bağlantı 23 sayılır)
+X_SINIRI = 4000             # karakter (X Premium; bağlantı 23 sayılır)
 
 
 def uzunluk(metin):

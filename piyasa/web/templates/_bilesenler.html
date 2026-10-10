@@ -93,7 +93,7 @@
   İçeriği fiyat.js, adres'teki JSON'dan doldurur.
 #}
 {% macro fiyat_paneli(adres, anlik_adres=None, birim='$', etiket='Son kapanış', hacim_birim='',
-    kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Anlık fiyat dakikada bir yenilenir; borsaya göre gerçek zamanlı ya da en çok 15-20 dakika gecikmelidir. Değişimler ve grafik temettü ve bölünmelere göre düzeltilmiş kapanışlardır.') %}
+    kaynak_notu='Kaynak: Yahoo Finance · Borsaya göre gerçek zamanlı ya da 15–20 dakika gecikmeli. Grafik, temettü ve bölünmelere göre düzeltilmiş kapanışlardır.') %}
 <section class="panel fiyat-panel" id="fiyat" data-fiyat-url="{{ adres }}"{% if anlik_adres %} data-anlik-url="{{ anlik_adres }}"{% endif %} data-birim="{{ birim }}"{% if hacim_birim %} data-hacim-birim="{{ hacim_birim }}"{% endif %} aria-live="polite">
   <div class="fiyat-ust">
     <div class="fiyat-sol">

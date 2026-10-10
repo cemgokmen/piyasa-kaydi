@@ -6,12 +6,13 @@ Eşikler gürültüyü ayıklar: küçük işlemler, fonların eşik bildirimler
 her gün işlem yapan büyük ortaklar paylaşılmaz.
 """
 
+import re
 from datetime import date, datetime, timedelta
 
 from piyasa.bicim import sirket_gorunen_ad, tr_baslik, tr_cumle, unvan
 from piyasa.bist.sorgular import kisa_unvan
 from piyasa.kurallar import GECERLI_KOD, TEMIZ
-from piyasa.paylasim import metin
+from piyasa.paylasim import gorsel, metin
 
 KAP_ESIK = 5_000_000            # TL
 GERI_ALIM_ESIK = 20_000_000     # TL
@@ -39,6 +40,57 @@ def _rol(ham):
     return tr.split(",")[0].strip()
 
 
+_UNVAN_ONEKI = re.compile(r"^[^,]{3,90}?(anonim|ortakl[ıi]|a\.ş|inc\b|corp|ltd|holding|plc\b|n\.v\.)[^,]*,\s*", re.IGNORECASE)
+
+
+def _kisa_tanim(ozet, sinir=120):
+    """Profil metninin ilk cümlesi, baştaki resmi unvan atılmış: 'Hava taşımacılığı ... sunmaktadır.'"""
+    if not ozet:
+        return None
+    cumle = re.split(r"(?<=[.!?])\s+", ozet.strip())[0]
+    cumle = _UNVAN_ONEKI.sub("", cumle)
+    cumle = cumle[:1].upper() + cumle[1:]
+    if len(cumle) > sinir:
+        cumle = cumle[:sinir].rsplit(" ", 1)[0].rstrip(",;") + "…"
+    return cumle
+
+
+def faaliyet(kod, bist=False, sektor=None, ag=True):
+    """Şirketin ne iş yaptığı, tek kısa cümle. ABD'de profil yoksa Yahoo'dan alınır (ag=True)."""
+    from piyasa import sirket_profili
+    try:
+        sembol = f"{kod}.IS" if bist else kod
+        p = sirket_profili.kayitli(sembol) or (sirket_profili.profil(sembol) if ag else None)
+    except Exception:
+        p = None
+    tanim = _kisa_tanim(p["ozet"]) if p and p.get("ozet") else None
+    if tanim:
+        return tanim
+    if bist and sektor:
+        from piyasa.bist.sektorler import sektor_adi
+        return f"{sektor_adi(sektor)} sektöründe faaliyet gösteriyor."
+    return None
+
+
+def _faaliyetleri_ekle(adaylar):
+    """Alım satım adaylarına şirket tanımı (profiller paralel alınır)."""
+    from concurrent.futures import ThreadPoolExecutor
+    islemler = [a for a in adaylar if a.get("grup") == "islem"]
+    if not islemler:
+        return
+    def bul(a):
+        x = a["kaynak"]
+        bist = "kod" in x and a["tur"] in ("KAP içeriden", "Geri alım")
+        return faaliyet(x["kod"] if bist else x["ticker"], bist=bist, sektor=x.get("bist_sektor"))
+    with ThreadPoolExecutor(6) as havuz:
+        sonuclar = list(havuz.map(bul, islemler))
+    for a, f in zip(islemler, sonuclar, strict=True):
+        if f:
+            a["kart"]["faaliyet"] = f
+            ilk, _, kalan = a["metin"].partition("\n\n")
+            a["metin"] = f"{ilk}\n\nNe iş yapar? {f}\n\n{kalan}"
+
+
 def _bist_fiyatlari():
     """Son BIST kapanışları (sitenin paylaşılan fiyat dosyasından; indirme yapmaz)."""
     try:
@@ -63,7 +115,7 @@ def _fiyat_tutarli(kod, fiyat):
 def kap_islemleri(conn, bas, kur):
     satirlar = conn.execute(
         """SELECT p.indeks, p.kod, p.kisi, p.kisi_turu, p.islem, p.tutar, p.nominal, p.fiyat, p.gorev,
-                  p.oran_sonra, p.islem_tarihi, b.yayin, s.unvan
+                  p.oran_sonra, p.islem_tarihi, b.yayin, s.unvan, s.sektor AS bist_sektor
            FROM kap_pay_islem p JOIN kap_bildirim b USING (indeks) LEFT JOIN bist_sirket s ON s.kod = p.kod
            WHERE b.yayin >= ? AND p.islem IN ('buy', 'sell') AND p.kisi_turu != 'fon' AND p.tutar >= ?""",
         (bas, KAP_ESIK)).fetchall()
@@ -87,7 +139,7 @@ def geri_alimlar(conn, bas, kur):
     """Her şirketin son günlerdeki geri alımları (bildirim programın bütün geçmişini içerir; tarihe göre süzülür)."""
     gun_bas = (date.fromisoformat(bas[:10]) - timedelta(days=2)).isoformat()
     satirlar = conn.execute(
-        """SELECT g.kod, SUM(g.nominal * g.fiyat) AS tutar, SUM(g.nominal * g.fiyat) / SUM(g.nominal) AS ortalama, MAX(g.islem_tarihi) AS son_tarih, s.unvan,
+        """SELECT g.kod, SUM(g.nominal * g.fiyat) AS tutar, SUM(g.nominal * g.fiyat) / SUM(g.nominal) AS ortalama, MAX(g.islem_tarihi) AS son_tarih, s.unvan, s.sektor AS bist_sektor,
                   (SELECT SUM(x.nominal * x.fiyat) FROM kap_geri_alim x WHERE x.kod = g.kod AND x.islem_tarihi >= ?) AS toplam_90
            FROM kap_geri_alim g JOIN kap_bildirim b USING (indeks) LEFT JOIN bist_sirket s ON s.kod = g.kod
            WHERE b.yayin >= ? AND g.islem_tarihi >= ?
@@ -187,13 +239,15 @@ def haber_adaylari(conn, simdi, saat):
         yerel = datetime.fromisoformat(x["yayin"]).astimezone()
         x["yayin_yerel"] = f"{metin.gun(yerel.date().isoformat())} · {yerel:%H:%M}"
         gosterge = gostergeler.get(metin._gosterge_kodu(x))
+        kart = metin.haber_karti(x, gosterge)
+        kart["foto"] = gorsel.foto(conn, x)
         sonuc.append({"anahtar": f"haber:{x['kume']}", "tur": "Haber", "grup": "haber",
-                      "onem": x["puan"], "metin": metin.haber(x), "kart": metin.haber_karti(x, gosterge),
+                      "onem": x["puan"], "metin": metin.haber(x), "kart": kart,
                       "kaynak": x, "kaynak_adres": x["adres"]})
     return sonuc
 
 
-def adaylar(conn, simdi=None, kur=45.0, saat=36):
+def adaylar(conn, simdi=None, kur=45.0, saat=36, faaliyet_ekle=True):
     """Son 'saat' saatte bildirilen, eşikleri aşan işlemler; önem sırasıyla."""
     simdi = simdi or datetime.now()
     bas = (simdi - timedelta(hours=saat)).strftime("%Y-%m-%d %H:%M:%S")
@@ -202,5 +256,8 @@ def adaylar(conn, simdi=None, kur=45.0, saat=36):
                 + form4_islemleri(conn, bas_gun) + kongre_islemleri(conn, bas_gun))
     for a in islemler:
         a["grup"] = "islem"
+    islemler = sorted(islemler, key=lambda a: -a["onem"])
+    if faaliyet_ekle:
+        _faaliyetleri_ekle(islemler)
     # Haberler kendi puanına göre, işlemler dolar karşılığına göre sıralı; iki grup ayrı listelenir
-    return haber_adaylari(conn, simdi, saat) + sorted(islemler, key=lambda a: -a["onem"])
+    return haber_adaylari(conn, simdi, saat) + islemler

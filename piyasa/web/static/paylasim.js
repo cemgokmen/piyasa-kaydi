@@ -40,7 +40,7 @@
   document.querySelectorAll(".paylasim-kart").forEach(function (kart) {
     const metin = kart.querySelector("textarea");
     const sayac = kart.querySelector(".paylasim-sayac");
-    const say = () => { const n = uzunluk(metin.value); sayac.textContent = `${n} karakter`; sayac.classList.toggle("tutar-sell", n > 280); };
+    const say = () => { const n = uzunluk(metin.value); sayac.textContent = `${n} karakter`; sayac.classList.toggle("tutar-sell", n > 4000); };
     metin.addEventListener("input", say);
     say();
     kart.addEventListener("click", function (olay) {

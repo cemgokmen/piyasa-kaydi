@@ -49,6 +49,9 @@ def fiyat_metni(n, birim):
 # Borsa İstanbul (KAP)
 # ---------------------------------------------------------------------------
 
+# ABD'de bildirimi yapan kişi değil kurumsa (fon, sigorta şirketi, holding)
+KURUM = re.compile(r"\b(inc|corp|co|llc|l\.?p|ltd|plc|fund|capital|partners|holdings?|insurance|trust|group|management|"
+                   r"advisors|bank|ag|sa|n\.v)\b\.?", re.IGNORECASE)
 SIRKET_ADI = re.compile(r"\b(A\.?\s?Ş|ANON[İI]M|HOLD[İI]NG|LTD|L[İI]M[İI]TED|ŞİRKETİ|ŞTİ|YATIRIM ORTAKLI)", re.IGNORECASE)
 
 
@@ -99,6 +102,8 @@ def form4(x):
         kim = f"{x['sirket']} hisselerinin %10'undan fazlasına sahip {x['kisi']}"
     elif rol and rol not in ("Bildirim yükümlüsü", "Üst düzey yönetici"):
         kim = f"{x['sirket']} {rol.lower()} {x['kisi']}"
+    elif KURUM.search(x["kisi"]):
+        kim = f"{x['sirket']} büyük ortaklarından {x['kisi']}"
     else:
         kim = f"{x['sirket']} yöneticilerinden {x['kisi']}"
     ilk = f"{kim}, şirket hisselerinde {tutar(x['tutar'], 'dolar')}lık {fiil} yaptı."
@@ -163,7 +168,8 @@ def geri_karti(x):
 
 def form4_karti(x):
     alim = x["action"] == "buy"
-    rol = x["rol"] if x["rol"] not in ("Bildirim yükümlüsü", "Üst düzey yönetici", "") else "Yönetici"
+    rol = x["rol"] if x["rol"] not in ("Bildirim yükümlüsü", "Üst düzey yönetici", "") else (
+        "Büyük ortak" if KURUM.search(x["kisi"]) else "Yönetici")
     return {"etiket": f"ABD · YÖNETİCİ {'ALIMI' if alim else 'SATIŞI'}", "renk": YESIL if alim else KIRMIZI,
             "kod": x["ticker"], "sirket": x["sirket"], "tutar": tutar(x["tutar"], "dolar"), "kisi": f"{x['kisi']} · {rol}",
             "ayrinti": f"{adet(x['adet'])} adet · ort. {fiyat_metni(x['fiyat'], 'dolar')}" if x.get("adet") and x.get("fiyat") else "",

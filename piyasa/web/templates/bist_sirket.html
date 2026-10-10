@@ -45,7 +45,7 @@
 
 {{ fiyat_paneli(url_for('bist.fiyat_api', kod=s.kod), anlik_adres=url_for('bist.anlik_api', kod=s.kod), birim='₺',
    etiket='Son fiyat',
-   kaynak_notu='Kaynak: Yahoo Finance (ücretsiz) · Borsa İstanbul fiyatları yaklaşık 15 dakika gecikmelidir. Değişimler ve grafik temettü ve bölünmelere göre düzeltilmiş kapanışlardır.') }}
+   kaynak_notu='Kaynak: Yahoo Finance · Borsa İstanbul fiyatları yaklaşık 15 dakika gecikmelidir. Değişimler ve grafik temettü ve bölünmelere göre düzeltilmiş kapanışlardır.') }}
 
 <section class="panel temel temel-iskelet" id="rakamlar" data-parca-adres="{{ url_for('bist.rakamlar', kod=s.kod) }}" aria-busy="true">
   <p class="soluk kucuk">Şirketin rakamları yükleniyor…</p>
@@ -130,7 +130,7 @@
   {% include "_kap_islemleri.html" %}
   {% else %}
   <div class="bos-durum"><p><strong>Kayıtlarımızda {{ s.kod }} için yönetici ya da büyük ortak işlemi yok.</strong></p>
-    <p>Son 4 ayın KAP bildirimleri taranıyor; yeni bildirimler her gün eklenir.</p></div>
+    <p>Son 4 ayın KAP bildirimlerinde kayıt bulunmuyor.</p></div>
   {% endif %}
   {% if fon_bildirimleri %}
   <details class="bilgi-kutu">
