@@ -19,6 +19,7 @@ Kullanım:
     python -m piyasa emtia                emtia verilerini indirir (CFTC, EIA, FRED)
     python -m piyasa enflasyon            Türkiye (TCMB) ve ABD (FRED) aylık enflasyon endeksleri
     python -m piyasa kap [--gun 90]       Borsa İstanbul: KAP pay alım satım, geri alım ve özel durum bildirimleri
+    python -m piyasa paylas [--gercek]    X'te otomatik paylaşım (varsayılan deneme: yalnızca listeler)
     python -m piyasa kripto [--tara]      Bitcoin/Ether vadelilerinde fon konumları (CFTC);
                                           --tara: eski Kongre bildirimlerinde kripto işlemlerini arar
     python -m piyasa fiyatlar             işlem yapılan hisselerin günlük fiyatlarını indirir
@@ -54,6 +55,7 @@ KOMUTLAR = {
     "enflasyon": "piyasa.toplama.enflasyon",
     "kripto": "piyasa.toplama.kripto",
     "kap": "piyasa.toplama.kap",
+    "paylas": "piyasa.paylasim.calistir",
     "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
     "sirketler": "piyasa.toplama.sirketler",
     "yurutme": "piyasa.toplama.yurutme",
@@ -76,7 +78,9 @@ KOMUTLAR = {
 # 'guncelle' sırayla çalıştırılan adımlar
 # 'guncelle --hizli' (günde dört kez): yalnızca yeni bildirimler ve bakımları
 # 'guncelle --canli' (15 dakikada bir): gün içi Form 4 ve KAP'ın o günkü bildirimleri
-CANLI_GUNCELLEME = ["form4-canli", ("kap", ["--canli", "--gun", "1", "--en-fazla", "60"]), "slug", "supheli"]
+# Paylaşım (X) en sonda: anahtar dosyası yoksa hiçbir şey yapmaz; kuralları için bkz. piyasa/paylasim
+CANLI_GUNCELLEME = ["form4-canli", ("kap", ["--canli", "--gun", "1", "--en-fazla", "60"]), "slug", "supheli",
+                    ("paylas", ["--gercek"])]
 # Form 4 ve KAP'ı canlı güncelleme zaten 15 dakikada bir alıyor; hızlı güncelleme onları tekrar taramaz
 # (kaçan olursa sabahki tam güncelleme günlük dizinden ve son 7 günden tamamlar)
 HIZLI_GUNCELLEME = ["kongre", "senato", "fon", "slug", "duzelt", "supheli"]

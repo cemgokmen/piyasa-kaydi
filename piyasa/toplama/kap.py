@@ -467,6 +467,21 @@ def geri_alim_tablosu(sayfa):
                 continue
             satirlar.append({"islem_tarihi": _tarih(re.match(TARIH, h[i_tarih]).group(1)), "nominal": nominal,
                              "fiyat": fiyat, "oran": _sayi(h[i_oran]) if i_oran is not None and i_oran < len(h) else None})
+    return fiyat_ayiricisini_duzelt(satirlar)
+
+
+def fiyat_ayiricisini_duzelt(satirlar):
+    """
+    Şirketler bazen ondalığı nokta ile yazıyor ('45.221' = 45,221 TL); binlik ayırıcı sanılınca fiyat
+    bin kat büyür. Aynı tablodaki fiyatların ortancasının yaklaşık bin katı olan fiyat düzeltilir.
+    """
+    fiyatlar = sorted(r["fiyat"] for r in satirlar)
+    if len(fiyatlar) < 2:
+        return satirlar
+    ortanca = fiyatlar[len(fiyatlar) // 2]
+    for r in satirlar:
+        if r["fiyat"] > 100 * ortanca and 0.5 <= r["fiyat"] / 1000 / ortanca <= 2:
+            r["fiyat"] /= 1000
     return satirlar
 
 

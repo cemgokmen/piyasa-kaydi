@@ -292,6 +292,10 @@ def init_db():
     conn.execute("""CREATE TABLE IF NOT EXISTS enflasyon (
         ulke TEXT, ay TEXT, endeks REAL, aylik REAL, guncelleme TEXT, PRIMARY KEY (ulke, ay))""")
 
+    # Sosyal medyada paylaşılan bildirimler (bkz. piyasa/paylasim): aynı şey iki kez paylaşılmaz
+    conn.execute("""CREATE TABLE IF NOT EXISTS paylasim (
+        anahtar TEXT PRIMARY KEY, platform TEXT, metin TEXT, durum TEXT, gonderi_id TEXT, zaman TEXT)""")
+
     # Gün içi Form 4 akışında işlenen bildirimler (alım/satım içermeyenler de tekrar indirilmesin)
     conn.execute("CREATE TABLE IF NOT EXISTS form4_islenen (numara TEXT PRIMARY KEY, zaman TEXT)")
 
