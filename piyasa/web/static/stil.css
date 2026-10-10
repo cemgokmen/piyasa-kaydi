@@ -2463,3 +2463,31 @@ a.serit-oge:hover .serit-ad { color: var(--vurgu); }
 .paylasim-dugmeler { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 1020px) { .paylasim-kart { grid-template-columns: minmax(0, 1fr); } }
 .dugme-sade { background: none; border-color: transparent; color: var(--yazi-3); }
+.paylasim-sekme { margin: 6px 0 4px; }
+.paylasim-baslik { margin: 26px 0 12px; font-size: 20px; scroll-margin-top: 80px; }
+
+/* ---------- Günün özeti: piyasa göstergeleri ve haber grupları ---------- */
+.ozet-piyasa { margin: 0 0 22px; }
+.ozet-gostergeler { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.ozet-gosterge {
+  display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--cizgi);
+  border-radius: var(--yaricap); background: var(--kart); color: inherit; text-decoration: none; font-size: 13px;
+}
+a.ozet-gosterge:hover { border-color: var(--vurgu); }
+.ozet-gosterge-ad { color: var(--yazi-3); font-size: 12.5px; }
+.ozet-gosterge-deger { font-size: 18px; font-weight: 600; }
+.ozet-piyasa-cumle { margin: 12px 2px 0; color: var(--yazi-2); font-size: 15px; }
+.ozet-manset-etiket { margin: 0 0 6px !important; color: var(--vurgu); font-size: 12px !important; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.ozet-manset h2 a { color: inherit; text-decoration: none; }
+.ozet-manset h2 a:hover { color: var(--vurgu); }
+.ozet-kaynak { margin: 4px 0 0; color: var(--yazi-3); font-size: 12.5px; }
+.ozet-haber-gruplari { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; }
+.ozet-grup-ad { margin: 14px 0 4px; color: var(--vurgu); font-size: 13px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.ozet-haber h4 a { color: inherit; text-decoration: none; }
+.ozet-haber h4 a:hover { color: var(--vurgu); }
+.ozet-not { margin-top: 28px; font-size: 12.5px; }
+@media (max-width: 1020px) { .ozet-gostergeler { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) {
+  .ozet-gostergeler { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ozet-haber-gruplari { grid-template-columns: minmax(0, 1fr); }
+}

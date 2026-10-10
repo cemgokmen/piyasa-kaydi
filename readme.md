@@ -48,6 +48,7 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 | Bölüm | Ne gösterir |
 |---|---|
 | **Yatırım karşılaştırma** | Geçmişte (2006'dan bu yana herhangi bir ay) dolar, euro, altın, gümüş, petrol, BIST 100, S&P 500, Nasdaq, Bitcoin, Ethereum ya da istenen hisse/kripto ile yapılan tek seferlik veya aylık düzenli yatırımın bugünkü değeri; TL ya da dolar bazında, enflasyondan arındırılmış getiri (TÜFE / ABD CPI), yıllık ortalama ve en büyük düşüşle. Seçimler adreste durur, bağlantıyla paylaşılır |
+| **Günün özeti** | Son 24 saat: piyasa göstergeleri, günün manşeti, konulara göre finans haberleri, KAP ve ABD bildirimleri; eski gün tutulmaz |
 | **Canlı** | Piyasa göstergeleri, Borsa İstanbul'da günün hareketi ve ABD yöneticileri, Kongre ve KAP'tan en yeni bildirimler tek akışta; 15 dakikada bir toplanır, sayfa dakikada bir yenilenir |
 | **Siyasetçiler** | Temsilciler Meclisi ve Senato üyelerinin STOCK Act bildirimleri; parti, eyalet, komite üyelikleri, resmi fotoğraflar, tahmini portföy ve geç bildirimler |
 | **Başkan ve Başkan Yardımcısı** | OGE yıllık mali durum bildirimlerinden ayıklanan hisse ve fon portföyü ile yıl içindeki işlemler |
@@ -84,6 +85,7 @@ bulunur; site yorum yapmaz, kaydı gösterir.
 
 | Kaynak | Veri | Sıklık |
 |---|---|---|
+| AA · Bloomberg HT · TRT Haber · Dünya · Ekonomim · Habertürk · Investing (RSS) | Finans haberleri: konu, önem puanı, aynı olayın kümelenmesi; 3 gün saklanır | 30 dakikada bir |
 | [TCMB](https://www.tcmb.gov.tr) · [FRED](https://fred.stlouisfed.org) | Türkiye ve ABD aylık tüketici fiyatları (enflasyon) | Günlük kontrol |
 | [SEC EDGAR](https://www.sec.gov/edgar) | Form 4 yönetici işlemleri, 13F fon portföyleri, şirket sektörleri | 15 dakikada bir / çeyreklik |
 | [House Clerk](https://disclosures-clerk.house.gov) | Temsilciler Meclisi işlem bildirimleri (PDF) | Günde 5 kez |

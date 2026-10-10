@@ -48,7 +48,6 @@ def test_sayfa_acilir(istemci, adres):
 
 @pytest.mark.parametrize("adres", ["/yok", "/hisse/YOKBOYLE", "/kisi/yok", "/fon/yok", "/emtia/yok",
                                    "/emtia/petrol", "/emtia/dogalgaz", "/emtia/bugday", "/emtia/misir",
-                                   "/gunluk-ozet/2000-01-01", "/gunluk-ozet/yok",
                                    "/yurutme/yok"])
 def test_olmayan_sayfa_404(istemci, adres):
     cevap = istemci.get(adres)
@@ -190,9 +189,8 @@ def test_sinyaller_ve_ozet(istemci):
     for metin in ("Üçlü onay", "Sinyaller işe yarıyor mu?", "Siyasetçi alımları", "Küme alımları"):
         assert metin in html
     ozet = istemci.get("/gunluk-ozet").get_data(as_text=True)
-    assert "yönetici" in ozet
-    # Maddelerdeki hisse kodu hisse sayfasına gider
-    assert re.search(r'<a class="ticker" href="/hisse/[A-Z.\-]+"', ozet)
+    # Özet son 24 saattir: örnek verideki 2 günlük ABD bildirimleri girmez, haberler girer
+    assert "Günün haberleri" in ozet and 'target="_blank" rel="noopener"' in ozet
     # Paylaşım metni ziyaretçilere gösterilmez
     assert "Metni kopyala" not in ozet and "ozet-metni" not in ozet
 

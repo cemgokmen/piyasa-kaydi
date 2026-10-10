@@ -3,9 +3,8 @@ Analiz sayfaları: siyasetçi performansı, çıkar çatışmaları, sinyaller
 (üçlü onay ve geçmiş başarı) ve günlük özet.
 """
 
-import re
 
-from flask import Blueprint, abort, render_template, request
+from flask import Blueprint, redirect, render_template, request, url_for
 
 from piyasa.analiz import cakisma, ihale, ozet, performans, sektor_haritasi, sinyaller
 from piyasa.analiz.getiri import UFUKLAR
@@ -53,9 +52,7 @@ def sektorler_sayfasi():
 @analiz.route("/gunluk-ozet")
 @analiz.route("/gunluk-ozet/<gun>")
 def gunluk_ozet(gun=None):
-    if gun is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", gun):
-        abort(404)
-    veri = ozet.gunluk_ozet(gun)
-    if veri is None or (gun is not None and veri["gun"] != gun):
-        abort(404)
-    return render_template("ozet.html", aktif="ozet", **veri)
+    # Özet her zaman bugünündür; eski tarihli bağlantılar bugüne yönlenir
+    if gun is not None:
+        return redirect(url_for("analiz.gunluk_ozet"), code=301)
+    return render_template("ozet.html", aktif="ozet", **ozet.gunluk_ozet())

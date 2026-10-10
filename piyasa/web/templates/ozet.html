@@ -1,36 +1,62 @@
 {% extends "base.html" %}
-{% block baslik %}{{ baslik }} günlük özet · Piyasa Kaydı{% endblock %}
-{% block aciklama %}{{ baslik }}: ABD'de siyasetçilerin ve şirket yöneticilerinin bildirdiği hisse işlemlerinin Türkçe özeti.{% endblock %}
+{% block baslik %}Günün özeti: {{ baslik }} · Piyasa Kaydı{% endblock %}
+{% block aciklama %}{{ baslik }}: günün finans haberleri, piyasalar, Borsa İstanbul'da içeriden işlemler, ABD'de yöneticilerin ve siyasetçilerin hisse işlemleri; sade Türkçe.{% endblock %}
 
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
-    <p class="ust-yol">Günlük özet</p>
+    <p class="ust-yol">Günün özeti</p>
     <h1>{{ baslik }}</h1>
-    {% if en_yeni %}<p class="sayfa-not">ABD'de bir günün bildirimleri o gün bittikten sonra, Türkiye saatiyle ertesi sabah yayımlandığı için en yeni özet bir önceki iş gününe aittir.</p>{% endif %}
+    <p class="sayfa-not">Son 24 saatte olanlar. Haberler 30 dakikada bir, bildirimler 15 dakikada bir eklenir; sabah 07:00'de günün özeti baştan yenilenir.</p>
   </div>
-  <div class="ozet-gezinti">
-    {% if onceki %}<a class="dugme" href="{{ url_for('analiz.gunluk_ozet', gun=onceki) }}" rel="prev">← {{ onceki|kisa_tarih }}</a>
-    {% else %}<span class="dugme pasif" aria-disabled="true">← Önceki</span>{% endif %}
-    <label class="secim">
-      <span class="gorunmez">Gün seç</span>
-      <select id="gun-sec" aria-label="Gün seç">
-        {% for g in gunler %}<option value="{{ url_for('analiz.gunluk_ozet', gun=g) }}" {% if g == gun %}selected{% endif %}>{{ g|uzun_tarih }}</option>{% endfor %}
-      </select>
-    </label>
-    {% if sonraki %}<a class="dugme" href="{{ url_for('analiz.gunluk_ozet', gun=sonraki) }}" rel="next">{{ sonraki|kisa_tarih }} →</a>
-    {% else %}<span class="dugme pasif" aria-disabled="true">Sonraki →</span>{% endif %}
-  </div>
+  <p class="canli-durum soluk"><span class="canli-nokta acik" aria-hidden="true"></span> Son güncelleme {{ guncelleme }}</p>
 </header>
 
+{% if piyasa %}
+<section class="ozet-piyasa" aria-label="Piyasalarda bugün">
+  <div class="ozet-gostergeler">
+    {% for g in piyasa.gostergeler %}
+    <{{ 'a' if g.adres else 'div' }} class="ozet-gosterge"{% if g.adres %} href="{{ g.adres }}"{% endif %}>
+      <span class="ozet-gosterge-ad">{{ g.ad }}</span>
+      <span class="ozet-gosterge-deger sayi">{{ g.deger_metni }}</span>
+      {% if g.degisim_metni %}<span class="sayi {{ 'tutar-buy' if g.artis else 'tutar-sell' }}">{{ g.degisim_metni }}</span>{% endif %}
+    </{{ 'a' if g.adres else 'div' }}>
+    {% endfor %}
+  </div>
+  {% if piyasa.cumle %}<p class="ozet-piyasa-cumle">{{ piyasa.cumle }}</p>{% endif %}
+</section>
+{% endif %}
+
 <article class="ozet-govde">
-  {% if bolumler %}
   {% if manset %}
   <header class="ozet-manset">
-    <h2>{{ manset }}</h2>
-    <p>{{ spot }}</p>
+    <p class="ozet-manset-etiket">Günün manşeti</p>
+    <h2>{% if manset_haber %}<a href="{{ manset_haber.adres }}" target="_blank" rel="noopener">{{ manset }}</a>{% else %}{{ manset }}{% endif %}</h2>
+    {% if spot %}<p>{{ spot }}</p>{% endif %}
+    {% if manset_haber %}<p class="ozet-kaynak">{{ manset_haber.kaynak }} · {{ manset_haber.saat }}{% if manset_haber.kaynak_sayisi > 1 %} · {{ manset_haber.kaynak_sayisi }} kaynakta{% endif %}</p>{% endif %}
   </header>
   {% endif %}
+
+  {% if haber_gruplari %}
+  <section class="ozet-bolum">
+    <h3 class="ozet-bolum-ad">Günün haberleri</h3>
+    <div class="ozet-haber-gruplari">
+      {% for grup in haber_gruplari %}
+      <div class="ozet-haber-grubu">
+        <h4 class="ozet-grup-ad">{{ grup.ad }}</h4>
+        {% for h in grup.haberler %}
+        <div class="ozet-haber">
+          <h4><a href="{{ h.adres }}" target="_blank" rel="noopener">{{ h.baslik }}</a></h4>
+          {% if h.ozet %}<p>{{ h.ozet }}</p>{% endif %}
+          <p class="ozet-kaynak">{{ h.kaynak }} · {{ h.saat }}{% if h.kaynak_sayisi > 1 %} · {{ h.kaynak_sayisi }} kaynakta{% endif %}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   {% for b in bolumler %}
   <section class="ozet-bolum">
     <h3 class="ozet-bolum-ad">{{ b.ad }}</h3>
@@ -43,8 +69,10 @@
     {% endfor %}
   </section>
   {% endfor %}
-  {% else %}
-  <p class="bos">Bu gün için özetlenecek bildirim yok.</p>
+
+  {% if not (manset or haber_gruplari or bolumler) %}
+  <p class="bos">Son 24 saatte özetlenecek haber ya da bildirim yok.</p>
   {% endif %}
+  <p class="ozet-not soluk">Haber başlıkları ve kısa özetler kaynaklarına aittir; ayrıntı için başlığa tıklayın. Yatırım tavsiyesi değildir.</p>
 </article>
 {% endblock %}

@@ -8,7 +8,7 @@
   <div>
     <p class="ust-yol">Yalnızca bu bilgisayarda</p>
     <h1>Paylaşım kartları</h1>
-    <p class="sayfa-not">Kayda değer bildirimler, önem sırasıyla. Görseli indirip metinle birlikte X'te paylaşın;
+    <p class="sayfa-not">Son saatlerin en önemli finans haberleri ve kayda değer alım satımlar. Görseli indirip metinle birlikte X'te paylaşın;
     sonra "Paylaşıldı" deyin, kart listeden düşer ve bir daha önerilmez. Metni paylaşmadan önce düzenleyebilirsiniz.</p>
   </div>
 </header>
@@ -19,13 +19,24 @@
   </div>
 </div>
 
-{% if adaylar %}
+{% set haberler = adaylar|selectattr('grup', 'equalto', 'haber')|list %}
+{% set islemler = adaylar|rejectattr('grup', 'equalto', 'haber')|list %}
+<nav class="segment paylasim-sekme" aria-label="Kart türü">
+  <a href="#haberler">Finans haberleri <span class="soluk">{{ haberler|length }}</span></a>
+  <a href="#islemler">Alım satımlar <span class="soluk">{{ islemler|length }}</span></a>
+</nav>
+
+{% for baslik, kimlik, liste in [('Finans haberleri', 'haberler', haberler), ('Alım satımlar', 'islemler', islemler)] %}
+<h2 class="paylasim-baslik" id="{{ kimlik }}">{{ baslik }}</h2>
+{% if liste %}
 <div class="paylasim-liste">
-  {% for a in adaylar %}
+  {% for a in liste %}
   <article class="panel paylasim-kart" data-anahtar="{{ a.anahtar }}" data-dosya="{{ a.kart.dosya }}">
-    <div class="paylasim-gorsel">{{ kart(a.kart, 'kart-' ~ loop.index) }}</div>
+    <div class="paylasim-gorsel">{{ kart(a.kart, kimlik ~ '-' ~ loop.index) }}</div>
     <div class="paylasim-yan">
-      <p class="paylasim-tur"><span class="rozet">{{ a.tur }}</span> <span class="soluk">önem {{ a.onem|round|int|sayi }} $</span></p>
+      <p class="paylasim-tur"><span class="rozet">{{ a.tur }}</span>
+        {% if a.grup == 'haber' %}<a class="soluk" href="{{ a.kaynak_adres }}" target="_blank" rel="noopener">habere git ↗</a>
+        <span class="soluk">· {{ a.kaynak.kaynak_sayisi }} kaynakta</span>{% else %}<span class="soluk">önem {{ a.onem|round|int|sayi }} $</span>{% endif %}</p>
       <textarea class="paylasim-metin" rows="9" aria-label="Gönderi metni">{{ a.metin }}</textarea>
       <p class="paylasim-sayac soluk"></p>
       <div class="paylasim-dugmeler">
@@ -40,8 +51,9 @@
   {% endfor %}
 </div>
 {% else %}
-<p class="bos-durum">Şu an paylaşılacak yeni bildirim yok. Bildirimler 15 dakikada bir güncellenir.</p>
+<p class="bos-durum">Şu an paylaşılacak yeni {{ 'haber' if kimlik == 'haberler' else 'alım satım' }} yok. Haberler 30, bildirimler 15 dakikada bir güncellenir.</p>
 {% endif %}
+{% endfor %}
 
 {% if paylasilanlar %}
 <section class="bolum">

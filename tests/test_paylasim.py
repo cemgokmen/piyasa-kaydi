@@ -45,7 +45,10 @@ def test_adaylar_ornek_veride(uygulama):
     assert any(a["anahtar"] == "kap:1001" for a in liste)
     assert not any(a["anahtar"] == "kap:1003" for a in liste)
     assert all(calistir.uzunluk(a["metin"]) <= 280 for a in liste)
-    assert liste == sorted(liste, key=lambda a: -a["onem"])
+    # Önce haberler (kendi puanıyla), sonra alım satımlar (dolar karşılığıyla) sıralı
+    haberler = [a for a in liste if a["grup"] == "haber"]
+    islemler = [a for a in liste if a["grup"] == "islem"]
+    assert liste == haberler + islemler and islemler == sorted(islemler, key=lambda a: -a["onem"])
 
 
 def test_gece_ve_gunluk_sinir(uygulama):

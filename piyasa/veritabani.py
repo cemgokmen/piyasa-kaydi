@@ -292,6 +292,12 @@ def init_db():
     conn.execute("""CREATE TABLE IF NOT EXISTS enflasyon (
         ulke TEXT, ay TEXT, endeks REAL, aylik REAL, guncelleme TEXT, PRIMARY KEY (ulke, ay))""")
 
+    # Finans haberleri (RSS): üç gün tutulur (bkz. toplama/haber_akisi.py)
+    conn.execute("""CREATE TABLE IF NOT EXISTS haber (
+        adres TEXT PRIMARY KEY, kaynak TEXT, baslik TEXT, ozet TEXT, konu TEXT, onem INTEGER, gorsel TEXT,
+        yayin TEXT, alindi TEXT, kume TEXT, kaynak_sayisi INTEGER DEFAULT 1, puan REAL)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_haber_yayin ON haber(yayin)")
+
     # Sosyal medyada paylaşılan bildirimler (bkz. piyasa/paylasim): aynı şey iki kez paylaşılmaz
     conn.execute("""CREATE TABLE IF NOT EXISTS paylasim (
         anahtar TEXT PRIMARY KEY, platform TEXT, metin TEXT, durum TEXT, gonderi_id TEXT, zaman TEXT)""")

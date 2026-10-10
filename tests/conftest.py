@@ -182,6 +182,25 @@ def _ay_listesi():
     return aylar("2005-01", f"{bugun.year:04d}-{bugun.month:02d}")
 
 
+def ornek_haberler(conn):
+    """Son saatlerin finans haberleri (biri iki kaynakta), toplayıcının kaydetme adımıyla."""
+    from datetime import datetime, timedelta
+
+    from piyasa.toplama import haber_akisi
+    simdi = datetime.now(UTC)
+    haber_akisi.kaydet(conn, [
+        {"adres": "https://aa.example/faiz", "kaynak": "AA", "baslik": "Merkez Bankası politika faizini yüzde 40'ta sabit tuttu",
+         "ozet": "Para Politikası Kurulu faizi değiştirmedi.", "gorsel": None, "yayin": (simdi - timedelta(hours=2)).isoformat()},
+        {"adres": "https://dunya.example/faiz", "kaynak": "Dünya", "baslik": "Merkez Bankası politika faizini sabit tuttu: yüzde 40",
+         "ozet": "", "gorsel": None, "yayin": (simdi - timedelta(hours=1)).isoformat()},
+        {"adres": "https://trt.example/altin", "kaynak": "TRT Haber", "baslik": "Gram altın rekor kırdı",
+         "ozet": "Ons altındaki yükselişle gram altın yeni zirve gördü.", "gorsel": None,
+         "yayin": (simdi - timedelta(hours=3)).isoformat()},
+        {"adres": "https://eko.example/mac", "kaynak": "Ekonomim", "baslik": "Derbi maçı bu akşam", "ozet": "", "gorsel": None,
+         "yayin": (simdi - timedelta(hours=1)).isoformat()},
+    ])
+
+
 def ornek_enflasyon(conn):
     """TL'de aylık %2, dolarda aylık %0,25 enflasyon."""
     for ulke, oran in (("TR", 0.02), ("US", 0.0025)):
@@ -388,6 +407,7 @@ def veritabani_yolu(tmp_path_factory):
     ornek_kripto_verisi(conn)
     ornek_bist_verisi(conn)
     ornek_enflasyon(conn)
+    ornek_haberler(conn)
     ornek_analiz_verisi(conn)
     # Devlet sözleşmeleri: NVDA'ya Jane'in alımından sonra olağanın çok üstünde sözleşme
     conn.executemany("INSERT INTO ihale VALUES (?,?,?,?,?,?,?,?,?)", [

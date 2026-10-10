@@ -147,7 +147,9 @@ def kap_karti(x):
     return {"etiket": f"KAP · İÇERİDEN {'ALIM' if alim else 'SATIŞ'}", "renk": YESIL if alim else KIRMIZI,
             "kod": x["kod"], "sirket": x["sirket"], "tutar": tutar(x["tutar"]), "kisi": f"{kisi} · {rol}",
             "ayrinti": " · ".join(ayrinti), "tarih": _uzun_gun(x["islem_tarihi"]),
-            "adres": f"{SITE}/bist/{x['kod']}", "kaynak": "Kaynak: KAP", "dosya": f"{x['kod']}-{x['islem_tarihi']}"}
+            "adres": f"{SITE}/bist/{x['kod']}", "kaynak": "Kaynak: KAP", "dosya": f"{x['kod']}-{x['islem_tarihi']}",
+            "neden": ("Yöneticinin ya da büyük ortağın kendi şirketinden hisse alması güven işareti sayılır." if alim else
+                      "İçeriden satışlar kişisel nedenlerle de yapılabilir; tek başına olumsuz işaret değildir.")}
 
 
 def geri_karti(x):
@@ -155,7 +157,8 @@ def geri_karti(x):
             "tutar": tutar(x["tutar"]), "kisi": "Şirket kendi payını borsadan geri aldı",
             "ayrinti": f"Son 90 günde toplam {tutar(x['toplam_90'])}" if x.get("toplam_90") else "",
             "tarih": _uzun_gun(x["son_tarih"]), "adres": f"{SITE}/bist/{x['kod']}", "kaynak": "Kaynak: KAP",
-            "dosya": f"{x['kod']}-geri-alim-{x['son_tarih']}"}
+            "dosya": f"{x['kod']}-geri-alim-{x['son_tarih']}",
+            "neden": "Şirketin kendi hissesini alması, hissenin ucuz olduğunu düşündüğünü gösterir."}
 
 
 def form4_karti(x):
@@ -165,7 +168,9 @@ def form4_karti(x):
             "kod": x["ticker"], "sirket": x["sirket"], "tutar": tutar(x["tutar"], "dolar"), "kisi": f"{x['kisi']} · {rol}",
             "ayrinti": f"{adet(x['adet'])} adet · ort. {fiyat_metni(x['fiyat'], 'dolar')}" if x.get("adet") and x.get("fiyat") else "",
             "tarih": _uzun_gun(x["disclosed_date"]), "adres": f"{SITE}/hisse/{x['ticker']}", "kaynak": "Kaynak: SEC Form 4",
-            "dosya": f"{x['ticker']}-{x['disclosed_date']}"}
+            "dosya": f"{x['ticker']}-{x['disclosed_date']}",
+            "neden": ("ABD'de yöneticilerin kendi parasıyla hisse alması şirkete güvenin işareti sayılır." if alim else
+                      "Büyük yönetici satışları piyasada yakından izlenir.")}
 
 
 def kongre_karti(x):
@@ -178,4 +183,80 @@ def kongre_karti(x):
             "kisi": " · ".join(p for p in (x["kisi"], unvan_, parti) if p),
             "ayrinti": f"İşlem tarihi {_uzun_gun(x['islem_tarihi'])}" if x.get("islem_tarihi") else "",
             "tarih": _uzun_gun(x["disclosed_date"]), "adres": f"{SITE}/hisse/{x['ticker']}",
-            "kaynak": "Kaynak: Kongre bildirimi", "dosya": f"{x['ticker']}-kongre-{x['disclosed_date']}"}
+            "kaynak": "Kaynak: Kongre bildirimi", "dosya": f"{x['ticker']}-kongre-{x['disclosed_date']}",
+            "neden": "ABD'li siyasetçiler hisse işlemlerini yasa gereği 45 gün içinde açıklamak zorunda."}
+
+
+# ---------------------------------------------------------------------------
+# Finans haberleri: kaynağı belirtilen kısa haber; kartta konu çizimi ve canlı fiyat
+# ---------------------------------------------------------------------------
+
+# Konu: (kart rengi, etiket, X etiketleri, "neden önemli" — finans bilmeyen için tek cümle, ilgili gösterge)
+HABER_KONULARI = {
+    "faiz": ("#8B5CF6", "FAİZ VE ENFLASYON", "#faiz #enflasyon",
+             "Faiz ve enflasyon; kredi, mevduat ve döviz kurlarını doğrudan etkiler.", "TRY=X"),
+    "doviz": ("#EAB308", "DÖVİZ VE ALTIN", "#dolar #altın",
+              "Kurdaki ve altındaki hareketler birikimlerin değerini doğrudan etkiler.", "GRAM"),
+    "borsa": ("#22C55E", "BORSA", "#borsa #BIST100",
+              "Hisse fiyatları şirketlerin kazancına ve yatırımcı beklentisine göre değişir.", "XU100.IS"),
+    "enerji": ("#F97316", "ENERJİ", "#petrol #enerji",
+               "Enerji fiyatları akaryakıttan faturalara kadar günlük harcamalara yansır.", "BZ=F"),
+    "kripto": ("#F59E0B", "KRİPTO", "#bitcoin #kripto",
+               "Kripto paralar çok oynaktır; fiyatları kısa sürede sert değişebilir.", "BTC-USD"),
+    "dunya": ("#3B82F6", "DÜNYA EKONOMİSİ", "#ekonomi",
+              "Büyük ekonomilerdeki gelişmeler Türkiye piyasalarını da etkiler.", "^GSPC"),
+    "ekonomi": ("#14B8A6", "EKONOMİ", "#ekonomi",
+                "Ekonomideki gelişmeler gelirlere, fiyatlara ve piyasalara yansır.", "TRY=X"),
+}
+
+
+def _gosterge_kodu(x):
+    """Haberin konusuna ve başlığına göre kartta gösterilecek canlı fiyat."""
+    b = x["baslik"].lower()
+    if x["konu"] == "doviz":
+        if "gümüş" in b:
+            return "SI=F"
+        if "altın" in b or "ons" in b:
+            return "GRAM"
+        if "euro" in b or "avro" in b:
+            return "EURTRY=X"
+        return "TRY=X"
+    if x["konu"] == "enerji":
+        # Brent fiyatı yalnızca petrol ve akaryakıt haberlerinde anlamlı
+        return "BZ=F" if any(k in b for k in ("petrol", "brent", "akaryakıt", "benzin", "motorin", "opec")) else None
+    return HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])[4]
+
+
+def haber(x):
+    """X metni: başlık, özet, kaynak. Haberin kendisi kaynağındadır; biz kısa aktarırız."""
+    renk, etiket, etiketler, neden, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
+    govde = [x["baslik"]]
+    if x.get("ozet") and x["ozet"].lower()[:60] != x["baslik"].lower()[:60]:
+        govde.append(x["ozet"])
+    return "\n\n".join(govde) + f"\n\nKaynak: {x['kaynak']} · {etiketler}\n{SITE}/gunluk-ozet"
+
+
+def satirlara_bol(metin, en_cok_karakter, en_cok_satir):
+    """Kelimeleri bölmeden satırlara ayırır; sığmazsa son satır '…' ile biter."""
+    import textwrap
+    satirlar = textwrap.wrap(metin, en_cok_karakter)
+    if len(satirlar) > en_cok_satir:
+        satirlar = satirlar[:en_cok_satir]
+        satirlar[-1] = satirlar[-1].rstrip(" ,.;:") + "…"
+    return satirlar
+
+
+def haber_karti(x, gosterge=None):
+    renk, etiket, _, neden, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
+    # Başlık en çok 3 satır: uzun başlıkta yazı küçülür
+    boyut, satirlar = 38, []
+    for secenek, karakter in ((54, 24), (48, 27), (42, 31), (38, 34)):
+        boyut, satirlar = secenek, satirlara_bol(x["baslik"], karakter, 3)
+        if not satirlar[-1].endswith("…"):
+            break
+    ozet = satirlara_bol(x.get("ozet") or "", 52, 2) if x.get("ozet") else []
+    yayin = x.get("yayin_yerel") or ""
+    return {"tip": "haber", "konu": x["konu"], "renk": renk, "etiket": etiket, "baslik_satirlari": satirlar,
+            "baslik_boyut": boyut, "ozet_satirlari": ozet, "neden": neden, "gosterge": gosterge,
+            "kaynak": f"Kaynak: {x['kaynak']}", "tarih": yayin, "adres": f"{SITE}/gunluk-ozet",
+            "dosya": f"haber-{x['konu']}-{(x.get('yayin') or '')[:16].replace(':', '')}"}

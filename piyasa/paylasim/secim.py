@@ -157,11 +157,50 @@ def kongre_islemleri(conn, bas_gun):
     return sonuc
 
 
+HABER_ESIK = 25              # önem puanı
+HABER_SAAT = 12              # haberlerde en çok bu kadar saat geriye bakılır: haber güncel olmalı
+HABER_SAYISI = 15
+
+
+def _gostergeler():
+    """Piyasa şeridindeki canlı fiyatlar: {'GRAM': {...}, 'TRY=X': {...}} (yoksa indirilir)."""
+    try:
+        from piyasa.emtia import serit
+        liste = serit.son_hali() or [serit.bicimli(g) for g in serit.serit()]
+        return {g["kod"]: g for g in liste}
+    except Exception:
+        return {}
+
+
+def haber_adaylari(conn, simdi, saat):
+    """Son saatlerin en önemli haberleri; aynı olaydan yalnızca kümenin temsilcisi."""
+    from datetime import UTC
+    bas = (datetime.now(UTC) - timedelta(hours=min(saat, HABER_SAAT))).isoformat()
+    satirlar = conn.execute(
+        """SELECT adres, kaynak, baslik, ozet, konu, puan, kaynak_sayisi, yayin, kume FROM haber
+           WHERE yayin >= ? AND adres = kume AND puan >= ? ORDER BY puan DESC LIMIT ?""",
+        (bas, HABER_ESIK, HABER_SAYISI)).fetchall()
+    gostergeler = _gostergeler() if satirlar else {}
+    sonuc = []
+    for r in satirlar:
+        x = dict(r)
+        yerel = datetime.fromisoformat(x["yayin"]).astimezone()
+        x["yayin_yerel"] = f"{metin.gun(yerel.date().isoformat())} · {yerel:%H:%M}"
+        gosterge = gostergeler.get(metin._gosterge_kodu(x))
+        sonuc.append({"anahtar": f"haber:{x['kume']}", "tur": "Haber", "grup": "haber",
+                      "onem": x["puan"], "metin": metin.haber(x), "kart": metin.haber_karti(x, gosterge),
+                      "kaynak": x, "kaynak_adres": x["adres"]})
+    return sonuc
+
+
 def adaylar(conn, simdi=None, kur=45.0, saat=36):
     """Son 'saat' saatte bildirilen, eşikleri aşan işlemler; önem sırasıyla."""
     simdi = simdi or datetime.now()
     bas = (simdi - timedelta(hours=saat)).strftime("%Y-%m-%d %H:%M:%S")
     bas_gun = (simdi - timedelta(hours=saat)).date().isoformat()
-    hepsi = (kap_islemleri(conn, bas, kur) + geri_alimlar(conn, bas, kur)
-             + form4_islemleri(conn, bas_gun) + kongre_islemleri(conn, bas_gun))
-    return sorted(hepsi, key=lambda a: -a["onem"])
+    islemler = (kap_islemleri(conn, bas, kur) + geri_alimlar(conn, bas, kur)
+                + form4_islemleri(conn, bas_gun) + kongre_islemleri(conn, bas_gun))
+    for a in islemler:
+        a["grup"] = "islem"
+    # Haberler kendi puanına göre, işlemler dolar karşılığına göre sıralı; iki grup ayrı listelenir
+    return haber_adaylari(conn, simdi, saat) + sorted(islemler, key=lambda a: -a["onem"])
