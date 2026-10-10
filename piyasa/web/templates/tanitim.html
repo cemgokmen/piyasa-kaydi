@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block baslik %}Tanıtım gönderisi · Piyasa Kaydı{% endblock %}
+{% block yapisal %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% macro gorsel(ad, en=1600, boy=900) -%}
+{% if ad in hazir %}
+<a class="tanitim-gorsel" href="{{ url_for('paylasim.tanitim_dosya', ad=ad ~ '.png') }}" download="piyasakaydi-{{ ad }}.png" title="İndir">
+  <img src="{{ url_for('paylasim.tanitim_dosya', ad=ad ~ '.png') }}" alt="{{ ad }}" loading="lazy" width="{{ en }}" height="{{ boy }}"></a>
+{% else %}<div class="tanitim-eksik">{{ ad }} henüz üretilmedi</div>{% endif %}
+{%- endmacro %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol"><a href="{{ url_for('paylasim.sayfa') }}">Paylaşım kartları</a></p>
+    <h1>Tanıtım ve profil</h1>
+    <p class="sayfa-not">İlk gönderi için zincir metinleri ve görseller; X profili için kapak, profil fotoğrafı ve biyografi.
+    Görsele tıklayınca indirilir.</p>
+  </div>
+</header>
+{% if not hazir %}
+<p class="bos-durum">Görseller henüz üretilmedi. Terminalde: <code>./venv/bin/python -m piyasa tanitim</code></p>
+{% endif %}
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Tanıtım zinciri</h2>
+    <p class="bolum-not">İlk gönderiyi atın, sonrakileri ona yanıt olarak ekleyin. Her gönderide en çok 4 görsel. İlk gönderiyi profilde sabitleyin.</p></div></header>
+  {% for metin, gorseller in zincir %}
+  <article class="panel tanitim-gonderi">
+    <div class="tanitim-izgara tanitim-izgara-{{ gorseller|length }}">{% for g in gorseller %}{{ gorsel(g) }}{% endfor %}</div>
+    <div class="paylasim-yan">
+      <p class="paylasim-tur"><span class="rozet">{{ loop.index }}. gönderi</span></p>
+      <textarea class="paylasim-metin" rows="9">{{ metin }}</textarea>
+      <div class="paylasim-dugmeler"><button type="button" class="dugme" data-kopyala>Metni kopyala</button></div>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>X profili</h2>
+    <p class="bolum-not">Ad: {{ profil.ad }} · Kullanıcı adı: {{ profil.kullanici }} · Konum: {{ profil.konum }} · Web sitesi: {{ profil.site }}</p></div></header>
+  <div class="tanitim-profil">
+    <div><p class="paylasim-tur"><span class="rozet">Kapak görseli · 1500×500</span></p>{{ gorsel('profil-kapak', 1500, 500) }}</div>
+    <div><p class="paylasim-tur"><span class="rozet">Profil fotoğrafı · 400×400</span></p>{{ gorsel('profil-foto', 400, 400) }}</div>
+  </div>
+  {% for bio in profil.bio_secenekleri %}
+  <article class="panel tanitim-bio">
+    <p class="paylasim-tur"><span class="rozet">Biyografi {{ loop.index }}</span> <span class="soluk">{{ bio|length }} / 160 karakter</span></p>
+    <textarea class="paylasim-metin" rows="3">{{ bio }}</textarea>
+    <div class="paylasim-dugmeler"><button type="button" class="dugme" data-kopyala>Kopyala</button></div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
+
+{% block betik %}<script>
+document.querySelectorAll("[data-kopyala]").forEach(function (d) {
+  d.addEventListener("click", function () {
+    const m = d.closest("article").querySelector("textarea").value;
+    navigator.clipboard.writeText(m).then(() => { const e = d.textContent; d.textContent = "Kopyalandı"; setTimeout(() => (d.textContent = e), 1500); });
+  });
+});
+</script>{% endblock %}

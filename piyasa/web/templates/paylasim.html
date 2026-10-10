@@ -22,6 +22,7 @@
 {% set haberler = adaylar|selectattr('grup', 'equalto', 'haber')|list %}
 {% set islemler = adaylar|rejectattr('grup', 'equalto', 'haber')|list %}
 <nav class="segment paylasim-sekme" aria-label="Kart türü">
+  <a href="{{ url_for('paylasim.tanitim_sayfasi') }}">Tanıtım ve profil</a>
   <a href="#haberler">Finans haberleri <span class="soluk">{{ haberler|length }}</span></a>
   <a href="#islemler">Alım satımlar <span class="soluk">{{ islemler|length }}</span></a>
 </nav>

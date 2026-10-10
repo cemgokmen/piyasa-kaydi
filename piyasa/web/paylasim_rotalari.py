@@ -8,9 +8,9 @@ from contextlib import closing
 from datetime import datetime
 from functools import wraps
 
-from flask import Blueprint, abort, jsonify, render_template, request
+from flask import Blueprint, abort, jsonify, render_template, request, send_from_directory
 
-from piyasa.paylasim import calistir
+from piyasa.paylasim import calistir, tanitim
 from piyasa.veritabani import get_connection, init_db
 
 paylasim = Blueprint("paylasim", __name__)
@@ -66,3 +66,36 @@ def isaretle():
                      (anahtar, metin_[:2000], durum, datetime.now().isoformat(timespec="seconds")))
         conn.commit()
     return jsonify({"tamam": True})
+
+
+# ---------------------------------------------------------------------------
+# Tanıtım gönderisi: slaytlar, X zinciri metinleri, profil görselleri ve biyografi
+# ---------------------------------------------------------------------------
+
+@paylasim.route("/paylasim/tanitim")
+@yalnizca_yerel
+def tanitim_sayfasi():
+    hazir = {p.stem for p in tanitim.KLASOR.glob("*.png")}
+    return render_template("tanitim.html", aktif="paylasim", zincir=tanitim.ZINCIR, profil=tanitim.PROFIL,
+                           slaytlar=tanitim.SLAYTLAR, hazir=hazir)
+
+
+@paylasim.route("/paylasim/tanitim/dosya/<path:ad>")
+@yalnizca_yerel
+def tanitim_dosya(ad):
+    return send_from_directory(tanitim.KLASOR, ad)
+
+
+@paylasim.route("/paylasim/tanitim/slayt/<ad>")
+@yalnizca_yerel
+def tanitim_slayt(ad):
+    """Görsel üretimi için tek slayt (tanitim.py bunu tam boyutta fotoğraflar)."""
+    olculer = {"profil-kapak": (1500, 500), "profil-foto": (400, 400)}
+    slaytlar = {x["ad"]: (i + 1, x) for i, x in enumerate(tanitim.SLAYTLAR)}
+    if ad not in slaytlar and ad not in olculer:
+        abort(404)
+    no, s = slaytlar.get(ad, (0, {}))
+    adres = dict((e[0], e[1]) for e in tanitim.EKRANLAR).get(s.get("ekran"), "")
+    en, boy = olculer.get(ad, (1600, 900))
+    return render_template("tanitim_slayt.html", ad=ad, s=s, no=no, toplam=len(tanitim.SLAYTLAR),
+                           adres=adres, en=en, boy=boy)

@@ -111,3 +111,16 @@ def test_paylasildi_isaretlenen_bir_daha_onerilmez(istemci):
 
 def test_robots_paylasim_sayfasini_engeller(istemci):
     assert "Disallow: /paylasim" in istemci.get("/robots.txt").get_data(as_text=True)
+
+
+def test_tanitim_sayfalari_yalnizca_yerel(istemci):
+    assert istemci.get("/paylasim/tanitim", headers={"CF-Connecting-IP": "1.2.3.4"}).status_code == 404
+    html = istemci.get("/paylasim/tanitim").get_data(as_text=True)
+    assert "Tanıtım zinciri" in html and "Biyografi 1" in html
+    slayt = istemci.get("/paylasim/tanitim/slayt/02-bist").get_data(as_text=True)
+    assert 'id="slayt"' in slayt and "KAP&#39;ta kim ne aldı?" in slayt
+    assert istemci.get("/paylasim/tanitim/slayt/yok").status_code == 404
+    from piyasa.paylasim import tanitim
+    # X biyografisi 160 karakteri geçemez; bir gönderide en çok 4 görsel
+    assert all(len(b) <= 160 for b in tanitim.PROFIL["bio_secenekleri"])
+    assert all(len(g) <= 4 for _, g in tanitim.ZINCIR)

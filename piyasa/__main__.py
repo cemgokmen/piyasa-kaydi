@@ -57,6 +57,7 @@ KOMUTLAR = {
     "kripto": "piyasa.toplama.kripto",
     "kap": "piyasa.toplama.kap",
     "paylas": "piyasa.paylasim.calistir",
+    "tanitim": "piyasa.paylasim.tanitim",
     "haberler": "piyasa.toplama.haber_akisi",
     "fiyatlar": "piyasa.toplama.fiyat_gecmisi",
     "sirketler": "piyasa.toplama.sirketler",

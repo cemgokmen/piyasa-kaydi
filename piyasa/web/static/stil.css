@@ -2491,3 +2491,11 @@ a.ozet-gosterge:hover { border-color: var(--vurgu); }
   .ozet-gostergeler { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ozet-haber-gruplari { grid-template-columns: minmax(0, 1fr); }
 }
+.tanitim-gonderi { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; padding: 16px; margin-bottom: 16px; }
+.tanitim-izgara { display: grid; gap: 8px; }
+.tanitim-izgara-4, .tanitim-izgara-2 { grid-template-columns: 1fr 1fr; }
+.tanitim-gorsel img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--cizgi); }
+.tanitim-eksik { display: grid; place-items: center; aspect-ratio: 16 / 9; border: 1px dashed var(--cizgi); border-radius: 8px; color: var(--yazi-3); font-size: 13px; }
+.tanitim-profil { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 18px; margin-bottom: 16px; align-items: start; }
+.tanitim-bio { padding: 14px 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+@media (max-width: 1020px) { .tanitim-gonderi, .tanitim-profil { grid-template-columns: minmax(0, 1fr); } }
