@@ -32,7 +32,7 @@ def kaydet(app, sure=SURE, en_cok=EN_COK):
 
     def uygun():
         return (request.method == "GET" and not app.config.get("TESTING")
-                and request.endpoint not in (None, "static") and not request.path.startswith("/api/"))
+                and request.endpoint not in (None, "static") and not request.path.startswith(("/api/", "/paylasim")))
 
     @app.before_request
     def onbellekten():

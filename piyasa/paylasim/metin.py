@@ -120,3 +120,62 @@ def kongre(x):
     ikinci = f"İşlem tarihi: {gun(x['islem_tarihi'])}." if x.get("islem_tarihi") else ""
     return "\n\n".join(p for p in (ilk, ikinci) if p) + \
         f"\n\nKaynak: Kongre işlem bildirimi · ${x['ticker']}\n{SITE}/hisse/{x['ticker']}"
+
+
+# ---------------------------------------------------------------------------
+# Paylaşım kartları (görsel): elle paylaşım için 1200×675 kartın alanları
+# ---------------------------------------------------------------------------
+
+YESIL, KIRMIZI, MAVI = "#22C55E", "#EF4444", "#3B82F6"
+
+
+def _uzun_gun(iso):
+    d = date.fromisoformat(iso[:10])
+    return f"{d.day} {AYLAR_UZUN[d.month - 1]} {d.year}"
+
+
+def kap_karti(x):
+    alim = x["islem"] == "buy"
+    sirket_mi = x["kisi_turu"] == "sirket" or bool(SIRKET_ADI.search(x["kisi"] or ""))
+    kisi = x["kisi_kisa"] if sirket_mi else x["kisi"]
+    rol = "Ortak" if sirket_mi or not x.get("gorev") else x["gorev"]
+    ayrinti = []
+    if x.get("nominal") and x.get("fiyat"):
+        ayrinti.append(f"{adet(x['nominal'])} adet · ort. {fiyat_metni(x['fiyat'], 'TL')}")
+    if x.get("oran_sonra") is not None:
+        ayrinti.append(f"işlem sonrası pay %{ondalik(x['oran_sonra'])}")
+    return {"etiket": f"KAP · İÇERİDEN {'ALIM' if alim else 'SATIŞ'}", "renk": YESIL if alim else KIRMIZI,
+            "kod": x["kod"], "sirket": x["sirket"], "tutar": tutar(x["tutar"]), "kisi": f"{kisi} · {rol}",
+            "ayrinti": " · ".join(ayrinti), "tarih": _uzun_gun(x["islem_tarihi"]),
+            "adres": f"{SITE}/bist/{x['kod']}", "kaynak": "Kaynak: KAP", "dosya": f"{x['kod']}-{x['islem_tarihi']}"}
+
+
+def geri_karti(x):
+    return {"etiket": "KAP · PAY GERİ ALIMI", "renk": MAVI, "kod": x["kod"], "sirket": x["sirket"],
+            "tutar": tutar(x["tutar"]), "kisi": "Şirket kendi payını borsadan geri aldı",
+            "ayrinti": f"Son 90 günde toplam {tutar(x['toplam_90'])}" if x.get("toplam_90") else "",
+            "tarih": _uzun_gun(x["son_tarih"]), "adres": f"{SITE}/bist/{x['kod']}", "kaynak": "Kaynak: KAP",
+            "dosya": f"{x['kod']}-geri-alim-{x['son_tarih']}"}
+
+
+def form4_karti(x):
+    alim = x["action"] == "buy"
+    rol = x["rol"] if x["rol"] not in ("Bildirim yükümlüsü", "Üst düzey yönetici", "") else "Yönetici"
+    return {"etiket": f"ABD · YÖNETİCİ {'ALIMI' if alim else 'SATIŞI'}", "renk": YESIL if alim else KIRMIZI,
+            "kod": x["ticker"], "sirket": x["sirket"], "tutar": tutar(x["tutar"], "dolar"), "kisi": f"{x['kisi']} · {rol}",
+            "ayrinti": f"{adet(x['adet'])} adet · ort. {fiyat_metni(x['fiyat'], 'dolar')}" if x.get("adet") and x.get("fiyat") else "",
+            "tarih": _uzun_gun(x["disclosed_date"]), "adres": f"{SITE}/hisse/{x['ticker']}", "kaynak": "Kaynak: SEC Form 4",
+            "dosya": f"{x['ticker']}-{x['disclosed_date']}"}
+
+
+def kongre_karti(x):
+    alim = x["action"] == "buy"
+    parti = {"D": "Demokrat", "R": "Cumhuriyetçi"}.get(x.get("parti") or "", "")
+    unvan_ = "Senatör" if "senato" in (x.get("meclis") or "").lower() else "Temsilciler Meclisi"
+    aralik = f"{tutar(x['alt'], '').strip()} – {tutar(x['ust'], 'dolar')}" if x["alt"] != x["ust"] else tutar(x["ust"], "dolar")
+    return {"etiket": f"ABD KONGRESİ · {'ALIM' if alim else 'SATIŞ'}", "renk": YESIL if alim else KIRMIZI,
+            "kod": x["ticker"], "sirket": x["sirket"], "tutar": aralik,
+            "kisi": " · ".join(p for p in (x["kisi"], unvan_, parti) if p),
+            "ayrinti": f"İşlem tarihi {_uzun_gun(x['islem_tarihi'])}" if x.get("islem_tarihi") else "",
+            "tarih": _uzun_gun(x["disclosed_date"]), "adres": f"{SITE}/hisse/{x['ticker']}",
+            "kaynak": "Kaynak: Kongre bildirimi", "dosya": f"{x['ticker']}-kongre-{x['disclosed_date']}"}

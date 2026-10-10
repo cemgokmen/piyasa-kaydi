@@ -79,7 +79,7 @@ def kap_islemleri(conn, bas, kur):
         x["gorev"] = tr_cumle(x["gorev"]) if x.get("gorev") else None
         x["islem_tarihi"] = x["islem_tarihi"] or x["yayin"][:10]
         sonuc.append({"anahtar": f"kap:{x['indeks']}", "tur": "KAP içeriden", "onem": x["tutar"] / kur,
-                      "metin": metin.kap_islem(x), "kaynak": x})
+                      "metin": metin.kap_islem(x), "kart": metin.kap_karti(x), "kaynak": x})
     return sonuc
 
 
@@ -100,7 +100,7 @@ def geri_alimlar(conn, bas, kur):
         if not _fiyat_tutarli(x["kod"], x["ortalama"]):
             continue
         sonuc.append({"anahtar": f"geri:{x['kod']}:{x['son_tarih']}", "tur": "Geri alım", "onem": x["tutar"] / kur,
-                      "metin": metin.geri_alim(x), "kaynak": x})
+                      "metin": metin.geri_alim(x), "kart": metin.geri_karti(x), "kaynak": x})
     return sonuc
 
 
@@ -129,7 +129,7 @@ def form4_islemleri(conn, bas_gun):
         # Üst yönetimin alımı daha çok haber: önem iki katı
         onem = x["tutar"] * (2 if ust and x["action"] == "buy" else 1)
         sonuc.append({"anahtar": f"form4:{x['person']}:{x['ticker']}:{x['action']}:{x['disclosed_date']}",
-                      "tur": "ABD yönetici", "onem": onem, "metin": metin.form4(x), "kaynak": x})
+                      "tur": "ABD yönetici", "onem": onem, "metin": metin.form4(x), "kart": metin.form4_karti(x), "kaynak": x})
     return sonuc
 
 
@@ -153,7 +153,7 @@ def kongre_islemleri(conn, bas_gun):
         x["sirket"] = sirket_gorunen_ad(x["sirket"]) if x["sirket"] else x["ticker"]
         onem = (x["alt"] + x["ust"]) / 2 * (5 if unlu else 1)
         sonuc.append({"anahtar": f"kongre:{x['person']}:{x['ticker']}:{x['action']}:{x['disclosed_date']}",
-                      "tur": "Kongre", "onem": onem, "metin": metin.kongre(x), "kaynak": x})
+                      "tur": "Kongre", "onem": onem, "metin": metin.kongre(x), "kart": metin.kongre_karti(x), "kaynak": x})
     return sonuc
 
 

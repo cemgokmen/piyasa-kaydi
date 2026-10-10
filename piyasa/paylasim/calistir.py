@@ -35,10 +35,10 @@ def _kur():
         return 45.0
 
 
-def bekleyenler(conn, simdi=None):
-    """Daha önce paylaşılmamış adaylar, önem sırasıyla."""
+def bekleyenler(conn, simdi=None, saat=36):
+    """Son 'saat' saatin daha önce paylaşılmamış adayları, önem sırasıyla."""
     paylasilan = {r[0] for r in conn.execute("SELECT anahtar FROM paylasim")}
-    return [a for a in secim.adaylar(conn, simdi, kur=_kur()) if a["anahtar"] not in paylasilan]
+    return [a for a in secim.adaylar(conn, simdi, kur=_kur(), saat=saat) if a["anahtar"] not in paylasilan]
 
 
 def paylasabilir_mi(conn, simdi):

@@ -81,3 +81,30 @@ def test_paylasim_varsayilan_kapali(tmp_path, monkeypatch):
     assert not x.acik_mi()
     dosya.write_text("X_PAYLASIM=acik\n")
     assert x.acik_mi()
+
+
+def test_paylasim_kartlari_yalnizca_yerel(istemci):
+    # Cloudflare üzerinden gelen istek sayfayı göremez
+    assert istemci.get("/paylasim", headers={"CF-Connecting-IP": "1.2.3.4"}).status_code == 404
+    assert istemci.post("/paylasim/isaretle", json={"anahtar": "a"}, headers={"CF-Ray": "x"}).status_code == 404
+    r = istemci.get("/paylasim?saat=240")
+    assert r.status_code == 200 and r.headers["Cache-Control"] == "no-store"
+    html = r.get_data(as_text=True)
+    assert 'class="paylasim-svg"' in html and "KAP · İÇERİDEN ALIM" in html and "piyasakaydi.com/bist/THYAO" in html
+
+
+def test_paylasildi_isaretlenen_bir_daha_onerilmez(istemci):
+    assert 'data-anahtar="kap:1001"' in istemci.get("/paylasim?saat=240").get_data(as_text=True)
+    assert istemci.post("/paylasim/isaretle", json={"anahtar": "kap:1001", "metin": "deneme"}).get_json()["tamam"]
+    assert 'data-anahtar="kap:1001"' not in istemci.get("/paylasim?saat=240").get_data(as_text=True)
+    # Geçersiz durum reddedilir
+    assert istemci.post("/paylasim/isaretle", json={"anahtar": "x", "durum": "sil"}).status_code == 400
+    from piyasa.veritabani import get_connection
+    conn = get_connection()
+    conn.execute("DELETE FROM paylasim")
+    conn.commit()
+    conn.close()
+
+
+def test_robots_paylasim_sayfasini_engeller(istemci):
+    assert "Disallow: /paylasim" in istemci.get("/robots.txt").get_data(as_text=True)

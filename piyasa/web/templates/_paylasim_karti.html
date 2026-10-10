@@ -1,0 +1,21 @@
+{# X için 1200×675 paylaşım kartı (SVG). Görsel olarak indirilirken tarayıcıda PNG'ye çevrilir. #}
+{% macro kart(k, kimlik) -%}
+{% set yazi = "Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" %}
+{% set sirket = k.sirket if k.sirket|length <= 42 else k.sirket[:40] ~ '…' %}
+<svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.sirket }} {{ k.tutar }}">
+  <rect width="1200" height="675" fill="#0B1220"/>
+  <rect width="12" height="675" fill="{{ k.renk }}"/>
+  <rect x="64" y="54" width="46" height="46" rx="11" fill="#1B4DFF"/>
+  <path d="M74 88l11-13 9 8 13-17" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="124" y="88" font-family="{{ yazi }}" font-size="30" fill="#E2E8F0">Piyasa<tspan font-weight="700" fill="#FFFFFF">Kaydı</tspan></text>
+  <text x="1136" y="86" text-anchor="end" font-family="{{ yazi }}" font-size="22" font-weight="700" letter-spacing="2" fill="{{ k.renk }}">{{ k.etiket }}</text>
+  <text x="64" y="212" font-family="{{ yazi }}" font-size="66" font-weight="800" fill="#FFFFFF">{{ k.kod }}</text>
+  <text x="64" y="264" font-family="{{ yazi }}" font-size="34" fill="#CBD5E1">{{ sirket }}</text>
+  <text x="64" y="392" font-family="{{ yazi }}" font-size="{{ 96 if k.tutar|length <= 16 else 76 }}" font-weight="800" fill="{{ k.renk }}">{{ k.tutar }}</text>
+  <text x="64" y="462" font-family="{{ yazi }}" font-size="{{ 34 if k.kisi|length <= 58 else 28 }}" font-weight="600" fill="#F1F5F9">{{ k.kisi }}</text>
+  {% if k.ayrinti %}<text x="64" y="514" font-family="{{ yazi }}" font-size="28" fill="#94A3B8">{{ k.ayrinti }}</text>{% endif %}
+  <line x1="64" y1="574" x2="1136" y2="574" stroke="#1E293B" stroke-width="2"/>
+  <text x="64" y="626" font-family="{{ yazi }}" font-size="26" font-weight="600" fill="#CBD5E1">{{ k.adres }}</text>
+  <text x="1136" y="626" text-anchor="end" font-family="{{ yazi }}" font-size="24" fill="#94A3B8">{{ k.kaynak }} · {{ k.tarih }}</text>
+</svg>
+{%- endmacro %}

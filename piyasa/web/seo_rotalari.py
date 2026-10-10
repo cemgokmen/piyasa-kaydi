@@ -20,7 +20,7 @@ seo = Blueprint("seo", __name__)
 @seo.route("/robots.txt")
 def robots():
     kok = request.url_root.rstrip("/")
-    metin = f"User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {kok}/sitemap.xml\n"
+    metin = f"User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /paylasim\n\nSitemap: {kok}/sitemap.xml\n"
     return Response(metin, mimetype="text/plain")
 
 

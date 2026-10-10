@@ -78,9 +78,7 @@ KOMUTLAR = {
 # 'guncelle' sırayla çalıştırılan adımlar
 # 'guncelle --hizli' (günde dört kez): yalnızca yeni bildirimler ve bakımları
 # 'guncelle --canli' (15 dakikada bir): gün içi Form 4 ve KAP'ın o günkü bildirimleri
-# Paylaşım (X) en sonda: anahtar dosyası yoksa hiçbir şey yapmaz; kuralları için bkz. piyasa/paylasim
-CANLI_GUNCELLEME = ["form4-canli", ("kap", ["--canli", "--gun", "1", "--en-fazla", "60"]), "slug", "supheli",
-                    ("paylas", ["--gercek"])]
+CANLI_GUNCELLEME = ["form4-canli", ("kap", ["--canli", "--gun", "1", "--en-fazla", "60"]), "slug", "supheli"]
 # Form 4 ve KAP'ı canlı güncelleme zaten 15 dakikada bir alıyor; hızlı güncelleme onları tekrar taramaz
 # (kaçan olursa sabahki tam güncelleme günlük dizinden ve son 7 günden tamamlar)
 HIZLI_GUNCELLEME = ["kongre", "senato", "fon", "slug", "duzelt", "supheli"]

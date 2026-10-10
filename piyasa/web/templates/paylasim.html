@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_paylasim_karti.html" import kart %}
+{% block baslik %}Paylaşım kartları · Piyasa Kaydı{% endblock %}
+{% block yapisal %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block icerik %}
+<header class="sayfa-ust">
+  <div>
+    <p class="ust-yol">Yalnızca bu bilgisayarda</p>
+    <h1>Paylaşım kartları</h1>
+    <p class="sayfa-not">Kayda değer bildirimler, önem sırasıyla. Görseli indirip metinle birlikte X'te paylaşın;
+    sonra "Paylaşıldı" deyin, kart listeden düşer ve bir daha önerilmez. Metni paylaşmadan önce düzenleyebilirsiniz.</p>
+  </div>
+</header>
+
+<div class="filtre-satir">
+  <div class="segment" role="group" aria-label="Dönem">
+    {% for deger, ad in sureler.items() %}<a class="{% if saat == deger %}secili{% endif %}" href="?saat={{ deger }}">{{ ad }}</a>{% endfor %}
+  </div>
+</div>
+
+{% if adaylar %}
+<div class="paylasim-liste">
+  {% for a in adaylar %}
+  <article class="panel paylasim-kart" data-anahtar="{{ a.anahtar }}" data-dosya="{{ a.kart.dosya }}">
+    <div class="paylasim-gorsel">{{ kart(a.kart, 'kart-' ~ loop.index) }}</div>
+    <div class="paylasim-yan">
+      <p class="paylasim-tur"><span class="rozet">{{ a.tur }}</span> <span class="soluk">önem {{ a.onem|round|int|sayi }} $</span></p>
+      <textarea class="paylasim-metin" rows="9" aria-label="Gönderi metni">{{ a.metin }}</textarea>
+      <p class="paylasim-sayac soluk"></p>
+      <div class="paylasim-dugmeler">
+        <button type="button" class="dugme dugme-ana" data-islem="indir">Görseli indir</button>
+        <button type="button" class="dugme" data-islem="kopyala">Metni kopyala</button>
+        <button type="button" class="dugme" data-islem="x">X'te aç</button>
+        <button type="button" class="dugme" data-islem="paylasildi">Paylaşıldı ✓</button>
+        <button type="button" class="dugme dugme-sade" data-islem="atla">Atla</button>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<p class="bos-durum">Şu an paylaşılacak yeni bildirim yok. Bildirimler 15 dakikada bir güncellenir.</p>
+{% endif %}
+
+{% if paylasilanlar %}
+<section class="bolum">
+  <header class="bolum-ust"><div><h2>Son paylaşılanlar</h2></div></header>
+  <ul class="akis panel">
+    {% for p in paylasilanlar %}<li><span class="soluk sayi">{{ p.zaman[5:16].replace('T', ' ') }}</span> <span class="kirp">{{ (p.metin or p.anahtar).split('\n')[0] }}</span></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block betik %}<script src="{{ url_for('static', filename='paylasim.js') }}" defer></script>{% endblock %}
