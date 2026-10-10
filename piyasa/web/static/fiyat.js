@@ -35,7 +35,10 @@
       const deger = document.createElement("span");
       deger.className = "degisim-deger";
       deger.textContent = d.oran === null ? "—" : G.yuzde(d.oran);
-      if (d.oran === null) li.title = "Bu süre için fiyat geçmişi yok";
+      if (d.ilk_tarih) {
+        li.classList.add("degisim-ilk");
+        li.title = `${G.tarih(d.ilk_tarih)} tarihinde işlem görmeye başladı; ilk kapanıştan bu yana değişim`;
+      } else if (d.oran === null) li.title = "Bu süre için fiyat geçmişi yok";
       li.append(etiket, deger);
       liste.appendChild(li);
     });
@@ -60,6 +63,22 @@
     kutu.textContent = `${G.tarih(h.tarih)} hacmi: ${G.kisaSayi(h.son)}${hb} ` +
       `(20 günlük ortalama ${G.kisaSayi(h.ortalama)}${hb}${oran !== null ? `, %${oran}` : ""})${yorum}`;
     kutu.hidden = false;
+  }
+
+  // Geçmişi kısa hisselerde (yeni halka arz) bütün geçmişi zaten gösteren aralıktan uzunları gizlenir
+  function araliklariAyarla() {
+    const gizli = veri.gizli_araliklar || [];
+    panel.querySelectorAll("[data-aralik]").forEach((d) => { d.hidden = gizli.includes(d.dataset.aralik); });
+    if (gizli.includes(aralik)) {
+      const gorunen = Array.from(panel.querySelectorAll("[data-aralik]")).filter((d) => !d.hidden);
+      const son = gorunen[gorunen.length - 1];
+      if (son) son.click();
+    }
+    const not = alan("ilk-islem");
+    if (not) {
+      not.hidden = !gizli.length;
+      if (gizli.length) not.textContent = `${G.tarih(veri.ilk_tarih)} tarihinde işlem görmeye başladı`;
+    }
   }
 
   function grafikCiz() {
@@ -124,6 +143,7 @@
       alan("tarih").textContent = `${G.tarih(veri.tarih)} kapanışı`;
       degisimleriYaz();
       hacimYaz();
+      araliklariAyarla();
       grafikCiz();
       anlikBaslat();
     })

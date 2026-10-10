@@ -111,7 +111,7 @@
   </div>
   <div class="fiyat-grafik-kap">
     <div class="grafik-ust-satir">
-      <span class="soluk kucuk">Fiyat grafiği</span>
+      <span class="soluk kucuk">Fiyat grafiği <span data-alan="ilk-islem" hidden></span></span>
       <div class="segment segment-kucuk" role="group" aria-label="Grafik aralığı">
         {% for anahtar, etiket in [('1a', '1 ay'), ('1y', '1 yıl'), ('5y', '5 yıl'), ('10y', '10 yıl')] %}
         <button type="button" data-aralik="{{ anahtar }}" {% if anahtar == '1y' %}class="secili" aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>{{ etiket }}</button>

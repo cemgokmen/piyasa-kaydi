@@ -135,17 +135,39 @@ def tablodan_bilgi(kod, tablo):
     if tablo is None or len(tablo) < 2:
         return None
     kapanis = tablo["Close"]
+    son, ilk = kapanis.index[-1], kapanis.index[0]
+
+    def yetmez(geri):
+        """Fiyat geçmişi bu süreye uzanmıyor mu (ör. yeni halka arz)?"""
+        return geri is not None and ilk > son - geri + pd.Timedelta(days=7)
+
+    # Geçmişi yetmeyen dönemler yerine tek bir "ilk işlemden beri" değişimi
+    degisimler, ilk_eklendi = [], False
+    for a, e, g in DEGISIM_DONEMLERI:
+        if not yetmez(g):
+            degisimler.append({"anahtar": a, "etiket": e, "oran": _degisim(kapanis, g)})
+        elif not ilk_eklendi:
+            ilk_eklendi = True
+            degisimler.append({"anahtar": "ilk", "etiket": "İlk işlemden beri",
+                               "oran": float(kapanis.iloc[-1] / kapanis.iloc[0] - 1) if kapanis.iloc[0] else None,
+                               "ilk_tarih": ilk.strftime("%Y-%m-%d")})
+
+    # Grafik: bir önceki aralık bütün geçmişi zaten gösteriyorsa daha uzun aralıklar gereksiz
+    gizli, onceki = [], None
+    for a, g, _ in GRAFIK_ARALIKLARI:
+        if onceki is not None and yetmez(onceki):
+            gizli.append(a)
+        onceki = g
 
     return {
         "kod": kod,
         "fiyat": round(float(kapanis.iloc[-1]), 4),
-        "tarih": kapanis.index[-1].strftime("%Y-%m-%d"),
-        "degisimler": [
-            {"anahtar": a, "etiket": e, "oran": _degisim(kapanis, g)}
-            for a, e, g in DEGISIM_DONEMLERI
-        ],
+        "tarih": son.strftime("%Y-%m-%d"),
+        "ilk_tarih": ilk.strftime("%Y-%m-%d"),
+        "degisimler": degisimler,
         "hacim": _hacim_ozeti(tablo),
-        "seriler": {a: _seri(tablo, g, o) for a, g, o in GRAFIK_ARALIKLARI},
+        "seriler": {a: _seri(tablo, g, o) for a, g, o in GRAFIK_ARALIKLARI if a not in gizli},
+        "gizli_araliklar": gizli,
     }
 
 

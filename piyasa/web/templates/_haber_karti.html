@@ -1,0 +1,231 @@
+{# Finans haberi kartları (1200×675 SVG): beş düzen, habere göre seçilen çizim.
+   Görseller sitenin kendi çizimleridir; Pexels anahtarı varsa fotoğraflı düzen kullanılır. #}
+{% set yazi = "Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" %}
+
+{# ---------------------------------------------------------------- çizimler (merkez 0,0; yaklaşık ±150) #}
+{% macro ikon(ad, c, z='#0B1220') -%}
+{% if ad in ('altin', 'gumus') %}
+  {% set r1 = '#EAB308' if ad == 'altin' else '#CBD5E1' %}{% set r2 = '#FDE68A' if ad == 'altin' else '#F8FAFC' %}
+  {% for dx, dy in [(-74, 46), (46, 46), (-14, -14)] %}
+  <g transform="translate({{ dx }} {{ dy }})">
+    <path d="M-64 32 L-46 -24 L46 -24 L64 32 Z" fill="{{ r1 }}" stroke="{{ '#94A3B8' if ad == 'gumus' else r1 }}" stroke-width="3"/>
+    <path d="M-46 -24 L46 -24 L38 -9 L-38 -9 Z" fill="{{ r2 }}" fill-opacity=".8"/>
+    <path d="M-64 32 L64 32 L58 42 L-58 42 Z" fill="#000" fill-opacity=".25"/>
+  </g>
+  {% endfor %}
+{% elif ad == 'petrol' %}
+  <rect x="-20" y="-6" width="150" height="150" rx="18" fill="{{ c }}"/>
+  <rect x="-20" y="26" width="150" height="9" fill="#000" fill-opacity=".22"/>
+  <rect x="-20" y="98" width="150" height="9" fill="#000" fill-opacity=".22"/>
+  <path d="M-80 -150 C-40 -90 10 -60 10 -10 A60 60 0 0 1 -170 -10 C-170 -60 -120 -90 -80 -150 Z" fill="{{ z }}" stroke="{{ c }}" stroke-width="9"/>
+  <path d="M-132 0 A34 34 0 0 0 -98 34" fill="none" stroke="{{ c }}" stroke-width="7" stroke-linecap="round"/>
+{% elif ad == 'akaryakit' %}
+  <rect x="-110" y="-130" width="140" height="250" rx="16" fill="{{ c }}"/>
+  <rect x="-88" y="-104" width="96" height="70" rx="8" fill="{{ z }}"/>
+  <text x="-40" y="-58" text-anchor="middle" font-family="{{ yazi }}" font-size="34" font-weight="800" fill="{{ c }}">₺</text>
+  <rect x="-128" y="118" width="176" height="22" rx="6" fill="{{ c }}" fill-opacity=".7"/>
+  <path d="M30 -60 h36 a22 22 0 0 1 22 22 v120 a18 18 0 0 0 36 0 v-140 l-30 -30" fill="none" stroke="{{ c }}" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+{% elif ad == 'gemi' %}
+  {% for x, y, r in [(-110, -40, 0), (-50, -40, 1), (10, -40, 2), (70, -40, 0), (-80, -96, 2), (-20, -96, 0), (40, -96, 1)] %}
+  <rect x="{{ x }}" y="{{ y }}" width="56" height="52" rx="4" fill="{{ [c, '#22C55E', '#3B82F6'][r] }}"/>
+  {% endfor %}
+  <path d="M-170 16 H170 L130 96 H-130 Z" fill="{{ c }}" fill-opacity=".9"/>
+  <path d="M-170 130 q30 -16 60 0 t60 0 t60 0 t60 0 t60 0" fill="none" stroke="{{ c }}" stroke-width="7" stroke-linecap="round" stroke-opacity=".6"/>
+{% elif ad == 'konut' %}
+  <path d="M-150 -10 L0 -140 L150 -10" fill="none" stroke="{{ c }}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="-110" y="-30" width="220" height="170" rx="10" fill="{{ c }}"/>
+  <rect x="-28" y="44" width="56" height="96" rx="6" fill="{{ z }}"/>
+  <rect x="-86" y="0" width="44" height="40" rx="4" fill="{{ z }}"/><rect x="42" y="0" width="44" height="40" rx="4" fill="{{ z }}"/>
+{% elif ad == 'otomobil' %}
+  <path d="M-170 60 V10 Q-170 -10 -150 -14 L-100 -24 L-60 -84 Q-50 -96 -34 -96 H60 Q76 -96 88 -84 L130 -24 L160 -14 Q170 -10 170 10 V60 Z" fill="{{ c }}"/>
+  <path d="M-52 -26 L-26 -74 H10 V-26 Z M28 -26 V-74 H62 L96 -26 Z" fill="{{ z }}" fill-opacity=".85"/>
+  <circle cx="-96" cy="64" r="40" fill="{{ z }}" stroke="{{ c }}" stroke-width="12"/><circle cx="96" cy="64" r="40" fill="{{ z }}" stroke="{{ c }}" stroke-width="12"/>
+{% elif ad == 'banka' %}
+  <path d="M-160 -50 L0 -140 L160 -50 Z" fill="{{ c }}"/>
+  {% for x in [-120, -60, 0, 60, 120] %}<rect x="{{ x - 16 }}" y="-36" width="32" height="128" rx="5" fill="{{ c }}" fill-opacity=".85"/>{% endfor %}
+  <rect x="-172" y="100" width="344" height="24" rx="6" fill="{{ c }}"/>
+  <circle cx="0" cy="-82" r="18" fill="{{ z }}"/>
+{% elif ad == 'yuzde' %}
+  <circle r="120" fill="none" stroke="{{ c }}" stroke-width="16"/>
+  <text y="50" text-anchor="middle" font-family="{{ yazi }}" font-size="150" font-weight="800" fill="{{ c }}">%</text>
+  <path d="M70 -150 l60 0 l0 60" fill="none" stroke="{{ c }}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+{% elif ad == 'grafik' %}
+  {% for i, a, u, y in [(0, 40, 90, 1), (1, 10, 70, 0), (2, 0, 40, 1), (3, -40, 20, 1), (4, -50, -10, 0), (5, -100, -40, 1)] %}
+  <line x1="{{ -125 + i * 50 }}" y1="{{ a - 22 }}" x2="{{ -125 + i * 50 }}" y2="{{ u + 22 }}" stroke="{{ '#22C55E' if y else '#EF4444' }}" stroke-width="4"/>
+  <rect x="{{ -141 + i * 50 }}" y="{{ a }}" width="32" height="{{ u - a }}" rx="4" fill="{{ '#22C55E' if y else '#EF4444' }}"/>
+  {% endfor %}
+  <path d="M-150 110 L-60 60 L10 80 L150 -110" fill="none" stroke="{{ c }}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+{% elif ad == 'bitcoin' %}
+  <circle r="130" fill="{{ c }}"/><circle r="108" fill="none" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="6"/>
+  <text y="56" text-anchor="middle" font-family="{{ yazi }}" font-size="160" font-weight="800" fill="#FFFFFF">₿</text>
+{% elif ad == 'dunya' %}
+  <circle r="140" fill="none" stroke="{{ c }}" stroke-width="10"/>
+  <ellipse rx="64" ry="140" fill="none" stroke="{{ c }}" stroke-width="7"/>
+  <line x1="-140" y1="0" x2="140" y2="0" stroke="{{ c }}" stroke-width="7"/>
+  <path d="M-120 -70 Q0 -44 120 -70 M-120 70 Q0 44 120 70" fill="none" stroke="{{ c }}" stroke-width="7"/>
+{% elif ad == 'simsek' %}
+  <circle r="140" fill="{{ c }}" fill-opacity=".15"/>
+  <path d="M30 -150 L-80 20 H0 L-30 150 L90 -30 H10 Z" fill="{{ c }}" stroke="{{ c }}" stroke-width="6" stroke-linejoin="round"/>
+{% elif ad == 'bugday' %}
+  {% for dx in [-60, 0, 60] %}
+  <g transform="translate({{ dx }} 0) rotate({{ dx / 6 }})">
+    <line x1="0" y1="-40" x2="0" y2="150" stroke="{{ c }}" stroke-width="8" stroke-linecap="round"/>
+    {% for i in range(5) %}<ellipse cx="-14" cy="{{ -120 + i * 30 }}" rx="12" ry="22" transform="rotate(-25 -14 {{ -120 + i * 30 }})" fill="{{ c }}"/>
+    <ellipse cx="14" cy="{{ -120 + i * 30 }}" rx="12" ry="22" transform="rotate(25 14 {{ -120 + i * 30 }})" fill="{{ c }}"/>{% endfor %}
+  </g>
+  {% endfor %}
+{% elif ad == 'cip' %}
+  <rect x="-100" y="-100" width="200" height="200" rx="22" fill="{{ c }}"/>
+  <rect x="-58" y="-58" width="116" height="116" rx="12" fill="{{ z }}"/>
+  {% for i in range(5) %}{% set p = -80 + i * 40 %}
+  <rect x="{{ p - 6 }}" y="-140" width="12" height="40" rx="4" fill="{{ c }}"/><rect x="{{ p - 6 }}" y="100" width="12" height="40" rx="4" fill="{{ c }}"/>
+  <rect x="-140" y="{{ p - 6 }}" width="40" height="12" rx="4" fill="{{ c }}"/><rect x="100" y="{{ p - 6 }}" width="40" height="12" rx="4" fill="{{ c }}"/>
+  {% endfor %}
+{% elif ad in ('dolar', 'euro') %}
+  {% for dx, dy, a in [(-30, 30, -10), (10, -10, 6)] %}
+  <g transform="translate({{ dx }} {{ dy }}) rotate({{ a }})">
+    <rect x="-150" y="-80" width="300" height="160" rx="14" fill="{{ c if loop.last else z }}" stroke="{{ c }}" stroke-width="8"/>
+    <circle r="54" fill="{{ z if loop.last else c }}" fill-opacity="{{ 1 if loop.last else 0.25 }}"/>
+    {% if loop.last %}<text y="26" text-anchor="middle" font-family="{{ yazi }}" font-size="76" font-weight="800" fill="{{ c }}">{{ '$' if ad == 'dolar' else '€' }}</text>{% endif %}
+  </g>
+  {% endfor %}
+{% else %}
+  {% for i, h in [(0, 80), (1, 130), (2, 105), (3, 180)] %}
+  <rect x="{{ -130 + i * 66 }}" y="{{ 120 - h }}" width="48" height="{{ h }}" rx="7" fill="{{ c }}" fill-opacity="{{ 0.5 + i * 0.16 }}"/>
+  {% endfor %}
+  <line x1="-150" y1="124" x2="150" y2="124" stroke="{{ c }}" stroke-opacity=".6" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="110" cy="-110" r="38" fill="{{ z }}" stroke="{{ c }}" stroke-width="7"/>
+  <text x="110" y="-96" text-anchor="middle" font-family="{{ yazi }}" font-size="40" font-weight="800" fill="{{ c }}">₺</text>
+{% endif %}
+{%- endmacro %}
+
+{# ---------------------------------------------------------------- ortak parçalar #}
+{% macro logo(acik=false) -%}
+  <rect x="64" y="54" width="46" height="46" rx="11" fill="#1B4DFF"/>
+  <path d="M74 88l11-13 9 8 13-17" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="124" y="88" font-family="{{ yazi }}" font-size="30" fill="{{ '#334155' if acik else '#E2E8F0' }}">Piyasa<tspan font-weight="700" fill="{{ '#0F172A' if acik else '#FFFFFF' }}">Kaydı</tspan></text>
+{%- endmacro %}
+
+{% macro etiket(k, renk, zemin_opak=0.14, cizgi=0.5) -%}
+  <rect x="{{ 1136 - (k.etiket|length * 14) - 36 }}" y="58" width="{{ k.etiket|length * 14 + 36 }}" height="40" rx="20" fill="{{ renk }}" fill-opacity="{{ zemin_opak }}" stroke="{{ renk }}" stroke-opacity="{{ cizgi }}"/>
+  <text x="1118" y="85" text-anchor="end" font-family="{{ yazi }}" font-size="20" font-weight="700" letter-spacing="1.5" fill="{{ renk }}">{{ k.etiket }}</text>
+{%- endmacro %}
+
+{% macro basliklar(satirlar, boyut, x, y, renk) -%}
+  {% for s in satirlar %}<text x="{{ x }}" y="{{ y + loop.index0 * boyut * 1.16 }}" font-family="{{ yazi }}" font-size="{{ boyut }}" font-weight="800" fill="{{ renk }}">{{ s }}</text>{% endfor %}
+{%- endmacro %}
+
+{% macro ozetler(satirlar, x, y, renk) -%}
+  {% for s in satirlar %}<text x="{{ x }}" y="{{ y + loop.index0 * 38 }}" font-family="{{ yazi }}" font-size="27" fill="{{ renk }}">{{ s }}</text>{% endfor %}
+{%- endmacro %}
+
+{% macro gosterge_kutusu(g, x, y, zemin='#111A2E', cizgi='#26324A', yazi_renk='#E2E8F0') -%}
+  {% set gm = g.ad ~ '  ' ~ g.deger_metni ~ ('  ' ~ g.degisim_metni if g.degisim_metni else '') %}
+  <rect x="{{ x }}" y="{{ y }}" width="{{ gm|length * 12.6 + 40 }}" height="46" rx="23" fill="{{ zemin }}" stroke="{{ cizgi }}"/>
+  <text x="{{ x + 20 }}" y="{{ y + 31 }}" font-family="{{ yazi }}" font-size="24" font-weight="600" fill="{{ yazi_renk }}">{{ g.ad }}  {{ g.deger_metni }}{% if g.degisim_metni %}  <tspan fill="{{ '#16A34A' if g.artis else '#DC2626' }}">{{ g.degisim_metni }}</tspan>{% endif %}</text>
+{%- endmacro %}
+
+{% macro neden_satiri(k, y, renk='#64748B') -%}
+  <text x="64" y="{{ y }}" font-family="{{ yazi }}" font-size="21" font-style="italic" fill="{{ renk }}">Neden önemli? {{ k.neden }}</text>
+{%- endmacro %}
+
+{% macro adres(k, renk='#CBD5E1', cizgi='#1E293B') -%}
+  <line x1="64" y1="588" x2="1136" y2="588" stroke="{{ cizgi }}" stroke-width="2"/>
+  <text x="64" y="634" font-family="{{ yazi }}" font-size="26" font-weight="600" fill="{{ renk }}">{{ k.adres }}</text>
+{%- endmacro %}
+
+{# ---------------------------------------------------------------- düzenler #}
+{% macro haber_karti(k, kimlik) -%}
+<svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.baslik_satirlari|join(' ') }}">
+<defs>
+  <radialGradient id="{{ kimlik }}-isik" cx="78%" cy="45%" r="55%"><stop offset="0" stop-color="{{ k.renk }}" stop-opacity=".30"/><stop offset="1" stop-color="{{ k.renk }}" stop-opacity="0"/></radialGradient>
+  <linearGradient id="{{ kimlik }}-renk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{{ k.renk }}"/><stop offset="1" stop-color="#0B1220"/></linearGradient>
+  <pattern id="{{ kimlik }}-nokta" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#FFFFFF" fill-opacity=".07"/></pattern>
+  <pattern id="{{ kimlik }}-cizgi" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="22" stroke="#FFFFFF" stroke-opacity=".06" stroke-width="6"/></pattern>
+</defs>
+
+{% if k.foto %}
+  {# Fotoğraflı: fotoğraf sağ yarıda, yazılar solda koyu zeminde #}
+  <rect width="1200" height="675" fill="#0B1220"/>
+  <linearGradient id="{{ kimlik }}-gecis" x1="0" x2="1"><stop offset="0" stop-color="#0B1220"/><stop offset=".45" stop-color="#0B1220" stop-opacity=".55"/><stop offset="1" stop-color="#0B1220" stop-opacity="0"/></linearGradient>
+  <image href="{{ k.foto.veri }}" x="480" y="0" width="720" height="675" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="480" width="460" height="675" fill="url(#{{ kimlik }}-gecis)"/>
+  <rect y="580" width="1200" height="95" fill="#0B1220" fill-opacity=".85"/>
+  <rect width="12" height="675" fill="{{ k.renk }}"/>
+  {{ logo() }}{{ etiket(k, k.renk) }}
+  {{ basliklar(k.baslik_satirlari, k.baslik_boyut, 64, 196, '#FFFFFF') }}
+  {{ ozetler(k.ozet_satirlari, 64, 196 + (k.baslik_satirlari|length) * k.baslik_boyut * 1.16 + 14, '#CBD5E1') }}
+  {% if k.foto.fotografci %}<text x="1136" y="566" text-anchor="end" font-family="{{ yazi }}" font-size="15" fill="#FFFFFF" fill-opacity=".7">Fotoğraf: {{ k.foto.fotografci }} · Pexels</text>{% endif %}
+  {{ adres(k) }}
+
+{% elif k.duzen == 'renk' %}
+  {# Konu renginde tam kart, büyük beyaz çizim arka planda #}
+  <rect width="1200" height="675" fill="url(#{{ kimlik }}-renk)"/>
+  <rect width="1200" height="675" fill="url(#{{ kimlik }}-cizgi)"/>
+  <g transform="translate(960 360) scale(1.25)" opacity=".9">{{ ikon(k.ikon, '#FFFFFF', k.renk) }}</g>
+  {{ logo() }}{{ etiket(k, "#FFFFFF", 0.16, 0.6) }}
+  {{ basliklar(k.baslik_satirlari, k.baslik_boyut, 64, 200, '#FFFFFF') }}
+  {{ ozetler(k.ozet_satirlari, 64, 200 + (k.baslik_satirlari|length) * k.baslik_boyut * 1.16 + 14, '#E2E8F0') }}
+  {% if k.gosterge %}{{ gosterge_kutusu(k.gosterge, 64, 488, '#0B1220', '#FFFFFF33', '#FFFFFF') }}{% endif %}
+  {{ neden_satiri(k, 562, '#E2E8F0') }}
+  {{ adres(k, '#FFFFFF', '#FFFFFF33') }}
+
+{% elif k.duzen == 'bant' %}
+  {# Üstte renkli bant ve çizim, altta geniş başlık #}
+  <rect width="1200" height="675" fill="#0B1220"/>
+  <rect width="1200" height="300" fill="url(#{{ kimlik }}-renk)"/>
+  <rect width="1200" height="300" fill="url(#{{ kimlik }}-nokta)"/>
+  <g transform="translate(980 182) scale(.72)">{{ ikon(k.ikon, '#FFFFFF', k.renk) }}</g>
+  {{ logo() }}
+  <text x="64" y="232" font-family="{{ yazi }}" font-size="22" font-weight="700" letter-spacing="2" fill="#FFFFFF">{{ k.etiket }}</text>
+  {{ basliklar(k.genis_satirlari[:2], k.genis_boyut, 64, 378, '#FFFFFF') }}
+  {{ ozetler(k.ozet_tek, 64, 378 + ([k.genis_satirlari|length, 2]|min) * k.genis_boyut * 1.16 + 10, '#94A3B8') }}
+  {{ neden_satiri(k, 566) }}
+  {{ adres(k) }}
+
+{% elif k.duzen == 'veri' %}
+  {# Büyük fiyat kutusu: haberin ilgili olduğu piyasanın anlık değeri #}
+  {% set g = k.gosterge %}
+  <rect width="1200" height="675" fill="#0B1220"/>
+  <rect width="1200" height="675" fill="url(#{{ kimlik }}-nokta)"/>
+  <rect width="12" height="675" fill="{{ k.renk }}"/>
+  {{ logo() }}{{ etiket(k, k.renk) }}
+  {{ basliklar(k.baslik_satirlari, k.baslik_boyut, 64, 196, '#FFFFFF') }}
+  {{ ozetler(k.ozet_satirlari[:1], 64, 196 + (k.baslik_satirlari|length) * k.baslik_boyut * 1.16 + 14, '#94A3B8') }}
+  <rect x="770" y="150" width="366" height="330" rx="24" fill="#111A2E" stroke="{{ k.renk }}" stroke-opacity=".55" stroke-width="2"/>
+  <g transform="translate(1060 222) scale(.28)">{{ ikon(k.ikon, k.renk) }}</g>
+  <text x="802" y="230" font-family="{{ yazi }}" font-size="26" font-weight="600" fill="#94A3B8">{{ g.ad }}</text>
+  <text x="802" y="330" font-family="{{ yazi }}" font-size="{{ 60 if g.deger_metni|length <= 9 else 48 }}" font-weight="800" fill="#FFFFFF">{{ g.deger_metni }}</text>
+  {% if g.degisim_metni %}<text x="802" y="396" font-family="{{ yazi }}" font-size="34" font-weight="700" fill="{{ '#22C55E' if g.artis else '#EF4444' }}">{{ g.degisim_metni }}</text>
+  <text x="802" y="440" font-family="{{ yazi }}" font-size="20" fill="#64748B">bugünkü değişim</text>{% endif %}
+  {{ neden_satiri(k, 562) }}
+  {{ adres(k) }}
+
+{% elif k.duzen == 'acik' %}
+  {# Açık renkli kart #}
+  <rect width="1200" height="675" fill="#F8FAFC"/>
+  <circle cx="980" cy="330" r="230" fill="{{ k.renk }}" fill-opacity=".10"/>
+  <rect width="12" height="675" fill="{{ k.renk }}"/>
+  <g transform="translate(980 330)">{{ ikon(k.ikon, k.renk, '#F8FAFC') }}</g>
+  {{ logo(true) }}{{ etiket(k, k.renk, 0.10, 0.45) }}
+  {{ basliklar(k.baslik_satirlari, k.baslik_boyut, 64, 196, '#0F172A') }}
+  {{ ozetler(k.ozet_satirlari, 64, 196 + (k.baslik_satirlari|length) * k.baslik_boyut * 1.16 + 14, '#475569') }}
+  {% if k.gosterge %}{{ gosterge_kutusu(k.gosterge, 64, 488, '#FFFFFF', '#CBD5E1', '#0F172A') }}{% endif %}
+  {{ neden_satiri(k, 562) }}
+  {{ adres(k, '#0F172A', '#E2E8F0') }}
+
+{% else %}
+  {# Yan: koyu zemin, sağda çizim #}
+  <rect width="1200" height="675" fill="#0B1220"/>
+  <rect width="1200" height="675" fill="url(#{{ kimlik }}-isik)"/>
+  <rect width="12" height="675" fill="{{ k.renk }}"/>
+  <g transform="translate(940 330)"><circle r="200" fill="{{ k.renk }}" fill-opacity=".07"/><circle r="150" fill="{{ k.renk }}" fill-opacity=".08"/>{{ ikon(k.ikon, k.renk) }}</g>
+  {{ logo() }}{{ etiket(k, k.renk) }}
+  {{ basliklar(k.baslik_satirlari, k.baslik_boyut, 64, 196, '#FFFFFF') }}
+  {{ ozetler(k.ozet_satirlari, 64, 196 + (k.baslik_satirlari|length) * k.baslik_boyut * 1.16 + 14, '#94A3B8') }}
+  {% if k.gosterge %}{{ gosterge_kutusu(k.gosterge, 64, 488) }}{% endif %}
+  {{ neden_satiri(k, 562) }}
+  {{ adres(k) }}
+{% endif %}
+</svg>
+{%- endmacro %}

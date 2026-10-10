@@ -104,3 +104,19 @@ def test_turkce_ekler():
                 ("21:00", "de"): "21:00'de", ("06:15", "de"): "06:15'te", ("16:30", "de"): "16:30'da"}
     for (metin, tur), beklenen in ornekler.items():
         assert ek(metin, tur) == beklenen
+
+
+def test_yeni_halka_arzda_ilk_islemden_beri():
+    """Ocak 2026'da işlem görmeye başlayan hisse: 1/5/10 yıl yerine tek 'ilk işlemden beri' değişimi."""
+    import pandas as pd
+
+    from piyasa import fiyat
+    gunler = pd.bdate_range("2026-01-05", "2026-10-09")
+    tablo = pd.DataFrame({"Close": [10 + i * 0.05 for i in range(len(gunler))], "Volume": 1000}, index=gunler)
+    b = fiyat.tablodan_bilgi("YENI.IS", tablo)
+    anahtarlar = [d["anahtar"] for d in b["degisimler"]]
+    assert anahtarlar == ["1g", "1h", "1a", "ilk"]
+    ilk = b["degisimler"][-1]
+    assert ilk["ilk_tarih"] == "2026-01-05" and ilk["oran"] == pytest.approx(tablo["Close"].iloc[-1] / 10 - 1)
+    # 1 yıllık grafik bütün geçmişi gösterir; 5 ve 10 yıl gizlenir
+    assert b["gizli_araliklar"] == ["5y", "10y"] and set(b["seriler"]) == {"1a", "1y"}

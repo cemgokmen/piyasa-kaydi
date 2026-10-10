@@ -252,17 +252,62 @@ def satirlara_bol(metin, en_cok_karakter, en_cok_satir):
     return satirlar
 
 
-def haber_karti(x, gosterge=None):
-    renk, etiket, _, neden, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
-    # Başlık en çok 3 satır: uzun başlıkta yazı küçülür
-    boyut, satirlar = 38, []
-    for secenek, karakter in ((54, 24), (48, 27), (42, 31), (38, 34)):
-        boyut, satirlar = secenek, satirlara_bol(x["baslik"], karakter, 3)
+# Habere özel çizim: başlıktaki ilk eşleşen kök (özelden genele). Konu yalnızca yedek.
+HABER_IKONLARI = [
+    ("gümüş", "gumus"), ("altın", "altin"), ("ons ", "altin"),
+    ("dolar/tl", "dolar"), ("doların", "dolar"), ("dolar kuru", "dolar"), ("euro/tl", "euro"), ("avro", "euro"),
+    ("tanker", "gemi"), ("gemi", "gemi"), ("ihracat", "gemi"), ("ithalat", "gemi"), ("konteyner", "gemi"),
+    ("liman", "gemi"), ("navlun", "gemi"),
+    ("akaryakıt", "akaryakit"), ("benzin", "akaryakit"), ("motorin", "akaryakit"), ("pompa", "akaryakit"),
+    ("petrol", "petrol"), ("brent", "petrol"), ("opec", "petrol"), ("doğal gaz", "petrol"), ("doğalgaz", "petrol"),
+    ("elektrik", "simsek"), ("enerji", "simsek"),
+    ("konut", "konut"), ("kira", "konut"), ("emlak", "konut"), ("gayrimenkul", "konut"),
+    ("otomotiv", "otomobil"), ("otomobil", "otomobil"), ("araç", "otomobil"),
+    ("banka", "banka"), ("katılım", "banka"), ("kredi", "banka"), ("sigorta", "banka"),
+    ("buğday", "bugday"), ("tarım", "bugday"), ("hasat", "bugday"), ("çay", "bugday"), ("fındık", "bugday"),
+    ("çip", "cip"), ("yarı iletken", "cip"), ("teknoloji", "cip"), ("yapay zeka", "cip"),
+    ("bitcoin", "bitcoin"), ("kripto", "bitcoin"),
+    ("faiz", "yuzde"), ("enflasyon", "yuzde"), ("merkez bankası", "yuzde"), ("fed", "yuzde"), ("ecb", "yuzde"),
+    ("tcmb", "yuzde"), ("tahvil", "yuzde"),
+    ("borsa", "grafik"), ("hisse", "grafik"), ("bist", "grafik"), ("endeks", "grafik"), ("halka arz", "grafik"),
+    ("abd", "dunya"), ("çin", "dunya"), ("avrupa", "dunya"), ("küresel", "dunya"), ("imf", "dunya"),
+]
+KONU_IKONU = {"faiz": "yuzde", "doviz": "dolar", "borsa": "grafik", "enerji": "petrol", "kripto": "bitcoin",
+              "dunya": "dunya", "ekonomi": "ekonomi"}
+DUZENLER = ("yan", "renk", "bant", "veri", "acik")
+
+
+def haber_ikonu(baslik, konu):
+    b = " " + baslik.replace("I", "ı").replace("İ", "i").lower() + " "
+    for kok, ikon in HABER_IKONLARI:
+        if re.search(r"(?<![a-zçğıöşü])" + re.escape(kok.strip()) + (r"(?![a-zçğıöşü])" if len(kok.strip()) <= 3 else ""), b):
+            if kok == "altın" and re.search(r"altın(d[ae]|dan|a\b)", b):
+                continue
+            return ikon
+    return KONU_IKONU.get(konu, "ekonomi")
+
+
+def _baslik_satirlari(baslik, secenekler):
+    """(yazı boyutu, satırlar): başlık 3 satıra sığana kadar yazı küçülür."""
+    boyut, satirlar = secenekler[-1][0], []
+    for secenek, karakter in secenekler:
+        boyut, satirlar = secenek, satirlara_bol(baslik, karakter, 3)
         if not satirlar[-1].endswith("…"):
             break
+    return boyut, satirlar
+
+
+def haber_karti(x, gosterge=None, duzen="yan"):
+    renk, etiket, _, neden, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
+    # Dar sütun (yanında çizim olan düzenler) ve geniş sütun (bant düzeni) için ayrı satırlar
+    boyut, satirlar = _baslik_satirlari(x["baslik"], ((54, 24), (48, 27), (42, 31), (38, 34)))
+    genis_boyut, genis_satirlar = _baslik_satirlari(x["baslik"], ((56, 36), (50, 40), (44, 46)))
     ozet = satirlara_bol(x.get("ozet") or "", 52, 2) if x.get("ozet") else []
-    yayin = x.get("yayin_yerel") or ""
-    return {"tip": "haber", "konu": x["konu"], "renk": renk, "etiket": etiket, "baslik_satirlari": satirlar,
-            "baslik_boyut": boyut, "ozet_satirlari": ozet, "neden": neden, "gosterge": gosterge,
-            "kaynak": f"Kaynak: {x['kaynak']}", "tarih": yayin, "adres": f"{SITE}/gunluk-ozet",
+    if duzen == "veri" and not gosterge:
+        duzen = "yan"
+    return {"tip": "haber", "duzen": duzen, "konu": x["konu"], "ikon": haber_ikonu(x["baslik"], x["konu"]),
+            "renk": renk, "etiket": etiket, "baslik_satirlari": satirlar, "baslik_boyut": boyut,
+            "genis_satirlari": genis_satirlar, "genis_boyut": genis_boyut, "ozet_satirlari": ozet,
+            "ozet_tek": satirlara_bol(x.get("ozet") or "", 78, 1) if x.get("ozet") else [],
+            "neden": neden, "gosterge": gosterge, "adres": f"{SITE}/gunluk-ozet",
             "dosya": f"haber-{x['konu']}-{(x.get('yayin') or '')[:16].replace(':', '')}"}

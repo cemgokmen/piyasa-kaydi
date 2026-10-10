@@ -6,6 +6,7 @@ Eşikler gürültüyü ayıklar: küçük işlemler, fonların eşik bildirimler
 her gün işlem yapan büyük ortaklar paylaşılmaz.
 """
 
+import hashlib
 import re
 from datetime import date, datetime, timedelta
 
@@ -233,13 +234,19 @@ def haber_adaylari(conn, simdi, saat):
            WHERE yayin >= ? AND adres = kume AND puan >= ? ORDER BY puan DESC LIMIT ?""",
         (bas, HABER_ESIK, HABER_SAYISI)).fetchall()
     gostergeler = _gostergeler() if satirlar else {}
-    sonuc = []
+    sonuc, onceki = [], None
     for r in satirlar:
         x = dict(r)
         yerel = datetime.fromisoformat(x["yayin"]).astimezone()
         x["yayin_yerel"] = f"{metin.gun(yerel.date().isoformat())} · {yerel:%H:%M}"
         gosterge = gostergeler.get(metin._gosterge_kodu(x))
-        kart = metin.haber_karti(x, gosterge)
+        # Düzen habere göre sabit, ama art arda iki kart aynı düzende olmaz
+        duzenler = metin.DUZENLER
+        sira = int(hashlib.sha1(x["adres"].encode()).hexdigest(), 16) % len(duzenler)
+        if duzenler[sira] == onceki or (duzenler[sira] == "veri" and not gosterge):
+            sira = (sira + 1) % len(duzenler)
+        kart = metin.haber_karti(x, gosterge, duzenler[sira])
+        onceki = kart["duzen"]
         kart["foto"] = gorsel.foto(conn, x)
         sonuc.append({"anahtar": f"haber:{x['kume']}", "tur": "Haber", "grup": "haber",
                       "onem": x["puan"], "metin": metin.haber(x), "kart": kart,
