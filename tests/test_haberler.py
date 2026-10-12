@@ -43,11 +43,10 @@ def test_gunun_ozeti_haberli_ve_guncel(istemci):
     assert r.status_code == 301 and r.headers["Location"].endswith("/gunluk-ozet")
 
 
-def test_haber_kartlari_paylasim_sayfasinda(istemci):
+def test_paylasim_sayfasinda_haber_yok(istemci):
     html = istemci.get("/paylasim").get_data(as_text=True)
-    assert "Finans haberleri" in html and "FAİZ VE ENFLASYON" in html and "Veri kartları" in html
-    # Haber kartında döviz/emtia yüzdesi kutusu ve süs çizimi yok
-    assert "Neden önemli?" not in html and "bugünkü değişim" not in html
+    assert "Piyasa ve sıralamalar" in html and "Alım satımlar" in html
+    assert "Finans haberleri" not in html and "FAİZ VE ENFLASYON" not in html
 
 
 def test_spor_ve_fed_karisikligi():

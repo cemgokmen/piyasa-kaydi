@@ -243,7 +243,8 @@ def _liste(anahtar, baslik, alt, satirlar, renk, kaynak, adres, birim_metni, gon
     for s in satirlar:
         s["oran"] = s["deger"] / en_cok
     gonderi = gonderi_basligi + "\n\n" + "\n".join(
-        f"{i}. {s['kod_metin']} {s['ad']}: {s['deger_metni']}" for i, s in enumerate(satirlar, 1)
+        f"{i}. {' '.join(x for x in (s['kod_metin'], s['ad']) if x)}: {s['deger_metni']}"
+        for i, s in enumerate(satirlar, 1)
     ) + f"\n\nKaynak: {kaynak}\n{adres}"
     return {"anahtar": anahtar, "tur": "Sıralama", "grup": "veri", "onem": 1e12, "metin": gonderi,
             "kart": {"tip": "liste", "renk": renk, "etiket": "HAFTANIN LİSTESİ", "baslik": baslik, "alt": alt,
@@ -332,3 +333,210 @@ def hareket_karti():
                                       "yukselen": yukselen, "dusen": dusen, "adres": f"{SITE}/bist",
                                       "kaynak": "Fiyatlar: Borsa İstanbul (15 dk gecikmeli)",
                                       "dosya": f"bist-hareket-{h['hareket_gunu']}"}}
+
+
+# ---------------------------------------------------------------------------
+# Daha fazla veri kartı: piyasa tablosu, kripto, haftalık hareket, fonlar, toplu alımlar,
+# üçlü onay ve yatırım karşılaştırma
+# ---------------------------------------------------------------------------
+
+def _iki_sutun(anahtar, etiket, baslik, alt, yukselen, dusen, adres, kaynak, gonderi, sol="EN ÇOK YÜKSELENLER",
+               sag="EN ÇOK DÜŞENLER"):
+    return {"anahtar": anahtar, "tur": etiket.title(), "grup": "veri", "onem": 1e12, "metin": gonderi,
+            "kart": {"tip": "hareket", "renk": YESIL, "etiket": etiket, "baslik": baslik, "alt": alt,
+                     "yukselen": yukselen, "dusen": dusen, "adres": adres, "kaynak": kaynak, "sol": sol, "sag": sag,
+                     "dosya": anahtar.replace(":", "-")}}
+
+
+def piyasa_tablosu_karti(simdi=None):
+    """Piyasalarda bugün: BIST 100, dolar, euro, altın, Brent, Bitcoin... (açılışta ve kapanışta birer kez)."""
+    from datetime import datetime
+    simdi = simdi or datetime.now()
+    try:
+        from piyasa.emtia import serit
+        gostergeler = serit.son_hali() or [serit.bicimli(g) for g in serit.serit()]
+    except Exception:
+        return None
+    if len(gostergeler) < 6:
+        return None
+    dilim = "acilis" if simdi.hour < 14 else "kapanis"
+    gun = metin.gun(simdi.date().isoformat())
+    baslik = f"Piyasalarda {gun} {'sabahı' if dilim == 'acilis' else 'akşamı'}"
+    gonderi = baslik + "\n\n" + "\n".join(
+        f"{g['ad']}: {g['deger_metni'].replace(' ₺', ' TL')}" + (f" ({g['degisim_metni'].replace('▲ ', '+').replace('▼ ', '−')})" if g["degisim_metni"] else "")
+        for g in gostergeler) + f"\n\n{SITE}"
+    return {"anahtar": f"tablo:{simdi.date().isoformat()}:{dilim}", "tur": "Piyasa tablosu", "grup": "veri", "onem": 3e12,
+            "metin": gonderi, "kart": {"tip": "tablo", "renk": MAVI, "etiket": "PİYASALAR", "baslik": baslik,
+                                      "alt": f"Saat {simdi:%H:%M} itibarıyla · borsalar 15 dk gecikmeli",
+                                      "gostergeler": gostergeler[:10], "adres": SITE, "kaynak": "",
+                                      "dosya": f"piyasalar-{simdi:%Y-%m-%d}-{dilim}"}}
+
+
+def kripto_karti(simdi=None):
+    """Son 24 saatte en çok yükselen ve düşen 5 kripto (piyasa değerine göre ilk 100 içinden)."""
+    try:
+        from piyasa.kripto import piyasa as kripto
+        liste = [x for x in kripto.liste() if x.get("b") and x["b"].get("degisim_24s") is not None
+                 and x.get("tur") != "Sabit para"]
+    except Exception:
+        return None
+    liste = sorted(liste, key=lambda x: -(x["b"].get("piyasa_degeri") or 0))[:100]
+    if len(liste) < 10:
+        return None
+    sirali = sorted(liste, key=lambda x: x["b"]["degisim_24s"])
+
+    def satir(x):
+        return {"kod": x["sembol"], "ad": x["ad"], "metin": _yuzde(x["b"]["degisim_24s"])}
+
+    yukselen, dusen = [satir(x) for x in sirali[::-1][:5]], [satir(x) for x in sirali[:5]]
+    from datetime import datetime
+    simdi = simdi or datetime.now()
+    gonderi = ("Kripto paralarda son 24 saat (piyasa değerine göre ilk 100):\n\n"
+               + "\n".join(f"▲ {s['kod']} ({s['ad']}) {s['metin']}" for s in yukselen) + "\n\n"
+               + "\n".join(f"▼ {s['kod']} ({s['ad']}) {s['metin']}" for s in dusen) + f"\n\nKaynak: CoinGecko\n{SITE}/kripto")
+    return _iki_sutun(f"kripto:{simdi:%Y-%m-%d}", "KRİPTO · 24 SAAT", "Kripto paralarda son 24 saat",
+                      "Piyasa değerine göre ilk 100 kripto · sabit paralar hariç", yukselen, dusen, f"{SITE}/kripto",
+                      "Kaynak: CoinGecko", gonderi)
+
+
+def bist_haftalik_karti():
+    """Borsa İstanbul'da son bir haftanın en çok yükselen ve düşen hisseleri."""
+    try:
+        from piyasa.bist import piyasa, sorgular
+        piyasa._dosyadan_oku()
+        fiyatlar = piyasa._durum["veri"]
+        adlar = {s["kod"]: s["unvan"] for s in sorgular.sirketler()}
+    except Exception:
+        return None
+    # Bedelsiz/bölünme düzeltilmemiş hisseler (haftada %60'tan fazla) ve kuruşluk hisseler dışarıda
+    liste = [(k, f) for k, f in fiyatlar.items() if k in adlar and f.get("h1") is not None
+             and f["fiyat"] >= 1 and abs(f["h1"]) < 0.6]
+    if len(liste) < 20:
+        return None
+    sirali = sorted(liste, key=lambda x: x[1]["h1"])
+
+    def satir(k, f):
+        return {"kod": k, "ad": tr_baslik(kisa_unvan(adlar[k])) if adlar[k] else k, "metin": _yuzde(f["h1"])}
+
+    yukselen, dusen = [satir(*x) for x in sirali[::-1][:5]], [satir(*x) for x in sirali[:5]]
+    damga = date.today().isocalendar()
+    gonderi = ("Borsa İstanbul'da haftanın en çok yükselen ve düşen hisseleri:\n\n"
+               + "\n".join(f"▲ #{s['kod']} {s['ad']} {s['metin']}" for s in yukselen) + "\n\n"
+               + "\n".join(f"▼ #{s['kod']} {s['ad']} {s['metin']}" for s in dusen) + f"\n\n{SITE}/bist")
+    return _iki_sutun(f"bist-hafta:{damga[0]}-{damga[1]}", "BORSA İSTANBUL · HAFTA",
+                      "Haftanın en çok yükselen ve düşen hisseleri", "Son 5 işlem günündeki değişim · fiyatı 1 TL üstü hisseler",
+                      yukselen, dusen, f"{SITE}/bist", "Fiyatlar: Borsa İstanbul (15 dk gecikmeli)", gonderi)
+
+
+def fon_kartlari():
+    """Büyük fonların son çeyrekte en çok aldığı ve sattığı hisseler (13F)."""
+    try:
+        from piyasa.analiz.fon_konsensus import fon_konsensusu
+        k = fon_konsensusu()
+    except Exception:
+        return []
+    kartlar = []
+    for tur, baslik, renk, alan in (("alinan", "Dev fonların son çeyrekte en çok aldığı hisseler", YESIL, "alan"),
+                                    ("satilan", "Dev fonların son çeyrekte en çok sattığı hisseler", KIRMIZI, "satan")):
+        satirlar = [{"kod": s["ticker"], "kod_metin": f"${s['ticker']}", "ad": sirket_gorunen_ad(s["sirket"]),
+                     "deger": s[alan], "deger_metni": f"{s['alan']} fon aldı · {s['satan']} sattı", "ek": ""} for s in k.get(f"en_cok_{tur}", [])[:5]]
+        kart = _liste(f"liste:fon-{tur}:{k.get('donem_adi')}", baslik,
+                      f"{k.get('fon_sayisi')} büyük fon ve bankanın 13F bildirimleri · {k.get('donem_adi')}", satirlar, renk,
+                      "SEC 13F", f"{SITE}/fonlar", "fon",
+                      f"{baslik} ({k.get('donem_adi')}, {k.get('fon_sayisi')} fon; "
+                      "pozisyon açan ya da artıran fonlar 'aldı', azaltan ya da çıkanlar 'sattı' sayılır):")
+        if kart:
+            kart["kart"]["barsiz"] = True
+            kart["kart"]["etiket"] = "BÜYÜK FONLAR"
+            kartlar.append(kart)
+    return kartlar
+
+
+def toplu_alim_kartlari(conn):
+    """Birden fazla yöneticinin aynı hisseyi aldığı şirketler (son 30 gün): ABD ve Borsa İstanbul."""
+    ay = (date.today() - timedelta(days=30)).isoformat()
+    damga = date.today().isocalendar()
+    kartlar = []
+    satirlar = [{"kod": r[0], "kod_metin": f"${r[0]}", "ad": sirket_gorunen_ad(r[1]) if r[1] else r[0], "deger": r[2],
+                 "deger_metni": f"{r[2]} yönetici · {metin.tutar(r[3], 'dolar')}", "ek": ""} for r in conn.execute(
+        f"""SELECT ticker, MAX(COALESCE(company, asset_name)), COUNT(DISTINCT person_slug) AS kisi, SUM(amount_max)
+            FROM transactions WHERE chamber IS NULL AND {TEMIZ} AND {GECERLI_KOD} AND action = 'buy' AND amount_max > 0
+              AND disclosed_date >= ? AND COALESCE(job_title, '') != '%10 üzeri ortak'
+            GROUP BY ticker HAVING kisi >= 2 ORDER BY kisi DESC, SUM(amount_max) DESC LIMIT 5""", (ay,))]
+    kart = _liste(f"liste:toplu-abd:{damga[0]}-{damga[1]}", "ABD'de birden fazla yöneticinin aldığı hisseler",
+                  "Aynı şirkette birden çok yöneticinin kendi parasıyla alımı · son 30 gün", satirlar, MAVI, "SEC Form 4",
+                  f"{SITE}/sinyaller", "",
+                  "ABD'de son 30 günde birden fazla yöneticinin kendi parasıyla aldığı hisseler:")
+    if kart:
+        kart["kart"]["barsiz"] = True
+        kartlar.append(kart)
+    satirlar = [{"kod": r[0], "kod_metin": f"#{r[0]}", "ad": tr_baslik(kisa_unvan(r[1])) if r[1] else r[0], "deger": r[2],
+                 "deger_metni": f"{r[2]} kişi · {metin.tutar(r[3])}", "ek": ""} for r in conn.execute(
+        """SELECT p.kod, s.unvan, COUNT(DISTINCT p.kisi) AS kisi, SUM(p.tutar) FROM kap_pay_islem p
+           JOIN kap_bildirim b USING (indeks) LEFT JOIN bist_sirket s ON s.kod = p.kod
+           WHERE b.yayin >= ? AND p.islem = 'buy' AND p.kisi_turu != 'fon' AND p.tutar > 0
+           GROUP BY p.kod HAVING kisi >= 2 ORDER BY kisi DESC, SUM(p.tutar) DESC LIMIT 5""", (ay,))]
+    kart = _liste(f"liste:toplu-bist:{damga[0]}-{damga[1]}", "Borsa İstanbul'da birden fazla içeriden alıcısı olan hisseler",
+                  "Yöneticilerin ve büyük ortakların KAP bildirimleri · son 30 gün", satirlar, YESIL, "KAP", f"{SITE}/bist", "",
+                  "Borsa İstanbul'da son 30 günde birden fazla yönetici ya da büyük ortağın alım yaptığı hisseler:")
+    if kart:
+        kart["kart"]["barsiz"] = True
+        kartlar.append(kart)
+    return kartlar
+
+
+def uclu_onay_karti():
+    """Yöneticiler, siyasetçiler ve dev fonların aynı anda yöneldiği hisseler."""
+    try:
+        from piyasa.analiz import sinyaller
+        u = sinyaller.uclu_onay()
+    except Exception:
+        return None
+    liste = [x for x in u["liste"] if x["kaynak"] >= 3][:5]
+    satirlar = [{"kod": x["ticker"], "kod_metin": f"${x['ticker']}", "ad": sirket_gorunen_ad(x["sirket"]), "deger": 3,
+                 "deger_metni": f"{x['yonetici']['kisi']} yönetici · {x['siyaset']['kisi']} siyasetçi · {x['fon']['artiran']} fon",
+                 "ek": ""} for x in liste]
+    damga = date.today().isocalendar()
+    kart = _liste(f"liste:uclu:{damga[0]}-{damga[1]}", "Üçlü onay: yöneticiler, siyasetçiler ve dev fonlar aynı hissede",
+                  f"Son {u['pencereler']['yonetici']} günde yönetici alımı, son {u['pencereler']['siyaset']} günde Kongre alımı, "
+                  "son çeyrekte fon artırımı", satirlar, MOR,
+                  "SEC, Kongre, 13F", f"{SITE}/sinyaller", "",
+                  "Üçlü onay: şirket yöneticilerinin, ABD'li siyasetçilerin ve dev fonların aynı anda yöneldiği hisseler:")
+    if kart:
+        kart["kart"]["barsiz"] = True
+        kart["kart"]["etiket"] = "SİNYALLER"
+    return kart
+
+
+def karsilastirma_karti():
+    """10 yıl önce 10.000 TL: dolar, altın, borsa, Bitcoin bugün ne olurdu?"""
+    try:
+        from piyasa.analiz import karsilastirma as k
+        from piyasa.bicim import para_metni
+        sonuc = k.hesapla([k.VARLIK[x] for x in ("tl", "dolar", "altin", "bist100", "sp500", "bitcoin")],
+                          k.varsayilan_baslangic(), 10_000, "TRY", "tek")
+    except Exception:
+        return None
+    if not sonuc or len(sonuc["varliklar"]) < 4:
+        return None
+    satirlar = [{"kod": v["ad"], "kod_metin": v["ad"], "ad": "", "deger": v["son"],
+                 "deger_metni": para_metni(v["son"], "TRY"), "ek": ""} for v in sonuc["varliklar"]]
+    from piyasa.bicim import ay_yil
+    bas = ay_yil(sonuc["aylar"][0], "de")
+    kart = _liste(f"liste:karsilastir:{date.today():%Y-%m}", f"{bas} 10.000 TL yatırsaydınız bugün",
+                  f"Aynı paranın enflasyona göre karşılığı: {para_metni(sonuc['enflasyon'][-1], 'TRY')}", satirlar[:5], "#EAB308",
+                  "Yahoo Finance, TCMB", f"{SITE}/yatirim-karsilastir", "TL",
+                  f"{bas} 10.000 TL ile alsaydınız bugün ne kadar paranız olurdu? (Enflasyon karşılığı "
+                  f"{para_metni(sonuc['enflasyon'][-1], 'TRY')})")
+    if kart:
+        kart["kart"]["etiket"] = "YATIRIM KARŞILAŞTIRMA"
+        kart["kart"]["barsiz"] = True
+    return kart
+
+
+def tum_veri_kartlari(conn):
+    """Sıralama ve özet kartlarının hepsi (tek işlem kartları hariç)."""
+    kartlar = [piyasa_tablosu_karti(), hareket_karti(), kripto_karti(), bist_haftalik_karti()]
+    kartlar += liste_kartlari(conn) + toplu_alim_kartlari(conn) + [uclu_onay_karti()] + fon_kartlari()
+    kartlar.append(karsilastirma_karti())
+    return [k for k in kartlar if k]

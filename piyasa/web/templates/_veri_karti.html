@@ -95,10 +95,13 @@
   {% for s in k.satirlar %}{% set y = 286 + loop.index0 * 62 %}
   <text x="64" y="{{ y + 8 }}" font-family="{{ rakam }}" font-size="22" font-weight="700" fill="#475569">{{ loop.index }}</text>
   <text x="104" y="{{ y + 8 }}" font-family="{{ yazi }}" font-size="25" font-weight="800" fill="#FFFFFF">{{ s.kod }}</text>
-  {% set ad = s.ad if s.ad|length <= 24 else s.ad[:23] ~ '…' %}
-  <text x="214" y="{{ y + 8 }}" font-family="{{ yazi }}" font-size="20" fill="#94A3B8">{{ ad }}</text>
+  {% set sinir = 30 if k.barsiz else 24 %}
+  {% set ad = s.ad if s.ad|length <= sinir else s.ad[:sinir - 1] ~ '…' %}
+  <text x="{{ 104 + [s.kod|length * 17 + 18, 110]|max }}" y="{{ y + 8 }}" font-family="{{ yazi }}" font-size="20" fill="#94A3B8">{{ ad }}</text>
+  {% if not k.barsiz %}
   <rect x="500" y="{{ y - 12 }}" width="250" height="24" rx="6" fill="#1C2539"/>
   <rect x="500" y="{{ y - 12 }}" width="{{ [s.oran * 250, 8]|max }}" height="24" rx="6" fill="{{ k.renk }}"/>
+  {% endif %}
   <text x="1136" y="{{ y + 8 }}" text-anchor="end" font-family="{{ rakam }}" font-size="22" font-weight="600" fill="#E2E8F0">{{ s.deger_metni }}</text>
   {% endfor %}
   {{ taban(k.adres, k.kaynak) }}
@@ -112,7 +115,7 @@
   {{ marka(k.etiket, '#94A3B8') }}
   <text x="64" y="176" font-family="{{ yazi }}" font-size="40" font-weight="800" fill="#FFFFFF">{{ k.baslik }}</text>
   <text x="64" y="212" font-family="{{ yazi }}" font-size="19" fill="#94A3B8">{{ k.alt }}</text>
-  {% for baslik, liste, renk, x in [('EN ÇOK YÜKSELENLER', k.yukselen, '#22C55E', 64), ('EN ÇOK DÜŞENLER', k.dusen, '#EF4444', 616)] %}
+  {% for baslik, liste, renk, x in [(k.sol or 'EN ÇOK YÜKSELENLER', k.yukselen, '#22C55E', 64), (k.sag or 'EN ÇOK DÜŞENLER', k.dusen, '#EF4444', 616)] %}
   <text x="{{ x }}" y="266" font-family="{{ yazi }}" font-size="16" font-weight="700" letter-spacing="2" fill="{{ renk }}">{{ baslik }}</text>
   {% for s in liste %}{% set y = 312 + loop.index0 * 56 %}
   <rect x="{{ x }}" y="{{ y - 30 }}" width="520" height="46" rx="10" fill="{{ renk }}" fill-opacity=".07"/>
@@ -127,6 +130,23 @@
 {%- endmacro %}
 
 {# ---------------------------------------------------------------- haber (tipografik) #}
+{% macro tablo(k, kimlik) -%}
+<svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.baslik }}">
+  {{ zemin(kimlik, k.renk) }}
+  {{ marka(k.etiket, k.renk) }}
+  <text x="64" y="176" font-family="{{ yazi }}" font-size="40" font-weight="800" fill="#FFFFFF">{{ k.baslik }}</text>
+  <text x="64" y="212" font-family="{{ yazi }}" font-size="19" fill="#94A3B8">{{ k.alt }}</text>
+  {% for g in k.gostergeler %}{% set x = 64 if loop.index0 < 5 else 616 %}{% set y = 276 + (loop.index0 % 5) * 64 %}
+  {% set renk = '#22C55E' if g.artis else ('#EF4444' if g.degisim_metni else '#94A3B8') %}
+  <rect x="{{ x }}" y="{{ y - 34 }}" width="520" height="52" rx="10" fill="#FFFFFF" fill-opacity=".04"/>
+  <text x="{{ x + 20 }}" y="{{ y }}" font-family="{{ yazi }}" font-size="22" font-weight="700" fill="#E2E8F0">{{ g.ad }}</text>
+  <text x="{{ x + 360 }}" y="{{ y }}" text-anchor="end" font-family="{{ rakam }}" font-size="23" font-weight="700" fill="#FFFFFF">{{ g.deger_metni }}</text>
+  <text x="{{ x + 500 }}" y="{{ y }}" text-anchor="end" font-family="{{ rakam }}" font-size="21" font-weight="700" fill="{{ renk }}">{{ g.degisim_metni }}</text>
+  {% endfor %}
+  {{ taban(k.adres, k.kaynak) }}
+</svg>
+{%- endmacro %}
+
 {% macro haber(k, kimlik) -%}
 <svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.baslik_satirlari|join(' ') }}">
   {{ zemin(kimlik, k.renk) }}

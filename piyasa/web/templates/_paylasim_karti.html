@@ -46,5 +46,6 @@
 {% elif k.tip == 'islem' %}{{ veri.islem(k, kimlik) }}
 {% elif k.tip == 'liste' %}{{ veri.liste(k, kimlik) }}
 {% elif k.tip == 'hareket' %}{{ veri.hareket(k, kimlik) }}
+{% elif k.tip == 'tablo' %}{{ veri.tablo(k, kimlik) }}
 {% else %}{{ islem_karti(k, kimlik) }}{% endif %}
 {%- endmacro %}

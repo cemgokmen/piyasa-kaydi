@@ -14,12 +14,13 @@ from piyasa.bist.sorgular import kisa_unvan
 from piyasa.kurallar import GECERLI_KOD, TEMIZ
 from piyasa.paylasim import gorsel, metin
 
-KAP_ESIK = 5_000_000            # TL
+KAP_ESIK = 1_000_000            # TL
 GERI_ALIM_ESIK = 20_000_000     # TL
-FORM4_ALIM_ESIK = 1_000_000     # dolar
+FORM4_ALIM_ESIK = 250_000       # dolar
 FORM4_SATIS_ESIK = 25_000_000   # dolar: satışlar çoğunlukla planlı, yalnızca çok büyükleri haber
 ORTAK_ESIK = 10_000_000         # dolar: yönetici olmayan %10 ortakların işlemleri
-KONGRE_ESIK = 250_000           # dolar (bildirilen aralığın üst sınırı)
+KONGRE_ESIK = 50_000            # dolar (bildirilen aralığın üst sınırı)
+EN_FAZLA_ISLEM = 40             # tek işlem kartı sayısı
 # İşlemleri en çok takip edilen üyeler: tutardan bağımsız paylaşılır
 UNLU_SIYASETCILER = ("Nancy Pelosi", "Marjorie Taylor Greene", "Ro Khanna", "Josh Gottheimer", "Dan Crenshaw",
                      "Tommy Tuberville", "Mark Warner", "Rand Paul", "Sheldon Whitehouse")
@@ -266,6 +267,6 @@ def adaylar(conn, simdi=None, kur=45.0, saat=36, faaliyet_ekle=True):
         _faaliyetleri_ekle(islemler)
     # Veri kartları: işlemler grafikli ve bağlamlı karta çevrilir; haftalık sıralamalar ve günün hareketi eklenir
     from piyasa.paylasim import veri
-    veri_kartlari = [k for k in [veri.hareket_karti()] + veri.liste_kartlari(conn) if k]
-    veri_kartlari += [veri.islem_karti(conn, a) for a in islemler]
-    return haber_adaylari(conn, simdi, saat) + veri_kartlari
+    veri_kartlari = veri.tum_veri_kartlari(conn)
+    veri_kartlari += [veri.islem_karti(conn, a) for a in islemler[:EN_FAZLA_ISLEM]]
+    return veri_kartlari

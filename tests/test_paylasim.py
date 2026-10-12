@@ -47,11 +47,9 @@ def test_adaylar_ornek_veride(uygulama):
     assert any(a["anahtar"] == "kap:1001" for a in liste)
     assert not any(a["anahtar"] == "kap:1003" for a in liste)
     assert all(calistir.uzunluk(a["metin"]) <= calistir.X_SINIRI for a in liste)
-    # Önce haberler, sonra veri kartları; tek işlem kartları dolar karşılığına göre sıralı
-    haberler = [a for a in liste if a["grup"] == "haber"]
-    veriler = [a for a in liste if a["grup"] == "veri"]
-    assert liste == haberler + veriler
-    islemler = [a for a in veriler if a["kart"]["tip"] == "islem"]
+    # Haber kartı yok, hepsi sitenin verisinden; tek işlem kartları dolar karşılığına göre sıralı
+    assert all(a["grup"] == "veri" for a in liste)
+    islemler = [a for a in liste if a["kart"]["tip"] == "islem"]
     assert islemler == sorted(islemler, key=lambda a: -a["onem"])
     # İşlem kartı metni haber diliyle: kim, ne kadar, şirketteki payı
     thy = next(a for a in liste if a["anahtar"] == "kap:1001")
