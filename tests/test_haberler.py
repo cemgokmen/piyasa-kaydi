@@ -45,7 +45,9 @@ def test_gunun_ozeti_haberli_ve_guncel(istemci):
 
 def test_haber_kartlari_paylasim_sayfasinda(istemci):
     html = istemci.get("/paylasim").get_data(as_text=True)
-    assert "Finans haberleri" in html and "FAİZ VE ENFLASYON" in html and "Neden önemli?" in html
+    assert "Finans haberleri" in html and "FAİZ VE ENFLASYON" in html and "Veri kartları" in html
+    # Haber kartında döviz/emtia yüzdesi kutusu ve süs çizimi yok
+    assert "Neden önemli?" not in html and "bugünkü değişim" not in html
 
 
 def test_spor_ve_fed_karisikligi():

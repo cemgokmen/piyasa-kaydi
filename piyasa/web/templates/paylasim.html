@@ -24,10 +24,10 @@
 <nav class="segment paylasim-sekme" aria-label="Kart türü">
   <a href="{{ url_for('paylasim.tanitim_sayfasi') }}">Tanıtım ve profil</a>
   <a href="#haberler">Finans haberleri <span class="soluk">{{ haberler|length }}</span></a>
-  <a href="#islemler">Alım satımlar <span class="soluk">{{ islemler|length }}</span></a>
+  <a href="#islemler">Veri kartları <span class="soluk">{{ islemler|length }}</span></a>
 </nav>
 
-{% for baslik, kimlik, liste in [('Finans haberleri', 'haberler', haberler), ('Alım satımlar', 'islemler', islemler)] %}
+{% for baslik, kimlik, liste in [('Veri kartları', 'islemler', islemler), ('Finans haberleri', 'haberler', haberler)] %}
 <h2 class="paylasim-baslik" id="{{ kimlik }}">{{ baslik }}</h2>
 {% if liste %}
 <div class="paylasim-liste">
@@ -37,7 +37,7 @@
     <div class="paylasim-yan">
       <p class="paylasim-tur"><span class="rozet">{{ a.tur }}</span>
         {% if a.grup == 'haber' %}<a class="soluk" href="{{ a.kaynak_adres }}" target="_blank" rel="noopener">habere git ↗</a>
-        <span class="soluk">· {{ a.kaynak.kaynak_sayisi }} kaynakta</span>{% else %}<span class="soluk">önem {{ a.onem|round|int|sayi }} $</span>{% endif %}</p>
+        <span class="soluk">· {{ a.kaynak.kaynak_sayisi }} kaynakta</span>{% endif %}</p>
       <textarea class="paylasim-metin" rows="9" aria-label="Gönderi metni">{{ a.metin }}</textarea>
       <p class="paylasim-sayac soluk"></p>
       <div class="paylasim-dugmeler">
@@ -52,7 +52,7 @@
   {% endfor %}
 </div>
 {% else %}
-<p class="bos-durum">Şu an paylaşılacak yeni {{ 'haber' if kimlik == 'haberler' else 'alım satım' }} yok.</p>
+<p class="bos-durum">Şu an paylaşılacak yeni {{ 'haber' if kimlik == 'haberler' else 'veri kartı' }} yok.</p>
 {% endif %}
 {% endfor %}
 

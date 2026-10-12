@@ -1,7 +1,7 @@
 {# X için 1200×675 paylaşım kartları (SVG). Görsel olarak indirilirken tarayıcıda 2400×1350 PNG'ye çevrilir.
    Görseller sitenin kendi çizimleridir (haber fotoğrafları kaynakların telifli görselleridir, kullanılmaz). #}
 {% set yazi = "Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" %}
-{% from "_haber_karti.html" import haber_karti %}
+{% import "_veri_karti.html" as veri %}
 
 {% macro ust_bant(k, etiket) -%}
   <rect x="64" y="54" width="46" height="46" rx="11" fill="#1B4DFF"/>
@@ -42,5 +42,9 @@
 {%- endmacro %}
 
 {% macro kart(k, kimlik) -%}
-{% if k.tip == 'haber' %}{{ haber_karti(k, kimlik) }}{% else %}{{ islem_karti(k, kimlik) }}{% endif %}
+{% if k.tip == 'haber' %}{{ veri.haber(k, kimlik) }}
+{% elif k.tip == 'islem' %}{{ veri.islem(k, kimlik) }}
+{% elif k.tip == 'liste' %}{{ veri.liste(k, kimlik) }}
+{% elif k.tip == 'hareket' %}{{ veri.hareket(k, kimlik) }}
+{% else %}{{ islem_karti(k, kimlik) }}{% endif %}
 {%- endmacro %}

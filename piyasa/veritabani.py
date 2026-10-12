@@ -297,6 +297,8 @@ def init_db():
         adres TEXT PRIMARY KEY, kaynak TEXT, baslik TEXT, ozet TEXT, konu TEXT, onem INTEGER, gorsel TEXT,
         yayin TEXT, alindi TEXT, kume TEXT, kaynak_sayisi INTEGER DEFAULT 1, puan REAL)""")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_haber_yayin ON haber(yayin)")
+    if "metin" not in {r[1] for r in conn.execute("PRAGMA table_info(haber)")}:
+        conn.execute("ALTER TABLE haber ADD COLUMN metin TEXT")
 
     # Sosyal medyada paylaşılan bildirimler (bkz. piyasa/paylasim): aynı şey iki kez paylaşılmaz
     conn.execute("""CREATE TABLE IF NOT EXISTS paylasim (

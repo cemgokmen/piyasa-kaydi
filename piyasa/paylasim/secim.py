@@ -6,7 +6,6 @@ Eşikler gürültüyü ayıklar: küçük işlemler, fonların eşik bildirimler
 her gün işlem yapan büyük ortaklar paylaşılmaz.
 """
 
-import hashlib
 import re
 from datetime import date, datetime, timedelta
 
@@ -56,15 +55,15 @@ def _kisa_tanim(ozet, sinir=120):
     return cumle
 
 
-def faaliyet(kod, bist=False, sektor=None, ag=True):
+def faaliyet(kod, bist=False, sektor=None, ag=True, sinir=240):
     """Şirketin ne iş yaptığı, tek kısa cümle. ABD'de profil yoksa Yahoo'dan alınır (ag=True)."""
     from piyasa import sirket_profili
     try:
         sembol = f"{kod}.IS" if bist else kod
-        p = sirket_profili.kayitli(sembol) or (sirket_profili.profil(sembol) if ag else None)
+        p = sirket_profili.kayitli(sembol) or (sirket_profili.profil(sembol, yahoo=sembol if bist else None) if ag else None)
     except Exception:
         p = None
-    tanim = _kisa_tanim(p["ozet"]) if p and p.get("ozet") else None
+    tanim = _kisa_tanim(p["ozet"], sinir) if p and p.get("ozet") else None
     if tanim:
         return tanim
     if bist and sektor:
@@ -76,7 +75,7 @@ def faaliyet(kod, bist=False, sektor=None, ag=True):
 def _faaliyetleri_ekle(adaylar):
     """Alım satım adaylarına şirket tanımı (profiller paralel alınır)."""
     from concurrent.futures import ThreadPoolExecutor
-    islemler = [a for a in adaylar if a.get("grup") == "islem"]
+    islemler = [a for a in adaylar if a.get("grup") == "veri"]
     if not islemler:
         return
     def bul(a):
@@ -87,9 +86,8 @@ def _faaliyetleri_ekle(adaylar):
         sonuclar = list(havuz.map(bul, islemler))
     for a, f in zip(islemler, sonuclar, strict=True):
         if f:
-            a["kart"]["faaliyet"] = f
-            ilk, _, kalan = a["metin"].partition("\n\n")
-            a["metin"] = f"{ilk}\n\nNe iş yapar? {f}\n\n{kalan}"
+            a["kart"]["faaliyet_tam"] = f
+            a["kart"]["faaliyet"] = _kisa_tanim(f, 120)
 
 
 def _bist_fiyatlari():
@@ -226,31 +224,31 @@ def _gostergeler():
 
 
 def haber_adaylari(conn, simdi, saat):
-    """Son saatlerin en önemli haberleri; aynı olaydan yalnızca kümenin temsilcisi."""
+    """Son saatlerin en önemli haberleri; aynı olaydan tek haber (başlık ya da metin benzerliğiyle)."""
     from datetime import UTC
+
+    from piyasa.toplama.haber_akisi import ayni_olay, giris
     bas = (datetime.now(UTC) - timedelta(hours=min(saat, HABER_SAAT))).isoformat()
     satirlar = conn.execute(
-        """SELECT adres, kaynak, baslik, ozet, konu, puan, kaynak_sayisi, yayin, kume FROM haber
-           WHERE yayin >= ? AND adres = kume AND puan >= ? ORDER BY puan DESC LIMIT ?""",
-        (bas, HABER_ESIK, HABER_SAYISI)).fetchall()
-    gostergeler = _gostergeler() if satirlar else {}
-    sonuc, onceki = [], None
-    for r in satirlar:
-        x = dict(r)
-        yerel = datetime.fromisoformat(x["yayin"]).astimezone()
-        x["yayin_yerel"] = f"{metin.gun(yerel.date().isoformat())} · {yerel:%H:%M}"
-        gosterge = gostergeler.get(metin._gosterge_kodu(x))
-        # Düzen habere göre sabit, ama art arda iki kart aynı düzende olmaz
-        duzenler = metin.DUZENLER
-        sira = int(hashlib.sha1(x["adres"].encode()).hexdigest(), 16) % len(duzenler)
-        if duzenler[sira] == onceki or (duzenler[sira] == "veri" and not gosterge):
-            sira = (sira + 1) % len(duzenler)
-        kart = metin.haber_karti(x, gosterge, duzenler[sira])
-        onceki = kart["duzen"]
+        """SELECT adres, kaynak, baslik, ozet, metin, konu, puan, kaynak_sayisi, yayin, kume FROM haber
+           WHERE yayin >= ? AND adres = kume AND puan >= ? AND kaynak != 'Investing'
+           ORDER BY (metin IS NOT NULL AND metin != '') DESC, puan DESC
+           LIMIT ?""", (bas, HABER_ESIK, HABER_SAYISI * 2)).fetchall()
+    sonuc, girisler = [], []
+    for r in sorted((dict(r) for r in satirlar), key=lambda h: -h["puan"]):
+        x = r
+        x["giris"] = giris(x.get("metin")) or x.get("ozet") or ""
+        # Farklı başlıkla verilmiş aynı haber: girişleri benzerse ikincisi atlanır
+        if any(ayni_olay(x["giris"], g) for g in girisler if g):
+            continue
+        girisler.append(x["giris"])
+        kart = metin.haber_karti(x)
         kart["foto"] = gorsel.foto(conn, x)
         sonuc.append({"anahtar": f"haber:{x['kume']}", "tur": "Haber", "grup": "haber",
                       "onem": x["puan"], "metin": metin.haber(x), "kart": kart,
                       "kaynak": x, "kaynak_adres": x["adres"]})
+        if len(sonuc) >= HABER_SAYISI:
+            break
     return sonuc
 
 
@@ -262,9 +260,12 @@ def adaylar(conn, simdi=None, kur=45.0, saat=36, faaliyet_ekle=True):
     islemler = (kap_islemleri(conn, bas, kur) + geri_alimlar(conn, bas, kur)
                 + form4_islemleri(conn, bas_gun) + kongre_islemleri(conn, bas_gun))
     for a in islemler:
-        a["grup"] = "islem"
+        a["grup"] = "veri"
     islemler = sorted(islemler, key=lambda a: -a["onem"])
     if faaliyet_ekle:
         _faaliyetleri_ekle(islemler)
-    # Haberler kendi puanına göre, işlemler dolar karşılığına göre sıralı; iki grup ayrı listelenir
-    return haber_adaylari(conn, simdi, saat) + islemler
+    # Veri kartları: işlemler grafikli ve bağlamlı karta çevrilir; haftalık sıralamalar ve günün hareketi eklenir
+    from piyasa.paylasim import veri
+    veri_kartlari = [k for k in [veri.hareket_karti()] + veri.liste_kartlari(conn) if k]
+    veri_kartlari += [veri.islem_karti(conn, a) for a in islemler]
+    return haber_adaylari(conn, simdi, saat) + veri_kartlari

@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+import pytest
+
 from piyasa.paylasim import calistir, metin, secim, x
 
 
@@ -45,10 +47,16 @@ def test_adaylar_ornek_veride(uygulama):
     assert any(a["anahtar"] == "kap:1001" for a in liste)
     assert not any(a["anahtar"] == "kap:1003" for a in liste)
     assert all(calistir.uzunluk(a["metin"]) <= calistir.X_SINIRI for a in liste)
-    # Önce haberler (kendi puanıyla), sonra alım satımlar (dolar karşılığıyla) sıralı
+    # Önce haberler, sonra veri kartları; tek işlem kartları dolar karşılığına göre sıralı
     haberler = [a for a in liste if a["grup"] == "haber"]
-    islemler = [a for a in liste if a["grup"] == "islem"]
-    assert liste == haberler + islemler and islemler == sorted(islemler, key=lambda a: -a["onem"])
+    veriler = [a for a in liste if a["grup"] == "veri"]
+    assert liste == haberler + veriler
+    islemler = [a for a in veriler if a["kart"]["tip"] == "islem"]
+    assert islemler == sorted(islemler, key=lambda a: -a["onem"])
+    # İşlem kartı metni haber diliyle: kim, ne kadar, şirketteki payı
+    thy = next(a for a in liste if a["anahtar"] == "kap:1001")
+    assert "Yönetim kurulu üyesi Ahmet Örnek" in thy["metin"] or "yönetim kurulu üyesi Ahmet Örnek" in thy["metin"]
+    assert "30 milyon TL'lik alım" in thy["metin"] and "fiyattan aldı" in thy["metin"]
 
 
 def test_gece_ve_gunluk_sinir(uygulama):
@@ -124,3 +132,22 @@ def test_tanitim_sayfalari_yalnizca_yerel(istemci):
     # X biyografisi 160 karakteri geçemez; bir gönderide en çok 4 görsel
     assert all(len(b) <= 160 for b in tanitim.PROFIL["bio_secenekleri"])
     assert all(len(g) <= 4 for _, g in tanitim.ZINCIR)
+
+
+
+def test_siralama_karti_ve_grafik():
+    from piyasa.paylasim import veri
+    satirlar = [{"kod": k, "kod_metin": f"#{k}", "ad": k, "deger": d, "deger_metni": f"{d} TL", "ek": ""}
+                for k, d in (("AAA", 300), ("BBB", 150), ("CCC", 30))]
+    kart = veri._liste("liste:test", "Başlık", "Alt", satirlar, "#000", "KAP", "piyasakaydi.com", "TL", "Liste:")
+    assert [s["oran"] for s in kart["kart"]["satirlar"]] == [1, 0.5, 0.1]
+    assert "1. #AAA AAA: 300 TL" in kart["metin"] and "Kaynak: KAP" in kart["metin"]
+    assert veri._liste("x", "", "", satirlar[:2], "#000", "", "", "", "") is None      # 3'ten az satır: kart yok
+    # Grafik: işlem günü işaretlenir, işlemden bu yana değişim hesaplanır
+    seri = [(f"2026-0{1 + i // 28}-{1 + i % 28:02d}", 10 + i) for i in range(60)]
+    g = veri.grafik(seri, 0, 0, 100, 50, seri[20][0])
+    assert g["isaret"]["tarih"] and g["degisim"] == pytest.approx(69 / 30 - 1) and g["degisim_etiket"] == "İşlemden bu yana"
+    # Bildirim bugün geldiyse 6 aylık değişim gösterilir
+    assert veri.grafik(seri, 0, 0, 100, 50, seri[-1][0])["degisim_etiket"].startswith("Son ")
+    assert veri.rol_iyelik("Başkan") == "başkanı" and veri.rol_iyelik("CEO") == "CEO'su"
+    assert veri.rol_iyelik("Yönetim kurulu üyesi") == "yönetim kurulu üyesi"

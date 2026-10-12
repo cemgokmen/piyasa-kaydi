@@ -61,7 +61,10 @@ ONEMLI = ("rekor", "son dakika", "faiz kararı", "açıklandı", "beklenti", "se
 # Her gün tekrarlanan fiyat sayfaları ("Altın bugün ne kadar?"): haber değeri düşük
 SIRADAN = re.compile(r"ne kadar|kaç tl|kaç lira|güncel .*fiyat|fiyatları bugün|canlı|\d{1,2} \w+ 20\d\d", re.IGNORECASE)
 GURULTU = re.compile(r"burç|\bmaç|futbol|\btff\b|teknik direktör|milli takım|süper lig|basketbol|dizi |magazin|"
-                     r"horoskop|şans oyunu|loto|kupon|tutuklandı|gözaltı", re.IGNORECASE)
+                     r"horoskop|şans oyunu|loto|kupon|tutuklandı|gözaltı|meteoroloji|sarı kod|turuncu kod|hava durumu|"
+                     r"kuvvetli yağış|sağanak", re.IGNORECASE)
+# Tıklama tuzağı başlıklar ("Zirvede hangi şirket? İşte...") geri planda kalır
+TUZAK = re.compile(r"\?|\bişte\b|\bhangi\b|merak edilen|ne zaman|nasıl yapılır|açıklandı mı", re.IGNORECASE)
 
 
 def _metin(oge, ad, ns=None):
@@ -160,6 +163,15 @@ def _kelimeler(metin):
     return {k for k in re.findall(r"[a-zçğıöşü0-9']{4,}", _kucuk(metin))} - _SIRADAN_SOZCUKLER
 
 
+_SAYI = re.compile(r"\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+,\d{2,}")
+
+
+def ayni_olay(a, b):
+    """İki haber metni aynı olayı mı anlatıyor: belirgin bir sayı ortak (4.206,01) ya da sözcükler çok benzer."""
+    ortak_sayi = set(_SAYI.findall(a or "")) & set(_SAYI.findall(b or ""))
+    return bool(ortak_sayi) or benzer(a, b) >= 0.5
+
+
 def benzer(a, b):
     """İki başlığın sözcük benzerliği (0–1): aynı olayın farklı kaynaklardaki haberi. En az 3 ortak sözcük gerekir."""
     ka, kb = _kelimeler(a), _kelimeler(b)
@@ -175,6 +187,8 @@ def puan(h, kume_buyuklugu=1, simdi=None):
         p += 6
     if SIRADAN.search(h["baslik"]):
         p -= 18
+    if TUZAK.search(h["baslik"]):
+        p -= 8
     p += min(kume_buyuklugu - 1, 4) * 8
     if h.get("yayin"):
         saat = (simdi - datetime.fromisoformat(h["yayin"])).total_seconds() / 3600
@@ -223,6 +237,65 @@ def kaydet(conn, haberler):
     return eklenen
 
 
+# ---------------------------------------------------------------------------
+# Haberin kendi metni: başlık tek başına çoğu zaman eksik ("2 banka", "o hisse"). Önemli haberlerin
+# sayfasındaki articleBody (JSON-LD) okunur; özet bu metnin ilk cümlelerinden kurulur.
+# ---------------------------------------------------------------------------
+
+METIN_SAYISI = 25            # her çalıştırmada en çok bu kadar haber sayfası okunur
+_YER_ETIKETI = re.compile(r"^[A-ZÇĞİÖŞÜa-zçğıöşü .'/-]{2,40}\s*\((AA|DHA|İHA|ANKA|BHT|Reuters)\)\s*[-–—]\s*")
+
+
+def sayfa_metni(adres):
+    """Haber sayfasındaki makale metni (JSON-LD articleBody); bulunamazsa None."""
+    import json
+    cevap = requests.get(adres, headers={"User-Agent": TARAYICI}, timeout=15)
+    cevap.raise_for_status()
+    for blok in re.findall(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>', cevap.text, re.S):
+        m = re.search(r'"articleBody"\s*:\s*"((?:[^"\\]|\\.)*)"', blok)
+        if m:
+            metin = html.unescape(html.unescape(json.loads('"' + m.group(1) + '"', strict=False)))
+            metin = sade(metin)
+            return metin if len(metin) > 120 else None
+    return None
+
+
+def giris(metin, sinir=420):
+    """Haberin girişi: ilk iki-üç cümle (en çok 'sinir' karakter), yer etiketi ("İstanbul (AA) -") atılmış."""
+    if not metin:
+        return ""
+    metin = _YER_ETIKETI.sub("", metin.strip())
+    metin = re.sub(r"(?<=[a-zçğıöşü0-9])\.(?=[A-ZÇĞİÖŞÜ])", ". ", metin)      # yapışık cümleler
+    metin = re.sub(r"(?<=[a-zçğıöşü]{3})(?=[A-ZÇĞİÖŞÜ][a-zçğıöşü]{2})", ". ", metin)   # ara başlık + metin
+    cumleler = re.split(r"(?<=[.!?])\s+(?=[A-ZÇĞİÖŞÜ0-9\"“])", metin)
+    sonuc = ""
+    for c in cumleler:
+        if sonuc and len(sonuc) + len(c) > sinir:
+            break
+        sonuc = f"{sonuc} {c}".strip()
+        if len(sonuc) > sinir * 0.6 and sonuc.count(".") >= 2:
+            break
+    return sonuc if len(sonuc) <= sinir + 80 else sonuc[:sinir].rsplit(" ", 1)[0] + "…"
+
+
+def metinleri_al(conn):
+    """Önemli haberlerin (kümelerin temsilcileri) metnini okur."""
+    satirlar = conn.execute(
+        """SELECT adres FROM haber WHERE adres = kume AND metin IS NULL AND puan >= 12 AND kaynak != 'Investing'
+           ORDER BY puan DESC LIMIT ?""", (METIN_SAYISI,)).fetchall()
+    okunan = 0
+    for (adres,) in satirlar:
+        try:
+            metin = sayfa_metni(adres) or ""
+        except Exception:
+            metin = ""
+        conn.execute("UPDATE haber SET metin = ? WHERE adres = ?", (metin, adres))
+        okunan += bool(metin)
+        time.sleep(0.4)
+    conn.commit()
+    return okunan
+
+
 def zamani_geldi_mi(conn, aralik=ARALIK):
     son = conn.execute("SELECT MAX(alindi) FROM haber").fetchone()[0]
     return not son or (datetime.now(UTC) - datetime.fromisoformat(son)).total_seconds() >= aralik - 60
@@ -246,7 +319,8 @@ def main():
                 print(f"  {ad}: alınamadı ({str(hata)[:80]})", flush=True)
             time.sleep(0.5)
         eklenen = kaydet(conn, toplam)
-        print(f"  Haberler: {len(toplam)} okundu, {eklenen} yeni", flush=True)
+        metinli = metinleri_al(conn)
+        print(f"  Haberler: {len(toplam)} okundu, {eklenen} yeni, {metinli} haberin metni alındı", flush=True)
     finally:
         conn.close()
 

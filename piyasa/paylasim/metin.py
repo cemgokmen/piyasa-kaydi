@@ -234,11 +234,15 @@ def _gosterge_kodu(x):
 
 
 def haber(x):
-    """X metni: başlık, özet, kaynak. Haberin kendisi kaynağındadır; biz kısa aktarırız."""
-    renk, etiket, etiketler, neden, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
+    """X metni: başlık, haberin kendi metninden 2-3 cümlelik giriş, kaynak."""
+    _, _, etiketler, _, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
+    b = x["baslik"].lower()
+    if x["konu"] == "doviz":       # konu etiketi yerine haberin kendisi
+        etiketler = "#gümüş #emtia" if "gümüş" in b else "#altın" if "altın" in b else "#dolar #döviz"
     govde = [x["baslik"]]
-    if x.get("ozet") and x["ozet"].lower()[:60] != x["baslik"].lower()[:60]:
-        govde.append(x["ozet"])
+    giris = x.get("giris") or x.get("ozet") or ""
+    if giris and giris.lower()[:60] != x["baslik"].lower()[:60]:
+        govde.append(giris)
     return "\n\n".join(govde) + f"\n\nKaynak: {x['kaynak']} · {etiketler}\n{SITE}/gunluk-ozet"
 
 
@@ -297,17 +301,12 @@ def _baslik_satirlari(baslik, secenekler):
     return boyut, satirlar
 
 
-def haber_karti(x, gosterge=None, duzen="yan"):
-    renk, etiket, _, neden, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
-    # Dar sütun (yanında çizim olan düzenler) ve geniş sütun (bant düzeni) için ayrı satırlar
-    boyut, satirlar = _baslik_satirlari(x["baslik"], ((54, 24), (48, 27), (42, 31), (38, 34)))
-    genis_boyut, genis_satirlar = _baslik_satirlari(x["baslik"], ((56, 36), (50, 40), (44, 46)))
-    ozet = satirlara_bol(x.get("ozet") or "", 52, 2) if x.get("ozet") else []
-    if duzen == "veri" and not gosterge:
-        duzen = "yan"
-    return {"tip": "haber", "duzen": duzen, "konu": x["konu"], "ikon": haber_ikonu(x["baslik"], x["konu"]),
-            "renk": renk, "etiket": etiket, "baslik_satirlari": satirlar, "baslik_boyut": boyut,
-            "genis_satirlari": genis_satirlar, "genis_boyut": genis_boyut, "ozet_satirlari": ozet,
-            "ozet_tek": satirlara_bol(x.get("ozet") or "", 78, 1) if x.get("ozet") else [],
-            "neden": neden, "gosterge": gosterge, "adres": f"{SITE}/gunluk-ozet",
-            "dosya": f"haber-{x['konu']}-{(x.get('yayin') or '')[:16].replace(':', '')}"}
+def haber_karti(x, gosterge=None, duzen=None):
+    """Haber kartı: büyük başlık ve haberin girişi; sade, tipografik (fotoğraf varsa fotoğraflı)."""
+    renk, etiket, _, _, _ = HABER_KONULARI.get(x["konu"], HABER_KONULARI["ekonomi"])
+    boyut, satirlar = _baslik_satirlari(x["baslik"], ((60, 34), (54, 38), (48, 43), (44, 47)))
+    giris = x.get("giris") or x.get("ozet") or ""
+    giris_satirlari = satirlara_bol(giris, 74, 5 - max(0, len(satirlar) - 2)) if giris else []
+    return {"tip": "haber", "konu": x["konu"], "renk": renk, "etiket": etiket, "baslik_satirlari": satirlar,
+            "baslik_boyut": boyut, "giris_satirlari": giris_satirlari, "kaynak_adi": x["kaynak"],
+            "adres": f"{SITE}/gunluk-ozet", "dosya": f"haber-{x['konu']}-{(x.get('yayin') or '')[:16].replace(':', '')}"}

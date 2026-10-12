@@ -1,0 +1,149 @@
+{# Sitenin kendi verisiyle paylaşım kartları (1200×675 SVG): içeriden işlem (grafikli), sıralama,
+   günün hareketi ve haber. Hepsi aynı görsel dil: koyu lacivert zemin, tek vurgu rengi, üstte marka,
+   altta adres ve resmi kaynak. #}
+{% set yazi = "Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" %}
+{% set rakam = "'IBM Plex Mono', 'SF Mono', Menlo, monospace" %}
+
+{% macro zemin(kimlik, renk) -%}
+  <defs>
+    <radialGradient id="{{ kimlik }}-isik" cx="100%" cy="0%" r="75%">
+      <stop offset="0" stop-color="{{ renk }}" stop-opacity=".20"/><stop offset="1" stop-color="{{ renk }}" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="{{ kimlik }}-alan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{ renk }}" stop-opacity=".32"/><stop offset="1" stop-color="{{ renk }}" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="#0A0F1C"/>
+  <rect width="1200" height="675" fill="url(#{{ kimlik }}-isik)"/>
+{%- endmacro %}
+
+{% macro marka(etiket, renk) -%}
+  <rect x="64" y="52" width="40" height="40" rx="10" fill="#1B4DFF"/>
+  <path d="M73 81l9-11 8 7 11-14" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="116" y="81" font-family="{{ yazi }}" font-size="26" fill="#CBD5E1">Piyasa<tspan font-weight="700" fill="#FFFFFF">Kaydı</tspan></text>
+  <text x="1136" y="80" text-anchor="end" font-family="{{ yazi }}" font-size="18" font-weight="700" letter-spacing="2.2" fill="{{ renk }}">{{ etiket }}</text>
+  <line x1="64" y1="114" x2="1136" y2="114" stroke="#1C2539" stroke-width="2"/>
+{%- endmacro %}
+
+{% macro taban(adres, kaynak='') -%}
+  <line x1="64" y1="606" x2="1136" y2="606" stroke="#1C2539" stroke-width="2"/>
+  <text x="64" y="644" font-family="{{ yazi }}" font-size="22" font-weight="600" fill="#E2E8F0">{{ adres }}</text>
+  {% if kaynak %}<text x="1136" y="644" text-anchor="end" font-family="{{ yazi }}" font-size="19" fill="#64748B">{{ kaynak }}</text>{% endif %}
+{%- endmacro %}
+
+{# ---------------------------------------------------------------- tek içeriden işlem #}
+{% macro islem(k, kimlik) -%}
+<svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.sirket }} {{ k.tutar }}">
+  {{ zemin(kimlik, k.renk) }}
+  {{ marka(k.etiket, k.renk) }}
+  {% set sirket = k.sirket if k.sirket|length <= 30 else k.sirket[:29] ~ '…' %}
+  <text x="64" y="186" font-family="{{ yazi }}" font-size="54" font-weight="800" fill="#FFFFFF">{{ k.kod }}</text>
+  <text x="64" y="226" font-family="{{ yazi }}" font-size="26" font-weight="600" fill="#CBD5E1">{{ sirket }}</text>
+  {% if k.faaliyet %}{% set f = k.faaliyet if k.faaliyet|length <= 44 else k.faaliyet[:43].rsplit(' ', 1)[0] ~ '…' %}
+  <text x="64" y="258" font-family="{{ yazi }}" font-size="19" fill="#64748B">{{ f }}</text>{% endif %}
+
+  <text x="64" y="318" font-family="{{ yazi }}" font-size="16" font-weight="700" letter-spacing="2" fill="#64748B">İŞLEMİ YAPAN</text>
+  {% set kisi = k.kisi if k.kisi|length <= 28 else k.kisi[:27] ~ '…' %}
+  <text x="64" y="352" font-family="{{ yazi }}" font-size="28" font-weight="700" fill="#FFFFFF">{{ kisi }}</text>
+  <text x="64" y="382" font-family="{{ yazi }}" font-size="20" fill="#94A3B8">{{ k.rol }}</text>
+
+  <text x="64" y="460" font-family="{{ yazi }}" font-size="{{ 58 if k.tutar|length <= 16 else 44 }}" font-weight="800" fill="{{ k.renk }}">{{ k.tutar }}</text>
+  <text x="64" y="492" font-family="{{ yazi }}" font-size="20" fill="#94A3B8">{{ k.tutar_alt }}</text>
+
+  {# Kutucuklar #}
+  {% for ad, deger in k.kutular %}
+  <g transform="translate({{ 64 + loop.index0 * 172 }} 520)">
+    <text font-family="{{ yazi }}" font-size="14" font-weight="700" letter-spacing="1.2" fill="#64748B">{{ ad|upper }}</text>
+    <text y="34" font-family="{{ rakam }}" font-size="22" font-weight="600" fill="#E2E8F0">{{ deger }}</text>
+  </g>
+  {% endfor %}
+
+  {# Fiyat grafiği: son 6 ay, işlem günü işaretli #}
+  <rect x="610" y="146" width="526" height="430" rx="18" fill="#0F172A" stroke="#1C2539" stroke-width="2"/>
+  {% if k.grafik %}{% set g = k.grafik %}
+  <text x="640" y="186" font-family="{{ yazi }}" font-size="16" font-weight="700" letter-spacing="2" fill="#64748B">SON 6 AY</text>
+  <text x="1106" y="188" text-anchor="end" font-family="{{ rakam }}" font-size="24" font-weight="600" fill="#FFFFFF">{{ '{:,.2f}'.format(g.son).replace(',', 'X').replace('.', ',').replace('X', '.') }}</text>
+  <path d="{{ g.alan }}" fill="url(#{{ kimlik }}-alan)"/>
+  <path d="{{ g.cizgi }}" fill="none" stroke="{{ k.renk }}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  {% if g.isaret %}{% set i = g.isaret %}
+  <line x1="{{ i.x }}" y1="214" x2="{{ i.x }}" y2="424" stroke="#FFFFFF" stroke-opacity=".45" stroke-width="2" stroke-dasharray="5 5"/>
+  <circle cx="{{ i.x }}" cy="{{ i.y }}" r="9" fill="#0F172A" stroke="#FFFFFF" stroke-width="4"/>
+  <text x="{{ i.x + (-12 if i.sag else 12) }}" y="{{ 236 }}" text-anchor="{{ 'end' if i.sag else 'start' }}" font-family="{{ yazi }}" font-size="17" font-weight="700" fill="#FFFFFF">İşlem · {{ i.tarih }}</text>
+  {% endif %}
+  <text x="640" y="452" font-family="{{ yazi }}" font-size="15" fill="#475569">{{ g.bas_tarih }}</text>
+  <text x="1106" y="452" text-anchor="end" font-family="{{ yazi }}" font-size="15" fill="#475569">{{ g.son_tarih }}</text>
+  {% if g.degisim is defined and g.degisim is not none %}
+  <line x1="640" y1="478" x2="1106" y2="478" stroke="#1C2539" stroke-width="2"/>
+  <text x="640" y="520" font-family="{{ yazi }}" font-size="18" fill="#94A3B8">{{ g.degisim_etiket }}</text>
+  <text x="1106" y="524" text-anchor="end" font-family="{{ rakam }}" font-size="30" font-weight="700" fill="{{ '#22C55E' if g.degisim >= 0 else '#EF4444' }}">{{ ('+' if g.degisim >= 0 else '−') ~ '%' ~ ('%.1f'|format(g.degisim|abs * 100)).replace('.', ',') }}</text>
+  {% endif %}
+  {% else %}
+  <text x="873" y="350" text-anchor="middle" font-family="{{ yazi }}" font-size="20" fill="#64748B">{{ k.baglam or 'Fiyat geçmişi bulunamadı' }}</text>
+  {% endif %}
+  {{ taban(k.adres, k.kaynak) }}
+</svg>
+{%- endmacro %}
+
+{# ---------------------------------------------------------------- sıralama #}
+{% macro liste(k, kimlik) -%}
+<svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.baslik }}">
+  {{ zemin(kimlik, k.renk) }}
+  {{ marka(k.etiket, k.renk) }}
+  {% set satirlar = k.baslik|wordwrap(46, wrapstring='\n')|string %}
+  {% for s in satirlar.split('\n')[:2] %}<text x="64" y="{{ 170 + loop.index0 * 48 }}" font-family="{{ yazi }}" font-size="40" font-weight="800" fill="#FFFFFF">{{ s }}</text>{% endfor %}
+  <text x="64" y="{{ 170 + (satirlar.split('\n')[:2]|length) * 48 - 8 }}" font-family="{{ yazi }}" font-size="19" fill="#94A3B8">{{ k.alt }}</text>
+  {% for s in k.satirlar %}{% set y = 286 + loop.index0 * 62 %}
+  <text x="64" y="{{ y + 8 }}" font-family="{{ rakam }}" font-size="22" font-weight="700" fill="#475569">{{ loop.index }}</text>
+  <text x="104" y="{{ y + 8 }}" font-family="{{ yazi }}" font-size="25" font-weight="800" fill="#FFFFFF">{{ s.kod }}</text>
+  {% set ad = s.ad if s.ad|length <= 24 else s.ad[:23] ~ '…' %}
+  <text x="214" y="{{ y + 8 }}" font-family="{{ yazi }}" font-size="20" fill="#94A3B8">{{ ad }}</text>
+  <rect x="500" y="{{ y - 12 }}" width="250" height="24" rx="6" fill="#1C2539"/>
+  <rect x="500" y="{{ y - 12 }}" width="{{ [s.oran * 250, 8]|max }}" height="24" rx="6" fill="{{ k.renk }}"/>
+  <text x="1136" y="{{ y + 8 }}" text-anchor="end" font-family="{{ rakam }}" font-size="22" font-weight="600" fill="#E2E8F0">{{ s.deger_metni }}</text>
+  {% endfor %}
+  {{ taban(k.adres, k.kaynak) }}
+</svg>
+{%- endmacro %}
+
+{# ---------------------------------------------------------------- günün hareketi #}
+{% macro hareket(k, kimlik) -%}
+<svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.baslik }}">
+  {{ zemin(kimlik, k.renk) }}
+  {{ marka(k.etiket, '#94A3B8') }}
+  <text x="64" y="176" font-family="{{ yazi }}" font-size="40" font-weight="800" fill="#FFFFFF">{{ k.baslik }}</text>
+  <text x="64" y="212" font-family="{{ yazi }}" font-size="19" fill="#94A3B8">{{ k.alt }}</text>
+  {% for baslik, liste, renk, x in [('EN ÇOK YÜKSELENLER', k.yukselen, '#22C55E', 64), ('EN ÇOK DÜŞENLER', k.dusen, '#EF4444', 616)] %}
+  <text x="{{ x }}" y="266" font-family="{{ yazi }}" font-size="16" font-weight="700" letter-spacing="2" fill="{{ renk }}">{{ baslik }}</text>
+  {% for s in liste %}{% set y = 312 + loop.index0 * 56 %}
+  <rect x="{{ x }}" y="{{ y - 30 }}" width="520" height="46" rx="10" fill="{{ renk }}" fill-opacity=".07"/>
+  <text x="{{ x + 18 }}" y="{{ y }}" font-family="{{ yazi }}" font-size="23" font-weight="800" fill="#FFFFFF">{{ s.kod }}</text>
+  {% set ad = s.ad if s.ad|length <= 22 else s.ad[:21] ~ '…' %}
+  <text x="{{ x + 120 }}" y="{{ y }}" font-family="{{ yazi }}" font-size="18" fill="#94A3B8">{{ ad }}</text>
+  <text x="{{ x + 502 }}" y="{{ y }}" text-anchor="end" font-family="{{ rakam }}" font-size="23" font-weight="700" fill="{{ renk }}">{{ s.metin }}</text>
+  {% endfor %}
+  {% endfor %}
+  {{ taban(k.adres, k.kaynak) }}
+</svg>
+{%- endmacro %}
+
+{# ---------------------------------------------------------------- haber (tipografik) #}
+{% macro haber(k, kimlik) -%}
+<svg id="{{ kimlik }}" class="paylasim-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="{{ k.baslik_satirlari|join(' ') }}">
+  {{ zemin(kimlik, k.renk) }}
+  {% if k.foto %}
+  <image href="{{ k.foto.veri }}" x="0" y="0" width="1200" height="675" preserveAspectRatio="xMidYMid slice"/>
+  <rect width="1200" height="675" fill="#0A0F1C" fill-opacity=".78"/>
+  {% endif %}
+  {{ marka(k.etiket, k.renk) }}
+  <rect x="64" y="160" width="6" height="{{ (k.baslik_satirlari|length) * k.baslik_boyut * 1.18 - 6 }}" rx="3" fill="{{ k.renk }}"/>
+  {% for s in k.baslik_satirlari %}
+  <text x="92" y="{{ 160 + k.baslik_boyut * 0.86 + loop.index0 * k.baslik_boyut * 1.18 }}" font-family="{{ yazi }}" font-size="{{ k.baslik_boyut }}" font-weight="800" fill="#FFFFFF">{{ s }}</text>
+  {% endfor %}
+  {% set gy = 160 + (k.baslik_satirlari|length) * k.baslik_boyut * 1.18 + 44 %}
+  {% for s in k.giris_satirlari %}
+  <text x="64" y="{{ gy + loop.index0 * 40 }}" font-family="{{ yazi }}" font-size="26" fill="#CBD5E1">{{ s }}</text>
+  {% endfor %}
+  {% if k.foto and k.foto.fotografci %}<text x="1136" y="590" text-anchor="end" font-family="{{ yazi }}" font-size="14" fill="#FFFFFF" fill-opacity=".6">Fotoğraf: {{ k.foto.fotografci }} · Pexels</text>{% endif %}
+  {{ taban(k.adres) }}
+</svg>
+{%- endmacro %}
