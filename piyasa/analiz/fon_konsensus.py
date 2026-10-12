@@ -150,3 +150,61 @@ def fon_konsensusu(adet=12):
         "en_cok_satilan": sirala([k for k in liste if k["satan"] > k["alan"]],
                                  lambda k: (k["satan"] - k["alan"], k["deger"])),
     }
+
+
+ETF = ("ETF", "ISHARES", "SPDR", "VANGUARD", "INDEX", "INVESCO QQQ", "SELECT SECTOR", "TRUST UNIT")
+
+
+def fon_hamleleri(slug):
+    """
+    Tek bir fonun son çeyrekte yaptığı en büyük değişiklikler: yeni girdiği, artırdığı,
+    azalttığı ve tamamen çıktığı hisseler, dolar büyüklüğüne göre sıralı.
+    Bölünme ya da birim değişikliği şüphesi olan hisseler (birim değer 3 kattan fazla oynadıysa)
+    alım satım sayılmaz.
+    """
+    with baglanti() as conn:
+        donemler = [s[0] for s in conn.execute(
+            "SELECT DISTINCT donem FROM holdings WHERE fon_slug = ? ORDER BY donem DESC LIMIT 2", (slug,))]
+        if len(donemler) < 2:
+            return None
+
+        def pozisyonlar(donem):
+            return {s["ticker"]: s for s in conn.execute(
+                """SELECT ticker, MAX(sirket_adi) AS sirket, SUM(adet) AS adet, SUM(deger) AS deger, MAX(fon_adi) AS fon
+                   FROM (SELECT CASE ticker WHEN 'GOOG' THEN 'GOOGL' ELSE ticker END AS ticker,
+                                sirket_adi, adet, deger, fon_adi
+                         FROM holdings WHERE fon_slug = ? AND donem = ? AND ticker IS NOT NULL AND ticker != '')
+                   GROUP BY ticker""", (slug, donem))}       # Alphabet'in iki hisse sınıfı tek sayılır
+
+        simdi, once = pozisyonlar(donemler[0]), pozisyonlar(donemler[1])
+    if not simdi:
+        return None
+    toplam = sum(s["deger"] or 0 for s in simdi.values()) or 1
+    alinan, satilan = [], []
+    for ticker, s in simdi.items():
+        o = once.get(ticker)
+        if not s["adet"] or not s["deger"]:
+            continue
+        birim = s["deger"] / s["adet"]
+        if o is None or not o["adet"]:
+            alinan.append({"ticker": ticker, "sirket": s["sirket"], "tur": "yeni", "oran": None, "tutar": s["deger"]})
+            continue
+        if not o["deger"] or not 1 / 3 < birim / (o["deger"] / o["adet"]) < 3:
+            continue
+        oran = s["adet"] / o["adet"] - 1
+        if abs(oran) < DEGISIM_ESIGI:
+            continue
+        kayit = {"ticker": ticker, "sirket": s["sirket"], "tur": "artirdi" if oran > 0 else "azaltti", "oran": oran,
+                 "tutar": abs(s["adet"] - o["adet"]) * birim}
+        (alinan if oran > 0 else satilan).append(kayit)
+    for ticker, o in once.items():
+        if ticker not in simdi and o["deger"]:
+            satilan.append({"ticker": ticker, "sirket": o["sirket"], "tur": "cikti", "oran": -1.0, "tutar": o["deger"]})
+
+    def sirala(liste):
+        liste = [x for x in liste if not any(e in (x["sirket"] or "").upper() for e in ETF)
+                 and x["tutar"] / toplam >= 0.001]          # portföyün binde birinden küçük oynamalar önemsiz
+        return sorted(liste, key=lambda x: -x["tutar"])
+
+    return {"fon": next(iter(simdi.values()))["fon"], "donem": donemler[0], "donem_adi": donem_metni(donemler[0]),
+            "pozisyon": len(simdi), "toplam": toplam, "alinan": sirala(alinan), "satilan": sirala(satilan)}
