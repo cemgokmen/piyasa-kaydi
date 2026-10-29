@@ -8,6 +8,7 @@ data/*.db
 data/*.db-journal
 data/*.db-yedek
 data/guncelleme.log
+data/nobet.log
 data/yfinance_onbellek/
 
 .pytest_cache/
