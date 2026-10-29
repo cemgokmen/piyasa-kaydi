@@ -8,7 +8,12 @@ from pathlib import Path
 # Proje kökü ve veri klasörü
 KOK = Path(__file__).resolve().parent.parent
 VERI_DIZINI = KOK / "data"
-VERITABANI = VERI_DIZINI / "kayitlar.db"
+# Masaüstü iCloud'a eşitlendiği için veritabanı orada durmaz: iCloud -wal/-shm
+# dosyalarını buluta kaldırınca SQLite "disk I/O error" verir ve site çöker
+VERITABANI = Path(os.environ.get(
+    "PIYASA_VERITABANI",
+    Path.home() / "Library" / "Application Support" / "PiyasaKaydi" / "kayitlar.db",
+))
 FON_LISTESI = VERI_DIZINI / "fonlar.json"
 
 # SEC, kendisine istek atan herkesin kim olduğunu bildirmesini istiyor.
