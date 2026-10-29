@@ -1,7 +1,7 @@
 {# Canlı akışta tek bildirim; değişken: o #}
 {% from "_bilesenler.html" import parti_rozeti %}
 <li class="canli-oge kaynak-{{ o.kaynak }}" data-anahtar="{{ o.kaynak }}|{{ o.gun }}|{{ o.kod }}|{{ o.kisi or '' }}|{{ o.islem or o.etiket }}|{{ o.dis_adres }}">
-  <span class="canli-saat sayi">{{ o.saat or '' }}</span>
+  <span class="canli-saat sayi">{{ o.saat or '–' }}</span>
   <div class="canli-govde">
     <div class="canli-ust">
       <span class="canli-kaynak">{% if o.kaynak == 'abd' %}ABD{% elif o.kaynak == 'siyaset' %}Kongre{% else %}{{ o.etiket }}{% endif %}</span>

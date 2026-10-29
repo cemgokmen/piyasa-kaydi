@@ -299,6 +299,11 @@ def test_kod_duzelt():
     assert kod_duzelt("ASX:LNW") == "LNW"
     assert kod_duzelt(" brk-b ") == "BRK-B"
     assert kod_duzelt(None) == ""
+    assert kod_duzelt("(SIRI)") == "SIRI"
+    assert kod_duzelt("$FEED") == "FEED"
+    assert kod_duzelt("NYSE/TRN") == "TRN"
+    assert kod_duzelt("BRK/B") == "BRK/B"
+    assert kod_duzelt("[NONE]") == "[NONE]"
 
 
 def test_rapor_kopyalari_silinir_ayni_rapordakiler_kalir(tmp_path, monkeypatch):

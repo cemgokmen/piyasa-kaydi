@@ -33,7 +33,8 @@ def anasayfa():
     son_dakika = canli_akisi.son_dakika()
     return render_template("anasayfa.html", aktif="anasayfa", emtia_sayisi=len(EMTIALAR),
                            kripto_sayisi=_kripto_sayisi(), bist_sayisi=len(bist_sorgulari.sirketler()),
-                           son_dakika=son_dakika, karsilastirma=ana_sayfa_ozeti(), **sorgular.genel_bakis())
+                           son_dakika=son_dakika, karsilastirma=ana_sayfa_ozeti(),
+                           sik_bakilanlar=sorgular.sik_bakilanlar(), **sorgular.genel_bakis())
 
 
 def _kripto_sayisi():

@@ -58,6 +58,24 @@ def yoneticilerin_toplu_alimlari(conn, gun=30, limit=8):
     ]
 
 
+# Ana sayfada aramanın altındaki kısayollar; yalnızca sayfası olanlar gösterilir
+SIK_BAKILAN_ABD = ("NVDA", "AAPL", "TSLA", "MSFT")
+SIK_BAKILAN_BIST = ("THYAO", "ASELS", "AKBNK")
+
+
+def sik_bakilanlar():
+    """[(ad, adres)]: verisi olan ABD ve Borsa İstanbul hisseleri."""
+    with baglanti() as conn:
+        abd = {r[0] for r in conn.execute(
+            f"SELECT DISTINCT ticker FROM transactions WHERE ticker IN ({','.join('?' * len(SIK_BAKILAN_ABD))})",
+            SIK_BAKILAN_ABD)}
+        bist = {r[0] for r in conn.execute(
+            f"SELECT kod FROM bist_sirket WHERE kod IN ({','.join('?' * len(SIK_BAKILAN_BIST))})",
+            SIK_BAKILAN_BIST)}
+    return ([(k, f"/hisse/{k}") for k in SIK_BAKILAN_ABD if k in abd]
+            + [(k, f"/bist/{k}") for k in SIK_BAKILAN_BIST if k in bist])
+
+
 def genel_bakis():
     with baglanti() as conn:
         yonetici = dict(conn.execute(

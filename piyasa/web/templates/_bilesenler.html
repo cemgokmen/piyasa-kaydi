@@ -9,7 +9,8 @@
 {%- endmacro %}
 
 {% macro kpi(etiket, deger, alt='', tur='', birim='') -%}
-  <div class="kpi {% if tur %}kpi-{{ tur }}{% endif %}">
+  {# Uzun değer (ör. '20,4 mn – 100,8 mn $') küçük yazılır; birimi alt satıra düşmesin #}
+  <div class="kpi {% if tur %}kpi-{{ tur }}{% endif %}{% if (deger|string|length) > 19 %} kpi-uzun{% endif %}">
     <span class="kpi-etiket">{{ etiket }}</span>
     <span class="kpi-deger">{{ deger }}{% if birim %}<span class="kpi-birim">{{ birim }}</span>{% endif %}</span>
     {% if alt %}<span class="kpi-alt">{{ alt }}</span>{% endif %}

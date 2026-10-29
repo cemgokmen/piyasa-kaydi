@@ -30,9 +30,9 @@
 </section>
 
 <section class="kpi-izgara">
-  {{ kpi('ABD yönetici bildirimi · bugün', sayilar.abd|sayi, (sayilar.abd_alim|sayi) ~ ' tanesi kendi parasıyla alım', 'alim' if sayilar.abd_alim else '') }}
-  {{ kpi('KAP bildirimi · bugün', sayilar.kap|sayi, 'içeriden işlem, geri alım ve özel durum') }}
-  {{ kpi('Siyasetçi bildirimi · bugün', sayilar.siyaset|sayi, 'ABD Kongresi üyeleri') }}
+  {{ kpi('ABD yönetici bildirimi · ' ~ sayilar.gun_adi, sayilar.abd|sayi, (sayilar.abd_alim|sayi) ~ ' tanesi kendi parasıyla alım', 'alim' if sayilar.abd_alim else '') }}
+  {{ kpi('KAP bildirimi · ' ~ sayilar.gun_adi, sayilar.kap|sayi, 'içeriden işlem, geri alım ve özel durum') }}
+  {{ kpi('Siyasetçi bildirimi · ' ~ sayilar.gun_adi, sayilar.siyaset|sayi, 'ABD Kongresi üyeleri') }}
   {% if artan or azalan %}
   {{ kpi('BIST yükselen / düşen', artan ~ ' / ' ~ azalan, 'hisse sayısı · ' ~ (hareket_gunu|kisa_tarih if hareket_gunu else ''),
          'alim' if artan > azalan else 'satim') }}

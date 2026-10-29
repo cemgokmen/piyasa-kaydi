@@ -30,18 +30,24 @@ IHALE_BASLANGIC = "2024-01-01"
 
 # Borsa kodu olmayan ihraççılar Form 4'te bu yer tutucularla gelir
 GECERSIZ_KODLAR = ("NONE", "N/A", "NA", "", "[NONE]")
+BORSA_ONEKLERI = ("NYSE", "NASDAQ", "AMEX", "OTC")
 
 
 def kod_duzelt(kod):
     """
     Bildirimlerdeki borsa kodunu tek biçime getirir:
-    'vicr' -> 'VICR', 'LEN, LEN.B' -> 'LEN', 'CRDA CRDB' -> 'CRDA', 'ASX:LNW' -> 'LNW'.
+    'vicr' -> 'VICR', 'LEN, LEN.B' -> 'LEN', 'CRDA CRDB' -> 'CRDA', 'ASX:LNW' -> 'LNW',
+    '(SIRI)' -> 'SIRI', '$FEED' -> 'FEED', 'NYSE/TRN' -> 'TRN'.
     """
     kod = (kod or "").strip().upper()
     if ":" in kod:                       # borsa öneki
         kod = kod.split(":")[-1]
+    on, _, son = kod.partition("/")
+    if son and on in BORSA_ONEKLERI:     # 'BRK/B' gibi pay sınıfları bölünmez
+        kod = son
     parca = [p for p in kod.replace(",", " ").replace(";", " ").split() if p]
-    return parca[0] if parca else kod
+    kod = parca[0] if parca else kod
+    return kod if kod in GECERSIZ_KODLAR else kod.strip("()$[]")
 
 PARTILER = {
     "D": ("Demokrat", "dem"),

@@ -5,7 +5,7 @@ zaman sırasında. Bildirimler 15 dakikada bir toplanır (bkz. piyasa/zamanlama.
 
 from datetime import UTC, date, datetime, timedelta, timezone
 
-from piyasa.bicim import kisa_aralik, kisa_tutar, sirket_gorunen_ad, tr_baslik, tr_cumle, unvan
+from piyasa.bicim import kisa_aralik, kisa_tarih, kisa_tutar, sirket_gorunen_ad, tr_baslik, tr_cumle, unvan
 from piyasa.bist.sorgular import KAP_BILDIRIM, kisa_unvan
 from piyasa.kurallar import GECERLI_KOD, TEMIZ, parti_bilgisi
 from piyasa.web.sorgular.ortak import baglanti
@@ -167,16 +167,34 @@ def son_dakika(adet=6):
     for kaynak, n in (("abd", 3), ("bist", 3), ("siyaset", 1)):
         secilen += [o for o in ogeler if o["kaynak"] == kaynak][:n]
     secilen.sort(key=lambda o: (o["gun"], o["saat"] or "00:00"), reverse=True)
+    # Ana sayfada gün başlığı yok: bugünden önceki bildirimde saat yerine gün yazılır
+    # (yalnız saat bugünkü sanılır); bugünkü ama saati bilinmeyende 'Bugün'
+    bugun = date.today().isoformat()
+    for o in secilen:
+        if o["gun"] != bugun:
+            o["saat"] = kisa_tarih(o["gun"])
+        elif not o["saat"]:
+            o["saat"] = "Bugün"
     return secilen[:adet]
 
 
 def bugun_sayilari():
-    """Üstteki özet: bugün ve dün gelen bildirim sayıları."""
-    bugun = date.today().isoformat()
+    """
+    Üstteki özet: bugün gelen bildirim sayıları. Bugün henüz hiç bildirim yoksa
+    (gece, sabah erken) sayaçlar sıfır durmasın diye dünün sayıları; 'gun_adi' hangisi olduğunu söyler.
+    """
+    sayilar = _gun_sayilari(date.today().isoformat())
+    if not (sayilar["abd"] or sayilar["siyaset"] or sayilar["kap"]):
+        sayilar = {**_gun_sayilari((date.today() - timedelta(days=1)).isoformat()), "gun_adi": "dün"}
+    return sayilar
+
+
+def _gun_sayilari(bugun):
     with baglanti() as conn:
         def tek(sorgu, *p):
             return conn.execute(sorgu, p).fetchone()[0] or 0
         return {
+            "gun_adi": "bugün",
             "abd": tek(f"SELECT COUNT(*) FROM transactions WHERE chamber IS NULL AND {TEMIZ} AND disclosed_date = ?",
                        bugun),
             "abd_alim": tek(f"""SELECT COUNT(*) FROM transactions WHERE chamber IS NULL AND {TEMIZ}

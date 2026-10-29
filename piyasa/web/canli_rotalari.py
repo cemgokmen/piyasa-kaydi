@@ -1,6 +1,7 @@
 """
 Canlı sayfa (/canli): piyasa göstergeleri, Borsa İstanbul'da günün hareketi ve bütün
-kaynaklardan en yeni bildirimler tek akışta. Sayfa açıkken akış dakikada bir yenilenir.
+kaynaklardan en yeni bildirimler tek akışta. Sayfa açıkken akış (ve ana sayfadaki
+'Son dakika' listesi) dakikada bir yenilenir.
 """
 
 from flask import Blueprint, render_template, request
@@ -33,7 +34,18 @@ def sayfa():
     )
 
 
+@sureli(60)
+def _son_dakika():
+    return sorgular.son_dakika()
+
+
 @canli.route("/api/canli/akis")
 def akis_api():
     """Sayfadaki akışın yenilenen hali (HTML parçası)."""
     return render_template("_canli_akis.html", gunler=_akis(_kaynak()))
+
+
+@canli.route("/api/canli/son-dakika")
+def son_dakika_api():
+    """Ana sayfadaki 'Son dakika' listesinin yenilenen hali (HTML parçası)."""
+    return render_template("_son_dakika.html", son_dakika=_son_dakika())

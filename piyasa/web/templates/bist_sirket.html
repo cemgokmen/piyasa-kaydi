@@ -123,8 +123,8 @@
   {% set alimlar = islemler|selectattr('islem', 'equalto', 'buy')|list %}{% set satimlar = islemler|selectattr('islem', 'equalto', 'sell')|list %}
   <div class="kpi-izgara kpi-3">
     {{ kpi('Bildirim', islemler|length, (islemler|map(attribute='kisi')|unique|list|length) ~ ' farklı kişi ya da kurum', birim='bildirim') }}
-    {{ kpi('Alım', (alimlar|sum(attribute='tutar')|tl) if alimlar|selectattr('tutar')|list else alimlar|length, alimlar|length ~ ' alım bildirimi', 'alim') }}
-    {{ kpi('Satım', (satimlar|sum(attribute='tutar')|tl) if satimlar|selectattr('tutar')|list else satimlar|length, satimlar|length ~ ' satım bildirimi', 'satim') }}
+    {{ kpi('Alım', (alimlar|selectattr('tutar')|sum(attribute='tutar')|tl) if alimlar|selectattr('tutar')|list else alimlar|length, alimlar|length ~ ' alım bildirimi', 'alim') }}
+    {{ kpi('Satım', (satimlar|selectattr('tutar')|sum(attribute='tutar')|tl) if satimlar|selectattr('tutar')|list else satimlar|length, satimlar|length ~ ' satım bildirimi', 'satim') }}
   </div>
   {% set kap_islemler = islemler %}{% set sirket_goster = False %}
   {% include "_kap_islemleri.html" %}
