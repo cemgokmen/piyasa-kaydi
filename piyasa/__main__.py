@@ -5,6 +5,7 @@ Kullanım:
     python -m piyasa site                 siteyi başlatır (http://127.0.0.1:5001)
     python -m piyasa site --ag            aynı Wi-Fi'daki telefondan da açılabilir
     python -m piyasa yayin                sitenin yayın sürümü (gunicorn); --kur ile Mac açılınca başlar
+    python -m piyasa nobet --kur          Mac boşta uyumaz; site 2 dakikada bir denetlenir, takılırsa yeniden başlar
     python -m piyasa guncelle             tüm veriyi günceller (--hizli: yalnızca yeni bildirimler)
     python -m piyasa guncelle --canli     gün içi Form 4 ve KAP bildirimleri (15 dakikada bir çalışır)
     python -m piyasa zamanla              tam güncelleme 07:00, hızlı güncelleme 12, 18, 21 ve 00:00,
@@ -66,6 +67,7 @@ KOMUTLAR = {
     "analiz": "piyasa.analiz.getiri",
     "zamanla": "piyasa.zamanlama",
     "yayin": "piyasa.yayin",
+    "nobet": "piyasa.nobet",
     "cusip": "piyasa.toplama.cusip",
     "profiller": "piyasa.toplama.profiller",
     "supheli": "piyasa.bakim.supheli",
