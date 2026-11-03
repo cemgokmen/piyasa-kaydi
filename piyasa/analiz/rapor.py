@@ -174,36 +174,68 @@ def kontrol_listesi(t, temel, rj, risk, bist):
     return m
 
 
-def birlesik_karar(t, temel, rj, bist):
-    k = t["puanlar"].get("orta")
-    tp = temel.get("puan") if temel else None
+DURUMLAR = {
+    "guclu": ("Güçlü aday", "Şirket iyi, fiyat yükseliyor"),
+    "spekulatif": ("Riskli yükseliş", "Fiyat yükseliyor ama şirket zayıf"),
+    "izle": ("İzle", "Şirket iyi ama fiyat düşüyor"),
+    "uzak": ("Uzak dur", "Şirket zayıf, fiyat düşüyor"),
+    "yukselis": ("Yükselişte", "Fiyat yükseliyor, şirket orta"),
+    "dusus": ("Düşüşte", "Fiyat düşüyor, şirket orta"),
+    "notr": ("Bekle", "Net bir işaret yok"),
+    "olumlu": ("Fiyat yükseliyor", "Şirket verisi yok"),
+    "olumsuz": ("Fiyat düşüyor", "Şirket verisi yok"),
+}
+
+
+def durum_kodu(teknik_orta, temel_puan):
+    """Tek kelimelik sonuç: orta vade grafik puanı ve şirket puanından."""
+    k, tp = teknik_orta, temel_puan
     if k is None:
         return None
     if tp is None:
-        if k >= 60:
-            kod, ad, metin = "olumlu", "Teknik olarak olumlu", "Trend ve momentum yukarı. Temel veri yok; karar yalnızca grafiğe dayanıyor, stop disiplini şart."
-        elif k <= 40:
-            kod, ad, metin = "olumsuz", "Teknik olarak olumsuz", "Trend ve momentum aşağı. Alım için trendin dönmesini beklemek daha güvenli."
-        else:
-            kod, ad, metin = "notr", "Teknik olarak nötr", "Belirgin bir yön yok. Destekten tepki ya da dirençte kırılım beklenebilir."
-    elif k >= 60 and tp >= 55:
-        kod, ad, metin = "guclu", "Güçlü aday", ("Hem şirket sağlam hem trend yukarı. Kaliteli şirket ile güçlü momentumun birleşimi, "
-                                                 "akademik çalışmalarda en istikrarlı getiriyi veren kombinasyondur. Giriş için geri çekilme ya da kırılım bekle, stopu destek altına koy.")
-    elif k >= 60 and tp < 45:
-        kod, ad, metin = "spekulatif", "Spekülatif yükseliş", ("Trend güçlü ama şirketin rakamları zayıf. Yükseliş haber ya da beklentiyle olabilir; "
-                                                               "kısa vadeli işlem olarak ele al, pozisyonu küçük tut, stopu sıkı izle.")
-    elif k <= 40 and tp >= 55:
-        kod, ad, metin = "izle", "İzle: iyi şirket, zayıf trend", ("Şirket sağlam ama fiyat düşüş trendinde. Düşen bıçağı tutmak yerine "
-                                                                   "trendin dönmesini bekle: 50 günlük ortalamanın üstünde kapanış, yükselen dip ya da haftalık grafikte 2. evre.")
-    elif k <= 40 and tp < 45:
-        kod, ad, metin = "uzak", "Uzak dur", "Hem trend aşağı hem rakamlar zayıf. Bu kombinasyon tarihsel olarak en kötü getiriyi verir."
-    else:
-        kod, ad, metin = "notr", "Nötr: belirgin avantaj yok", ("Teknik ve temel taraf birbirini teyit etmiyor. Daha net bir tablo "
-                                                                 "(trend teyidi ya da bilançoda iyileşme) beklenebilir.")
+        return "olumlu" if k >= 60 else "olumsuz" if k <= 40 else "notr"
+    if k >= 60 and tp >= 55:
+        return "guclu"
+    if k >= 60 and tp < 45:
+        return "spekulatif"
+    if k <= 40 and tp >= 55:
+        return "izle"
+    if k <= 40 and tp < 45:
+        return "uzak"
+    if k >= 60:
+        return "yukselis"
+    if k <= 40:
+        return "dusus"
+    return "notr"
+
+
+KARAR_METNI = {
+    "guclu": "Hem şirket sağlam hem fiyat yükselişte. Bu ikisinin bir arada olması, geçmişte en istikrarlı getiriyi veren durumdur. "
+             "Alırken fiyatın biraz geri çekilmesini bekleyebilirsin; zarar durdurma (stop) seviyesini aşağıdaki bölümden al.",
+    "spekulatif": "Fiyat yükseliyor ama şirketin rakamları zayıf. Yükseliş haber ya da beklentiyle olabilir ve çabuk sönebilir. "
+                  "Alacaksan az al ve stopa sadık kal.",
+    "izle": "Şirket sağlam ama fiyat düşüyor. Düşen hisseyi erken almak yerine düşüşün bitmesini bekle: "
+            "fiyatın 50 günlük ortalamanın üstüne çıkması iyi bir işarettir.",
+    "uzak": "Hem fiyat düşüyor hem şirketin rakamları zayıf. Geçmişte en kötü getiriyi veren durum budur.",
+    "yukselis": "Fiyat yükselişte, şirketin rakamları ise ne iyi ne kötü. Alınabilir ama 'Güçlü aday' kadar sağlam değil; daha küçük al.",
+    "dusus": "Fiyat düşüşte, şirketin rakamları ortalama. Şu an almak için bir sebep yok.",
+    "notr": "Fiyatın yönü belli değil. Net bir işaret çıkana kadar beklemek daha iyi.",
+    "olumlu": "Fiyat yükselişte. Bu varlık için şirket verisi yok; karar yalnızca grafiğe dayanıyor, stopa sadık kal.",
+    "olumsuz": "Fiyat düşüşte. Alım için düşüşün bitmesini beklemek daha güvenli.",
+}
+
+
+def birlesik_karar(t, temel, rj, bist):
+    k = t["puanlar"].get("orta")
+    tp = temel.get("puan") if temel else None
+    kod = durum_kodu(k, tp)
+    if kod is None:
+        return None
     uyari = None
-    if bist and rj and rj["kod"] == "ayi" and kod in ("guclu", "spekulatif", "olumlu"):
-        uyari = "Piyasa düşüş rejiminde: güçlü hisseler de endeksle birlikte düşebilir. Pozisyon boyutunu yarıya indir."
-    return {"kod": kod, "ad": ad, "metin": metin, "teknik": k, "temel": tp, "uyari": uyari}
+    if bist and rj and rj["kod"] == "ayi" and kod in ("guclu", "spekulatif", "olumlu", "yukselis"):
+        uyari = "Borsanın geneli düşüşte: iyi hisseler de endeksle birlikte düşebilir. Normalin yarısı kadar al."
+    return {"kod": kod, "ad": DURUMLAR[kod][0], "kisa": DURUMLAR[kod][1], "metin": KARAR_METNI[kod],
+            "teknik": k, "temel": tp, "uyari": uyari}
 
 
 def isabet_ozeti(isabet):
@@ -215,14 +247,14 @@ def isabet_ozeti(isabet):
     olumlu, olumsuz = gruplar.get("Olumlu "), gruplar.get("Olumsuz")
     kor = i["korelasyon"]
     if not olumlu or olumlu.get("n", 0) < 5 or not olumsuz or olumsuz.get("n", 0) < 3 or kor is None:
-        return {"kod": "yetersiz", "metin": "Bu hissede puanı sınamak için yeterli geçmiş yok."}
+        return {"kod": "yetersiz", "metin": "Bu hissenin geçmişi, puanın ne kadar tuttuğunu ölçmek için yetmiyor."}
     fark = (olumlu.get("ortalama") or 0) - (olumsuz.get("ortalama") or 0)
     if kor > 0.10 and fark > 0:
-        return {"kod": "iyi", "metin": "Bu hissede puan geçmişte işe yaradı: olumlu puanlardan sonraki 3 ay, olumsuzlardan sonrakinden daha iyi geçti."}
+        return {"kod": "iyi", "metin": "Güven notu: bu hissede grafik puanı geçmişte tuttu. Puan iyiyken hisse sonraki aylarda daha iyi gitti."}
     if kor < -0.10 and fark < 0:
-        return {"kod": "ters", "metin": "Bu hissede puan geçmişte ters çalıştı: hisse trend takibinden çok ortalamaya dönüşle hareket ediyor. "
-                                       "Yükselişte satıp düşüşte almak bu hissede daha iyi sonuç vermiş."}
-    return {"kod": "zayif", "metin": "Bu hissede puanın geçmiş isabeti zayıf: kararı tek başına puana bırakma, temel tarafa ve seviyelere ağırlık ver."}
+        return {"kod": "ters", "metin": "Dikkat: bu hissede grafik puanı geçmişte ters çalıştı. Puan iyiyken hisse genelde sonra düştü, kötüyken yükseldi. "
+                                       "Bu hissede grafik puanına güvenme."}
+    return {"kod": "zayif", "metin": "Dikkat: bu hissede grafik puanı geçmişte pek tutmadı. Ona fazla güvenme; şirketin rakamlarına ve destek seviyelerine de bak."}
 
 
 # ---------------------------------------------------------------------------
@@ -329,9 +361,10 @@ def genel_bakis():
         satirlar.append({"kod": kod, "ad": adlar.get(kod), "sektor": sektorler.get(kod), **s,
                          "temel": tm.get("puan"), "temel_bilesen": tm.get("bilesen"), "fk": tm.get("fk"), "pddd": tm.get("pddd"),
                          "roe": tm.get("roe"), "piotroski": tm.get("piotroski"), "bayrak": tm.get("bayrak"),
-                         "birlesik": _birlesik_puan(s["puan"].get("orta"), tm.get("puan"))})
+                         "birlesik": _birlesik_puan(s["puan"].get("orta"), tm.get("puan")),
+                         "durum": durum_kodu(s["puan"].get("orta"), tm.get("puan"))})
     satirlar.sort(key=lambda s: -(s["birlesik"] if s["birlesik"] is not None else -1))
-    return {"satirlar": satirlar, "genislik": t.get("genislik"), "rejim": t.get("rejim"), "zaman": t.get("zaman"),
+    return {"satirlar": satirlar, "durumlar": DURUMLAR, "genislik": t.get("genislik"), "rejim": t.get("rejim"), "zaman": t.get("zaman"),
             "temel_sayisi": sum(1 for s in temel.values() if s.get("puan") is not None),
             "medyan": (v.get("medyan") or {}).get("genel")}
 

@@ -188,7 +188,7 @@ def test_analiz_genel_sayfasi(istemci, sahte_analiz):
     cevap = istemci.get("/analiz")
     html = cevap.get_data(as_text=True)
     assert cevap.status_code == 200 and "noindex" in cevap.headers["X-Robots-Tag"]
-    assert "BIST 100 taraması" in html and "THYAO" in html and "Para yönetimi kuralları" in html
+    assert "BIST 100 hisseleri" in html and "Güçlü aday" in html and "THYAO" in html and "Para yönetimi kuralları" in html
     assert istemci.get("/analiz?kod=asels").headers["Location"].endswith("/analiz/ASELS")
 
 

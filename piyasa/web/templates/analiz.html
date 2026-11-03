@@ -5,15 +5,16 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='analiz.css') }}">{% endblock %}
 
 {% macro ton(p) %}{% if p is none %}yok{% elif p >= 60 %}iyi{% elif p <= 40 %}kotu{% else %}orta{% endif %}{% endmacro %}
-{% macro puan_hucre(p) %}<span class="an-puan an-{{ ton(p) }}">{{ p|round|int if p is not none else '—' }}</span>{% endmacro %}
+{% macro kelime(p) %}{% if p is none %}{% elif p >= 70 %}Çok iyi{% elif p >= 60 %}İyi{% elif p > 40 %}Orta{% elif p > 30 %}Kötü{% else %}Çok kötü{% endif %}{% endmacro %}
+{% macro puan_hucre(p) %}{% if p is none %}<span class="an-soluk">—</span>{% else %}<span class="an-puan an-{{ ton(p) }}">{{ p|round|int }} <small>{{ kelime(p) }}</small></span>{% endif %}{% endmacro %}
 {% macro getiri(g) %}<span class="{{ 'tutar-buy' if g and g > 0 else 'tutar-sell' if g and g < 0 else '' }}">{{ g|yuzde(basamak=1) if g is not none else '—' }}</span>{% endmacro %}
 
 {% block icerik %}
 <header class="sayfa-ust">
   <div>
     <h1>Analiz</h1>
-    <p class="sayfa-not">Her hisse için teknik puan (trend, momentum, endekse göre güç, hacim, risk), temel puan (kalite, reel büyüme,
-      finansal sağlık, değerleme), destek-direnç ve pozisyon boyutu. Bir hisseye tıkla ya da kodunu yaz.</p>
+    <p class="sayfa-not">Hangi hisse alınmaya değer, hangisinden uzak durulmalı? Her hisse için iki soruya bakılır:
+      fiyat yükseliyor mu, şirket iyi mi? Bir hisseye tıkla ya da kodunu yaz.</p>
   </div>
   <form class="an-ara an-ara-buyuk" method="get" action="{{ url_for('analiz.analiz_sayfasi') }}" role="search">
     <input type="search" name="kod" placeholder="Hisse kodu: THYAO, ASELS, AAPL, NVDA…" aria-label="Hisse kodu" autocomplete="off" spellcheck="false" autofocus>
@@ -26,9 +27,10 @@
   <div class="an-karar-metin">
     <p class="an-ust-etiket">BIST 100 · piyasa rejimi</p>
     <h2>{{ rejim.ad }}</h2>
-    <p>{{ rejim.metin }}</p>
-    <p class="an-soluk kucuk">Rejim; endeksin 200 günlük ortalamaya göre konumu, ortalamanın eğimi, hisselerin kaçının kendi 200 günlüğünün üstünde olduğu
-      ve endeksin dolar bazındaki trendiyle belirlenir. Düşüş rejiminde yeni pozisyonlar daha küçük açılır.</p>
+    <p class="an-sade">{% if rejim.kod == 'ayi' %}Kısaca: borsanın geneli düşüyor. Bu dönemde iyi hisseler de düşebilir; yeni alımları küçük tut, paranın çoğunu bekletmek daha güvenli.
+      {% elif rejim.kod == 'boga' %}Kısaca: borsanın geneli yükseliyor. Alım yapmak için uygun bir dönem; yine de her işlemde zarar durdurma seviyesi koy.
+      {% else %}Kısaca: borsada net bir yön yok. Seçici ol, alımları normalin yarısı büyüklükte yap.{% endif %}</p>
+
   </div>
   <div class="an-rejim-kpi">
     <div><span>BIST 100</span><b class="mono">{{ rejim.fiyat|ondalik(0) }}</b><small>200 günlük {{ rejim.sma200|ondalik(0) if rejim.sma200 else '—' }}</small></div>
@@ -36,12 +38,12 @@
     {% if rejim.dolar %}<div><span>1 yıl (dolar bazında)</span><b class="mono">{{ getiri(rejim.dolar.y1) }}</b>
       <small>{{ '200 günlüğün üstünde' if rejim.dolar.ust200 else '200 günlüğün altında' }}</small></div>{% endif %}
     {% if genislik %}
-    <div><span>200 günlüğün üstündeki hisseler</span><b class="mono">{{ genislik.ust200|yuzde(isaretli=false, basamak=0) if genislik.ust200 is not none else '—' }}</b>
-      <small>50 günlük: {{ genislik.ust50|yuzde(isaretli=false, basamak=0) if genislik.ust50 is not none else '—' }}</small></div>
+    <div><span>Yükseliş trendindeki hisseler</span><b class="mono">{{ genislik.ust200|yuzde(isaretli=false, basamak=0) if genislik.ust200 is not none else '—' }}</b>
+      <small>200 günlük ortalamasının üstünde olanlar</small></div>
     <div><span>52 hafta zirve / dip</span><b class="mono"><span class="tutar-buy">{{ genislik.yeni_zirve }}</span> / <span class="tutar-sell">{{ genislik.yeni_dip }}</span></b>
       <small>bugün yeni zirve ve dip yapan</small></div>
-    <div><span>Orta vade puanı ≥60 / ≤40</span><b class="mono"><span class="tutar-buy">{{ genislik.olumlu }}</span> / <span class="tutar-sell">{{ genislik.olumsuz }}</span></b>
-      <small>{{ genislik.n }} hissenin</small></div>
+    <div><span>İyi / kötü görünen hisse</span><b class="mono"><span class="tutar-buy">{{ genislik.olumlu }}</span> / <span class="tutar-sell">{{ genislik.olumsuz }}</span></b>
+      <small>grafik puanına göre, {{ genislik.n }} hisseden</small></div>
     {% endif %}
   </div>
 </section>
@@ -50,19 +52,44 @@
 <section class="bolum" id="tarama">
   <header class="bolum-ust">
     <div>
-      <h2>BIST 100 taraması <span class="h2-not">({{ satirlar|length }} hisse)</span></h2>
-      <p class="bolum-not">Sıralama: teknik orta vade ve temel puanın ortalaması. Sütun başlığına tıklayarak sıralamayı değiştir.
-        {% if zaman %}Teknik veriler son kapanışa göredir.{% endif %}
-        {% if temel_sayisi < satirlar|length %}Temel puanı olan hisse: {{ temel_sayisi }} (geri kalanı arka planda hazırlanıyor).{% endif %}</p>
+      <h2>BIST 100 hisseleri <span class="h2-not">({{ satirlar|length }} hisse)</span></h2>
+      <p class="bolum-not">En iyi görünenler en üstte. Bir hisseye tıklayınca ayrıntılı raporu açılır.
+        {% if temel_sayisi < satirlar|length %}Şirket puanı olan hisse: {{ temel_sayisi }} (geri kalanı hazırlanıyor).{% endif %}</p>
     </div>
   </header>
 
+  <div class="an-nasil">
+    <div>
+      <b>Sonuç sütunu</b>
+      <p>İki soruya birlikte bakar: <em>Fiyat yükseliyor mu?</em> (grafik) ve <em>Şirket iyi mi?</em> (bilanço).</p>
+      <ul>
+        <li><span class="an-durum an-durum-guclu">Güçlü aday</span> şirket iyi ve fiyat yükseliyor — alım için bakılacak hisseler</li>
+        <li><span class="an-durum an-durum-izle">İzle</span> şirket iyi ama fiyat düşüyor — düşüş bitene kadar bekle</li>
+        <li><span class="an-durum an-durum-spekulatif">Riskli yükseliş</span> fiyat yükseliyor ama şirket zayıf — küçük ve kısa tut</li>
+        <li><span class="an-durum an-durum-yukselis">Yükselişte</span> fiyat yükseliyor, şirket orta — alınabilir ama daha az</li>
+        <li><span class="an-durum an-durum-dusus">Düşüşte</span> fiyat düşüyor, şirket orta</li>
+        <li><span class="an-durum an-durum-uzak">Uzak dur</span> şirket zayıf ve fiyat düşüyor</li>
+        <li><span class="an-durum an-durum-notr">Bekle</span> net bir işaret yok</li>
+      </ul>
+    </div>
+    <div>
+      <b>Puanlar (0–100)</b>
+      <p>50 ortadır. Yüksek iyi, düşük kötü.</p>
+      <ul>
+        <li><span class="an-puan an-iyi">60+ İyi</span> <span class="an-puan an-orta">40–60 Orta</span> <span class="an-puan an-kotu">40− Kötü</span></li>
+        <li><b>Grafik · haftalar:</b> fiyat önümüzdeki birkaç hafta için iyi görünüyor mu?</li>
+        <li><b>Grafik · aylar:</b> önümüzdeki 1–12 ay için. Sonuç sütunu buna bakar.</li>
+        <li><b>Şirket:</b> karlılık, büyüme, borç ve fiyatın ucuzluğu.</li>
+      </ul>
+    </div>
+  </div>
+
   <div class="an-suzgec" role="group" aria-label="Süzgeç" data-suzgec>
-    <button type="button" data-suz="hepsi" aria-pressed="true">Tümü</button>
-    <button type="button" data-suz="guclu">Güçlü adaylar <small>trend + şirket</small></button>
-    <button type="button" data-suz="lider">Trend liderleri <small>200 günlük üstü, endeksten güçlü</small></button>
-    <button type="button" data-suz="izle">İzle <small>iyi şirket, zayıf trend</small></button>
-    <button type="button" data-suz="ucuz">Ucuz ve kaliteli</button>
+    <button type="button" data-suz="hepsi" aria-pressed="true">Hepsi</button>
+    <button type="button" data-suz="guclu">Güçlü adaylar</button>
+    <button type="button" data-suz="izle">İzle</button>
+    <button type="button" data-suz="lider">Endeksten güçlü olanlar</button>
+    <button type="button" data-suz="ucuz">Ucuz ve kaliteli şirketler</button>
     <button type="button" data-suz="uzak">Uzak dur</button>
     <select data-sektor aria-label="Sektör">
       <option value="">Bütün sektörler</option>
@@ -76,18 +103,14 @@
       <thead>
         <tr>
           <th scope="col" data-sirala="kod" data-tur="metin">Hisse</th>
-          <th scope="col" class="sag" data-sirala="birlesik">Birleşik</th>
-          <th scope="col" class="sag" data-sirala="kisa">Kısa</th>
-          <th scope="col" class="sag" data-sirala="orta">Orta</th>
-          <th scope="col" class="sag" data-sirala="uzun">Uzun</th>
-          <th scope="col" class="sag" data-sirala="temel">Temel</th>
-          <th scope="col" class="sag" data-sirala="a1">1 ay</th>
-          <th scope="col" class="sag" data-sirala="a6">6 ay</th>
-          <th scope="col" class="sag" data-sirala="rsi">RSI</th>
-          <th scope="col" class="sag" data-sirala="zirveden">Zirveden</th>
-          <th scope="col" class="sag" data-sirala="fk">F/K</th>
-          <th scope="col" class="sag" data-sirala="roe">ÖK karlılığı</th>
-          <th scope="col" class="sag" data-sirala="piotroski">F skoru</th>
+          <th scope="col" data-sirala="birlesik">Sonuç</th>
+          <th scope="col" class="sag" data-sirala="kisa">Grafik<small>haftalar</small></th>
+          <th scope="col" class="sag" data-sirala="orta">Grafik<small>aylar</small></th>
+          <th scope="col" class="sag" data-sirala="temel">Şirket<small>bilanço</small></th>
+          <th scope="col" class="sag" data-sirala="a1">Son 1 ay</th>
+          <th scope="col" class="sag" data-sirala="a6">Son 6 ay</th>
+          <th scope="col" class="sag" data-sirala="zirveden">Zirveye<small>uzaklık</small></th>
+          <th scope="col" class="sag" data-sirala="fk">F/K<small>düşük = ucuz</small></th>
         </tr>
       </thead>
       <tbody>
@@ -100,24 +123,20 @@
             data-a1="{{ s.a1 if s.a1 is not none else '' }}" data-a6="{{ s.a6 if s.a6 is not none else '' }}"
             data-rsi="{{ s.rsi if s.rsi is not none else '' }}" data-zirveden="{{ s.zirveden if s.zirveden is not none else '' }}"
             data-fk="{{ s.fk if s.fk else '' }}" data-roe="{{ s.roe if s.roe is not none else '' }}"
-            data-piotroski="{{ s.piotroski if s.piotroski is not none else '' }}"
             data-ust200="{{ 1 if s.ust200 else 0 }}" data-relatif="{{ s.bilesen.relatif if s.bilesen.relatif is not none else '' }}"
             data-degerleme="{{ s.temel_bilesen.degerleme if s.temel_bilesen and s.temel_bilesen.degerleme is not none else '' }}"
             data-kalite="{{ s.temel_bilesen.kalite if s.temel_bilesen and s.temel_bilesen.kalite is not none else '' }}">
           <td data-etiket="Hisse"><a class="ticker" href="{{ url_for('analiz.analiz_hisse', kod=s.kod) }}">{{ s.kod }}</a>
             <span class="alt-satir kirp">{{ s.ad or '' }}</span></td>
-          <td class="sag" data-etiket="Birleşik">{{ puan_hucre(s.birlesik) }}</td>
-          <td class="sag" data-etiket="Kısa">{{ puan_hucre(s.puan.kisa) }}</td>
-          <td class="sag" data-etiket="Orta">{{ puan_hucre(s.puan.orta) }}</td>
-          <td class="sag" data-etiket="Uzun">{{ puan_hucre(s.puan.uzun) }}</td>
-          <td class="sag" data-etiket="Temel">{{ puan_hucre(s.temel) }}{% if s.bayrak %} <span class="an-bayrak" title="{{ s.bayrak }} kırmızı bayrak">⚑</span>{% endif %}</td>
-          <td class="sag mono" data-etiket="1 ay">{{ getiri(s.a1) }}</td>
-          <td class="sag mono" data-etiket="6 ay">{{ getiri(s.a6) }}</td>
-          <td class="sag mono" data-etiket="RSI">{{ s.rsi|ondalik(0) if s.rsi is not none else '—' }}</td>
-          <td class="sag mono" data-etiket="Zirveden">{{ s.zirveden|yuzde(basamak=0) if s.zirveden is not none else '—' }}</td>
+          <td data-etiket="Sonuç">{% if s.durum %}<span class="an-durum an-durum-{{ s.durum }}">{{ durumlar[s.durum][0] }}</span>
+            <span class="alt-satir">{{ durumlar[s.durum][1] }}</span>{% else %}—{% endif %}</td>
+          <td class="sag" data-etiket="Grafik (haftalar)">{{ puan_hucre(s.puan.kisa) }}</td>
+          <td class="sag" data-etiket="Grafik (aylar)">{{ puan_hucre(s.puan.orta) }}</td>
+          <td class="sag" data-etiket="Şirket">{{ puan_hucre(s.temel) }}{% if s.bayrak %} <span class="an-bayrak" title="Bilançoda {{ s.bayrak }} uyarı var">⚑</span>{% endif %}</td>
+          <td class="sag mono" data-etiket="Son 1 ay">{{ getiri(s.a1) }}</td>
+          <td class="sag mono" data-etiket="Son 6 ay">{{ getiri(s.a6) }}</td>
+          <td class="sag mono" data-etiket="Zirveye uzaklık">{{ s.zirveden|yuzde(basamak=0) if s.zirveden is not none else '—' }}</td>
           <td class="sag mono" data-etiket="F/K">{{ s.fk|ondalik(1) if s.fk else '—' }}</td>
-          <td class="sag mono" data-etiket="ÖK karlılığı">{{ s.roe|yuzde(basamak=0) if s.roe is not none else '—' }}</td>
-          <td class="sag mono" data-etiket="F skoru">{{ s.piotroski if s.piotroski is not none else '—' }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -125,7 +144,7 @@
   </div>
   <p class="bos" data-bos hidden>Bu süzgece uyan hisse yok.</p>
   {% else %}
-  <p class="bos">Tarama hazırlanıyor: BIST 100 hisselerinin iki yıllık fiyatları indiriliyor. Bir dakika sonra sayfayı yenile.</p>
+  <p class="bos">Liste hazırlanıyor: BIST 100 hisselerinin fiyatları indiriliyor. Bir dakika sonra sayfayı yenile.</p>
   {% endif %}
 </section>
 
@@ -143,16 +162,14 @@
     </ol>
   </div>
   <div class="panel">
-    <div class="panel-ust"><div><h2>Puanlar nasıl okunur?</h2></div></div>
-    <dl class="an-sozluk">
-      <dt><span class="an-puan an-iyi">60+</span></dt><dd>Olumlu: göstergelerin çoğu aynı yönde ve lehte.</dd>
-      <dt><span class="an-puan an-orta">40–60</span></dt><dd>Nötr: belirgin bir avantaj yok.</dd>
-      <dt><span class="an-puan an-kotu">−40</span></dt><dd>Olumsuz: trend ve/veya rakamlar aleyhte.</dd>
-      <dt>Kısa · Orta · Uzun</dt><dd>Teknik puanın üç vadesi: günler-haftalar, 1-12 ay, 1 yıl ve üstü.</dd>
-      <dt>Temel</dt><dd>Kalite, reel büyüme, finansal sağlık ve BIST 100 medyanına göre değerleme. Haftada bir güncellenir.</dd>
-      <dt>⚑</dt><dd>Bilançoda kırmızı bayrak var (yüksek borç, zarar, sulanma, Altman riskli bölge…). Hisse sayfasında ayrıntısı yazar.</dd>
-      <dt>F skoru</dt><dd>Piotroski: 9 muhasebe testinden kaçını geçtiği. 7+ güçlü, 3 ve altı zayıf.</dd>
-    </dl>
+    <div class="panel-ust"><div><h2>Bu sayfa ne işe yarar?</h2></div></div>
+    <ol class="an-kural-liste">
+      <li><b>Önce piyasaya bak.</b> Üstteki kutu "Düşüş rejimi" diyorsa borsanın geneli düşüyor demektir; iyi hisseler de düşebilir. Bu dönemde az al.</li>
+      <li><b>"Güçlü aday" süzgecine bas.</b> Hem şirketi iyi hem fiyatı yükselen hisseler kalır.</li>
+      <li><b>Hisseye tıkla.</b> Raporda grafik, yorum, şirketin rakamları ve ne kadar alman gerektiği yazar.</li>
+      <li><b>"Pozisyon ve risk" bölümünde kaç adet alacağını gör.</b> Zarar durdurma (stop) seviyesini mutlaka not et ve fiyat oraya gelirse sat.</li>
+    </ol>
+    <p class="dipnot">⚑ işareti: şirketin bilançosunda dikkat edilmesi gereken bir şey var (yüksek borç, zarar gibi); raporda ne olduğu yazar.</p>
     <p class="dipnot">Puanlar geçmiş verilerin sistematik bir özetidir, geleceği bilmez. Her hisse sayfasında puanın o hissede geçmişte ne kadar işe yaradığı ayrıca gösterilir.</p>
   </div>
 </section>

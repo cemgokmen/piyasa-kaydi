@@ -13,10 +13,12 @@
 {% macro ton(p) %}{% if p is none %}yok{% elif p >= 60 %}iyi{% elif p <= 40 %}kotu{% else %}orta{% endif %}{% endmacro %}
 {% macro yon_ton(y) %}{% if y is none or y == 0 %}orta{% elif y > 0 %}iyi{% else %}kotu{% endif %}{% endmacro %}
 {% macro bilesen_ton(x) %}{% if x is none %}yok{% elif x > 0.2 %}iyi{% elif x < -0.2 %}kotu{% else %}orta{% endif %}{% endmacro %}
+{% macro kelime(p) %}{% if p is none %}Veri yok{% elif p >= 70 %}Çok iyi{% elif p >= 60 %}İyi{% elif p > 40 %}Orta{% elif p > 30 %}Kötü{% else %}Çok kötü{% endif %}{% endmacro %}
 {% macro puan_halka(p, etiket, alt='') %}
 <div class="an-halka an-{{ ton(p) }}" style="--p: {{ p if p is not none else 0 }}">
+  <span class="an-halka-baslik">{{ etiket }}</span>
   <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="an-halka-iz" cx="18" cy="18" r="15.9"/><circle class="an-halka-dolu" cx="18" cy="18" r="15.9" pathLength="100"/></svg>
-  <div class="an-halka-ic"><b>{{ p|round|int if p is not none else '—' }}</b><span>{{ etiket }}</span></div>
+  <div class="an-halka-ic"><b>{{ p|round|int if p is not none else '—' }}</b><span>{{ kelime(p) }}</span></div>
   {% if alt %}<small>{{ alt }}</small>{% endif %}
 </div>
 {% endmacro %}
@@ -66,17 +68,20 @@
 <section class="an-karar an-karar-{{ r.karar.kod }}" aria-label="Genel görünüm">
   <div class="an-karar-metin">
     <p class="an-ust-etiket">Genel görünüm</p>
-    <h2>{{ r.karar.ad }}</h2>
+    <h2>{{ r.karar.ad }} <small class="an-karar-kisa">· {{ r.karar.kisa }}</small></h2>
     <p>{{ r.karar.metin }}</p>
+    <p class="an-soluk kucuk">Puanlar 0–100 arasıdır; 50 orta, 60 üstü iyi, 40 altı kötü. Halkalar dolu ve yeşilse iyi, kırmızıysa kötü.</p>
     {% if r.karar.uyari %}<p class="an-uyari">⚠ {{ r.karar.uyari }}</p>{% endif %}
     {% if r.isabet_ozeti %}<p class="an-isabet-not an-isabet-{{ r.isabet_ozeti.kod }}">{{ r.isabet_ozeti.metin }} <a href="#isabet">Ayrıntı</a></p>{% endif %}
   </div>
   <div class="an-halkalar">
-    {{ puan_halka(t.puanlar.kisa, 'Kısa', 'günler-haftalar') }}
-    {{ puan_halka(t.puanlar.orta, 'Orta', '1-12 ay') }}
-    {{ puan_halka(t.puanlar.uzun, 'Uzun', '1 yıl +') }}
+    <div class="an-halka-grup"><p>Grafik: fiyat yükselir mi?</p><div>
+    {{ puan_halka(t.puanlar.kisa, 'Haftalar', 'önümüzdeki birkaç hafta') }}
+    {{ puan_halka(t.puanlar.orta, 'Aylar', '1–12 ay') }}
+    {{ puan_halka(t.puanlar.uzun, 'Yıllar', '1 yıl ve üstü') }}</div></div>
     <span class="an-halka-ayrac" aria-hidden="true"></span>
-    {{ puan_halka(tm.puan if tm else none, 'Temel', 'şirketin rakamları') }}
+    <div class="an-halka-grup"><p>Şirket iyi mi?</p><div>
+    {{ puan_halka(tm.puan if tm else none, 'Bilanço', 'kar, büyüme, borç, ucuzluk') }}</div></div>
   </div>
 </section>
 {% endif %}
