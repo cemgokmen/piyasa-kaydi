@@ -221,6 +221,17 @@ window.yerelOneriler = yerelOneriler;
 
 document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
   const form = kutu.form;
+  // data-oneri="analiz": yalnızca hisse ve kriptolar; seçilen öneri analiz raporunu açar
+  const analizModu = kutu.dataset.oneri === "analiz";
+  const ANALIZ_TURLERI = ["Hisse", "BIST", "Kripto"];
+  function uyarla(oneriler) {
+    if (!analizModu) return oneriler;
+    return oneriler.filter((o) => ANALIZ_TURLERI.includes(o.tur) && o.deger)
+      .map(function (o) {
+        const kod = o.tur === "Kripto" && !o.deger.includes("-") ? `${o.deger}-USD` : o.deger;
+        return { ...o, adres: `/analiz/${encodeURIComponent(kod)}` };
+      });
+  }
   const liste = document.createElement("ul");
   liste.className = "oneri-listesi";
   liste.id = `oneri-listesi-${sira}`;
@@ -306,6 +317,13 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
       secenekler.push(li);
     });
 
+    if (analizModu) {
+      liste.hidden = !secenekler.length;
+      kutu.setAttribute("aria-expanded", secenekler.length ? "true" : "false");
+      aktifYap(-1);
+      return;
+    }
+
     if (aranan === null) {
       // Son aramalar: başlık ve temizleme düğmesi
       const baslik = document.createElement("li");
@@ -358,14 +376,23 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
   }
 
   function sonlariGoster() {
+    if (analizModu) return;
     const liste_ = sonAramalar();
     if (!liste_.length) return;
     goster(liste_, null);
   }
 
   // Serbest metinle arama da geçmişe yazılır
-  form.addEventListener("submit", function () {
+  form.addEventListener("submit", function (olay) {
     const aranan = kutu.value.trim();
+    // Analiz kutusunda şirket adı yazılıp Enter'a basılırsa ilk öneri açılır
+    if (analizModu) {
+      if (secenekler.length && !/^[A-Za-z0-9.=^-]{1,15}$/.test(aranan)) {
+        olay.preventDefault();
+        sec(secenekler[0]);
+      }
+      return;
+    }
     if (aranan) {
       sonAramaKaydet({ etiket: aranan, alt: "bütün işlemlerde arama", tur: "Arama",
                        adres: `/islemler?q=${encodeURIComponent(aranan)}&donem=365` });
@@ -399,19 +426,21 @@ document.querySelectorAll("input[data-oneri]").forEach(function (kutu, sira) {
     // Önce tarayıcıdaki dizinden, anında
     aramaDizinYukle().then(function (dizin) {
       if (!dizin || kutu.value.trim() !== aranan) return;
-      const yerel = yerelOneriler(dizin, aranan);
+      const yerel = analizModu ? uyarla(yerelOneriler(dizin, aranan, 8, ANALIZ_TURLERI)) : yerelOneriler(dizin, aranan);
       if (yerel.length) oneriGoster(yerel, aranan);
     });
     // Sonra sunucudan: dizinde olmayan, az işlem görmüş hisse ve kişiler için
     zamanlayici = setTimeout(function () {
       if (istek) istek.abort();
       istek = new AbortController();
-      fetch(`/api/oneri?q=${encodeURIComponent(aranan)}`, { signal: istek.signal })
+      fetch(`/api/oneri?q=${encodeURIComponent(aranan)}${analizModu ? "&turler=" + ANALIZ_TURLERI.join(",") : ""}`, { signal: istek.signal })
         .then((cevap) => cevap.json())
         .then(function (veri) {
           // Yanıt gelene kadar kutu değiştiyse eski yanıtı gösterme
           if (veri.sorgu !== kutu.value.trim().slice(0, 60)) return;
-          oneriGoster(veri.oneriler, aranan);
+          const gelen = uyarla(veri.oneriler);
+          if (analizModu && !gelen.length) return;
+          oneriGoster(gelen, aranan);
         })
         .catch(() => {});
     }, 250);

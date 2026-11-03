@@ -549,3 +549,16 @@ def test_telefon_alt_menusu(tarayici, sunucu):
         assert tarayici.find_element(By.CSS_SELECTOR, "[data-alt-panel='alt-diger']").get_attribute("aria-current") == "page"
     finally:
         tarayici.set_window_size(1366, 1000)
+
+
+def test_analiz_kutusu_onerileri_analiz_raporunu_acar(tarayici, sunucu):
+    tarayici.get(sunucu + "/analiz")
+    kutu = tarayici.find_element(By.CSS_SELECTOR, "input[data-oneri=analiz]")
+    liste = tarayici.find_element(By.CSS_SELECTOR, ".an-ara .oneri-listesi")
+    # Şirket adıyla yazınca BIST hissesi önerilir; adres analiz raporudur, kişi ve fonlar çıkmaz
+    kutu.send_keys("aselsan")
+    bekle(tarayici, lambda t: liste.is_displayed() and "ASELS" in liste.text)
+    adresler = [li.get_attribute("data-adres") for li in liste.find_elements(By.CSS_SELECTOR, "li[role=option]")]
+    assert adresler and all(a.startswith("/analiz/") for a in adresler)
+    assert "/analiz/ASELS" in adresler
+    assert "bütün işlemlerde ara" not in liste.text

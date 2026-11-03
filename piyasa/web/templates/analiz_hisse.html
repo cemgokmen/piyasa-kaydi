@@ -58,7 +58,7 @@
     </span>
   </div>
   <form class="an-ara" method="get" action="{{ url_for('analiz.analiz_sayfasi') }}" role="search">
-    <input type="search" name="kod" placeholder="Başka hisse: ASELS, AAPL…" aria-label="Hisse kodu" autocomplete="off" spellcheck="false">
+    <input type="search" name="kod" placeholder="Başka hisse: ASELS, Türk Hava, Apple…" aria-label="Hisse kodu ya da şirket adı" autocomplete="off" data-oneri="analiz" spellcheck="false">
     <button class="dugme dugme-sade" type="submit">Analiz et</button>
   </form>
 </header>

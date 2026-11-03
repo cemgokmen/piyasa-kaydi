@@ -42,7 +42,9 @@
 .an-fiyat > b small { font-size: 16px; color: var(--yazi-3); font-weight: 500; }
 .an-getiriler { display: flex; gap: 12px; justify-content: flex-end; margin-top: 6px; font-size: 12.5px; color: var(--yazi-3); }
 .an-getiriler b { font-family: var(--mono); font-weight: 600; margin-left: 2px; }
-.an-ara { display: flex; gap: 8px; grid-column: 1 / -1; max-width: 460px; }
+.an-ara { position: relative; display: flex; gap: 8px; grid-column: 1 / -1; max-width: 460px; }
+.an-ara .oneri-listesi { right: auto; width: min(460px, 100%); }
+.an-ara input[data-oneri] { text-transform: none; }
 .an-ara input {
   flex: 1; min-width: 0; height: 36px; padding: 0 12px;
   border: 1px solid var(--cizgi); border-radius: 9px; background: var(--kart); color: var(--yazi);

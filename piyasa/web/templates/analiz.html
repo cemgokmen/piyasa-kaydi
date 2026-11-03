@@ -17,7 +17,7 @@
       fiyat yükseliyor mu, şirket iyi mi? Bir hisseye tıkla ya da kodunu yaz.</p>
   </div>
   <form class="an-ara an-ara-buyuk" method="get" action="{{ url_for('analiz.analiz_sayfasi') }}" role="search">
-    <input type="search" name="kod" placeholder="Hisse kodu: THYAO, ASELS, AAPL, NVDA…" aria-label="Hisse kodu" autocomplete="off" spellcheck="false" autofocus>
+    <input type="search" name="kod" placeholder="Hisse kodu ya da şirket adı: THYAO, Aselsan, Apple…" aria-label="Hisse kodu ya da şirket adı" autocomplete="off" data-oneri="analiz" spellcheck="false" autofocus>
     <button class="dugme dugme-ana" type="submit">Analiz et</button>
   </form>
 </header>
