@@ -449,6 +449,16 @@ def uygulama(veritabani_yolu):
     bist_piyasa.KILIT = veritabani_yolu.parent / "bist_fiyatlari.kilit"
     bist_piyasa._durum.update(zaman=0.0, tam=0.0, seri={}, veri={}, dosya=0.0)
     bist_piyasa.fiyatlar(["THYAO", "ASELS", "OTKAR"], bekle=True)
+    # Analiz taraması: gerçek dosyaya dokunulmaz, indirme yapılmaz
+    from piyasa.analiz import rapor as analiz_raporu
+    from piyasa.analiz import tarama
+    tarama_eski = (tarama.DOSYA, tarama.KILIT, tarama.tazele, analiz_raporu.gecmis, analiz_raporu.temel_ham)
+    tarama.DOSYA = veritabani_yolu.parent / "analiz_tarama.json"
+    tarama.KILIT = veritabani_yolu.parent / "analiz_tarama.kilit"
+    tarama._durum.update(veri={}, dosya=0.0, calisiyor=False)
+    tarama.tazele = lambda *a, **k: False
+    analiz_raporu.gecmis = lambda yahoo, yil=5: None
+    analiz_raporu.temel_ham = lambda yahoo: None
     kripto_piyasa._info_al = sahte_kripto_bilgisi
     kripto_piyasa._bilgi.temizle()
     kripto_piyasa._vadeli.temizle()
@@ -486,6 +496,7 @@ def uygulama(veritabani_yolu):
     bist_piyasa._indir = bist_eski
     bist_piyasa.DOSYA, bist_piyasa.KILIT = bist_dosya
     karsilastirma._aylik = karsilastirma_eski
+    (tarama.DOSYA, tarama.KILIT, tarama.tazele, analiz_raporu.gecmis, analiz_raporu.temel_ham) = tarama_eski
 
 
 @pytest.fixture()

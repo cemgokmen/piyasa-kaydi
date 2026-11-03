@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+{% set k = r.kimlik %}
+{% set t = r.teknik %}
+{% set gs = t.gosterge %}
+{% set tm = r.temel %}
+{% set simge = '₺' if k.para == 'TRY' else '$' if k.para == 'USD' else k.para %}
+{% block baslik %}{{ k.kod }} analizi · Piyasa Kaydı{% endblock %}
+{% block aciklama %}{{ k.kod }} teknik ve temel analiz raporu.{% endblock %}
+{% block yapisal %}<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='analiz.css') }}">{% endblock %}
+{% block geri_adres %}{{ url_for('analiz.analiz_sayfasi') }}{% endblock %}
+
+{% macro ton(p) %}{% if p is none %}yok{% elif p >= 60 %}iyi{% elif p <= 40 %}kotu{% else %}orta{% endif %}{% endmacro %}
+{% macro yon_ton(y) %}{% if y is none or y == 0 %}orta{% elif y > 0 %}iyi{% else %}kotu{% endif %}{% endmacro %}
+{% macro bilesen_ton(x) %}{% if x is none %}yok{% elif x > 0.2 %}iyi{% elif x < -0.2 %}kotu{% else %}orta{% endif %}{% endmacro %}
+{% macro puan_halka(p, etiket, alt='') %}
+<div class="an-halka an-{{ ton(p) }}" style="--p: {{ p if p is not none else 0 }}">
+  <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="an-halka-iz" cx="18" cy="18" r="15.9"/><circle class="an-halka-dolu" cx="18" cy="18" r="15.9" pathLength="100"/></svg>
+  <div class="an-halka-ic"><b>{{ p|round|int if p is not none else '—' }}</b><span>{{ etiket }}</span></div>
+  {% if alt %}<small>{{ alt }}</small>{% endif %}
+</div>
+{% endmacro %}
+{% macro bilesen_cubugu(ad, x, not_='') %}
+<div class="an-bilesen">
+  <span class="an-bilesen-ad">{{ ad }}{% if not_ %} <small>{{ not_ }}</small>{% endif %}</span>
+  <span class="an-bilesen-cubuk" aria-hidden="true">
+    <span class="an-bilesen-orta"></span>
+    {% if x is not none %}<span class="an-bilesen-dolu an-{{ bilesen_ton(x) }}" style="{% if x >= 0 %}left:50%;width:{{ (x * 50)|round(1) }}%{% else %}left:{{ (50 + x * 50)|round(1) }}%;width:{{ (-x * 50)|round(1) }}%{% endif %}"></span>{% endif %}
+  </span>
+  <span class="an-bilesen-deger an-{{ bilesen_ton(x) }}">{{ '—' if x is none else ('+' if x > 0 else '−' if x < 0 else '') ~ ((x|abs) * 100)|round|int }}</span>
+</div>
+{% endmacro %}
+
+{% block icerik %}
+<header class="an-ust">
+  <div class="an-kimlik">
+    <p class="ust-yol"><a href="{{ url_for('analiz.analiz_sayfasi') }}">Analiz</a> ·
+      {% if k.piyasa == 'BIST' %}<a href="{{ url_for('bist.sirket', kod=k.kod) }}">Şirket sayfası</a>
+      {% elif k.piyasa == 'ABD' %}<a href="{{ url_for('site.hisse', ticker=k.kod) }}">Şirket sayfası</a>{% endif %}</p>
+    <h1><span class="an-kod">{{ k.kod }}</span> {{ (k.ad if k.piyasa == 'BIST' else k.ad|sirket_adi) if k.ad else '' }}</h1>
+    <p class="kimlik">
+      <span class="etiket">{{ 'Borsa İstanbul' if k.piyasa == 'BIST' else 'ABD' if k.piyasa == 'ABD' else 'Diğer' }}</span>
+      {% if k.xu100 %}<span class="etiket etiket-soluk">BIST 100</span>{% endif %}
+      {% if k.sektor %}<span class="etiket etiket-soluk">{{ k.sektor|lower|capitalize }}</span>{% elif k.sektor_yahoo %}<span class="etiket etiket-soluk">{{ k.sektor_yahoo }}</span>{% endif %}
+      <span class="an-soluk">Son kapanış {{ t.tarih.isoformat()|uzun_tarih }}</span>
+    </p>
+  </div>
+  <div class="an-fiyat">
+    <b>{{ gs.close|fiyat }} <small>{{ simge }}</small></b>
+    {% set g1 = gs.getiriler['1h'] %}
+    <span class="an-getiriler">
+      {% for anahtar, etiket in [('1h', '1H'), ('1a', '1A'), ('3a', '3A'), ('1y', '1Y')] %}
+      {% set g = gs.getiriler[anahtar] %}
+      <span>{{ etiket }} <b class="{{ 'tutar-buy' if g and g > 0 else 'tutar-sell' if g and g < 0 else '' }}">{{ g|yuzde(basamak=1) if g is not none else '—' }}</b></span>
+      {% endfor %}
+    </span>
+  </div>
+  <form class="an-ara" method="get" action="{{ url_for('analiz.analiz_sayfasi') }}" role="search">
+    <input type="search" name="kod" placeholder="Başka hisse: ASELS, AAPL…" aria-label="Hisse kodu" autocomplete="off" spellcheck="false">
+    <button class="dugme dugme-sade" type="submit">Analiz et</button>
+  </form>
+</header>
+
+{# ---------------- KARAR ---------------- #}
+{% if r.karar %}
+<section class="an-karar an-karar-{{ r.karar.kod }}" aria-label="Genel görünüm">
+  <div class="an-karar-metin">
+    <p class="an-ust-etiket">Genel görünüm</p>
+    <h2>{{ r.karar.ad }}</h2>
+    <p>{{ r.karar.metin }}</p>
+    {% if r.karar.uyari %}<p class="an-uyari">⚠ {{ r.karar.uyari }}</p>{% endif %}
+    {% if r.isabet_ozeti %}<p class="an-isabet-not an-isabet-{{ r.isabet_ozeti.kod }}">{{ r.isabet_ozeti.metin }} <a href="#isabet">Ayrıntı</a></p>{% endif %}
+  </div>
+  <div class="an-halkalar">
+    {{ puan_halka(t.puanlar.kisa, 'Kısa', 'günler-haftalar') }}
+    {{ puan_halka(t.puanlar.orta, 'Orta', '1-12 ay') }}
+    {{ puan_halka(t.puanlar.uzun, 'Uzun', '1 yıl +') }}
+    <span class="an-halka-ayrac" aria-hidden="true"></span>
+    {{ puan_halka(tm.puan if tm else none, 'Temel', 'şirketin rakamları') }}
+  </div>
+</section>
+{% endif %}
+
+<nav class="an-gezinti" aria-label="Rapor bölümleri">
+  <a href="#grafik">Grafik</a><a href="#okuma">Okuma</a><a href="#pozisyon">Pozisyon ve risk</a>
+  <a href="#teknik-puan">Teknik puan</a>{% if tm %}<a href="#temel">Temel analiz</a>{% endif %}<a href="#isabet">Geçmiş isabet</a><a href="#yontem">Yöntem</a>
+</nav>
+
+{# ---------------- GRAFİK ---------------- #}
+<section class="panel an-grafik-panel" id="grafik">
+  <div class="an-arac">
+    <div class="an-segment" role="group" aria-label="Aralık" data-aralik>
+      {% for a, e in [('63', '3A'), ('126', '6A'), ('252', '1Y'), ('504', '2Y'), ('1260', '5Y')] %}
+      <button type="button" data-gun="{{ a }}" {% if a == '252' %}aria-pressed="true"{% endif %}>{{ e }}</button>
+      {% endfor %}
+    </div>
+    <div class="an-katmanlar" role="group" aria-label="Katmanlar">
+      {% for a, e, acik in [('ort', 'Ortalamalar', true), ('bb', 'Bollinger', false), ('st', 'Süpertrend', false), ('sr', 'Destek/direnç', true), ('fib', 'Fibonacci', false), ('zz', 'Tepe-dip', false)] %}
+      <label class="an-cip"><input type="checkbox" data-katman="{{ a }}" {% if acik %}checked{% endif %}> {{ e }}</label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="an-lejant" data-lejant></div>
+  <div class="an-grafik" data-grafik role="img" aria-label="{{ k.kod }} mum grafiği"></div>
+  <script type="application/json" id="grafik-verisi">{{ grafik|safe }}</script>
+</section>
+
+{# ---------------- OKUMA ---------------- #}
+<div class="an-iki" id="okuma">
+  <section class="panel">
+    <div class="panel-ust"><div><h2>Grafik okuması</h2><p class="panel-not">Göstergelerin söylediği, tek tek ve sade dille.</p></div></div>
+    <ul class="an-okuma">
+      {% for m in r.okuma %}
+      <li class="an-{{ yon_ton(m.yon) }}"><b>{{ m.baslik }}</b><p>{{ m.metin }}</p></li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <div class="an-sutun">
+    <section class="panel">
+      <div class="panel-ust"><div><h2>Senaryolar</h2><p class="panel-not">Hangi seviyede ne değişir?</p></div></div>
+      <div class="an-senaryo">
+        <div class="an-iyi"><b>Yükseliş senaryosu</b><p>{{ r.senaryo.boga }}</p></div>
+        <div class="an-kotu"><b>Düşüş senaryosu</b><p>{{ r.senaryo.ayi }}</p></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-ust"><div><h2>Formasyonlar</h2><p class="panel-not">Son günlerin mumları ve grafik yapısı.</p></div></div>
+      {% set hepsi = t.mumlar + t.formasyonlar %}
+      {% if hepsi %}
+      <ul class="an-okuma an-okuma-kucuk">
+        {% for f in hepsi %}<li class="an-{{ yon_ton(f.yon) }}"><b>{{ f.ad }}</b><p>{{ f.aciklama }}</p></li>{% endfor %}
+      </ul>
+      {% else %}<p class="bos">Son günlerde belirgin bir mum ya da grafik formasyonu yok.</p>{% endif %}
+    </section>
+
+    {% if r.bolgeler %}
+    <section class="panel">
+      <div class="panel-ust"><div><h2>Destek ve direnç bölgeleri</h2>
+        <p class="panel-not">Son 3 yılın dönüş noktaları, hacim profili ve pivotlardan. Güç, bölgenin geçmişte şansın üstünde tutunup tutunmadığıdır.</p></div></div>
+      <div class="tablo-kap">
+        <table class="tablo an-tablo">
+          <thead><tr><th>Bölge</th><th>Tür</th><th class="sag">Uzaklık</th><th class="sag">Test</th><th class="sag">Güç</th></tr></thead>
+          <tbody>
+          {% for b in r.bolgeler %}
+            {% if loop.index0 > 0 and r.bolgeler[loop.index0 - 1].tur == 'direnç' and b.tur == 'destek' %}
+            <tr class="an-simdi"><td colspan="5">Fiyat · {{ gs.close|fiyat }}</td></tr>
+            {% endif %}
+            <tr>
+              <td class="mono">{{ b.alt|fiyat }} – {{ b.ust|fiyat }}</td>
+              <td><span class="an-rozet an-{{ 'iyi' if b.tur == 'destek' else 'kotu' }}">{{ b.tur|capitalize }}</span></td>
+              <td class="sag mono">{{ (b.uzaklik_yuzde / 100)|yuzde(basamak=1) }}</td>
+              <td class="sag mono">{{ b.tutunan }}/{{ b.test }}</td>
+              <td class="sag"><span class="an-guc" style="--g: {{ b.puan }}"></span> <span class="mono">{{ b.puan|round|int }}</span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+
+{# ---------------- POZİSYON VE RİSK ---------------- #}
+{% set rk = r.risk %}
+{% if rk %}
+<section class="panel an-pozisyon" id="pozisyon"
+  data-giris="{{ rk.giris }}" data-para="{{ k.para }}" data-kur="{{ r.kur or '' }}" data-atr="{{ rk.atr }}"
+  data-hedefler='{{ rk.hedefler|tojson }}' data-rejim="{{ r.rejim.kod if r.rejim else '' }}">
+  <div class="panel-ust">
+    <div><h2>Pozisyon ve risk</h2>
+      <p class="panel-not">Profesyonellerin kuralı: tek işlemde sermayenin küçük bir yüzdesinden fazlasını riske atma. Adet, stopa göre hesaplanır —
+        stop uzaksa daha az hisse alınır. Ayarlar yalnızca bu tarayıcıda saklanır.</p></div>
+  </div>
+  <div class="an-poz-izgara">
+    <div class="an-poz-girdi">
+      <label>Sermaye <span class="an-girdi"><input type="text" inputmode="numeric" data-alan="sermaye" value="300.000"> <i>TL</i></span></label>
+      <label>İşlem başına risk <span class="an-girdi"><input type="text" inputmode="decimal" data-alan="risk" value="1"> <i>%</i></span>
+        <small>Yeni başlayan için %0,5–1. Üst üste 10 kayıpta sermayenin yaklaşık %10'u gider.</small></label>
+      <label>Tek hisse en çok <span class="an-girdi"><input type="text" inputmode="decimal" data-alan="tavan" value="20"> <i>%</i></span>
+        <small>Bir hissenin portföydeki en büyük payı.</small></label>
+      <label>Giriş fiyatı <span class="an-girdi"><input type="text" inputmode="decimal" data-alan="giris" value="{{ rk.giris|fiyat }}"> <i>{{ simge }}</i></span></label>
+      {% if k.para == 'USD' %}<p class="an-soluk kucuk">Dolar kuru: {{ r.kur|fiyat if r.kur else '—' }} TL</p>{% endif %}
+    </div>
+    <fieldset class="an-stoplar">
+      <legend>Stop seviyesi</legend>
+      {% for s in rk.stoplar %}
+      <label class="an-stop">
+        <input type="radio" name="stop" value="{{ s.fiyat }}" {% if s.kod == rk.onerilen %}checked{% endif %}>
+        <span><b>{{ s.ad }}{% if s.kod == rk.onerilen %} <em>önerilen</em>{% endif %}</b>
+          <span class="mono">{{ s.fiyat|fiyat }} {{ simge }} · {{ s.uzaklik|yuzde(basamak=1) }}</span>
+          <small>{{ s.aciklama }}</small></span>
+      </label>
+      {% endfor %}
+      <label class="an-stop">
+        <input type="radio" name="stop" value="ozel">
+        <span><b>Kendi stopum</b> <span class="an-girdi"><input type="text" inputmode="decimal" data-alan="ozel-stop" placeholder="{{ (rk.giris - 2 * rk.atr)|fiyat }}"> <i>{{ simge }}</i></span></span>
+      </label>
+    </fieldset>
+    <div class="an-poz-sonuc" data-sonuc aria-live="polite"></div>
+  </div>
+  {% if r.kontrol %}
+  {% set gecen = r.kontrol|selectattr('gecti')|list|length %}
+  <div class="an-kontrol">
+    <h3>İşlem öncesi kontrol listesi <span class="an-kontrol-sayi an-{{ 'iyi' if gecen >= r.kontrol|length * 0.75 else 'kotu' if gecen <= r.kontrol|length * 0.4 else 'orta' }}">{{ gecen }}/{{ r.kontrol|length }}</span></h3>
+    <ul>
+      {% for m in r.kontrol %}
+      <li class="{{ 'an-gecti' if m.gecti else 'an-kaldi' }}"><span aria-hidden="true">{{ '✓' if m.gecti else '✕' }}</span>
+        <b>{{ m.ad }}</b> <small>{{ m.aciklama }}</small></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ---------------- TEKNİK PUAN ---------------- #}
+<section class="panel" id="teknik-puan">
+  <div class="panel-ust"><div><h2>Teknik puan nasıl oluştu?</h2>
+    <p class="panel-not">Her bileşen −100 (en olumsuz) ile +100 (en olumlu) arasında. Vadeye göre ağırlıklar değişir:
+      kısa vadede aşırı alım-satım ve hacim, uzun vadede trend ve momentum ağır basar.</p></div></div>
+  <div class="an-iki an-ic">
+    <div>
+      {% set notlar = {'trend': '50/200 günlük ortalama, eğim, Süpertrend', 'momentum': '12-1 ay ve 6 ay getiri, RSI, MACD',
+                       'relatif': 'Endekse göre 3 ve 6 ay', 'hacim': 'Chaikin, OBV, yükselen gün hacmi',
+                       'donus': 'RSI(2), Bollinger %b', 'risk': 'Oynaklık, zirveden uzaklık'} %}
+      {% for ad, etiket in [('trend', 'Trend'), ('momentum', 'Momentum'), ('relatif', 'Endekse göre güç'), ('hacim', 'Hacim / para akışı'), ('donus', 'Aşırı alım-satım'), ('risk', 'Risk')] %}
+      {{ bilesen_cubugu(etiket, t.bilesen[ad], notlar[ad]) }}
+      {% endfor %}
+      <table class="an-agirlik">
+        <thead><tr><th></th>{% for ad in ['Trend', 'Mom.', 'Endeks', 'Hacim', 'Dönüş', 'Risk'] %}<th>{{ ad }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for v, ad in [('kisa', 'Kısa'), ('orta', 'Orta'), ('uzun', 'Uzun')] %}
+          <tr><th>{{ ad }}</th>{% for b in ['trend', 'momentum', 'relatif', 'hacim', 'donus', 'risk'] %}<td>%{{ (agirliklar[v][b] * 100)|round|int }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <table class="an-gosterge">
+        <tbody>
+          <tr><th>20 / 50 / 200 günlük ortalama</th><td class="mono">{{ gs.sma20|fiyat }} · {{ gs.sma50|fiyat }} · {{ gs.sma200|fiyat if gs.sma200 else '—' }}</td></tr>
+          <tr><th>RSI (14) · RSI (2)</th><td class="mono">{{ gs.rsi|ondalik(0) }} · {{ gs.rsi2|ondalik(0) }}</td></tr>
+          <tr><th>MACD · sinyal · histogram</th><td class="mono">{{ gs.macd|ondalik(2) }} · {{ gs.macd_sinyal|ondalik(2) }} · {{ gs.macd_hist|ondalik(2) }}</td></tr>
+          <tr><th>ADX · +DI · −DI</th><td class="mono">{{ gs.adx|ondalik(0) }} · {{ gs.arti_di|ondalik(0) }} · {{ gs.eksi_di|ondalik(0) }}</td></tr>
+          <tr><th>Stokastik %K · %D</th><td class="mono">{{ gs.stok_k|ondalik(0) }} · {{ gs.stok_d|ondalik(0) }}</td></tr>
+          <tr><th>Bollinger üst · alt · %b</th><td class="mono">{{ gs.bb_ust|fiyat }} · {{ gs.bb_alt|fiyat }} · {{ gs.bb_b|ondalik(2) }}</td></tr>
+          <tr><th>Chaikin para akışı · MFI</th><td class="mono">{{ gs.cmf|ondalik(2) }} · {{ gs.mfi|ondalik(0) }}</td></tr>
+          <tr><th>ATR (14)</th><td class="mono">{{ gs.atr|fiyat }} · {{ (gs.atr / gs.close)|yuzde(isaretli=false, basamak=1) }}</td></tr>
+          <tr><th>Süpertrend (10, 3)</th><td class="mono">{{ 'Yükseliş' if gs.st_yon == 1 else 'Düşüş' }} · {{ gs.st_cizgi|fiyat }}</td></tr>
+          <tr><th>55 günlük kanal</th><td class="mono">{{ gs.donchian_alt|fiyat }} – {{ gs.donchian_ust|fiyat }}</td></tr>
+          <tr><th>52 hafta aralığı</th><td class="mono">{{ gs.dip252|fiyat }} – {{ gs.zirve252|fiyat }}</td></tr>
+          <tr><th>Yıllık oynaklık{% if gs.endeks_oynaklik %} (endeks){% endif %}</th><td class="mono">{{ gs.oynaklik|yuzde(isaretli=false, basamak=0) if gs.oynaklik else '—' }}{% if gs.endeks_oynaklik %} ({{ gs.endeks_oynaklik|yuzde(isaretli=false, basamak=0) }}){% endif %}</td></tr>
+          {% if gs.beta is not none %}<tr><th>Beta (1 yıl, {{ k.endeks_ad }})</th><td class="mono">{{ gs.beta|ondalik(2) }}</td></tr>{% endif %}
+          <tr><th>Son 1 yılın en büyük düşüşü</th><td class="mono">{{ gs.en_buyuk_dusus|yuzde(basamak=1) if gs.en_buyuk_dusus is not none else '—' }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+{# ---------------- TEMEL ---------------- #}
+{% if tm %}
+{% set o = tm.oranlar %}
+{% set md = tm.medyan %}
+{% set rs = '₺' if tm.rapor_para == 'TRY' else '$' if tm.rapor_para == 'USD' else tm.rapor_para %}
+<section class="panel" id="temel">
+  <div class="panel-ust"><div><h2>Temel analiz</h2>
+    <p class="panel-not">Son {{ tm.yillar|length }} yılın yıllık tabloları ({{ tm.yillar|first }}–{{ tm.yillar|last }}).
+      {% if tm.rapor_para != tm.para %}Şirket {{ tm.rapor_para }} cinsinden raporluyor; oranlar aynı para birimine çevrilerek hesaplandı.{% endif %}
+      {% if tm.tms29 %}TL raporlayan şirket: enflasyon muhasebesi (TMS 29) hesaba katıldı, büyümeler reeldir.{% elif tm.reel %}Banka/finans: TMS 29 uygulanmadığı için oranlar TÜFE ile arındırıldı.{% endif %}
+      {% if r.medyan_kaynak %}Değerleme karşılaştırması: {{ r.medyan_kaynak }} medyanı.{% endif %}</p></div></div>
+
+  <div class="an-iki an-ic">
+    <div>
+      {% set agirlik = tm.agirlik %}
+      {% for ad, etiket in [('kalite', 'Kalite ve karlılık'), ('buyume', 'Büyüme'), ('saglik', 'Finansal sağlık'), ('degerleme', 'Değerleme')] %}
+      {% if agirlik[ad] > 0 %}{{ bilesen_cubugu(etiket, tm.bilesen[ad], 'ağırlık %' ~ (agirlik[ad] * 100)|round|int) }}{% endif %}
+      {% endfor %}
+      <ul class="an-okuma an-okuma-kucuk">
+        {% for m in tm.okuma %}<li class="an-{{ yon_ton(m.yon) }}"><b>{{ m.baslik }}</b><p>{{ m.metin }}</p></li>{% endfor %}
+      </ul>
+    </div>
+    <div class="an-sutun">
+      {% if tm.guclu %}
+      <div class="an-liste an-liste-iyi"><h3>Güçlü yanlar</h3><ul>{% for g in tm.guclu %}<li>{{ g }}</li>{% endfor %}</ul></div>
+      {% endif %}
+      {% if tm.bayraklar %}
+      <div class="an-liste an-liste-kotu"><h3>Kırmızı bayraklar</h3><ul>{% for g in tm.bayraklar %}<li>{{ g }}</li>{% endfor %}</ul></div>
+      {% elif not tm.guclu %}<p class="bos">Belirgin bir güçlü yan ya da alarm yok.</p>{% endif %}
+
+      {% if tm.piotroski %}
+      <details class="an-detay" open>
+        <summary>Piotroski F skoru <b class="an-{{ 'iyi' if tm.piotroski.olcekli >= 7 else 'kotu' if tm.piotroski.olcekli <= 3 else 'orta' }}">{{ tm.piotroski.puan }}/{{ tm.piotroski.toplam }}</b></summary>
+        <ul class="an-testler">
+          {% for x in tm.piotroski.testler %}<li class="{{ 'an-gecti' if x.gecti else 'an-kaldi' }}"><span aria-hidden="true">{{ '✓' if x.gecti else '✕' }}</span> <b>{{ x.ad }}</b> <small>{{ x.aciklama }}</small></li>{% endfor %}
+        </ul>
+      </details>
+      {% endif %}
+      {% if tm.altman %}
+      <p class="an-altman">Altman Z'' <b class="mono an-{{ 'iyi' if tm.altman.bolge == 'guvenli' else 'kotu' if tm.altman.bolge == 'riskli' else 'orta' }}">{{ tm.altman.z|ondalik(2) }}</b>
+        · {{ tm.altman.etiket }}. <small>Eşikler: 4,15 altı riskli, 5,85 üstü güvenli.</small></p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% macro oran_satiri(etiket, deger, medyan=none, aciklama='') %}
+  <tr><th>{{ etiket }}{% if aciklama %}<small>{{ aciklama }}</small>{% endif %}</th><td class="mono">{{ deger }}</td><td class="mono an-soluk">{{ medyan if medyan is not none else '' }}</td></tr>
+  {% endmacro %}
+  <div class="an-oranlar">
+    <table class="an-gosterge">
+      <thead><tr><th>Değerleme</th><th>Şirket</th><th>Medyan</th></tr></thead>
+      <tbody>
+        {{ oran_satiri('F/K', o.fk|ondalik(1) if o.fk else ('Zararda' if o.fk is none and tm.bilesen.degerleme is not none else '—'), md.fk|ondalik(1), 'Fiyat / yıllık kar') }}
+        {{ oran_satiri('PD/DD', o.pddd|ondalik(2) if o.pddd else '—', md.pddd|ondalik(2), 'Piyasa değeri / özkaynak') }}
+        {% if not tm.finans %}
+        {{ oran_satiri('FD/FAVÖK', o.fd_favok|ondalik(1) if o.fd_favok else '—', md.fd_favok|ondalik(1), 'Firma değeri / faaliyet nakdi') }}
+        {{ oran_satiri('Serbest nakit verimi', o.fcf_verimi|yuzde(basamak=1) if o.fcf_verimi is not none else '—', md.fcf_verimi|yuzde(basamak=1) if md.fcf_verimi is not none else none) }}
+        {{ oran_satiri('Fiyat / satış', o.fs|ondalik(2) if o.fs else '—') }}
+        {% endif %}
+        {{ oran_satiri('Temettü verimi', o.temettu|yuzde(isaretli=false, basamak=1) if o.temettu else 'Yok') }}
+        {% if o.geri_alim_verimi %}{{ oran_satiri('Geri alım verimi', o.geri_alim_verimi|yuzde(isaretli=false, basamak=1)) }}{% endif %}
+        {% if tm.ters_ina %}{{ oran_satiri('Ters İNA: fiyatlanan büyüme', tm.ters_ina.buyume|yuzde(basamak=1), none, '10 yıl, yıllık serbest nakit büyümesi') }}{% endif %}
+      </tbody>
+    </table>
+    <table class="an-gosterge">
+      <thead><tr><th>Karlılık</th><th></th><th></th></tr></thead>
+      <tbody>
+        {{ oran_satiri('Özkaynak karlılığı', o.roe|yuzde(basamak=1) if o.roe is not none else '—', ('reel ' ~ o.roe_reel|yuzde(basamak=1)) if tm.reel and not tm.tms29 and o.roe_reel is not none else none) }}
+        {% if not tm.finans %}
+        {{ oran_satiri('Yatırılan sermaye getirisi', o.roic|yuzde(basamak=1) if o.roic is not none else '—') }}
+        {{ oran_satiri('Brüt marj', o.brut_marj|yuzde(isaretli=false, basamak=1) if o.brut_marj is not none else '—') }}
+        {{ oran_satiri('Faaliyet marjı', o.faaliyet_marj|yuzde(basamak=1) if o.faaliyet_marj is not none else '—') }}
+        {% endif %}
+        {{ oran_satiri('Net marj', o.net_marj|yuzde(basamak=1) if o.net_marj is not none else '—') }}
+        {{ oran_satiri('Varlık karlılığı', o.roa|yuzde(basamak=1) if o.roa is not none else '—') }}
+      </tbody>
+    </table>
+    <table class="an-gosterge">
+      <thead><tr><th>Büyüme ve sağlık</th><th></th><th></th></tr></thead>
+      <tbody>
+        {{ oran_satiri('Gelir büyümesi (yıllık ort.)', (o.gelir_cagr_reel if tm.reel else o.gelir_cagr)|yuzde(basamak=1) if (o.gelir_cagr_reel if tm.reel else o.gelir_cagr) is not none else '—', 'reel' if tm.reel else none) }}
+        {{ oran_satiri('Hisse başına kar büyümesi', (o.hbk_cagr_reel if tm.reel else o.hbk_cagr)|yuzde(basamak=1) if (o.hbk_cagr_reel if tm.reel else o.hbk_cagr) is not none else '—', 'reel' if tm.reel else none) }}
+        {% if not tm.finans %}
+        {{ oran_satiri('Net borç / FAVÖK', ('Net nakit' if o.nb_favok < 0 else o.nb_favok|ondalik(1)) if o.nb_favok is not none else '—') }}
+        {{ oran_satiri('Faiz karşılama', (o.faiz_karsilama|ondalik(1) ~ ' kat') if o.faiz_karsilama is not none else '—') }}
+        {{ oran_satiri('Cari oran', o.cari|ondalik(2) if o.cari is not none else '—') }}
+        {{ oran_satiri('Tahakkuk oranı', o.tahakkuk|yuzde(basamak=1) if o.tahakkuk is not none else '—', none, '(net kar − işletme nakdi) / varlık') }}
+        {% endif %}
+        {{ oran_satiri('Hisse sayısı değişimi', o.sulanma|yuzde(basamak=1) if o.sulanma is not none else '—', none, 'yıllık; artı = sulanma') }}
+      </tbody>
+    </table>
+  </div>
+
+  {% if tm.tarihce %}
+  <div class="tablo-kap">
+    <table class="tablo an-tablo">
+      <thead><tr><th>Yıl</th><th class="sag">Gelir</th><th class="sag">Net kar</th><th class="sag">Net marj</th><th class="sag">Serbest nakit</th></tr></thead>
+      <tbody>
+        {% for y in tm.tarihce|reverse %}
+        <tr><td>{{ y.yil }}</td><td class="sag mono">{{ y.gelir_yazi }}</td>
+          <td class="sag mono {{ 'tutar-sell' if y.net and y.net < 0 else '' }}">{{ y.net_yazi }}</td>
+          <td class="sag mono">{{ y.net_marj|yuzde(basamak=1) if y.net_marj is not none else '—' }}</td>
+          <td class="sag mono">{{ y.sna_yazi }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if tm.tms29 %}<p class="dipnot">Yahoo'daki yıllık rakamlar her yıl farklı tarihin TL'siyle yazılı olabilir (TMS 29); tablo ham rakamları gösterir, büyüme oranları düzeltilmiştir.</p>{% endif %}
+  {% endif %}
+</section>
+{% elif k.temel %}
+<section class="panel" id="temel"><div class="panel-ust"><div><h2>Temel analiz</h2></div></div>
+  <p class="bos">Şirketin yıllık tabloları şu an alınamadı (Yahoo geçici olarak yanıt vermiyor olabilir). Birkaç dakika sonra sayfayı yenile.</p></section>
+{% endif %}
+
+{# ---------------- İSABET ---------------- #}
+<section class="panel" id="isabet">
+  <div class="panel-ust"><div><h2>Bu puan bu hissede geçmişte işe yaradı mı?</h2>
+    <p class="panel-not">Aynı kural geçmişin her gününe uygulandı; puanın olumlu, nötr ve olumsuz olduğu günlerden sonra hissenin
+      {% if gs.endeks_getiri %}endekse göre{% endif %} ne yaptığına bakıldı. Örtüşen dönemler seyreltildi. Geçmiş, geleceğin garantisi değildir;
+      ama bir kural bu hissede hiç çalışmamışsa ona güvenmek için sebep yoktur.</p></div></div>
+  <div class="an-isabet">
+    {% for v, ad in [('kisa', 'Kısa vade · sonraki 10 gün'), ('orta', 'Orta vade · sonraki 60 gün'), ('uzun', 'Uzun vade · sonraki 250 gün')] %}
+    {% set i = t.isabet[v] %}
+    <div class="an-isabet-kart">
+      <h3>{{ ad }}</h3>
+      {% if i %}
+      <table class="an-gosterge">
+        <thead><tr><th>Puan</th><th class="sag">Gözlem</th><th class="sag">Ort. {{ 'fark' if i.endekse_gore else 'getiri' }}</th><th class="sag">Pozitif</th></tr></thead>
+        <tbody>
+          {% for g in i.gruplar %}
+          <tr><th>{{ g.ad }}</th><td class="sag mono">{{ g.n }}</td>
+            <td class="sag mono {{ 'tutar-buy' if g.ortalama and g.ortalama > 0 else 'tutar-sell' if g.ortalama and g.ortalama < 0 else '' }}">{{ g.ortalama|yuzde(basamak=1) if g.n else '—' }}</td>
+            <td class="sag mono">{{ g.yenme|yuzde(isaretli=false, basamak=0) if g.n else '—' }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="an-soluk kucuk">{{ i.n }} gözlem, {{ i.baslangic.isoformat()|uzun_tarih }}'den beri.
+        {% if i.korelasyon is not none %}Sıra korelasyonu {{ i.korelasyon|ondalik(2) }}
+        ({{ 'anlamlı olumlu' if i.korelasyon > 0.15 else 'zayıf olumlu' if i.korelasyon > 0.05 else 'ters' if i.korelasyon < -0.05 else 'yok denecek kadar az' }}).{% endif %}</p>
+      {% else %}<p class="bos">Yeterli geçmiş yok.</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ---------------- YÖNTEM ---------------- #}
+<section class="panel an-yontem" id="yontem">
+  <details>
+    <summary><h2>Yöntem ve kaynaklar</h2></summary>
+    <div class="an-yontem-ic">
+      <p><b>Teknik puan</b> altı bileşenin ağırlıklı ortalamasıdır (50 = nötr). Trend: fiyatın 50 ve 200 günlük ortalamalara göre konumu ve
+        200 günlüğün eğimi — zaman serisi momentumunun 100 yılı aşkın veride işe yaradığı gösterilmiştir (Moskowitz, Ooi, Pedersen 2012; Faber 2007).
+        Momentum: son ay hariç 12 aylık getiri (Jegadeesh &amp; Titman 1993), RSI ve MACD. Aşırı alım-satım yalnızca kısa vadede
+        ağırlıklıdır; kısa vadeli dönüş etkisi (Lehmann 1990) düşen trendde zayıflatılır. Haftalık grafik Stan Weinstein'ın evre analiziyle,
+        tepe-dip yapısı Dow teorisiyle, kırılımlar Donchian kanalıyla okunur. 52 hafta zirvesine yakınlık olumlu sayılır (George &amp; Hwang 2004).</p>
+      <p><b>Destek ve direnç</b> bölgeleri dönüş noktası kümeleri, hacim profili ve pivotlardan bulunur; her bölgenin geçmişteki tutunma
+        oranı rastgele seçilmiş seviyelerle karşılaştırılır (binom z testi). Güç puanı yüksek bölge, şansın üstünde tepki vermiş bölgedir.</p>
+      <p><b>Temel puan</b> dört bileşenden oluşur: kalite (özkaynak ve sermaye getirisi, brüt kar/varlık — Novy-Marx 2013, marj istikrarı —
+        Asness, Frazzini, Pedersen 2019), büyüme (TL raporlayanlarda reel), finansal sağlık (Piotroski 2000 F skoru, Altman 2005 Z'' skoru,
+        borç, faiz karşılama, tahakkuk — Sloan 1996) ve değerleme (F/K, PD/DD, FD/FAVÖK, serbest nakit verimi; aynı piyasanın medyanına göre).
+        Ters İNA, bugünkü fiyatın varsaydığı büyümeyi bulur (Mauboussin &amp; Rappaport).</p>
+      <p><b>Pozisyon boyutu</b> sabit kesirli risk yöntemiyledir: adet = sermaye × risk oranı ÷ (giriş − stop). Böylece her işlemde aynı
+        oranda risk alınır; oynak hissede otomatik olarak daha az hisse alınır (Van Tharp, Ralph Vince).</p>
+      <p><b>Sınırlar:</b> veriler Yahoo Finance'tendir, BIST fiyatları yaklaşık 15 dakika gecikmelidir. Bilanço kalemleri Yahoo'nun
+        sınıflandırmasıyladır, KAP'taki resmi tablolarla küçük farklar olabilir. Hiçbir puan geleceği bilmez; bu sayfa karar vermeye
+        yardımcı bir kontrol aracıdır, yatırım tavsiyesi değildir.</p>
+    </div>
+  </details>
+</section>
+{% endblock %}
+
+{% block betik %}<script src="{{ url_for('static', filename='analiz.js') }}"></script>{% endblock %}

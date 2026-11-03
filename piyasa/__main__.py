@@ -40,6 +40,7 @@ Kullanım:
     python -m piyasa fon-cik              fon listesinden CIK numaralarını bulur
     python -m piyasa sr-dene [kod ...]    destek/direnç modelini birkaç hissede dener
     python -m piyasa sr-tarama [aralık dönem]   modeli geniş bir hisse grubunda sınar
+    python -m piyasa analiz-tarama [--temel]    BIST 100 teknik/temel analiz taramasını tazeler
 """
 
 import importlib
@@ -78,6 +79,7 @@ KOMUTLAR = {
     "fon-cik": "piyasa.toplama.fon_cik",
     "sr-dene": "piyasa.analiz.sr_dene",
     "sr-tarama": "piyasa.analiz.sr_tarama",
+    "analiz-tarama": "piyasa.analiz.tarama",
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar

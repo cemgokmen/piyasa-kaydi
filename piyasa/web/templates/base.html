@@ -62,6 +62,7 @@
         </div>
       </div>
       {% for ad, adres, etiket in [
+          ('analiz', url_for('analiz.analiz_sayfasi'), 'Analiz'),
           ('sinyal', url_for('analiz.sinyaller_sayfasi'), 'Sinyaller'),
           ('karsilastir', url_for('karsilastir.sayfa'), 'Yatırım karşılaştırma'),
           ('siyasetci', url_for('site.siyasetciler'), 'Siyasetçiler'),
@@ -143,7 +144,7 @@
 
 {# Telefon alt menüsü: masaüstü menüsüyle aynı yapı. "Piyasalar" ve "Diğer" aşağıdan açılan panel açar. #}
 {% set piyasa_aktif = aktif in ('bist', 'emtia', 'kripto') %}
-{% set diger_aktif = aktif in ('siyasetci', 'yonetici', 'fonlar', 'canli', 'ozet') %}
+{% set diger_aktif = aktif in ('analiz', 'siyasetci', 'yonetici', 'fonlar', 'canli', 'ozet') %}
 <nav class="alt-gezinti" aria-label="Hızlı gezinme">
   <a href="{{ url_for('site.anasayfa') }}" {% if aktif == 'anasayfa' %}aria-current="page"{% endif %}>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Ana sayfa</a>
@@ -169,6 +170,8 @@
 </div>
 <div class="alt-panel" id="alt-diger" role="dialog" aria-label="Diğer sayfalar" hidden>
   <p class="alt-panel-baslik">Diğer</p>
+  <a href="{{ url_for('analiz.analiz_sayfasi') }}" {% if aktif == 'analiz' %}aria-current="page"{% endif %}>
+    <b>Analiz</b><span>Teknik ve temel analiz, BIST 100 taraması, pozisyon hesabı</span></a>
   <a href="{{ url_for('site.siyasetciler') }}" {% if aktif == 'siyasetci' %}aria-current="page"{% endif %}>
     <b>Siyasetçiler</b><span>ABD Kongresi üyelerinin hisse işlemleri</span></a>
   <a href="{{ url_for('site.islemler', kaynak='yonetici') }}" {% if aktif == 'yonetici' %}aria-current="page"{% endif %}>

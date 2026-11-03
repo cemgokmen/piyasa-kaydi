@@ -1,12 +1,15 @@
 """
 Analiz sayfaları: siyasetçi performansı, çıkar çatışmaları, sinyaller
-(üçlü onay ve geçmiş başarı) ve günlük özet.
+(üçlü onay ve geçmiş başarı), günlük özet ve teknik/temel analiz (/analiz).
 """
 
 
-from flask import Blueprint, redirect, render_template, request, url_for
+import json
+import re
 
-from piyasa.analiz import cakisma, ihale, ozet, performans, sektor_haritasi, sinyaller
+from flask import Blueprint, abort, make_response, redirect, render_template, request, url_for
+
+from piyasa.analiz import cakisma, ihale, ozet, performans, rapor, sektor_haritasi, sinyaller, teknik
 from piyasa.analiz.getiri import UFUKLAR
 
 analiz = Blueprint("analiz", __name__)
@@ -56,3 +59,38 @@ def gunluk_ozet(gun=None):
     if gun is not None:
         return redirect(url_for("analiz.gunluk_ozet"), code=301)
     return render_template("ozet.html", aktif="ozet", **ozet.gunluk_ozet())
+
+
+# ---------------------------------------------------------------------------
+# Teknik ve temel analiz (kişisel kullanım: arama motorlarına kapalı)
+# ---------------------------------------------------------------------------
+
+ANALIZ_KODU = re.compile(r"^[A-Z0-9][A-Z0-9.\-=^]{0,14}$")
+
+
+def _dizinsiz(cevap):
+    cevap = make_response(cevap)
+    cevap.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return cevap
+
+
+@analiz.route("/analiz")
+def analiz_sayfasi():
+    kod = (request.args.get("kod") or "").strip().upper()
+    if kod:
+        return redirect(url_for("analiz.analiz_hisse", kod=kod))
+    return _dizinsiz(render_template("analiz.html", aktif="analiz", **rapor.genel_bakis()))
+
+
+@analiz.route("/analiz/<kod>")
+def analiz_hisse(kod):
+    kod = kod.strip().upper()
+    if not ANALIZ_KODU.match(kod):
+        abort(404)
+    try:
+        r = rapor.rapor(kod)
+    except rapor.Bulunamadi:
+        abort(404)
+    grafik = json.dumps(r.pop("grafik"), separators=(",", ":"))
+    return _dizinsiz(render_template("analiz_hisse.html", aktif="analiz", r=r, grafik=grafik,
+                                     agirliklar=teknik.AGIRLIKLAR))

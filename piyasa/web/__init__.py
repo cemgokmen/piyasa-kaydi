@@ -98,4 +98,6 @@ def create_app(vekil_arkasinda=False):
         serit.arkaplanda_tazele()
         from piyasa.web import arama
         arama.arkaplanda_tazele()
+        from piyasa.analiz import tarama
+        tarama.arkaplanda_tazele()
     return app
