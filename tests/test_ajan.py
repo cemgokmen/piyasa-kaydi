@@ -319,3 +319,93 @@ def test_kanal_paraleli_karsi_uctan_gecer():
 
 def test_kaynaklarin_ikisi_de_yuklu():
     assert {r.kaynak.kod for r in KURALLAR.values()} >= {"altay1997", "gedik2021"}
+
+
+# ---------------------------------------------------------------------------
+# Dönemler, çakışan getiriler, maliyet
+# ---------------------------------------------------------------------------
+
+def test_donem_izleme_suresi_tasan_sinyali_saymaz():
+    from piyasa.analiz.ajan.donemler import ESKI, OLAGAN, SOK
+    assert OLAGAN.icerir(pd.Timestamp("2025-01-06"), pd.Timestamp("2025-02-06"))
+    assert not OLAGAN.icerir(pd.Timestamp("2026-02-20"), pd.Timestamp("2026-03-20"))     # çıkışı savaşa taşıyor
+    assert not OLAGAN.icerir(pd.Timestamp("2020-10-01"), pd.Timestamp("2020-11-20"))
+    assert SOK.icerir(pd.Timestamp("2026-10-01"), pd.Timestamp("2026-10-20"))
+    assert ESKI.icerir(pd.Timestamp("2015-01-05"), pd.Timestamp("2015-03-05"))
+
+
+def test_donemli_sinama_yalnizca_o_donemin_sinyalini_sayar():
+    from piyasa.analiz.ajan.donemler import Donem
+    f = _evren(adet=20, gun=500)
+    tarihler = next(iter(f.values())).index
+    orta = tarihler[250]
+    ilk = Donem("a", "A", str(tarihler[0].date()), str(orta.date()), "")
+    son = Donem("b", "B", str(tarihler[251].date()), None, "")
+    kurallar = {"altay.stokastik": KURALLAR["altay.stokastik"]}
+    hepsi = sinama.sina(f, kurallar)["altay.stokastik"]["al"]["sinyal"]
+    a = sinama.sina(f, kurallar, donem=ilk)["altay.stokastik"]["al"]["sinyal"]
+    b = sinama.sina(f, kurallar, donem=son)["altay.stokastik"]["al"]["sinyal"]
+    assert a + b <= hepsi and a > 0 and b > 0
+    assert a + b >= hepsi - 40      # yalnızca sınıra taşanlar düşer
+
+
+def test_cakisan_getiride_p_degeri_buyur():
+    rng = np.random.default_rng(3)
+    # 12 haftalık hareketli toplam: ardışık gözlemler güçlü bağlı, sıradan t testi fazla iyimser
+    x = pd.Series(rng.normal(0.002, 0.02, 400)).rolling(12).mean().dropna().to_numpy()
+    assert sinama._cakisma_p(x, 12) > sinama._cakisma_p(x, 0)
+    assert sinama._cakisma_p(np.zeros(30), 4) == 1.0
+
+
+def test_maliyeti_karsilamayan_sonuc_kanit_sayilmaz():
+    s = {"n": 100, "p": 0.001, "p_duzeltilmis": 0.01, "ortalama": 0.002, "ilk_yari": 0.002, "ikinci_yari": 0.002}
+    assert sinama._karar(s) == "maliyet"
+    assert sinama._karar({**s, "ortalama": 0.02}) == "calisiyor"
+
+
+def test_onceki_yillarda_ters_cikan_kural_oy_vermez():
+    from piyasa.analiz.ajan import kanit, okuma
+    olagan = {"x": {"al": {"ortalama": 0.02, "kanit": "zayif"}, "sat": {"ortalama": 0.01}}}
+    eski = {"x": {"al": {"ortalama": -0.01, "n": 50, "p": 0.3}, "sat": {"ortalama": 0.02, "n": 50, "p": 0.01}}}
+    kanit._tekrar_isle(olagan, eski)
+    assert olagan["x"]["al"]["tekrar"] == "tekrarlamadi" and olagan["x"]["sat"]["tekrar"] == "tekrarladi"
+    df = sahte_ohlcv(gun=600, tohum=21)
+    g = gostergeler(df)
+    b = Baglam(df, g)
+    aktif = {k: r.fonksiyon(b).iloc[-r.gecerlilik:] for k, r in KURALLAR.items()}
+    k, s = next((k, s[s != 0]) for k, s in aktif.items() if (s != 0).any())
+    taraf = "al" if s.iloc[-1] > 0 else "sat"
+    tutan = okuma.oku(df, g, {k: {taraf: {"kanit": "calisiyor", "tekrar": "tekrarladi"}}})
+    tutmayan = okuma.oku(df, g, {k: {taraf: {"kanit": "calisiyor", "tekrar": "tekrarlamadi"}}})
+    assert tutan["kanitli"] == 1 and tutmayan["kanitli"] == 0
+
+
+def test_seans_acikken_bugunku_sinyal_gecici_ve_oysuz():
+    from piyasa.analiz.ajan import okuma
+    df = sahte_ohlcv(gun=600, tohum=21)
+    df.index = pd.date_range(end=pd.Timestamp.today().normalize(), periods=len(df), freq="D")
+    g = gostergeler(df)
+    b = Baglam(df, g)
+    k = next((k for k, r in KURALLAR.items() if r.fonksiyon(b).iloc[-1] != 0), None)
+    if k is None:
+        pytest.skip("bu veride bugün sinyal yok")
+    taraf = "al" if KURALLAR[k].fonksiyon(b).iloc[-1] > 0 else "sat"
+    s = okuma.oku(df, g, {k: {taraf: {"kanit": "calisiyor"}}}, seans_acik=True)
+    satir = next(x for x in s["sinyaller"] if x["kimlik"] == k)
+    assert satir["gecici"] and s["kanitli"] == 0
+
+
+def test_bes_gosterge_ilk_gun_sinyal_verir_ve_matriks_yuklu():
+    assert {r.kaynak.kod for r in KURALLAR.values()} >= {"matriks2020"}
+    df = sahte_ohlcv(gun=800, tohum=9)
+    s = KURALLAR["matriks.bes_gosterge"].fonksiyon(Baglam(df, gostergeler(df)))
+    assert (s != 0).any()
+    assert not ((s != 0) & (s.shift(1) != 0)).any()     # durum değil, başlangıç anı
+
+
+def test_gecikmeli_kesisim_iki_gun_sonra_gelir():
+    df = sahte_ohlcv(gun=500, tohum=4)
+    b = Baglam(df, gostergeler(df))
+    hemen = KURALLAR["matriks.ema_5_14"].fonksiyon(b)
+    gecik = KURALLAR["matriks.ema_5_14_gecikmeli"].fonksiyon(b)
+    assert hemen.shift(2).fillna(0.0).equals(gecik)

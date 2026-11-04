@@ -14,9 +14,15 @@ Analiz ajanının öğrendiği kaynaklar.
 Kaynağın söylediği iddiadır, doğru kabul edilmez. Teknik puan ve destek/direnç gücü ancak sınamada iyileşiyorsa değiştirilir;
 sonuç not dosyasına yazılır.
 
+## Sınama dönemleri
+
+Karar olağan dönemden çıkar; İran savaşı (Mart 2026) ve fon soruşturması (Eylül 2026) dışarıdadır. 2012–2020 bağımsız ikinci sınamadır,
+orada ters çıkan kural oy vermez. Sınırlar `piyasa/analiz/ajan/donemler.py` dosyasındadır ve sonuca bakılarak değiştirilmez.
+
 ## Kaynaklar
 
 | Kaynak | Dosya | Notlar |
 |---|---|---|
 | Erdinç Altay, *Portföy Yönetiminde Karar Alma Aracı Olarak Teknik Analizin Kullanımı*, İÜ SBE YL tezi, 1997 | `pdf/altay-1997.pdf` | `notlar/altay-1997.md` |
 | Gedik Yatırım, *Teknik Analiz Eğitim Sunumu*, Şubat 2021 | `pdf/gedik-2021.pdf` | `notlar/gedik-2021.md` |
+| Matriks, *Teknik Analiz Modülleri (KHN Menüleri) Eğitim Dokümanı*, 2020 | `pdf/matriks-2020.pdf` | `notlar/matriks-2020.md` |
