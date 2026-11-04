@@ -230,3 +230,28 @@ def test_bolunme_duzelt_islenmemis_bedelsizi_siler_gercek_hareketi_korur():
     # %10'luk tavan hareketine dokunulmaz, tablo aynen döner
     assert bolunme_duzelt(d.iloc[:2]) is not None and bolunme_duzelt(d.iloc[:2])["Close"].iloc[0] == 100
     assert bist_mi("GARAN.IS") and not bist_mi("AAPL")
+
+
+def _kapanislar(tarihler, kapanis):
+    return pd.DataFrame({k: kapanis for k in ("Open", "High", "Low", "Close")} | {"Volume": [10.0] * len(kapanis)},
+                        index=pd.DatetimeIndex(tarihler), dtype=float)
+
+
+def test_bolunme_duzelt_fiyat_sinirina_gore_karar_verir():
+    from piyasa.analiz.teknik.veri import bolunme_duzelt
+    # Yahoo bir seansı atlamış: iki tavan +%21 görünür, gerçektir (VESTL 2026-11-04)
+    d = _kapanislar(["2026-10-30", "2026-11-02", "2026-11-04"], [11.0, 11.16, 13.49])
+    assert bolunme_duzelt(d)["Close"].iloc[1] == pytest.approx(11.16)
+    # Ağırlıklı ortalama bazı döneminde kapanıştan kapanışa +%20 ve −%18 gerçektir
+    d = _kapanislar(["2015-03-02", "2015-03-03", "2015-03-04"], [100.0, 120, 98.4])
+    assert bolunme_duzelt(d)["Close"].tolist() == pytest.approx([100, 120, 98.4])
+    # Küçük bedelsiz: bugünkü sınırda −%14 ancak sermaye artırımıyla açıklanır
+    d = _kapanislar(["2024-11-27", "2024-11-28", "2024-11-29"], [100.0, 86, 87])
+    assert bolunme_duzelt(d)["Close"].iloc[0] == pytest.approx(86)
+    # Tek seansta %25'i aşan yukarı sıçrama Yahoo hatasıdır (AYGAZ 2022-09-01)
+    d = _kapanislar(["2022-08-31", "2022-09-01", "2022-09-02"], [100.0, 172, 171])
+    assert bolunme_duzelt(d)["Close"].iloc[0] == pytest.approx(172)
+    # Saat dilimli indeks (yfinance Ticker.history)
+    d = _kapanislar(["2024-11-27", "2024-11-28"], [100.0, 86])
+    d.index = d.index.tz_localize("Europe/Istanbul")
+    assert bolunme_duzelt(d)["Close"].iloc[0] == pytest.approx(86)
