@@ -357,6 +357,7 @@ def bolgeyi_sina(df, atr_seri, merkez, yari_genislik, son_indeks,
 
         testler.append({
             "indeks": bit,
+            "yon": yon,
             "tutundu": sonuc,
             "tepki": max(0.0, float(tepki)),
             "agirlik": 0.5 ** ((son_indeks - bit) / yarilanma),
@@ -409,6 +410,21 @@ def yuvarlak_sayi_puani(fiyat, tolerans):
         if abs(fiyat - round(fiyat / adim) * adim) <= tolerans:
             return {basamak: 1.0, basamak / 2: 0.7, basamak / 4: 0.4}[adim]
     return 0.0
+
+
+def bolge_ozellikleri(df, merkez, yari, testler, tur):
+    """
+    Altay 1997 (s. 76–78): gücü temasın tazeliği, bölgedeki hacim ve bölgede geçen süre belirler; kırılan direnç
+    desteğe, kırılan destek dirence döner.
+    """
+    temas = (df["Low"].to_numpy() <= merkez + yari) & (df["High"].to_numpy() >= merkez - yari)
+    konum = np.flatnonzero(temas)
+    # Şimdi destekse daha önce alttan gelip kırılmış (dirençken), dirençse üstten gelip kırılmış olmalı
+    kirilan_yon = "alttan" if tur == "destek" else "ustten"
+    return {"son_temas_gun": int(len(df) - 1 - konum[-1]) if len(konum) else None,
+            "bolgede_gun": int(temas[-252:].sum()),
+            # Yalnızca son sonuçlanan test kırılışsa: fiyat bölgeyi son geçişte ters yönden aşmış, yeni rolü henüz sınanmamış
+            "rol_degisti": bool(testler) and not testler[-1]["tutundu"] and testler[-1]["yon"] == kirilan_yon}
 
 
 def bolgeleri_hesapla(df, bitis=None):
@@ -511,6 +527,7 @@ def bolgeleri_hesapla(df, bitis=None):
             "cakisma":     len(b["kaynaklar"]) / 3,
             "yuvarlak":    yuvarlak_sayi_puani(merkez, yari),
         }
+        ek_bilgi = bolge_ozellikleri(df, merkez, yari, testler, "destek" if merkez < son_fiyat else "direnç")
         puan = 100 * sum(AGIRLIK[k] * v for k, v in ozellik.items())
 
         sonuc.append({
@@ -528,6 +545,7 @@ def bolgeleri_hesapla(df, bitis=None):
             "kaynaklar": ", ".join(sorted(b["kaynaklar"])),
             "etiketler": ", ".join(b["etiketler"]),
             "son_test": df.index[testler[-1]["indeks"]].date() if testler else None,
+            **ek_bilgi,
             "ozellikler": {k: round(float(v), 3) for k, v in ozellik.items()},
         })
 
