@@ -20,6 +20,7 @@ from piyasa.analiz.destek_direnc import bolgeleri_hesapla
 from piyasa.analiz.teknik.veri import bist_mi, bolunme_duzelt
 from piyasa.bicim import fiyat as fiyat_yazi
 from piyasa.bicim import ondalik
+from piyasa.bist import piyasa as bist_piyasa
 from piyasa.onbellek import sureli
 
 GECMIS_SURESI = 15 * 60
@@ -403,7 +404,7 @@ def rapor(kod):
         "karar": birlesik_karar(t, temel, rj, k["piyasa"] == "BIST"),
         "kontrol": kontrol_listesi(t, temel, rj, risk, k["piyasa"] == "BIST"),
         "isabet_ozeti": isabet_ozeti(t["isabet"]),
-        "ajan": ajan_okuma.oku(t["_df"], t["_g"]),
+        "ajan": ajan_okuma.oku(t["_df"], t["_g"], seans_acik=bist_mi(k["yahoo"]) and bist_piyasa.borsa_acik()),
         "egilim": egilim_ozeti(t["egilim"]),
         "risk": risk,
         "kur": None if para == "TRY" else dolar_kuru() if para == "USD" else None,

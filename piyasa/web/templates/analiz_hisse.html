@@ -181,10 +181,11 @@
         {% for s in aj.sinyaller %}
         <tr>
           <td><b>{{ s.ad }}</b><span class="alt-satir">{{ s.metin }}</span></td>
-          <td data-etiket="Sinyal"><span class="an-rozet an-{{ 'iyi' if s.yon > 0 else 'kotu' }}">{{ 'AL' if s.yon > 0 else 'SAT' }}</span></td>
+          <td data-etiket="Sinyal"><span class="an-rozet an-{{ 'iyi' if s.yon > 0 else 'kotu' }}">{{ 'AL' if s.yon > 0 else 'SAT' }}</span>{% if s.gecici %}<span class="alt-satir">Geçici: gün kapanmadı</span>{% endif %}</td>
           <td class="mono an-tek" data-etiket="Tarih">{{ s.tarih.isoformat()|kisa_tarih }}</td>
           <td data-etiket="Kanıt"><span class="an-rozet an-{{ s.kanit_ton }}">{{ s.kanit }}</span>
-            {% if s.ortalama is not none %}<span class="alt-satir">{{ s.ufuk }} günde gruba göre {{ s.ortalama|yuzde(basamak=1) }} ({{ 'SAT sinyalinde artı, hissenin geride kaldığı' if s.yon < 0 else 'hissenin farkı' }})</span>{% endif %}</td>
+            {% if s.ortalama is not none %}<span class="alt-satir">{{ s.ufuk }} günde gruba göre {{ s.ortalama|yuzde(basamak=1) }} ({{ 'SAT sinyalinde artı, hissenin geride kaldığı' if s.yon < 0 else 'hissenin farkı' }})</span>{% endif %}
+            {% if s.tekrar %}<span class="alt-satir">{{ s.tekrar }}</span>{% endif %}</td>
           <td class="an-soluk" data-etiket="Kaynak">{{ s.kaynak }}, s. {{ s.sayfa }}</td>
         </tr>
         {% endfor %}

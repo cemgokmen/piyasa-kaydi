@@ -48,3 +48,10 @@ Veri: bugünkü BIST 100, 2020-11 – 2026-11 (sağkalım yanlılığı var). Ku
 Çoklu test uyarısı: 48 sinyal türünün 3'ü ham p < 0,05 verdi (biri Altay'dan). Şansla yaklaşık 2 tanesi beklenir; "zayıf kanıt" etiketini tek başına karar sebebi sayma.
 
 Formasyon türlerine ayrılınca yalnızca omuz-baş-omuz öne çıktı: kırılıştan sonra 60 günde grubun %3,8 gerisinde (ham p = 0,016, düzeltmesiz). Hepsi sınandığı için bu da kanıt sayılmaz, izlenecek.
+
+## Dönemlere ayrılmış yeniden sınama (2026-11-04)
+
+Yukarıdaki tablo düzeltmelerden öncedir; 2026'daki savaş ve fon krizini içerir, bedelsiz hatası taşır ve p değerleri çakışmayı hesaba katmaz. Güncel sonuçlar `notlar/matriks-2020.md` dosyasındadır. Bu kaynak için:
+- 20/50 aşağı kesişimi Holm'u geçti: olağan dönem +%2,07, 2012–2020 +%0,56, savaş ve fon krizi −%0,86.
+- 60 günde kırılma (yatık/orta/dik): olağan %70/87/95, 2012–2020 %69/88/98, kriz %64/94/99. "Dik çizgi daha güvenilir" krizden bağımsız olarak desteklenmedi.
+- Hedefe ulaşma, olağan / 2012–2020 / kriz: ters OBO %72/58/33, yükselen üçgen %60/57/63, dikdörtgen %52/49/35, alçalan üçgen %48/57/36, bayrak %29/28/6, OBO %18/30/31. Krizde örnek küçük (12–65 kırılış). "En az gidilecek nokta" iddiası sakin dönemde de desteklenmedi.

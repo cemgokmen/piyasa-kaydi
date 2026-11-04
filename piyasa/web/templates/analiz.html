@@ -153,7 +153,8 @@
   <header class="bolum-ust"><div>
     <h2>Kaynak kuralları tutuyor mu?</h2>
     <p class="bolum-not">Okunan kaynaklardaki kurallar BIST 100 geçmişinde sınanır. Kaynak ne derse desin, kanıtı olmayan kural karar için sayılmaz.
-      {% if kanit %}{{ kanit.hisse }} hisse, {{ kanit.bas|uzun_tarih }} – {{ kanit.bit|uzun_tarih }}.{% endif %}</p>
+      {% if kanit.donemler %}Karar olağan dönemden çıkar ({{ kanit.donemler.olagan.bas|uzun_tarih }} – {{ kanit.donemler.olagan.bit|uzun_tarih }}): İran savaşı ve fon soruşturması dışarıda. Önceki yıllar ({{ kanit.donemler.eski.bas[:4] }}–{{ kanit.donemler.eski.bit[:4] }}) ikinci, bağımsız sınamadır.
+      {% elif kanit %}{{ kanit.hisse }} hisse, {{ kanit.bas|uzun_tarih }} – {{ kanit.bit|uzun_tarih }}.{% endif %}</p>
   </div></header>
   {% if kanit %}
   <div class="tablo-kap">
@@ -164,22 +165,27 @@
         <tr><td><b>{{ k.ad }}</b></td><td class="an-soluk" data-etiket="Kaynak">{{ k.kaynak }}, s. {{ k.sayfa }}</td><td class="sag mono an-tek" data-etiket="Süre">{{ k.ufuk }} gün</td>
           {% for t, etiket in ((k.al, 'AL sinyali'), (k.sat, 'SAT sinyali')) %}
           <td data-etiket="{{ etiket }}"><span class="an-rozet an-{{ t.ton }}">{{ t.kanit }}</span>
-            {% if t.ortalama is not none %}<span class="alt-satir">{{ t.ortalama|yuzde(basamak=1) }} · {{ t.sinyal }} sinyal</span>{% endif %}</td>
+            {% if t.ortalama is not none %}<span class="alt-satir">{{ t.ortalama|yuzde(basamak=1) }} · {{ t.sinyal }} sinyal</span>{% endif %}
+            {% if t.eski is not none or t.sok is not none %}<span class="alt-satir">{% if t.eski is not none %}Önceki yıllar {{ t.eski|yuzde(basamak=1) }}{% endif %}{% if t.eski is not none and t.sok is not none %} · {% endif %}{% if t.sok is not none %}Savaş ve fon krizi {{ t.sok|yuzde(basamak=1) }}{% endif %}</span>{% endif %}</td>
           {% endfor %}</tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <p class="dipnot">Rakam: sinyalden sonraki sürede kuralın kazancı, aynı günkü grup ortalamasına göre. SAT sinyalinde artı, hissenin grubun gerisinde kaldığı anlamına gelir.</p>
+  <p class="dipnot">Rakam: sinyalden sonraki sürede kuralın kazancı, aynı günkü grup ortalamasına göre. SAT sinyalinde artı, hissenin grubun gerisinde kaldığı anlamına gelir. Önceki yıllarda ters çıkan kural oy vermez. Maliyet olarak gidiş-dönüş binde 4 alındı.</p>
   {% if kanit.formasyonlar %}
   <h3 class="an-ara-baslik">Formasyon hedefleri tutuyor mu?</h3>
   <p class="bolum-not">Kaynaklar hedefi "en az gidilecek nokta" diye anlatır. Hacim teyitli kırılışların 60 gün içinde hedefe ulaşma oranı:</p>
   <div class="tablo-kap">
     <table class="tablo an-tablo">
-      <thead><tr><th>Formasyon</th><th class="sag">Kırılış</th><th class="sag">Hedefe ulaşan</th></tr></thead>
+      <thead><tr><th>Formasyon</th><th class="sag">Kırılış</th><th class="sag">Olağan dönem</th><th class="sag">Önceki yıllar</th><th class="sag">Savaş ve fon krizi</th></tr></thead>
       <tbody>
-        {% for f in kanit.formasyonlar.values()|sort(attribute='hedef', reverse=true) %}
-        <tr><td data-etiket="Formasyon"><b>{{ f.ad }}</b></td><td class="sag mono" data-etiket="Kırılış">{{ f.n }}</td><td class="sag mono" data-etiket="Hedefe ulaşan">{{ f.hedef|yuzde(isaretli=false, basamak=0) }}</td></tr>
+        {% set dn = kanit.donemler or {} %}
+        {% for kod, f in kanit.formasyonlar.items()|sort(attribute='1.hedef', reverse=true) %}
+        {% set e = ((dn.eski or {}).formasyonlar or {}).get(kod) %}{% set s = ((dn.sok or {}).formasyonlar or {}).get(kod) %}
+        <tr><td data-etiket="Formasyon"><b>{{ f.ad }}</b></td><td class="sag mono" data-etiket="Kırılış">{{ f.n }}</td><td class="sag mono" data-etiket="Olağan dönem">{{ f.hedef|yuzde(isaretli=false, basamak=0) }}</td>
+          <td class="sag mono" data-etiket="Önceki yıllar">{{ e.hedef|yuzde(isaretli=false, basamak=0) if e else '–' }}</td>
+          <td class="sag mono" data-etiket="Savaş ve fon krizi">{% if s and s.n >= 20 %}{{ s.hedef|yuzde(isaretli=false, basamak=0) }}{% else %}–{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

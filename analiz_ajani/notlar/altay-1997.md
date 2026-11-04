@@ -96,3 +96,7 @@ Veri: bugünkü BIST 100, 2020-11 – 2026-11 (sağkalım yanlılığı var). Ku
 | Destek/direnç: temasın tazeliği | Yalnızca gösteriliyor | Tezin tersine, taze temas daha az tutundu (%57'ye %65) |
 | Destek/direnç: bölgede geçen süre | Yalnızca gösteriliyor | Tek yönlü ilişki yok (%59, %65, %60) |
 | Stokastik portföy deneyi | Tekrarlandı, sitede | 5 yılın 4'ünde endeksin gerisinde, son yılda faizin çok gerisinde |
+
+## Dönemlere ayrılmış yeniden sınama (2026-11-04)
+
+Bu dosyadaki sınama sonuçları dönem ayrımından, bedelsiz düzeltmesinden ve çakışma düzeltmesinden öncedir. Güncel tablo `notlar/matriks-2020.md` dosyasındadır. Stokastik trend yönünde AL olağan dönemde +%1,01 (p 0,027) verdi ama 2012–2020'de tekrarlamadı (−%0,02), artık oy vermez.
