@@ -393,6 +393,12 @@
         {{ oran_satiri('Faiz karşılama', (o.faiz_karsilama|ondalik(1) ~ ' kat') if o.faiz_karsilama is not none else '—') }}
         {{ oran_satiri('Cari oran', o.cari|ondalik(2) if o.cari is not none else '—') }}
         {{ oran_satiri('Tahakkuk oranı', o.tahakkuk|yuzde(basamak=1) if o.tahakkuk is not none else '—', none, '(net kar − işletme nakdi) / varlık') }}
+        {{ oran_satiri('Asit-test oranı', o.asit|ondalik(2) if o.asit is not none else '—', none, 'ders kitabı ölçüsü 1') }}
+        {{ oran_satiri('Nakit oranı', o.nakit_orani|ondalik(2) if o.nakit_orani is not none else '—', none, 'ders kitabı ölçüsü 0,20') }}
+        {{ oran_satiri('Duran varlık / devamlı sermaye', o.duran_devamli|ondalik(2) if o.duran_devamli is not none else '—', none, '1’in üstü: duran varlık kısa vadeli borçla finanse ediliyor') }}
+        {{ oran_satiri('Borç / maddi özkaynak', o.borc_maddi_ozk|ondalik(2) if o.borc_maddi_ozk is not none else '—', none, 'ders kitabı ölçüsü 1') }}
+        {{ oran_satiri('Stok süresi', (o.stok_gun|ondalik(0) ~ ' gün') if o.stok_gun is not none else '—') }}
+        {{ oran_satiri('Alacak tahsil süresi', (o.alacak_gun|ondalik(0) ~ ' gün') if o.alacak_gun is not none else '—', none, 'kredili satış verisi yok, tüm satışla') }}
         {% endif %}
         {{ oran_satiri('Hisse sayısı değişimi', o.sulanma|yuzde(basamak=1) if o.sulanma is not none else '—', none, 'yıllık; artı = sulanma') }}
       </tbody>

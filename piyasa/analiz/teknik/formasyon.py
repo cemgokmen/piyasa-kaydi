@@ -120,7 +120,7 @@ def grafik_formasyonlari(df, g, noktalar):
         bosluk = df["Open"].iloc[i] - df["Close"].iloc[i - 1]
         if abs(bosluk) > a:
             dolu = (df["Low"].iloc[i:].min() <= df["Close"].iloc[i - 1]) if bosluk > 0 else (df["High"].iloc[i:].max() >= df["Close"].iloc[i - 1])
-            ekle("Yukarı boşluk" if bosluk > 0 else "Aşağı boşluk", 1 if bosluk > 0 else -1,
+            ekle("Yukarı boşluk" if bosluk > 0 else "Aşağı boşluk", 0 if bosluk > 0 else -1,   # yukarı boşluğun kanıtı yok
                  f"{df.index[i]:%d.%m} günü fiyat {_p(abs(bosluk))} (%{_o(abs(bosluk) / df['Close'].iloc[i - 1] * 100)}) "
                  f"{'yukarı' if bosluk > 0 else 'aşağı'} boşlukla açıldı" + ("; boşluk kapandı." if dolu else "; boşluk henüz kapanmadı."),
                  0.5)

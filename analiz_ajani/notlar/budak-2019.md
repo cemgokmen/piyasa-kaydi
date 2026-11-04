@@ -50,3 +50,17 @@ Dönemler `ajan/donemler.py`. SAT'ta artı, hissenin gruptan geride kalmasıdır
 - RSI 30 altına girişte almak olağan dönemde −%1,09 (p 0,016), eski yıllarda +%0,08: tekrarlamadı.
 - Gedik 20/50 aşağı kesişimi, 98 sınamada da Holm'u geçen tek sinyal olarak kaldı (düzeltilmiş p 0,016).
 - 98 sınamada 11 ham p < 0,05; yalnızca şansla yaklaşık 5 beklenir.
+
+## Puan sınaması: %b puandan çıkarılmalı mı?
+
+Önceden konan ölçüt: iki dönemde de p < 0,05 ve aynı yönde iyileşme olursa değişir. Sıra sıra olağan / 2012–2020, 10 gün ileri, haftalık sıra korelasyonu (IC). Fiyat düzeltmesi onarıldıktan sonraki sayılar.
+
+| Sürüm | IC | IC farkı (p) | Üst-alt %20 farkı |
+|---|---|---|---|
+| Mevcut | +0,0452 / +0,0264 | | +0,86 / +0,53 |
+| %b çıkarıldı | +0,0419 / +0,0275 | −0,0034 (0,044) / +0,0011 (0,36) | +0,76 / +0,51 |
+| RSI(2) çıkarıldı | +0,0453 / +0,0235 | +0,0001 (0,94) / −0,0029 (0,018) | +0,87 / +0,51 |
+| Dönüş bileşeni çıkarıldı | +0,0390 / +0,0192 | −0,0063 (0,072) / −0,0072 (0,003) | +0,79 / +0,45 |
+| %b ters çevrildi | +0,0387 / +0,0215 | −0,0065 (0,045) / −0,0049 (0,026) | +0,74 / +0,52 |
+
+Ölçüt sağlanmadı, formül aynı kaldı. Banda değmek tek başına AL olarak grubun gerisinde kalsa da %b puan içinde zarar vermiyor: düşüş trendinde kısılır, etkin ağırlığı %12,5'tir ve puan hisseleri mutlak değil birbirine göre sıralar. Puan iki dönemde anlamlı sıralar (savaş-fon krizinde anlamlı değil: IC +0,04, p = 0,34, n = 30). Üst-alt farkı 10 günde maliyet öncesi +%0,5–0,9'dur; evren bugünkü BIST 100 olduğu için sağkalım payı içerir.

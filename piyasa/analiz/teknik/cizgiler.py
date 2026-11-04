@@ -173,7 +173,9 @@ def _kutu_formasyonu(p, kapanis, onceki=None):
         yukseklik = abs(p[0][1] - onceki[1]) if onceki else yukseklik      # hedef sapın boyudur
     elif kod == "genisleme":
         yukseklik = abs(ust(p[-1][0]) - alt(p[-1][0]))
-    yon = {"yukselen_ucgen": 1, "alcalan_ucgen": -1, "alcalan_kama": 1, "yukselen_kama": -1, "genisleme": -1}.get(kod, 0)
+    # Üçgene kırılmadan yön verilmez: kaynaklar düz kenardan kırılır der, BIST 100'de kırılışların çoğu eğimli kenardandır
+    # (notlar/tspakb-2011.md). Kamalarda kaynağın yönü iki dönemde de tutar.
+    yon = {"alcalan_kama": 1, "yukselen_kama": -1, "genisleme": -1}.get(kod, 0)
     return {"ad": ad, "kod": kod, "yon": yon, "bas": bas, "son": son, "ust": ust, "alt": alt, "hedef_f": hedef_f,
             "esik": 0.0 if kod != "dikdortgen" else DELME, "yukseklik": yukseklik, "hacim_uygun": None, "egim": None}
 

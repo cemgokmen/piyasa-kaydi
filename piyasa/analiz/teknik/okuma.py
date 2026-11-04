@@ -176,6 +176,7 @@ def okuma(t, bolgeler=None):
             metin = (f"Son 6 ayın düşüş salınımı {_p(fib['ust'])} → {_p(fib['alt'])}. Fiyat düşüşün %{round(d * 100)} kadarını geri aldı. ")
             metin += ("Tepki zayıf." if d < 0.382 else "Tepki, klasik %38,2–61,8 bölgesinde." if d <= 0.618
                       else "Düşüşün çoğu geri alındı: dönüş ihtimali güçleniyor.")
+        metin += " BIST 100 geçmişinde düzeltmeler bu seviyelerde yığılmıyor; seviyeyi tek başına kanıt sayma."
         ekle("Fibonacci", 0, metin)
 
     # Destek / direnç

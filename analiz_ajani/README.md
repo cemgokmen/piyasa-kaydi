@@ -21,9 +21,12 @@ orada ters çıkan kural oy vermez. Sınırlar `piyasa/analiz/ajan/donemler.py` 
 
 ## Kaynaklar
 
+Not dosyalarındaki sınama sayıları yazıldıkları günün verisine dayanır. 2026-11-04'te fiyat düzeltmesi değişti (`notlar/tspakb-2011.md`); güncel sayı `/analiz` sayfasındadır.
+
 | Kaynak | Dosya | Notlar |
 |---|---|---|
 | Erdinç Altay, *Portföy Yönetiminde Karar Alma Aracı Olarak Teknik Analizin Kullanımı*, İÜ SBE YL tezi, 1997 | `pdf/altay-1997.pdf` | `notlar/altay-1997.md` |
 | Gedik Yatırım, *Teknik Analiz Eğitim Sunumu*, Şubat 2021 | `pdf/gedik-2021.pdf` | `notlar/gedik-2021.md` |
 | Matriks, *Teknik Analiz Modülleri (KHN Menüleri) Eğitim Dokümanı*, 2020 | `pdf/matriks-2020.pdf` | `notlar/matriks-2020.md` |
 | Cemile Budak, *Teknik Analiz İndikatörlerinin Performans Karşılaştırması*, Marmara Üni. YL tezi, 2019 | `pdf/budak-2019.pdf` | `notlar/budak-2019.md` |
+| TSPAKB, *Analiz Yöntemleri*, SPK İleri Düzey Lisans Kılavuzu, Eylül 2011 | `pdf/tspakb-2011.pdf` | `notlar/tspakb-2011.md` |

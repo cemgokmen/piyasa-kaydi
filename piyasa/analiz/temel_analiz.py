@@ -165,6 +165,13 @@ VERGI_ONCESI = ("Pretax Income",)
 VERGI = ("Tax Provision",)
 TEMETTU = ("Cash Dividends Paid", "Common Stock Dividend Paid")
 GERI_ALIM = ("Repurchase Of Capital Stock", "Common Stock Payments")
+SATIS_MALIYETI = ("Cost Of Revenue",)
+STOK = ("Inventory",)
+DIGER_DONEN = ("Other Current Assets",)
+ALACAK = ("Accounts Receivable", "Receivables")
+DURAN = ("Total Non Current Assets",)
+UV_YUKUMLULUK = ("Total Non Current Liabilities Net Minority Interest",)
+MADDI_OLMAYAN = ("Goodwill And Other Intangible Assets",)
 
 
 def _cagr(bas, son, yil):
@@ -172,6 +179,38 @@ def _cagr(bas, son, yil):
     if not bas or son is None or bas <= 0 or son <= 0 or yil <= 0:
         return None
     return (son / bas) ** (1 / yil) - 1
+
+
+def mali_oranlar(t, son_bilanco):
+    """
+    Klasik likidite, mali yapı ve devir oranları (TSPAKB 2011, s. 36–43). Sınır değerleri ders kitabı ölçüsüdür ve
+    sınanmadı: Yahoo'da yalnızca son dört yıl var, puana girmezler, yalnızca gösterilirler.
+    """
+    donen, kv = son_bilanco(DONEN), son_bilanco(KV_BORC)
+    stok, diger = son_bilanco(STOK) or 0.0, son_bilanco(DIGER_DONEN) or 0.0
+    ozk, duran, uv = son_bilanco(OZKAYNAK), son_bilanco(DURAN), son_bilanco(UV_YUKUMLULUK)
+    borc = son_bilanco(YUKUMLULUK)
+    maddi_ozk = ozk - (son_bilanco(MADDI_OLMAYAN) or 0.0) if ozk is not None else None
+
+    def gun(pay, kalem):
+        """Ortalama bakiyenin kaç günlük satışa denk geldiği: 360 / devir hızı."""
+        if len(t.yillar) < 2:
+            return None
+        ort = _ort(t.b(kalem, -1), t.b(kalem, -2))
+        return 360 * ort / pay if ort and pay and pay > 0 else None
+
+    vergi_oncesi, faiz, varlik, ozk_y = t.g(VERGI_ONCESI), t.g(FAIZ), t.b(VARLIK), t.b(OZKAYNAK)
+    return {
+        "asit": _bol(donen - stok - diger, kv) if donen is not None else None,
+        "nakit_orani": _bol(son_bilanco(NAKIT), kv),
+        "duran_devamli": _bol(duran, ozk + uv) if None not in (duran, ozk, uv) and ozk + uv > 0 else None,
+        "borc_maddi_ozk": _bol(borc, maddi_ozk) if borc is not None and maddi_ozk and maddi_ozk > 0 else None,
+        "stok_gun": gun(t.g(SATIS_MALIYETI), STOK),
+        "alacak_gun": gun(t.g(GELIR), ALACAK),
+        # Vergi iki tarafa da aynı girsin diye özkaynak getirisi de vergi öncesi: fark yalnızca borcun maliyetini gösterir
+        "ekonomik_rant": _bol(vergi_oncesi + abs(faiz or 0), varlik) if vergi_oncesi is not None else None,
+        "ozk_vergi_oncesi": _bol(vergi_oncesi, ozk_y) if ozk_y and ozk_y > 0 else None,
+    }
 
 
 def finans_mi(bilgi, sektor=None):
@@ -526,6 +565,7 @@ def degerlendir(bilgi, gelir=None, bilanco=None, nakit=None, ceyrek_bilanco=None
             "fk": fk, "pddd": pddd, "fd_favok": fd_favok, "fcf_verimi": fcf_verimi, "fs": fs,
             "temettu": temettu, "geri_alim_verimi": geri_alim_verimi, "sulanma": sulanma,
             "net_borc": net_borc, "piyasa_degeri": pd_rapor, "son_enflasyon": son_enf,
+            **({} if finans else mali_oranlar(t, son_bilanco)),
         },
         "medyan": medyan,
         "piotroski": f_skor,
@@ -588,6 +628,9 @@ def _yanlar(s):
         bayrak.append(f"Net borç FAVÖK'ün {ondalik(o['nb_favok'], 1)} katı: borç yükü ağır.")
     if o["faiz_karsilama"] is not None and o["faiz_karsilama"] < 1.5 and not s["finans"]:
         bayrak.append(f"Faaliyet karı faiz giderini yalnızca {ondalik(o['faiz_karsilama'], 1)} kat karşılıyor.")
+    if (not s["finans"] and o.get("ekonomik_rant") is not None and o.get("ozk_vergi_oncesi") is not None
+            and 0 < o["ozk_vergi_oncesi"] < o["ekonomik_rant"]):
+        bayrak.append(f"Varlık getirisi (%{ondalik(o['ekonomik_rant'] * 100, 1)}, faiz öncesi) özkaynak getirisinden yüksek: borcun maliyeti, kattığından fazla.")
     if o["tahakkuk"] is not None and o["tahakkuk"] > 0.10:
         bayrak.append("Karın büyük kısmı nakde dönmüyor (yüksek tahakkuk): kar kalitesi zayıf.")
     if o["sulanma"] is not None and o["sulanma"] > 0.08:
