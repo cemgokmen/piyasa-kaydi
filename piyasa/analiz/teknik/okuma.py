@@ -137,7 +137,7 @@ def okuma(t, bolgeler=None):
         if b_ > 1:
             metin = "Fiyat üst Bollinger bandının dışında kapattı: güçlü itiş ama kısa vadede gerilmiş."
         elif b_ < 0:
-            metin = "Fiyat alt Bollinger bandının dışında kapattı: sert satış, kısa vadeli tepki yükselişi sık görülür."
+            metin = "Fiyat alt Bollinger bandının dışında kapattı: sert satış. BIST 100 geçmişinde alt banda değmek tek başına alım sebebi olmadı."
         else:
             metin = f"Fiyat Bollinger bantlarının içinde (%b = {ondalik(b_, 2)})."
         metin += f" Günlük ortalama hareket (ATR) {_p(gs['atr'])}, yani fiyatın {ek('%' + _o(gs['atr'] / c * 100), 'si')}"

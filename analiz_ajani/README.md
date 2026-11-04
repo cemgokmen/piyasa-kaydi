@@ -26,3 +26,4 @@ orada ters çıkan kural oy vermez. Sınırlar `piyasa/analiz/ajan/donemler.py` 
 | Erdinç Altay, *Portföy Yönetiminde Karar Alma Aracı Olarak Teknik Analizin Kullanımı*, İÜ SBE YL tezi, 1997 | `pdf/altay-1997.pdf` | `notlar/altay-1997.md` |
 | Gedik Yatırım, *Teknik Analiz Eğitim Sunumu*, Şubat 2021 | `pdf/gedik-2021.pdf` | `notlar/gedik-2021.md` |
 | Matriks, *Teknik Analiz Modülleri (KHN Menüleri) Eğitim Dokümanı*, 2020 | `pdf/matriks-2020.pdf` | `notlar/matriks-2020.md` |
+| Cemile Budak, *Teknik Analiz İndikatörlerinin Performans Karşılaştırması*, Marmara Üni. YL tezi, 2019 | `pdf/budak-2019.pdf` | `notlar/budak-2019.md` |

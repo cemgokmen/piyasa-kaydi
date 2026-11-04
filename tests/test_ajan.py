@@ -409,3 +409,18 @@ def test_gecikmeli_kesisim_iki_gun_sonra_gelir():
     hemen = KURALLAR["matriks.ema_5_14"].fonksiyon(b)
     gecik = KURALLAR["matriks.ema_5_14_gecikmeli"].fonksiyon(b)
     assert hemen.shift(2).fillna(0.0).equals(gecik)
+
+
+def test_budak_gosterge_kurallari():
+    assert {r.kaynak.kod for r in KURALLAR.values()} >= {"budak2019"}
+    df = sahte_ohlcv(gun=700, tohum=11)
+    b = Baglam(df, gostergeler(df))
+    for k in [k for k in KURALLAR if k.startswith("budak.")]:
+        s = KURALLAR[k].fonksiyon(b)
+        assert (s != 0).any(), k
+    # Bollinger: bant dışında kaldığı sürece yeniden sinyal yok, ilk değme sayılır
+    t = pd.date_range("2024-01-01", periods=60, freq="B")
+    c = np.r_[np.full(40, 100.0) + np.tile([0.2, -0.2], 20), np.full(20, 70.0)]
+    d = pd.DataFrame({"Open": c, "High": c + 0.1, "Low": c - 0.1, "Close": c, "Volume": np.full(60, 1000.0)}, index=t)
+    s = KURALLAR["budak.bollinger"].fonksiyon(Baglam(d, gostergeler(d)))
+    assert s.iloc[40] == 1 and s.iloc[41] == 0
