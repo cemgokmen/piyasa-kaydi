@@ -393,3 +393,19 @@ section[id], div[id] { scroll-margin-top: 64px; }
 .an-nasil ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; color: var(--yazi-2); }
 .an-nasil .an-durum { min-width: 112px; text-align: center; margin-right: 6px; }
 @media (max-width: 860px) { .an-nasil { grid-template-columns: minmax(0, 1fr); } .an-halka-grup > div { gap: 8px; } }
+
+/* ---------- Kaynak kuralları ve trend çizgileri ---------- */
+.an-tc-destek { stroke: var(--an-iyi); stroke-width: 1.4; }
+.an-tc-direnc { stroke: var(--an-kotu); stroke-width: 1.4; }
+.an-tc-kirik { stroke-dasharray: 4 3; opacity: .7; }
+.an-ajan td { vertical-align: top; }
+.an-tek { white-space: nowrap; }
+.an-tablo th small { display: block; font-size: 10.5px; font-weight: 400; color: var(--yazi-3); text-transform: none; letter-spacing: 0; }
+.an-rozet { white-space: nowrap; }
+.an-tablo .alt-satir { display: block; font-family: var(--sans); font-size: 11.5px; color: var(--yazi-3); }
+.an-ajan .alt-satir { white-space: normal; }
+.an-egilim { margin: 0 16px 14px; padding: 12px 14px; border-radius: 10px; background: var(--kart-2); font-size: 13.5px; }
+.an-egilim h3 { margin: 0 0 4px; font-size: 14px; }
+.an-egilim p { margin: 0 0 4px; color: var(--yazi-2); }
+.an-ara-baslik { margin: 20px 0 4px; font-size: 16px; }
+.an-tc-kanal { stroke: var(--yazi-3); stroke-width: 1.1; stroke-dasharray: 2 3; }

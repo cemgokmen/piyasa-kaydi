@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 from piyasa.analiz import teknik
+from piyasa.analiz.destek_direnc import atr
 from piyasa.ayarlar import VERITABANI
 from piyasa.bist import piyasa as bist_piyasa
 
@@ -37,6 +38,7 @@ DOSYA = VERITABANI.parent / "analiz_tarama.json"
 KILIT = VERITABANI.parent / "analiz_tarama.kilit"
 ENDEKS = "XU100.IS"
 DOLAR = "TRY=X"
+TEYIT_ENDEKSLERI = {"XUSIN.IS": "Sınai", "XBANK.IS": "Banka"}   # Dow: endeksler birbirini teyit etmeli
 ACIK_TAZELIK = 60 * 60            # borsa açıkken teknik tarama en çok bu kadar eski olabilir
 TEMEL_TAZELIK = 7 * 24 * 3600
 TEMEL_PARCA = 12
@@ -123,7 +125,21 @@ def genislik(satirlar):
     }
 
 
-def rejim(endeks_df, dolar=None, gen=None):
+def dow_teyidi(endeks_df, yan):
+    """Dow'un 'endeksler birbirini teyit etmeli' kuralı: XU100 ile sınai ve banka endeksleri aynı birincil trendde mi?"""
+    ana = teknik.dow_okumasi(endeks_df, atr(endeks_df))
+    satirlar = [{"ad": "BIST 100", "birincil": ana["birincil"], "ikincil": ana["ikincil"]}]
+    for ad, df in yan.items():
+        d = teknik.dow_okumasi(df, atr(df))
+        satirlar.append({"ad": ad, "birincil": d["birincil"], "ikincil": d["ikincil"]})
+    turler = {s["birincil"] for s in satirlar}
+    teyit = len(satirlar) > 1 and len(turler) == 1 and "belirsiz" not in turler
+    return {"endeksler": satirlar, "teyit": teyit, "metin": (
+        ("Endeksler aynı birincil trendi gösteriyor: " + ("yükseliş." if ana["birincil"] == "yukselis" else "düşüş.")) if teyit
+        else "Endeksler aynı birincil trendi göstermiyor: Dow'a göre trend teyitli değil.")}
+
+
+def rejim(endeks_df, dolar=None, gen=None, yan=None):
     """Piyasa rejimi: endeksin trendi, dolar bazında trend ve genişlik birlikte."""
     t = teknik.analiz(endeks_df)
     gs = t["gosterge"]
@@ -156,12 +172,13 @@ def rejim(endeks_df, dolar=None, gen=None):
                                                        "trendi teyitli ve endeksten güçlü hisseleri tercih et.")
     return {"kod": kod, "ad": ad, "metin": metin, "puan": puan, "ust200": ust200, "egim200": egim, "dolar": dolar_bazli,
             "endeks_puan": t["puanlar"], "evre": t["evre"], "fiyat": gs["close"], "sma200": gs["sma200"],
-            "y1": gs["getiriler"]["1y"], "a1": gs["getiriler"]["1a"], "rsi": gs["rsi"]}
+            "y1": gs["getiriler"]["1y"], "a1": gs["getiriler"]["1a"], "rsi": gs["rsi"],
+            "dow": dow_teyidi(endeks_df, yan or {})}
 
 
 def teknik_tara(kodlar):
     import yfinance as yf
-    yahoo = [bist_piyasa.yahoo_kodu(k) for k in kodlar] + [ENDEKS, DOLAR]
+    yahoo = [bist_piyasa.yahoo_kodu(k) for k in kodlar] + [ENDEKS, DOLAR, *TEYIT_ENDEKSLERI]
     tablo = yf.download(yahoo, period="2y", interval="1d", auto_adjust=True, group_by="ticker",
                         threads=True, progress=False, timeout=30)
     endeks = _ohlcv(tablo, ENDEKS)
@@ -181,7 +198,8 @@ def teknik_tara(kodlar):
             except Exception:
                 continue
         gen = genislik(list(satirlar.values()))
-        rj = rejim(endeks, dolar_kapanis, gen)
+        yan = {ad: d for k, ad in TEYIT_ENDEKSLERI.items() if (d := _ohlcv(tablo, k)) is not None}
+        rj = rejim(endeks, dolar_kapanis, gen, yan)
     return {"hisseler": satirlar, "genislik": gen, "rejim": rj, "zaman": time.time()}
 
 
@@ -335,11 +353,25 @@ def _sessiz(fonksiyon, *args, **kwargs):
         return None
 
 
+def _kanit_tazele():
+    """Kuralların haftalık sınaması; yalnızca tarama kilidini alan süreç çalıştırır."""
+    from piyasa.analiz.ajan import kanit
+    if not kanit.gerekli():
+        return
+    with open(KILIT, "w") as kilit_dosyasi:
+        try:
+            fcntl.flock(kilit_dosyasi, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+        kanit.tazele([k for k, _, _ in evren()])
+
+
 def arkaplanda_tazele(aralik=DONGU):
     def dongu():
         time.sleep(20)
         while True:
             _sessiz(tazele)
+            _sessiz(_kanit_tazele)
             time.sleep(aralik)
     threading.Thread(target=dongu, name="analiz-tarama", daemon=True).start()
 

@@ -30,7 +30,8 @@
     <p class="an-sade">{% if rejim.kod == 'ayi' %}Kısaca: borsanın geneli düşüyor. Bu dönemde iyi hisseler de düşebilir; yeni alımları küçük tut, paranın çoğunu bekletmek daha güvenli.
       {% elif rejim.kod == 'boga' %}Kısaca: borsanın geneli yükseliyor. Alım yapmak için uygun bir dönem; yine de her işlemde zarar durdurma seviyesi koy.
       {% else %}Kısaca: borsada net bir yön yok. Seçici ol, alımları normalin yarısı büyüklükte yap.{% endif %}</p>
-
+    {% if rejim.dow %}<p class="an-soluk kucuk">Dow teyidi: {{ rejim.dow.metin }}
+      {% for e in rejim.dow.endeksler %}{{ e.ad }}: {{ {'yukselis': 'yükseliş', 'dusus': 'düşüş'}.get(e.birincil, 'belirsiz') }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
   </div>
   <div class="an-rejim-kpi">
     <div><span>BIST 100</span><b class="mono">{{ rejim.fiyat|ondalik(0) }}</b><small>200 günlük {{ rejim.sma200|ondalik(0) if rejim.sma200 else '—' }}</small></div>
@@ -146,6 +147,63 @@
   {% else %}
   <p class="bos">Liste hazırlanıyor: BIST 100 hisselerinin fiyatları indiriliyor. Bir dakika sonra sayfayı yenile.</p>
   {% endif %}
+</section>
+
+<section class="bolum" id="kaynak-kurallari">
+  <header class="bolum-ust"><div>
+    <h2>Kaynak kuralları tutuyor mu?</h2>
+    <p class="bolum-not">Okunan kaynaklardaki kurallar BIST 100 geçmişinde sınanır. Kaynak ne derse desin, kanıtı olmayan kural karar için sayılmaz.
+      {% if kanit %}{{ kanit.hisse }} hisse, {{ kanit.bas|uzun_tarih }} – {{ kanit.bit|uzun_tarih }}.{% endif %}</p>
+  </div></header>
+  {% if kanit %}
+  <div class="tablo-kap">
+    <table class="tablo an-tablo an-ajan">
+      <thead><tr><th>Kural</th><th>Kaynak</th><th class="sag">Süre</th><th>AL sinyali</th><th>SAT sinyali</th></tr></thead>
+      <tbody>
+        {% for k in kural_tablosu %}
+        <tr><td><b>{{ k.ad }}</b></td><td class="an-soluk" data-etiket="Kaynak">{{ k.kaynak }}, s. {{ k.sayfa }}</td><td class="sag mono an-tek" data-etiket="Süre">{{ k.ufuk }} gün</td>
+          {% for t, etiket in ((k.al, 'AL sinyali'), (k.sat, 'SAT sinyali')) %}
+          <td data-etiket="{{ etiket }}"><span class="an-rozet an-{{ t.ton }}">{{ t.kanit }}</span>
+            {% if t.ortalama is not none %}<span class="alt-satir">{{ t.ortalama|yuzde(basamak=1) }} · {{ t.sinyal }} sinyal</span>{% endif %}</td>
+          {% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">Rakam: sinyalden sonraki sürede kuralın kazancı, aynı günkü grup ortalamasına göre. SAT sinyalinde artı, hissenin grubun gerisinde kaldığı anlamına gelir.</p>
+  {% if kanit.formasyonlar %}
+  <h3 class="an-ara-baslik">Formasyon hedefleri tutuyor mu?</h3>
+  <p class="bolum-not">Kaynaklar hedefi "en az gidilecek nokta" diye anlatır. Hacim teyitli kırılışların 60 gün içinde hedefe ulaşma oranı:</p>
+  <div class="tablo-kap">
+    <table class="tablo an-tablo">
+      <thead><tr><th>Formasyon</th><th class="sag">Kırılış</th><th class="sag">Hedefe ulaşan</th></tr></thead>
+      <tbody>
+        {% for f in kanit.formasyonlar.values()|sort(attribute='hedef', reverse=true) %}
+        <tr><td data-etiket="Formasyon"><b>{{ f.ad }}</b></td><td class="sag mono" data-etiket="Kırılış">{{ f.n }}</td><td class="sag mono" data-etiket="Hedefe ulaşan">{{ f.hedef|yuzde(isaretli=false, basamak=0) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">Bu oran yönü ölçmez ve piyasanın genel yükselişini de içerir: yukarı yönlü formasyonlar enflasyonlu bir dönemde daha kolay hedefe ulaşır.</p>
+  {% endif %}
+  {% if kanit.deney %}
+  <h3 class="an-ara-baslik">Tezin deneyi bugün tekrarlansa (Altay 1997: +%176, endeks +%128)</h3>
+  <p class="bolum-not">Yalnızca stokastik sinyalleriyle, eşit ağırlıklı, açığa satışsız portföy; boştaki para gecelik faizde. Hisseler bugünkü BIST 100 olduğu için sonuç gerçekte olabilecekten iyi görünür.</p>
+  <div class="tablo-kap">
+    <table class="tablo an-tablo">
+      <thead><tr><th>Dönem</th><th class="sag">Stokastik<small>komisyon binde 7</small></th><th class="sag">Stokastik<small>komisyon binde 2</small></th><th class="sag">BIST 100</th><th class="sag">Aynı hisseleri al-tut</th><th class="sag">Yalnızca faiz</th></tr></thead>
+      <tbody>
+        {% for d in kanit.deney %}
+        <tr><td class="mono">{{ d.bas|uzun_tarih }} – {{ d.bit|uzun_tarih }}</td>
+          <td class="sag mono" data-etiket="Stokastik, binde 7">{{ getiri(d.tez.getiri) }}</td><td class="sag mono" data-etiket="Stokastik, binde 2">{{ getiri(d.bugun.getiri) }}</td>
+          <td class="sag mono" data-etiket="BIST 100">{{ getiri(d.endeks) }}</td><td class="sag mono" data-etiket="Aynı hisseleri al-tut">{{ getiri(d.al_tut) }}</td><td class="sag mono" data-etiket="Yalnızca faiz">{{ getiri(d.faiz) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">Faiz, TCMB politika faiziyle yaklaşık hesaplanmıştır. Endeks temettüsüzdür, hisseler temettü düzeltmelidir. Vergi dahil değildir.</p>
+  {% endif %}
+  {% else %}<p class="bos">Kurallar henüz sınanmadı; sınama birkaç dakika içinde arka planda tamamlanır.</p>{% endif %}
 </section>
 
 <section class="izgara-2 an-kurallar">

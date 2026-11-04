@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from piyasa.analiz import rapor, tarama, teknik, temel_analiz
+from piyasa.analiz.ajan import kanit as ajan_kanit
 
 
 def sahte_ohlcv(gun=900, egim=0.0006, tohum=3, baslangic=100.0):
@@ -181,6 +182,11 @@ def sahte_analiz(monkeypatch):
             "medyan": {"genel": {"fk": 9.0, "pddd": 1.0, "fd_favok": 7.0, "n": 99}}}
     monkeypatch.setattr(tarama, "_oku", lambda: veri)
     monkeypatch.setattr(tarama, "teknik_gerekli", lambda v, simdi=None: False)
+    donem = {"bas": "2025-11-04", "bit": "2026-11-03", "tez": {"getiri": 0.04}, "bugun": {"getiri": 0.08},
+             "endeks": 0.01, "al_tut": -0.08, "faiz": 0.37}
+    monkeypatch.setattr(ajan_kanit, "oku", lambda: {"hisse": 99, "bas": "2020-11-04", "bit": "2026-11-03", "deney": [donem],
+                                                    "kurallar": {"altay.stokastik": {"al": {"kanit": "sans", "ortalama": 0.004, "sinyal": 10},
+                                                                                     "sat": {"kanit": "zayif", "ortalama": 0.002, "sinyal": 9}}}})
     return fiyatlar
 
 
@@ -189,6 +195,7 @@ def test_analiz_genel_sayfasi(istemci, sahte_analiz):
     html = cevap.get_data(as_text=True)
     assert cevap.status_code == 200 and "noindex" in cevap.headers["X-Robots-Tag"]
     assert "BIST 100 hisseleri" in html and "Güçlü aday" in html and "THYAO" in html and "Para yönetimi kuralları" in html
+    assert "Kaynak kuralları tutuyor mu" in html and "Tezin deneyi" in html and "Altay 1997" in html and "Dow teyidi" in html
     assert istemci.get("/analiz?kod=asels").headers["Location"].endswith("/analiz/ASELS")
 
 
@@ -197,7 +204,8 @@ def test_analiz_hisse_sayfasi(istemci, sahte_analiz):
     html = cevap.get_data(as_text=True)
     assert cevap.status_code == 200
     for parca in ("Genel görünüm", "Grafik okuması", "Pozisyon ve risk", "Temel analiz", "Piotroski",
-                  "geçmişte işe yaradı", 'id="grafik-verisi"', "enflasyon muhasebesi"):
+                  "geçmişte işe yaradı", 'id="grafik-verisi"', "enflasyon muhasebesi", "Kaynak kuralları bu hissede",
+                  "trend takibi işe yarıyor mu"):
         assert parca in html, parca
     abd = istemci.get("/analiz/AAPL").get_data(as_text=True)
     assert "Dolar kuru" in abd and "S&amp;P 500" in abd

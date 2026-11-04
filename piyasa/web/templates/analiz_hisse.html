@@ -87,7 +87,7 @@
 {% endif %}
 
 <nav class="an-gezinti" aria-label="Rapor bölümleri">
-  <a href="#grafik">Grafik</a><a href="#okuma">Okuma</a><a href="#pozisyon">Pozisyon ve risk</a>
+  <a href="#grafik">Grafik</a><a href="#okuma">Okuma</a><a href="#ajan">Kaynak kuralları</a><a href="#pozisyon">Pozisyon ve risk</a>
   <a href="#teknik-puan">Teknik puan</a>{% if tm %}<a href="#temel">Temel analiz</a>{% endif %}<a href="#isabet">Geçmiş isabet</a><a href="#yontem">Yöntem</a>
 </nav>
 
@@ -100,7 +100,7 @@
       {% endfor %}
     </div>
     <div class="an-katmanlar" role="group" aria-label="Katmanlar">
-      {% for a, e, acik in [('ort', 'Ortalamalar', true), ('bb', 'Bollinger', false), ('st', 'Süpertrend', false), ('sr', 'Destek/direnç', true), ('fib', 'Fibonacci', false), ('zz', 'Tepe-dip', false)] %}
+      {% for a, e, acik in [('ort', 'Ortalamalar', true), ('bb', 'Bollinger', false), ('st', 'Süpertrend', false), ('sr', 'Destek/direnç', true), ('fib', 'Fibonacci', false), ('zz', 'Tepe-dip', false), ('tc', 'Trend çizgileri', true)] %}
       <label class="an-cip"><input type="checkbox" data-katman="{{ a }}" {% if acik %}checked{% endif %}> {{ e }}</label>
       {% endfor %}
     </div>
@@ -153,11 +153,11 @@
             <tr class="an-simdi"><td colspan="5">Fiyat · {{ gs.close|fiyat }}</td></tr>
             {% endif %}
             <tr>
-              <td class="mono">{{ b.alt|fiyat }} – {{ b.ust|fiyat }}</td>
-              <td><span class="an-rozet an-{{ 'iyi' if b.tur == 'destek' else 'kotu' }}">{{ b.tur|capitalize }}</span></td>
-              <td class="sag mono">{{ (b.uzaklik_yuzde / 100)|yuzde(basamak=1) }}</td>
-              <td class="sag mono">{{ b.tutunan }}/{{ b.test }}</td>
-              <td class="sag"><span class="an-guc" style="--g: {{ b.puan }}"></span> <span class="mono">{{ b.puan|round|int }}</span></td>
+              <td class="mono" data-etiket="Bölge">{{ b.alt|fiyat }} – {{ b.ust|fiyat }}{% if b.son_temas_gun is not none %}<span class="alt-satir">son temas {{ 'bugün' if b.son_temas_gun == 0 else b.son_temas_gun ~ ' gün önce' }}</span>{% endif %}</td>
+              <td data-etiket="Tür"><span class="an-rozet an-{{ 'iyi' if b.tur == 'destek' else 'kotu' }}">{{ b.tur|capitalize }}</span>{% if b.rol_degisti %} <span class="an-rozet an-orta" title="Bu bölge daha önce ters yönden kırılmış: kırılan direnç desteğe, kırılan destek dirence döner">Rol değişti</span>{% endif %}</td>
+              <td class="sag mono an-tek" data-etiket="Uzaklık">{{ (b.uzaklik_yuzde / 100)|yuzde(basamak=1) }}</td>
+              <td class="sag mono an-tek" data-etiket="Test">{{ b.tutunan }}/{{ b.test }}</td>
+              <td class="sag an-tek" data-etiket="Güç"><span class="an-guc" style="--g: {{ b.puan }}"></span> <span class="mono">{{ b.puan|round|int }}</span></td>
             </tr>
           {% endfor %}
           </tbody>
@@ -167,6 +167,42 @@
     {% endif %}
   </div>
 </div>
+
+{# ---------------- KAYNAK KURALLARI ---------------- #}
+{% set aj = r.ajan %}
+<section class="panel" id="ajan">
+  <div class="panel-ust"><div><h2>Kaynak kuralları bu hissede ne diyor?</h2>
+    <p class="panel-not">Okunan kaynaklardaki al-sat kuralları. Her kural BIST 100 geçmişinde sınandı; yalnızca kanıtı olanlar "dikkate alınır". Bu bölüm yukarıdaki puanları değiştirmez.</p></div></div>
+  {% if aj.sinyaller %}
+  <div class="tablo-kap">
+    <table class="tablo an-tablo an-ajan">
+      <thead><tr><th>Kural</th><th>Sinyal</th><th>Tarih</th><th>Geçmişteki kanıt</th><th>Kaynak</th></tr></thead>
+      <tbody>
+        {% for s in aj.sinyaller %}
+        <tr>
+          <td><b>{{ s.ad }}</b><span class="alt-satir">{{ s.metin }}</span></td>
+          <td data-etiket="Sinyal"><span class="an-rozet an-{{ 'iyi' if s.yon > 0 else 'kotu' }}">{{ 'AL' if s.yon > 0 else 'SAT' }}</span></td>
+          <td class="mono an-tek" data-etiket="Tarih">{{ s.tarih.isoformat()|kisa_tarih }}</td>
+          <td data-etiket="Kanıt"><span class="an-rozet an-{{ s.kanit_ton }}">{{ s.kanit }}</span>
+            {% if s.ortalama is not none %}<span class="alt-satir">{{ s.ufuk }} günde gruba göre {{ s.ortalama|yuzde(basamak=1) }} ({{ 'SAT sinyalinde artı, hissenin geride kaldığı' if s.yon < 0 else 'hissenin farkı' }})</span>{% endif %}</td>
+          <td class="an-soluk" data-etiket="Kaynak">{{ s.kaynak }}, s. {{ s.sayfa }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="dipnot">{{ aj.toplam }} kuraldan {{ aj.sinyaller|length }} tanesi şu an sinyal veriyor; {{ aj.kanitli }} tanesinin kanıtı var.</p>
+  {% else %}<p class="bos">Son günlerde hiçbir kural sinyal vermedi.</p>{% endif %}
+  {% if r.egilim %}
+  {% set e = r.egilim %}
+  <div class="an-egilim">
+    <h3>Bu hissede trend takibi işe yarıyor mu?</h3>
+    <p>{{ e.metin }}</p>
+    <p class="an-soluk kucuk">Run testi z = {{ e.run.z|ondalik(2) }} ({{ e.run.run }} run, beklenen {{ e.run.beklenen|ondalik(0) }}).
+      Seri korelasyon:{% for k, c in e.korelasyon.items() %}{% if c %} {{ k }} gün {{ c.r|ondalik(2) }}{% if c.anlamli %} (anlamlı){% endif %}{% if not loop.last %} ·{% endif %}{% endif %}{% endfor %}.</p>
+  </div>
+  {% endif %}
+</section>
 
 {# ---------------- POZİSYON VE RİSK ---------------- #}
 {% set rk = r.risk %}
@@ -251,6 +287,9 @@
           <tr><th>MACD · sinyal · histogram</th><td class="mono">{{ gs.macd|ondalik(2) }} · {{ gs.macd_sinyal|ondalik(2) }} · {{ gs.macd_hist|ondalik(2) }}</td></tr>
           <tr><th>ADX · +DI · −DI</th><td class="mono">{{ gs.adx|ondalik(0) }} · {{ gs.arti_di|ondalik(0) }} · {{ gs.eksi_di|ondalik(0) }}</td></tr>
           <tr><th>Stokastik %K · %D</th><td class="mono">{{ gs.stok_k|ondalik(0) }} · {{ gs.stok_d|ondalik(0) }}</td></tr>
+          <tr><th>Williams %R (14) · Momentum (10)</th><td class="mono">{{ gs.williams|ondalik(0) }} · {{ gs.momentum10|ondalik(0) }}</td></tr>
+          <tr><th>CCI (20) · CCI (10)</th><td class="mono">{{ gs.cci20|ondalik(0) }} · {{ gs.cci10|ondalik(0) }}</td></tr>
+          <tr><th>VHF (28)</th><td class="mono">{{ gs.vhf|ondalik(2) }}</td></tr>
           <tr><th>Bollinger üst · alt · %b</th><td class="mono">{{ gs.bb_ust|fiyat }} · {{ gs.bb_alt|fiyat }} · {{ gs.bb_b|ondalik(2) }}</td></tr>
           <tr><th>Chaikin para akışı · MFI</th><td class="mono">{{ gs.cmf|ondalik(2) }} · {{ gs.mfi|ondalik(0) }}</td></tr>
           <tr><th>ATR (14)</th><td class="mono">{{ gs.atr|fiyat }} · {{ (gs.atr / gs.close)|yuzde(isaretli=false, basamak=1) }}</td></tr>
@@ -428,6 +467,9 @@
         Asness, Frazzini, Pedersen 2019), büyüme (TL raporlayanlarda reel), finansal sağlık (Piotroski 2000 F skoru, Altman 2005 Z'' skoru,
         borç, faiz karşılama, tahakkuk — Sloan 1996) ve değerleme (F/K, PD/DD, FD/FAVÖK, serbest nakit verimi; aynı piyasanın medyanına göre).
         Ters İNA, bugünkü fiyatın varsaydığı büyümeyi bulur (Mauboussin &amp; Rappaport).</p>
+      <p><b>Kaynak kuralları</b> okunan kaynaklardan alınır (Altay 1997, Gedik 2021). Her kural, BIST 100'ün son 6 yılında sinyalden sonra hissenin
+        aynı günkü grup ortalamasına göre ne yaptığıyla sınanır; test haftalık ortalamalar üzerinden, Holm düzeltmesiyle yapılır ve dönemin iki yarısı aynı
+        işareti vermelidir. Evren bugünkü BIST 100 olduğu için sağkalım yanlılığı vardır.</p>
       <p><b>Pozisyon boyutu</b> sabit kesirli risk yöntemiyledir: adet = sermaye × risk oranı ÷ (giriş − stop). Böylece her işlemde aynı
         oranda risk alınır; oynak hissede otomatik olarak daha az hisse alınır (Van Tharp, Ralph Vince).</p>
       <p><b>Sınırlar:</b> veriler Yahoo Finance'tendir, BIST fiyatları yaklaşık 15 dakika gecikmelidir. Bilanço kalemleri Yahoo'nun

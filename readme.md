@@ -218,12 +218,13 @@ piyasa/
 │                        CFTC/EIA/FRED, enflasyon (TCMB, FRED)
 ├── bakim/               Veri düzeltme, şüpheli kayıtlar
 ├── analiz/              Getiri, performans, çıkar çatışması, sinyaller, sektör haritası, ihaleler, özet,
-│                        yatırım karşılaştırma
+│                        yatırım karşılaştırma; teknik/ (göstergeler, puan, formasyon), ajan/ (kaynak kuralları ve sınaması)
 ├── emtia/               Emtia tanımları, sorgular, haberler, Kapalıçarşı, piyasa beklentileri
 ├── kripto/              Coin profilleri, CoinGecko verisi, kripto şirketleri, CFTC ve 13F sorguları
 ├── bist/                Fiyatlar (borsa saatinde, süreçler arası paylaşımlı), günün hareketi, KAP sorguları
 ├── veri/                Elle hazırlanmış şirket ve endüstri tanımları
 └── web/                 Flask uygulaması: her bölümün rotası (*_rotalari.py), sorgular, şablonlar, CSS ve JavaScript
+analiz_ajani/            Analiz ajanının kaynak PDF ve eğitim dosyaları (git dışı) ve notları
 tests/                   pytest ve Selenium testleri
 data/                    Fon listesi; veritabanı yerelde oluşturulur
 ```
@@ -246,6 +247,7 @@ haber ve çeviri servisleri sahte veriyle değiştirilir.
 | `test_bicim.py` | Tutar, tarih, ad ve unvan biçimleri; bildirim ayrıştırıcıları; haber seçimi |
 | `test_analiz.py` | Getiri, istatistik ve Holm düzeltmesi, sektör eşlemeleri |
 | `test_yurutme.py` | OGE bildirimleri, şirket rakamları |
+| `test_ajan.py` | Kaynak kuralları: geleceği görmeme, sınama, deney; yeni göstergeler ve formasyonlar |
 | `test_mimari.py` | Katmanlar arası bağımlılık kuralları |
 
 ## Yöntem ve sınırlar

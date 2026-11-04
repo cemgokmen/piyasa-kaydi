@@ -138,7 +138,7 @@
     const V = JSON.parse(kaynak.textContent);
     const N = V.t.length;
     const fiyatF = sayi(V.basamak);
-    const katman = { ort: true, bb: false, st: false, sr: true, fib: false, zz: false };
+    const katman = { ort: true, bb: false, st: false, sr: true, fib: false, zz: false, tc: true };
     let gun = Math.min(252, N);
 
     document.querySelectorAll("[data-katman]").forEach(function (k) {
@@ -335,6 +335,26 @@
             yz.textContent = fiyatF.format(p.fiyat);
           });
         }
+      }
+
+      // --- Trend çizgileri (eksik işlem günleri yüzünden indekse göre çizilir)
+      if (katman.tc && V.cizgiler && V.cizgiler.length) {
+        const sira = {};
+        V.t.forEach((t, i) => { sira[t] = i; });
+        const g = oge("g", {}, svg);
+        V.cizgiler.forEach(function (c) {
+          const i1 = sira[c.t1], i3 = sira[c.t3];
+          if (i1 === undefined || i3 === undefined || i3 <= bas) return;
+          const f = (i) => c.f1 + ((c.f3 - c.f1) * (i - i1)) / (i3 - i1);
+          const sol = Math.max(i1, bas);
+          if (!icinde(f(sol)) || !icinde(f(i3))) return;
+          oge("line", { x1: x(sol), y1: y(f(sol)), x2: x(i3), y2: y(f(i3)),
+            class: (c.tur === "destek" ? "an-tc-destek" : "an-tc-direnc") + (c.durum === "kirildi" ? " an-tc-kirik" : "") }, g);
+          if (c.kanal_f3 !== null && c.durum === "gecerli") {
+            const k = (i) => f(i) + (c.kanal_f3 - c.f3);
+            if (icinde(k(sol)) && icinde(k(i3))) oge("line", { x1: x(sol), y1: y(k(sol)), x2: x(i3), y2: y(k(i3)), class: "an-tc-kanal" }, g);
+          }
+        });
       }
 
       // --- Son fiyat etiketi

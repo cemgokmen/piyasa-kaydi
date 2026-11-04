@@ -14,6 +14,8 @@ import numpy as np
 
 from piyasa import fiyat as fiyat_servisi
 from piyasa.analiz import tarama, teknik, temel_analiz
+from piyasa.analiz.ajan import kanit as ajan_kanit
+from piyasa.analiz.ajan import okuma as ajan_okuma
 from piyasa.analiz.destek_direnc import bolgeleri_hesapla
 from piyasa.bicim import fiyat as fiyat_yazi
 from piyasa.bicim import ondalik
@@ -257,6 +259,58 @@ def isabet_ozeti(isabet):
     return {"kod": "zayif", "metin": "Dikkat: bu hissede grafik puanı geçmişte pek tutmadı. Ona fazla güvenme; şirketin rakamlarına ve destek seviyelerine de bak."}
 
 
+EGILIM_METNI = {
+    "trendli": "Son iki yılda getiriler rassal bir seriden daha uzun süre aynı yönde gitmiş.",
+    "donuslu": "Son iki yılda getiriler rassal bir seriden daha sık yön değiştirmiş.",
+    "rassal": "Son iki yılda getirilerin yönü rassal bir seriden ayırt edilemiyor.",
+}
+
+
+def egilim_ozeti(e):
+    """Tezin 'bu hissede trend takibi işe yarar mı?' sorusu. Cevabın sınırı da yazılır: bkz. analiz_ajani/notlar/altay-1997.md."""
+    if not e:
+        return None
+    return {**e, "metin": EGILIM_METNI[e["kod"]]
+            + " Bu ölçümü ağırlık ayarında kullanmıyoruz: BIST 100'de bir dönemin sonucu sonraki dönemi öngörmedi."}
+
+
+def _hedef_metni(f, kanitlar=None):
+    durum = f["durum"]
+    if durum == "olusuyor":
+        return "Oluşuyor, henüz teyit yok: kırılış gelmeden işlem sinyali sayılmaz."
+    yon = "yukarı" if f["kirilis_yon"] > 0 else "aşağı"
+    bas = "Hacim teyitli" if f["hacimli"] else ("Aşağı" if f["kirilis_yon"] < 0 else "Hacimsiz, teyitsiz")
+    metin = f"{bas} {yon} kırılış, {fiyat_yazi(f['kirilis_fiyat'])}. Kaynakların hedefi {fiyat_yazi(f['hedef'])}."
+    k = (kanitlar or {}).get(f["kod"])
+    if k and k.get("n", 0) >= 20:
+        metin += f" BIST 100'de bu türün %{round(k['hedef'] * 100)} kadarı 60 günde hedefe ulaştı."
+    return metin
+
+
+def cizgi_dayanikliligi(t, kanit):
+    """Geçerli çizginin eğimine göre, BIST 100'de benzer eğimli çizgilerin ne sıklıkla kırıldığı."""
+    k = (kanit or {}).get("cizgiler")
+    if not k:
+        return []
+    sonuc = []
+    for c in t.get("trend_cizgileri") or []:
+        if c["durum"] == "gecerli":
+            i = 0 if c["egim"] <= k["kesit"][0] else 1 if c["egim"] <= k["kesit"][1] else 2
+            ad = ("yatık", "orta eğimli", "dik")[i]
+            sonuc.append({"baslik": "Trend çizgisinin dayanıklılığı", "yon": 0,
+                          "metin": f"{c['tur'].capitalize()} çizgisi {ad}. BIST 100'de bu eğimdeki çizgilerin %{round(k['kirilma'][i] * 100)} kadarı {k['ufuk']} gün içinde kırıldı."})
+    return sonuc
+
+
+def klasik_sunum(t, kanitlar=None):
+    sonuc = []
+    for f in t.get("klasik") or []:
+        yon = 0 if f["durum"] == "olusuyor" else f.get("kirilis_yon", 0)
+        ek = " Sağ omuzdaki hacim soldakilerden düşük olmalıydı; değil." if f.get("hacim_uygun") is False else ""
+        sonuc.append({"ad": f["ad"], "yon": yon, "aciklama": _hedef_metni(f, kanitlar) + ek})
+    return sonuc
+
+
 # ---------------------------------------------------------------------------
 # Grafik verisi
 # ---------------------------------------------------------------------------
@@ -283,6 +337,7 @@ def grafik_verisi(t, bolgeler):
         "macd": _yuvarla(g["macd"], b + 1), "macds": _yuvarla(g["macd_sinyal"], b + 1), "macdh": _yuvarla(g["macd_hist"], b + 1),
         "bolgeler": [{"alt": z["alt"], "ust": z["ust"], "tur": z["tur"], "puan": z["puan"]} for z in bolgeler],
         "noktalar": t["noktalar"],
+        "cizgiler": [{k: c[k] for k in ("tur", "durum", "t1", "f1", "t3", "f3", "kanal_f1", "kanal_f3")} for c in t.get("trend_cizgileri") or []],
         "fib": [{"oran": s["oran"], "fiyat": s["fiyat"]} for s in fib["seviyeler"]] if fib else [],
         "basamak": b,
     }
@@ -328,12 +383,14 @@ def rapor(kod):
     tv = tarama.veri()
     rj = ((tv.get("teknik") or {}).get("rejim")) if k["piyasa"] == "BIST" else None
     risk = risk_plani(t, bolgeler)
+    kanit = ajan_kanit.oku()
+    t["formasyonlar"] = klasik_sunum(t, kanit.get("formasyonlar")) + t["formasyonlar"]
     para = bilgi.get("currency") or k["para"]
     return {
         "kimlik": {**k, "ad": k["ad"] or bilgi.get("longName") or bilgi.get("shortName") or k["kod"],
                    "sektor_yahoo": bilgi.get("sector"), "endustri": bilgi.get("industry"), "para": para},
         "teknik": t,
-        "okuma": teknik.okuma(t, bolgeler),
+        "okuma": teknik.okuma(t, bolgeler) + cizgi_dayanikliligi(t, kanit),
         "senaryo": teknik.senaryolar(t, bolgeler),
         "bolgeler": bolgeler,
         "sr": sr,
@@ -343,6 +400,8 @@ def rapor(kod):
         "karar": birlesik_karar(t, temel, rj, k["piyasa"] == "BIST"),
         "kontrol": kontrol_listesi(t, temel, rj, risk, k["piyasa"] == "BIST"),
         "isabet_ozeti": isabet_ozeti(t["isabet"]),
+        "ajan": ajan_okuma.oku(t["_df"], t["_g"]),
+        "egilim": egilim_ozeti(t["egilim"]),
         "risk": risk,
         "kur": None if para == "TRY" else dolar_kuru() if para == "USD" else None,
         "grafik": grafik_verisi(t, bolgeler),
@@ -366,7 +425,8 @@ def genel_bakis():
     satirlar.sort(key=lambda s: -(s["birlesik"] if s["birlesik"] is not None else -1))
     return {"satirlar": satirlar, "durumlar": DURUMLAR, "genislik": t.get("genislik"), "rejim": t.get("rejim"), "zaman": t.get("zaman"),
             "temel_sayisi": sum(1 for s in temel.values() if s.get("puan") is not None),
-            "medyan": (v.get("medyan") or {}).get("genel")}
+            "medyan": (v.get("medyan") or {}).get("genel"),
+            "kural_tablosu": ajan_okuma.ozet_tablosu(), "kanit": ajan_kanit.oku()}
 
 
 def _birlesik_puan(teknik_p, temel_p):
