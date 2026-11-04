@@ -30,3 +30,6 @@ data/x.env
 data/pexels.env
 data/haber_gorselleri/
 data/tanitim/
+
+# Analiz ajanının kaynak PDF ve eğitim dosyaları: telifli, git dışında
+analiz_ajani/pdf/

@@ -41,6 +41,7 @@ Kullanım:
     python -m piyasa sr-dene [kod ...]    destek/direnç modelini birkaç hissede dener
     python -m piyasa sr-tarama [aralık dönem]   modeli geniş bir hisse grubunda sınar
     python -m piyasa analiz-tarama [--temel]    BIST 100 teknik/temel analiz taramasını tazeler
+    python -m piyasa ajan-sina            kaynaklardan gelen kuralları BIST 100 geçmişinde sınar
 """
 
 import importlib
@@ -80,6 +81,7 @@ KOMUTLAR = {
     "sr-dene": "piyasa.analiz.sr_dene",
     "sr-tarama": "piyasa.analiz.sr_tarama",
     "analiz-tarama": "piyasa.analiz.tarama",
+    "ajan-sina": "piyasa.analiz.ajan.kanit",
 }
 
 # 'guncelle' sırayla çalıştırılan adımlar
