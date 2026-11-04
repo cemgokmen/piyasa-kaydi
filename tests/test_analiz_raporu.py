@@ -215,3 +215,18 @@ def test_analiz_bilinmeyen_kod_404(istemci, sahte_analiz):
     assert istemci.get("/analiz/YOKBOYLE").status_code == 404
     assert istemci.get("/analiz/<script>").status_code == 404
     assert "Disallow: /analiz" in istemci.get("/robots.txt").get_data(as_text=True)
+
+
+def test_bolunme_duzelt_islenmemis_bedelsizi_siler_gercek_hareketi_korur():
+    from piyasa.analiz.teknik.veri import bist_mi, bolunme_duzelt
+    t = pd.date_range("2024-01-01", periods=5, freq="B")
+    d = pd.DataFrame({"Open": [100.0, 110, 11, 12, 13], "High": [100.0, 110, 11, 12, 13], "Low": [100.0, 110, 11, 12, 13],
+                      "Close": [100.0, 110, 11, 12, 13], "Volume": [10.0, 10, 100, 100, 100]}, index=t)
+    y = bolunme_duzelt(d)
+    assert y["Close"].iloc[-1] == 13 and y["Close"].iloc[2] == 11           # son fiyatlar değişmez
+    assert y["Close"].iloc[0] == pytest.approx(10) and y["Close"].iloc[1] == pytest.approx(11)
+    assert y["Volume"].iloc[0] == pytest.approx(100)
+    assert (y["Close"].pct_change().abs().dropna() <= 0.15).all()
+    # %10'luk tavan hareketine dokunulmaz, tablo aynen döner
+    assert bolunme_duzelt(d.iloc[:2]) is not None and bolunme_duzelt(d.iloc[:2])["Close"].iloc[0] == 100
+    assert bist_mi("GARAN.IS") and not bist_mi("AAPL")

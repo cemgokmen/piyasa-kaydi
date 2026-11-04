@@ -17,6 +17,7 @@ from piyasa.analiz import tarama, teknik, temel_analiz
 from piyasa.analiz.ajan import kanit as ajan_kanit
 from piyasa.analiz.ajan import okuma as ajan_okuma
 from piyasa.analiz.destek_direnc import bolgeleri_hesapla
+from piyasa.analiz.teknik.veri import bist_mi, bolunme_duzelt
 from piyasa.bicim import fiyat as fiyat_yazi
 from piyasa.bicim import ondalik
 from piyasa.onbellek import sureli
@@ -66,6 +67,8 @@ def gecmis(yahoo, yil=5):
     df = df[["Open", "High", "Low", "Close", "Volume"]].dropna(subset=["Close"])
     df.index = df.index.tz_localize(None).normalize()
     df = df[~df.index.duplicated(keep="last")]
+    if bist_mi(yahoo):
+        df = bolunme_duzelt(df)
     return df if len(df) >= 60 else None
 
 

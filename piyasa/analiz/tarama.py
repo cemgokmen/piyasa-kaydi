@@ -30,6 +30,7 @@ import pandas as pd
 
 from piyasa.analiz import teknik
 from piyasa.analiz.destek_direnc import atr
+from piyasa.analiz.teknik.veri import bolunme_duzelt
 from piyasa.ayarlar import VERITABANI
 from piyasa.bist import piyasa as bist_piyasa
 
@@ -194,7 +195,7 @@ def teknik_tara(kodlar):
             if df is None:
                 continue
             try:
-                satirlar[kod] = hisse_ozeti(df, endeks["Close"])
+                satirlar[kod] = hisse_ozeti(bolunme_duzelt(df), endeks["Close"])
             except Exception:
                 continue
         gen = genislik(list(satirlar.values()))
